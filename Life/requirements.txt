@@ -1,0 +1,12 @@
+Pillow
+SpeechRecognition
+asyncpg
+dblpy
+discord.py
+granitepy
+jishaku
+matplotlib
+objgraph
+psutil
+youtube-dl
+aiOsu
