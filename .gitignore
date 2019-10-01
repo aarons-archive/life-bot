@@ -3,5 +3,4 @@
 *.mp3
 *.webm
 *.ini
-OldBot/config.py
-MrBot/config.py
+Life/config.py
