@@ -26,7 +26,7 @@ class Utilities(commands.Cog):
 
         # Create embed
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
         )
         embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s Info")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
@@ -41,7 +41,7 @@ class Utilities(commands.Cog):
                                                     f"**Lines:** {lines}\n**Files:** {files}\n")
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
-        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)** | "
+        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot)** | "
                                                      f"**[Support server](https://discord.gg/XejxSqT)** | "
                                                      f"**[Source code](https://github.com/MyNameBeMrRandom/Life)**", inline=False)
         return await ctx.send(embed=embed)
@@ -53,7 +53,7 @@ class Utilities(commands.Cog):
         """
 
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
         )
         embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s system stats")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
@@ -117,7 +117,7 @@ class Utilities(commands.Cog):
             user = ctx.author
 
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
         )
         embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author.name)
         if user.is_avatar_animated():
@@ -141,7 +141,7 @@ class Utilities(commands.Cog):
 
         online, offline, idle, dnd = botUtils.guild_user_status_count(ctx.guild)
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
         embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author.name)

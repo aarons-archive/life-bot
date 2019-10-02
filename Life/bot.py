@@ -35,7 +35,6 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 EXTENSIONS = [
     "cogs.utilities",
     "cogs.accounts",
-    "cogs.images",
     "cogs.help",
     "cogs.owner",
     "jishaku",
@@ -66,6 +65,7 @@ class Life(commands.Bot):
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
+        self.memory_usage = []
 
         for extension in EXTENSIONS:
             try:

@@ -6,9 +6,10 @@ class Background(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+        self.change_prescence.start()
         self.current_prescence = 0
         self.prescences = []
-        self.change_prescence.start()
 
     def cog_unload(self):
         self.change_prescence.stop()

@@ -33,7 +33,7 @@ class Owner(commands.Cog):
             embed = discord.Embed(
                 title=f"{guild.name} ({guild.id})",
                 description=f"",
-                color=0xFF0000
+                colour=discord.Color.gold()
             )
             for command in usage:
                 embed.description += f"{command} : {usage[command]}\n"
@@ -56,7 +56,7 @@ class Owner(commands.Cog):
         for guild in self.bot.guilds:
             online, offline, idle, dnd = botUtils.guild_user_status_count(guild)
             embed = discord.Embed(
-                colour=0xFF0000,
+                colour=discord.Color.gold(),
                 title=f"{guild.name}'s Stats and Information."
             )
             embed.set_footer(text=f"ID: {guild.id}")

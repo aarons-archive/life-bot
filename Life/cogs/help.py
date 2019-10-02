@@ -37,10 +37,10 @@ class HelpCommand(commands.HelpCommand):
         owner = ctx.bot.get_user(238356301439041536)
         # Define an embed.
         embed = discord.Embed(
-            colour=0xFF0000,
-            title="__MrBots help page__",
-            description=f"Use `{ctx.prefix} help [command]` for more info on a command.\n"
-                        f"You can also use `{ctx.prefix} help [category]` for more info on a category.\n"
+            colour=discord.Color.gold(),
+            title="__Life's help page__",
+            description=f"Use `{ctx.prefix}help [command]` for more info on a command.\n"
+                        f"You can also use `{ctx.prefix}help [category]` for more info on a category.\n"
         )
         # Loop through all the cogs.
         for cog in ctx.bot.cogs.values():
@@ -73,11 +73,11 @@ class HelpCommand(commands.HelpCommand):
             return await ctx.send("That extension is hidden/is owner only.")
         # Define an embed.
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
             title=f"__**{cog.qualified_name} cog help page.**__",
             description=f""
         )
-        embed.description += f"Use `{ctx.prefix} help [command]` for more info on a command.\n\n"
+        embed.description += f"Use `{ctx.prefix}help [command]` for more info on a command.\n\n"
         # Loop through all the commands in this cog.
         for command in cog.get_commands():
             # Get the command name along with all its aliases.
@@ -144,7 +144,7 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         # Define an embed.
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
             title=f"",
             description=""
         )
@@ -174,7 +174,7 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         # Define an embed.
         embed = discord.Embed(
-            colour=0xFF0000,
+            colour=discord.Color.gold(),
             title=f"",
             description=""
         )
@@ -215,7 +215,7 @@ class HelpCommand(commands.HelpCommand):
 
 class Help(commands.Cog):
     """
-    Help with how to understand and use MrBot.
+    Help with how to understand and use Life.
     """
 
     def __init__(self, bot):

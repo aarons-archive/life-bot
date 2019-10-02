@@ -1,9 +1,6 @@
-CREATE TABLE IF NOT EXISTS users(
+CREATE TABLE IF NOT EXISTS accounts(
     id BIGINT PRIMARY KEY,
     background TEXT,
-    voted BOOLEAN,
-    vote_claimed BOOLEAN,
-    vote_count BIGINT,
     cash BIGINT,
     bank BIGINT
 );
