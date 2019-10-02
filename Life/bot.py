@@ -17,11 +17,13 @@ see <https://www.gnu.org/licenses/>.
 """
 
 import asyncio
+import time
 import os
 
 from discord.ext import commands
 import aiohttp
 import asyncpg
+import psutil
 import config
 
 # noinspection PyUnresolvedReferences
@@ -54,6 +56,9 @@ class Life(commands.Bot):
 
         self.config = config
 
+        self.start_time = time.time()
+        self.process = psutil.Process()
+
         self.db = None
         self.db_ready = False
 
@@ -61,9 +66,6 @@ class Life(commands.Bot):
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
-
-        # For future discord bot list intergration. TODO
-        # self.dblpy = dbl.DBLClient(self, config.DBL_TOKEN, webhook_path="/dblwebhook", webhook_auth=config.DBL_TOKEN, webhook_port=5000)
 
         for extension in EXTENSIONS:
             try:

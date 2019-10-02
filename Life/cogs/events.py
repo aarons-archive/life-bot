@@ -2,7 +2,6 @@ from discord.ext import commands
 from .utils import exceptions
 from .utils import formatting
 import traceback
-import andesite
 import discord
 import dbl
 

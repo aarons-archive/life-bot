@@ -8,9 +8,6 @@ import time
 import os
 
 
-start_time = time.time()
-
-
 class Utilities(commands.Cog):
 
     def __init__(self, bot):
@@ -25,7 +22,7 @@ class Utilities(commands.Cog):
         # Get bot information.
         typingms, latencyms, discordms, average = await botUtils.ping(self.bot, ctx)
         files, functions, comments, lines = botUtils.linecount()
-        uptime = time.time() - start_time
+        uptime = time.time() - self.bot.start_time
 
         # Create embed
         embed = discord.Embed(
@@ -40,14 +37,13 @@ class Utilities(commands.Cog):
         embed.add_field(name="__**Stats:**__", value=f"**Discord.py Version:** {str(discord.__version__)}\n"
                                                      f"**Commands:** {len(self.bot.commands)}\n"
                                                      f"**Cogs:** {len(self.bot.cogs)}\n")
-        embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n **Functions:** {functions}\n"
-                                                    f"**Lines:** {lines}\n **Files:** {files}\n")
+        embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n**Functions:** {functions}\n"
+                                                    f"**Lines:** {lines}\n**Files:** {files}\n")
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
         embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)** | "
-                                                     f"**[DBL Upvote](https://discordbots.org/bot/627491967391236097/vote)** | "
                                                      f"**[Support server](https://discord.gg/XejxSqT)** | "
-                                                     f"**[Source code](https://github.com/MyNameBeMrRandom/MrBot)**", inline=False)
+                                                     f"**[Source code](https://github.com/MyNameBeMrRandom/Life)**", inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="system", aliases=["sys"])
@@ -56,7 +52,6 @@ class Utilities(commands.Cog):
         Get information about the system the bot is running on.
         """
 
-        process = psutil.Process()
         embed = discord.Embed(
             colour=0xFF0000,
         )
@@ -71,22 +66,10 @@ class Utilities(commands.Cog):
         embed.add_field(name="__**System Disk:**__", value=f"**Total:** {round(psutil.disk_usage('/').total/1073741824, 2)} GB\n"
                                                            f"**Used:** {round(psutil.disk_usage('/').used/1073741824, 2)} GB\n"
                                                            f"**Free:** {round(psutil.disk_usage('/').free/1073741824, 2)} GB")
-        embed.add_field(name="__**Process information:**__", value=f"**Memory usage:** {round(process.memory_full_info().rss/1048576, 2)} mb\n"
-                                                                   f"**CPU usage:** {process.cpu_percent()}%\n"
-                                                                   f"**Threads:** {process.num_threads()}")
+        embed.add_field(name="__**Process information:**__", value=f"**Memory usage:** {round(self.bot.process.memory_full_info().rss/1048576, 2)} mb\n"
+                                                                   f"**CPU usage:** {self.bot.process.cpu_percent()}%\n"
+                                                                   f"**Threads:** {self.bot.process.num_threads()}")
         return await ctx.send(embed=embed)
-
-    @commands.command(name="code_info", aliases=["ci"])
-    async def code_info(self, ctx):
-        """
-        Get information about the bots code.
-        """
-
-        files, functions, comments, lines = botUtils.linecount()
-        return await ctx.send(f"**Comments:** {comments}\n"
-                              f"**Functions:** {functions}\n"
-                              f"**Lines:** {lines}\n"
-                              f"**Files:** {files}\n")
 
     @commands.command(name="ping")
     async def ping(self, ctx):
@@ -98,15 +81,6 @@ class Utilities(commands.Cog):
         return await ctx.send(f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                               f"**Discord:** {discordms}ms\n**Average:** {average}ms")
 
-    @commands.command(name="uptime")
-    async def uptime(self, ctx):
-        """
-        Get the bots uptime.
-        """
-
-        uptime = time.time() - start_time
-        return await ctx.send(f"{formatting.get_time_friendly(uptime)}")
-
     @commands.command(name="source")
     async def source(self, ctx, *, command: str = None):
         """
@@ -115,7 +89,7 @@ class Utilities(commands.Cog):
         `command`: The name of the command you want the source for.
         """
 
-        github_url = "https://github.com/MyNameBeMrRandom/MrBot"
+        github_url = "https://github.com/MyNameBeMrRandom/Life"
         if command is None:
             return await ctx.send(f"<{github_url}>")
         obj = self.bot.get_command(command.replace(".", " "))
@@ -126,7 +100,7 @@ class Utilities(commands.Cog):
         location = ""
         if not obj.callback.__module__.startswith("discord"):
             location = os.path.relpath(src.co_filename).replace("\\", "/")
-        final_url = f"<{github_url}/blob/master/MrBot/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>"
+        final_url = f"<{github_url}/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>"
         await ctx.send(final_url)
 
     @commands.command(name="avatar")
