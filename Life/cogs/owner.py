@@ -1,5 +1,5 @@
 from discord.ext import commands
-from .utils import botUtils
+from .utilities import utils
 import discord
 import asyncpg
 
@@ -54,7 +54,7 @@ class Owner(commands.Cog):
 
         # Loop through all bots guilds and create an embed for each one.
         for guild in self.bot.guilds:
-            online, offline, idle, dnd = botUtils.guild_user_status_count(guild)
+            online, offline, idle, dnd = utils.guild_user_status_count(guild)
             embed = discord.Embed(
                 colour=discord.Color.gold(),
                 title=f"{guild.name}'s Stats and Information."
@@ -67,13 +67,13 @@ class Owner(commands.Cog):
                                                                        f"<:away:627627415119724554>{idle} |"
                                                                        f"<:dnd:627627404784828416>{dnd} |"
                                                                        f"<:offline:627627415144890389>{offline}\n"
-                                                                       f"**Verification level:** {botUtils.guild_verification_level(guild)}\n"
-                                                                       f"**Content filter level:** {botUtils.guild_content_filter_level(guild)}\n"
-                                                                       f"**2FA:** {botUtils.guild_mfa_level(guild)}\n"
+                                                                       f"**Verification level:** {utils.guild_verification_level(guild)}\n"
+                                                                       f"**Content filter level:** {utils.guild_content_filter_level(guild)}\n"
+                                                                       f"**2FA:** {utils.guild_mfa_level(guild)}\n"
                                                                        f"**Role Count:** {len(guild.roles)}\n", inline=False)
             embed.add_field(name="__**Channels:**__", value=f"**Text channels:** {len(guild.text_channels)}\n"
                                                             f"**Voice channels:** {len(guild.voice_channels)}\n"
-                                                            f"**Voice region:** {botUtils.guild_region(guild)}\n"
+                                                            f"**Voice region:** {utils.guild_region(guild)}\n"
                                                             f"**AFK timeout:** {int(guild.afk_timeout / 60)} minutes\n"
                                                             f"**AFK channel:** {guild.afk_channel}\n", inline=False)
             embed.set_thumbnail(url=guild.icon_url)

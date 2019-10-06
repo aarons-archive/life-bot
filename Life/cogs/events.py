@@ -1,9 +1,9 @@
 from discord.ext import commands
-from .utils import exceptions
-from .utils import formatting
+from .utilities import exceptions
+from .utilities import formatting
+from .objects.account import Account
 import traceback
 import discord
-import dbl
 
 
 class Events(commands.Cog):
@@ -19,11 +19,17 @@ class Events(commands.Cog):
         # Set our user/guild blacklists.
         blacklisted_users = await self.bot.db.fetch("SELECT * FROM user_blacklist")
         blacklisted_guilds = await self.bot.db.fetch("SELECT * FROM guild_blacklist")
+        accounts = await self.bot.db.fetch("SELECT * FROM accounts")
 
-        for i in range(len(blacklisted_users)):
-            self.bot.user_blacklist.append(int(blacklisted_users[i]["id"]))
-        for i in range(len(blacklisted_guilds)):
-            self.bot.guild_blacklist.append(int(blacklisted_guilds[i]["id"]))
+        # Append list of blacklisted guilds and users to respecitive lists.
+        for user in range(len(blacklisted_users)):
+            self.bot.user_blacklist.append(int(blacklisted_users[user]["id"]))
+        for user in range(len(blacklisted_guilds)):
+            self.bot.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
+
+        for account in accounts:
+            items = await self.bot.db.fetch("SELECT * FROM inventory WHERE owner = $1", account["id"])
+            self.bot.accounts[account["id"]] = Account(dict(account), items)
 
         # Leave any guilds that are blacklisted.
         for guild in self.bot.guilds:

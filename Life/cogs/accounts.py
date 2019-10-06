@@ -1,5 +1,5 @@
 from discord.ext import commands
-from .utils import imaging
+from .utilities import imaging
 import asyncpg
 import discord
 import os
@@ -101,6 +101,10 @@ class Accounts(commands.Cog):
             # Set the users background to that image.
             await self.bot.db.execute(f"UPDATE accounts SET background = $1 WHERE id = $2", str(ctx.author.id), ctx.author.id)
             return await ctx.send(f"Your background was changed from `{data['background']}` to `{ctx.author.id}`.")
+
+    @commands.command(name="inventory", aliases=["inv"])
+    async def inventory(self, ctx):
+        pass
 
 
 def setup(bot):

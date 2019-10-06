@@ -27,14 +27,17 @@ import psutil
 import config
 
 # noinspection PyUnresolvedReferences
-from cogs.utils.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
+from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
+# noinspection PyUnresolvedReferences
+from cogs.manager import Manager
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 
 EXTENSIONS = [
-    "cogs.utilities",
+    "cogs.information",
     "cogs.accounts",
+    "cogs.fun",
     "cogs.help",
     "cogs.owner",
     "jishaku",
@@ -52,6 +55,7 @@ class Life(commands.Bot):
         )
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.manager = Manager(self)
 
         self.config = config
 
@@ -65,7 +69,8 @@ class Life(commands.Bot):
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
-        self.memory_usage = []
+
+        self.accounts = {}
 
         for extension in EXTENSIONS:
             try:

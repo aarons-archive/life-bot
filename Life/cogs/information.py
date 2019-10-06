@@ -1,6 +1,6 @@
 from discord.ext import commands
-from .utils import formatting
-from .utils import botUtils
+from .utilities import formatting
+from .utilities import utils
 import discord
 import inspect
 import psutil
@@ -8,7 +8,7 @@ import time
 import os
 
 
-class Utilities(commands.Cog):
+class Information(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -20,8 +20,8 @@ class Utilities(commands.Cog):
         """
 
         # Get bot information.
-        typingms, latencyms, discordms, average = await botUtils.ping(self.bot, ctx)
-        files, functions, comments, lines = botUtils.linecount()
+        typingms, latencyms, discordms, average = await utils.ping(self.bot, ctx)
+        files, functions, comments, lines = utils.linecount()
         uptime = time.time() - self.bot.start_time
 
         # Create embed
@@ -77,7 +77,7 @@ class Utilities(commands.Cog):
         Gets the bots ping.
         """
 
-        typingms, latencyms, discordms, average = await botUtils.ping(self.bot, ctx)
+        typingms, latencyms, discordms, average = await utils.ping(self.bot, ctx)
         return await ctx.send(f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                               f"**Discord:** {discordms}ms\n**Average:** {average}ms")
 
@@ -139,7 +139,7 @@ class Utilities(commands.Cog):
         Get information about the current server.
         """
 
-        online, offline, idle, dnd = botUtils.guild_user_status_count(ctx.guild)
+        online, offline, idle, dnd = utils.guild_user_status_count(ctx.guild)
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
@@ -153,12 +153,12 @@ class Utilities(commands.Cog):
                                                                    f"<:away:627627415119724554>{idle} |"
                                                                    f"<:dnd:627627404784828416>{dnd} |"
                                                                    f"<:offline:627627415144890389>{offline}\n"
-                                                                   f"**Verification level:** {botUtils.guild_verification_level(ctx.guild)}\n"
-                                                                   f"**Content filter level:** {botUtils.guild_content_filter_level(ctx.guild)}\n"
-                                                                   f"**2FA:** {botUtils.guild_mfa_level(ctx.guild)}\n", inline=False)
+                                                                   f"**Verification level:** {utils.guild_verification_level(ctx.guild)}\n"
+                                                                   f"**Content filter level:** {utils.guild_content_filter_level(ctx.guild)}\n"
+                                                                   f"**2FA:** {utils.guild_mfa_level(ctx.guild)}\n", inline=False)
         embed.add_field(name="__**Channels:**__", value=f"**Text channels:** {len(ctx.guild.text_channels)}\n"
                                                         f"**Voice channels:** {len(ctx.guild.voice_channels)}\n"
-                                                        f"**Voice region:** {botUtils.guild_region(ctx.guild)}\n"
+                                                        f"**Voice region:** {utils.guild_region(ctx.guild)}\n"
                                                         f"**AFK timeout:** {int(ctx.guild.afk_timeout/60)} minutes\n"
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
         embed.add_field(name="__**Role information:**__", value=f"**Roles:** {' '.join([r.mention for r in ctx.guild.roles[1:]])}\n"
@@ -178,15 +178,15 @@ class Utilities(commands.Cog):
             user = ctx.author
         user = ctx.guild.get_member(user.id)
         embed = discord.Embed(
-            colour=botUtils.embed_color(user),
+            colour=utils.embed_color(user),
             title=f"{user.name}'s Stats and Information."
         )
         embed.set_author(icon_url=user.avatar_url, name=user.name)
         embed.set_footer(text=f"ID: {user.id}")
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {user}\n"
                                                                    f"**Account created:** {user.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
-                                                                   f"**Status:** {botUtils.user_status(user)}\n"
-                                                                   f"**Activity:** {botUtils.user_activity(user)}", inline=False)
+                                                                   f"**Status:** {utils.user_status(user)}\n"
+                                                                   f"**Activity:** {utils.user_activity(user)}", inline=False)
         embed.add_field(name="__**Server-related information:**__", value=f"**Nickname:** {user.nick}\n"
                                                                           f"**Joined server:** {user.joined_at.__format__('%A %d %B %Y at %H:%M')}\n"
                                                                           f"**Roles:** {' '.join([r.mention for r in user.roles[1:]])}")
@@ -195,4 +195,4 @@ class Utilities(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Utilities(bot))
+    bot.add_cog(Information(bot))
