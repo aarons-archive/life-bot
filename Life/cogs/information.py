@@ -144,7 +144,6 @@ class Information(commands.Cog):
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
-        embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author.name)
         embed.set_footer(text=f"ID: {ctx.guild.id}")
         embed.add_field(name="__**General information:**__", value=f"**Owner:** {ctx.guild.owner}\n"
                                                                    f"**Server created at:** {ctx.guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
@@ -181,7 +180,6 @@ class Information(commands.Cog):
             colour=utils.embed_color(user),
             title=f"{user.name}'s Stats and Information."
         )
-        embed.set_author(icon_url=user.avatar_url, name=user.name)
         embed.set_footer(text=f"ID: {user.id}")
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {user}\n"
                                                                    f"**Account created:** {user.created_at.__format__('%A %d %B %Y at %H:%M')}\n"

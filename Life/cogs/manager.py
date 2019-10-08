@@ -79,6 +79,41 @@ class Manager:
         # Return any non_stackables.
         return non_stackables
 
+    def get_item_type(self, account_id, item_type):
+        # Get the account with the given id.
+        account = self.get_account(account_id)
+
+        # If no account was found.
+        if not account:
+            return None
+
+        # Get all items with the given id.
+        items = [item for item in account.inventory if item["type"] == item_type]
+
+        # If no items where found.
+        if not items:
+            return None
+
+        # Return items
+        return items
+
+    async def fetch_item_type(self, account_id, item_type):
+        # Get the account with the given id.
+        account = await self.fetch_account(account_id)
+
+        # If no account was found.
+        if not account:
+            return None
+
+        # Get all items with the given id.
+        items = [item for item in account.inventory if item["type"] == item_type]
+
+        # If no items where found.
+        if not items:
+            return None
+
+        return items
+
 
 
 
