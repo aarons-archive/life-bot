@@ -29,7 +29,7 @@ import config
 # noinspection PyUnresolvedReferences
 from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 # noinspection PyUnresolvedReferences
-from cogs.manager import Manager
+from cogs.AccountManager import AccountManager
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -55,7 +55,7 @@ class Life(commands.Bot):
         )
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.manager = Manager(self)
+        self.account_manager = AccountManager(self)
 
         self.config = config
 

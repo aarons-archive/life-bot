@@ -44,7 +44,7 @@ def colour(image_bytes, fg_colour, bg_colour):
     for x in range(lx):
         for y in range(ly):
             v = bw_image.getpixel((x, y))
-            if v > 127:
+            if v > 120:
                 colour_image.putpixel((x, y), fg_colour)
             else:
                 colour_image.putpixel((x, y), bg_colour)

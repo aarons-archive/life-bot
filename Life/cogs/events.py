@@ -1,7 +1,6 @@
 from discord.ext import commands
 from .utilities import exceptions
 from .utilities import formatting
-from .objects.account import Account
 import traceback
 import discord
 
@@ -16,10 +15,12 @@ class Events(commands.Cog):
 
         print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}")
 
+        # Cache the current accounts in the database
+        await self.bot.account_manager.cache_all_accounts()
+
         # Set our user/guild blacklists.
         blacklisted_users = await self.bot.db.fetch("SELECT * FROM user_blacklist")
         blacklisted_guilds = await self.bot.db.fetch("SELECT * FROM guild_blacklist")
-        accounts = await self.bot.db.fetch("SELECT * FROM accounts")
 
         # Append list of blacklisted guilds and users to respecitive lists.
         for user in range(len(blacklisted_users)):
@@ -27,15 +28,14 @@ class Events(commands.Cog):
         for user in range(len(blacklisted_guilds)):
             self.bot.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
 
-        for account in accounts:
-            items = await self.bot.db.fetch("SELECT * FROM inventory WHERE owner = $1", account["id"])
-            self.bot.accounts[account["id"]] = Account(dict(account), items)
-
         # Leave any guilds that are blacklisted.
         for guild in self.bot.guilds:
-            if guild.id in self.bot.guild_blacklist:
-                await guild.leave()
-                print(f"[BOT] Left blacklisted guild - {guild.id}")
+            # If the guild is not in the blacklist, skip it.
+            if guild.id not in self.bot.guild_blacklist:
+                continue
+            # The guild was in the blacklist, so leave it.
+            print(f"[BOT] Left blacklisted guild - {guild.id}")
+            await guild.leave()
 
     @commands.Cog.listener()
     async def on_resume(self):
