@@ -1,4 +1,4 @@
-from .objects.account import Account
+from .objects import Account
 import asyncpg
 
 
@@ -83,78 +83,78 @@ class AccountManager:
             return None
         # Get all items with the given id.
         items = [item for item in account.inventory if item["id"] == item_id]
-        # If no items where found.
+        # If no items were found return none.
         if not items:
             return None
-        # Define a list for the nonstackable items.
+        # Define a list for non-stackable items.
         non_stackables = []
         # Loop through items.
         for item in items:
-            # If the item is not stackable, add it to a list.
-            if item["stackable"] is False:
-                non_stackables.append(item)
-            # If the item is stackable, return it since there will only be one.
-            else:
+            # If the items is stackable, there will only be one entry so return the entry.
+            if item["stackable"] is True:
                 return item
-        # Return any non_stackables.
+            # If the item is not stackable.
+            else:
+                # If there is only 1 non stackable items with this id, return it
+                if len(items) == 1:
+                    return item
+                # Otherwise, append it to a list to return later.
+                else:
+                    non_stackables.append(item)
         return non_stackables
 
     async def fetch_item_id(self, account_id, item_id):
-        # Get the account with the given id.
+        # Fetch the account with the given id.
         account = await self.fetch_account(account_id)
         # If no account was found.
         if not account:
             return None
         # Get all items with the given id.
         items = [item for item in account.inventory if item["id"] == item_id]
-        # If no items where found.
+        # If no items were found return None.
         if not items:
             return None
-        # Define a list for the non stackable items.
+        # Define a list for non-stackable items.
         non_stackables = []
         # Loop through items.
         for item in items:
-            # If the item is not stackable, add it to a list.
-            if item["stackable"] is False:
-                non_stackables.append(item)
-            # If the item is stackable, return it since there will only be one.
-            else:
+            # If the items is stackable, there will only be one entry so return the entry.
+            if item["stackable"] is True:
                 return item
-        # Return any non_stackables.
+            # If the item is not stackable.
+            else:
+                # If there is only 1 non stackable items with this id, return it
+                if len(items) == 1:
+                    return item
+                # Otherwise, append it to a list to return later.
+                else:
+                    non_stackables.append(item)
         return non_stackables
 
     def get_item_type(self, account_id, item_type):
         # Get the account with the given id.
         account = self.get_account(account_id)
-        # If no account was found.
+        # If no account was found, return None
         if not account:
             return None
         # Get all items with the given id.
         items = [item for item in account.inventory if item["type"] == item_type]
-        # If no items where found.
+        # If no items where found, return None
         if not items:
             return None
         # Return items
         return items
 
     async def fetch_item_type(self, account_id, item_type):
-        # Get the account with the given id.
+        # Fetch the account with the given id.
         account = await self.fetch_account(account_id)
-        # If no account was found.
+        # If no account was found, return None
         if not account:
             return None
         # Get all items with the given id.
         items = [item for item in account.inventory if item["type"] == item_type]
-        # If no items where found.
+        # If no items where found, return None
         if not items:
             return None
         # Return items.
         return items
-
-
-
-
-
-
-
-

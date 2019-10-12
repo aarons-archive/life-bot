@@ -24,19 +24,28 @@ class Owner(commands.Cog):
         embeds = []
 
         # Loop through bot.usage to get the guild and its command uses.
-        for guild, usage in self.bot.stats.items():
+        for guild_id, usage in self.bot.stats.items():
 
             # Get the guild by its stored id.
-            guild = self.bot.get_guild(guild)
+            guild = self.bot.get_guild(guild_id)
+
+            # If the guild is not found anymore, skip it.
+            if guild is None:
+                continue
 
             # Create the embed.
             embed = discord.Embed(
-                title=f"{guild.name} ({guild.id})",
-                description=f"",
-                colour=discord.Color.gold()
+                colour=discord.Color.gold(),
+                title=f"{guild.name}",
+                description=f"```py\n"
             )
+            embed.set_footer(text=f"{guild.id}")
+            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
             for command in usage:
                 embed.description += f"{command} : {usage[command]}\n"
+            embed.description += "```"
+
+            # Append the embed to the list of embeds
             embeds.append(embed)
 
         # Send the message

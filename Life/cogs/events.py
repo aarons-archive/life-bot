@@ -48,7 +48,7 @@ class Events(commands.Cog):
     # noinspection PyUnusedLocal
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        # If the edited message is not embedded or pinned, process it, this allow a user a message and run the command. Useful for misspellings.
+        # If the edited message is not embedded or pinned, process it, this allows for uses to edit commands.
         if not after.embeds and not after.pinned:
 
             # Get the context of the message.
@@ -62,9 +62,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        # Track which commands are used and in which guilds.
 
-        # Get the full command.
+        # Handle blacklisted users.
+        if ctx.author.id in self.bot.user_blacklist:
+            return await ctx.channel.send(f"Sorry, you are blacklisted.")
+
+        # Track which commands are used and in which guilds.
         parent = ctx.command.full_parent_name
         if parent:
             command = f"{parent} {ctx.command.name}"
@@ -87,14 +90,14 @@ class Events(commands.Cog):
         if hasattr(ctx.command, "on_error"):
             return
 
-        # Get the original exception or or if nothing is found keep the exception.
+        # Get the original exception or if nothing is found keep the exception.
         error = getattr(error, "original", error)
 
         # Check for errors.
         if isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(f"You missed the `{error.param}` parameter. You can use `{ctx.prefix}help {ctx.command}` for more information on what parameters to pass.")
+            await ctx.send(f"You missed the `{error.param}` parameter. You can use `{ctx.prefix}help {ctx.command}` for more information on what parameters to pass.")
         if isinstance(error, commands.TooManyArguments):
-            return await ctx.send(f"You passed too many arguments to the command `{ctx.command}`. You can use `{ctx.prefix}help {ctx.command}` for more information on what arguments to pass.")
+            await ctx.send(f"You passed too many arguments to the command `{ctx.command}`. You can use `{ctx.prefix}help {ctx.command}` for more information on what arguments to pass.")
         if isinstance(error, commands.BadArgument):
             return await ctx.send(f"You passed a bad arguement to the command `{ctx.command}`.")
         if isinstance(error, commands.CommandNotFound):
@@ -143,33 +146,10 @@ class Events(commands.Cog):
             print(f"[BOT] Left blacklisted guild - {guild.name}")
             return await guild.leave()
 
-        # Future discord bot list intergration. TODO
-
-        # Try to update discord bot list guild count.
-        # try:
-        #    await self.bot.dblpy.post_guild_count()
-        #    print(f"[DBL] Posted guild count of {len(self.bot.guilds)}")
-        # except dbl.Forbidden:
-        #    print("[DBL] Forbidden - Failed to post guild count")
-        # except dbl.Unauthorized:
-        #    print("[DBL] Forbidden - Failed to post guild count")
-
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         # Log the guild that was left.
         print(f"\n[BOT] Left a guild - {guild.name}")
-
-        # Future discord bot list intergration. TODO
-
-        # Try to update discord bot list count.
-        # try:
-        #    await self.bot.dblpy.post_guild_count()
-        #    print(f"[DBL] Posted guild count of {len(self.bot.guilds)}")
-        # except dbl.Forbidden:
-        #    print("[DBL] Forbidden - Failed to post guild count")
-        # except dbl.Unauthorized:
-        #    print("[DBL] Forbidden - Failed to post guild count")
-
 
 def setup(bot):
     bot.add_cog(Events(bot))

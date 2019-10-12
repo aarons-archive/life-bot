@@ -143,6 +143,7 @@ class EmbedPaginator:
     async def stop(self):
         # Delete the message.
         return await self.message.delete
+
     async def page_forward(self):
         # If the current page is bigger then or equal to the amount of pages, return
         if self.page >= self.pages - 1:

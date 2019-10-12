@@ -17,9 +17,13 @@ class Background(commands.Cog):
     # noinspection PyCallingNonCallable
     @tasks.loop(minutes=5.0)
     async def change_prescence(self):
-        self.prescences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
-                           discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
-                           discord.Activity(type=discord.ActivityType.playing, name=f"{self.bot.config.DISCORD_PREFIX}help")]
+        self.prescences = [discord.Activity(type=discord.ActivityType.watching,
+                                            name=f'{len(self.bot.guilds)} Guilds'),
+                           discord.Activity(type=discord.ActivityType.watching,
+                                            name=f'{len(self.bot.users)} Users'),
+                           discord.Activity(type=discord.ActivityType.playing,
+                                            name=f"{self.bot.config.DISCORD_PREFIX}help")
+                           ]
         await self.bot.change_presence(activity=self.prescences[self.current_prescence])
         self.current_prescence = (self.current_prescence + 1) % len(self.prescences)
 

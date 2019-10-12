@@ -29,7 +29,7 @@ import config
 # noinspection PyUnresolvedReferences
 from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 # noinspection PyUnresolvedReferences
-from cogs.AccountManager import AccountManager
+from cogs.utilities.managers import AccountManager
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -65,11 +65,11 @@ class Life(commands.Bot):
         self.db = None
         self.db_ready = False
 
-        self.stats = {}
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
 
+        self.stats = {}
         self.accounts = {}
 
         for extension in EXTENSIONS:
@@ -122,24 +122,6 @@ class Life(commands.Bot):
     async def get_context(self, message, *, cls=None):
         return await super().get_context(message, cls=MyContext)
 
-    async def on_message(self, message):
-
-        # If the message was not in a guild, return.
-        if not message.guild:
-            return
-        # Ignore all other bots.
-        if message.author.bot:
-            return
-
-        # Get the context of the message.
-        ctx = await self.get_context(message)
-
-        # Handle blacklisted users.
-        if ctx.command:
-            if message.author.id in self.user_blacklist:
-                return await message.channel.send(f"Sorry, you are blacklisted.")
-            return await self.process_commands(message)
-
 
 class MyContext(commands.Context):
 
@@ -150,7 +132,12 @@ class MyContext(commands.Context):
         entries_per_page = kwargs.get("entries_per_page")
 
         # Start pagination
-        paginator = Paginator(ctx=self, title=title,  entries=entries, entries_per_page=entries_per_page, total_entries=len(entries))
+        paginator = Paginator(
+            ctx=self,
+            title=title,
+            entries=entries,
+            entries_per_page=entries_per_page,
+            total_entries=len(entries))
         return await paginator.paginate()
 
     async def paginate_embed(self, **kwargs):
@@ -160,7 +147,12 @@ class MyContext(commands.Context):
         entries_per_page = kwargs.get("entries_per_page")
 
         # Start pagination
-        paginator = EmbedPaginator(ctx=self, title=title,  entries=entries, entries_per_page=entries_per_page, total_entries=len(entries))
+        paginator = EmbedPaginator(
+            ctx=self,
+            title=title,
+            entries=entries,
+            entries_per_page=entries_per_page,
+            total_entries=len(entries))
         return await paginator.paginate()
 
     async def paginate_codeblock(self, **kwargs):
@@ -170,7 +162,12 @@ class MyContext(commands.Context):
         entries_per_page = kwargs.get("entries_per_page")
 
         # Start pagination
-        paginator = CodeblockPaginator(ctx=self, title=title,  entries=entries, entries_per_page=entries_per_page, total_entries=len(entries))
+        paginator = CodeblockPaginator(
+            ctx=self,
+            title=title,
+            entries=entries,
+            entries_per_page=entries_per_page,
+            total_entries=len(entries))
         return await paginator.paginate()
 
     async def paginate_embeds(self, **kwargs):

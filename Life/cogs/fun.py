@@ -147,13 +147,14 @@ class Fun(commands.Cog):
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
-    @commands.command(name="test")
-    async def test(self, ctx):
-        image_bytes = await imaging.get_image(self.bot, str(ctx.author.avatar_url_as(size=128, format="png")))
+    @commands.command(name="gif_test")
+    async def gif_test(self, ctx):
 
-        image = await self.bot.loop.run_in_executor(None, imaging.gif, image_bytes)
+        image_bytes = await imaging.get_image(self.bot, str(ctx.author.avatar_url_as(size=256, format="png")))
 
-        await ctx.send(content=f"Here is your test image.", file=discord.File(filename=f"ImageColour.gif", fp=image))
+        image = await self.bot.loop.run_in_executor(None, imaging.gif_test, image_bytes)
+
+        return await ctx.send(content=f"Here is your test image.", file=discord.File(filename=f"ImageColour.gif", fp=image))
 
 
 def setup(bot):

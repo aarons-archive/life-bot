@@ -1,5 +1,6 @@
-from PIL import ImageDraw, ImageFilter, Image
 from io import BytesIO
+
+from PIL import ImageDraw, ImageFilter, Image
 
 
 async def get_image(bot, url):
@@ -64,35 +65,31 @@ def colour(image_bytes, fg_colour, bg_colour):
     return image
 
 
-def gif(image_bytes):
+def gif_test(image_bytes):
 
     frames = []
 
-    x, y = 0, 0
+    x = 0
+    y = x
 
-    avatar_img = Image.open(BytesIO(image_bytes)).copy()
+    image = Image.open(BytesIO(image_bytes)).copy()
 
-    for i in range(512):
+    for frame in range(100):
 
-        gif_image = Image.new('RGB', (512, 512), (255, 255, 255))
-        gif_image.paste(avatar_img, (x, y))
+        new_image = Image.new('RGBA', (512, 512), (0, 0, 0))
+        new_image.paste(image, (x, y))
 
-        frames.append(gif_image)
-        frames.append(gif_image)
+        frames.append(new_image)
 
-        x += 1
-        y += 1
+        x += 2
+        y = x + 64
 
-    # Save the image to a buffer.
-    image = BytesIO()
-    frames[0].save(image, save_all=True, format='gif', append_images=frames, loop=0)
+    gif = BytesIO()
+    frames[0].save(gif, save_all=True, format='gif', append_images=frames, loop=0)
 
-    avatar_img.close()
+    image.close()
     for frame in frames:
         frame.close()
 
-    # Return image
-    image.seek(0)
-    return image
-
-
+    gif.seek(0)
+    return gif
