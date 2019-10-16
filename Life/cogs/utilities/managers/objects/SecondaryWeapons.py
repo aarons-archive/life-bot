@@ -10,3 +10,6 @@ class SubmachineGun:
         self.magazine = 50
 
         self.owner = item["owner"]
+
+    def __repr__(self):
+        return "<Item id={0.id} name={0.name} power={0.power} owner={0.owner}>".format(self)

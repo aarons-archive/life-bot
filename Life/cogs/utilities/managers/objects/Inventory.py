@@ -1,4 +1,22 @@
-from .Items import Items
+from .PrimaryWeapons import *
+from .SecondaryWeapons import *
+from .PowerWeapons import *
+
+items = {
+    1: Pistol,
+    101: SubmachineGun,
+    201: RocketLauncher,
+}
+
+
+class Items:
+
+    def get_item(self, item):
+        item_object = items.get(item["id"], None)
+        if item_object is None:
+            return None
+        else:
+            return item_object(item)
 
 
 class Inventory:
@@ -9,3 +27,7 @@ class Inventory:
 
         self.raw_inventory = raw_inventory
         self.inventory = [self.item_manager.get_item(item) for item in self.raw_inventory]
+
+    def get_item(self):
+        for item in self.inventory:
+            if item
