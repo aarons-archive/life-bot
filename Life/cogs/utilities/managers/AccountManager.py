@@ -33,7 +33,7 @@ class AccountManager:
     async def create_account(self, ctx, user_id):
         try:
             # Add the account to the database.
-            await self.bot.db.execute(f"INSERT INTO accounts VALUES ($1, 'bg_default', 1000, 1000, 0)", user_id)
+            await self.bot.db.execute(f"INSERT INTO accounts VALUES ($1, 'bg_default', 1000, 1000)", user_id)
 
             # Cache the account.
             await self.cache_account(user_id)
@@ -52,16 +52,16 @@ class AccountManager:
             return await ctx.send("You don't have an account.")
 
         # The user has an account, so delete it.
-
         await self.bot.db.execute(f"DELETE FROM accounts WHERE id = $1", user_id)
         self.bot.accounts.pop(user_id, None)
         await ctx.send("Deleted your account.")
 
     def get_account(self, account_id):
         try:
+            # Get account from local cache.
             return self.bot.accounts.get(account_id)
-        # Return none if no account was found.
         except ValueError:
+            # Return none if no account was found.
             return None
 
     async def fetch_account(self, account_id):
@@ -71,90 +71,7 @@ class AccountManager:
             items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
             # Return an account object.
             return Account(dict(account[0]), items)
-        # Return none if no account was found.
+
         except ValueError:
+            # Return None if no account was found.
             return None
-
-    def get_item_id(self, account_id, item_id):
-        # Get the account with the given id.
-        account = self.get_account(account_id)
-        # If no account was found.
-        if not account:
-            return None
-        # Get all items with the given id.
-        items = [item for item in account.inventory if item["id"] == item_id]
-        # If no items were found return none.
-        if not items:
-            return None
-        # Define a list for non-stackable items.
-        non_stackables = []
-        # Loop through items.
-        for item in items:
-            # If the items is stackable, there will only be one entry so return the entry.
-            if item["stackable"] is True:
-                return item
-            # If the item is not stackable.
-            else:
-                # If there is only 1 non stackable items with this id, return it
-                if len(items) == 1:
-                    return item
-                # Otherwise, append it to a list to return later.
-                else:
-                    non_stackables.append(item)
-        return non_stackables
-
-    async def fetch_item_id(self, account_id, item_id):
-        # Fetch the account with the given id.
-        account = await self.fetch_account(account_id)
-        # If no account was found.
-        if not account:
-            return None
-        # Get all items with the given id.
-        items = [item for item in account.inventory if item["id"] == item_id]
-        # If no items were found return None.
-        if not items:
-            return None
-        # Define a list for non-stackable items.
-        non_stackables = []
-        # Loop through items.
-        for item in items:
-            # If the items is stackable, there will only be one entry so return the entry.
-            if item["stackable"] is True:
-                return item
-            # If the item is not stackable.
-            else:
-                # If there is only 1 non stackable items with this id, return it
-                if len(items) == 1:
-                    return item
-                # Otherwise, append it to a list to return later.
-                else:
-                    non_stackables.append(item)
-        return non_stackables
-
-    def get_item_type(self, account_id, item_type):
-        # Get the account with the given id.
-        account = self.get_account(account_id)
-        # If no account was found, return None
-        if not account:
-            return None
-        # Get all items with the given id.
-        items = [item for item in account.inventory if item["type"] == item_type]
-        # If no items where found, return None
-        if not items:
-            return None
-        # Return items
-        return items
-
-    async def fetch_item_type(self, account_id, item_type):
-        # Fetch the account with the given id.
-        account = await self.fetch_account(account_id)
-        # If no account was found, return None
-        if not account:
-            return None
-        # Get all items with the given id.
-        items = [item for item in account.inventory if item["type"] == item_type]
-        # If no items where found, return None
-        if not items:
-            return None
-        # Return items.
-        return items

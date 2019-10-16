@@ -151,5 +151,6 @@ class Events(commands.Cog):
         # Log the guild that was left.
         print(f"\n[BOT] Left a guild - {guild.name}")
 
+
 def setup(bot):
     bot.add_cog(Events(bot))

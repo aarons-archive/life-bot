@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from PIL import ImageDraw, ImageFilter, Image
+from PIL import ImageDraw, Image, ImageSequence
 
 
 async def get_image(bot, url):
@@ -32,64 +32,82 @@ def resize_image(image_bytes, height, width):
     return image
 
 
-def colour(image_bytes, fg_colour, bg_colour):
-    # Open the image_bytes as an image and covert it to black and white.
-    bw_image = Image.open(BytesIO(image_bytes)).convert('L')
-    # Smooth the image.
-    bw_image = bw_image.filter(ImageFilter.SMOOTH)
-    # Get the size of the image.
-    lx, ly = bw_image.size
-    # Create a new image to add our pixels too.
-    colour_image = Image.new('RGB', (lx, ly))
-    # Loop through all pixels and decide whether to the give them bg_colour or fg_colour based on thier own colour.
-    for x in range(lx):
-        for y in range(ly):
-            v = bw_image.getpixel((x, y))
-            if v > 120:
-                colour_image.putpixel((x, y), fg_colour)
+def colour(image_bytes, image_colour):
+
+    # Open the image_bytes as an image, and convert it to an RGBA type image.
+    image = Image.open(BytesIO(image_bytes)).convert("RGBA")
+    mask = image.convert("L")
+
+    # Switch pixels colours with the value specified.
+    lx, ly = image.size
+    pixel = image.load()
+    for y in range(ly):
+        for x in range(lx):
+            if pixel[x, y] == (0, 0, 0, 0):
+                continue
             else:
-                colour_image.putpixel((x, y), bg_colour)
-    # Smooth the new image
-    colour_image = colour_image.filter(ImageFilter.SMOOTH)
+                pixel[x, y] = image_colour
+
+    # Put a mask of the original image over the colour-changed one.
+    image.putalpha(mask)
 
     # Save the image to a buffer.
-    image = BytesIO()
-    colour_image.save(image, "png")
+    colour_image = BytesIO()
+    image.save(colour_image, "png")
 
     # Close images.
-    bw_image.close()
-    colour_image.close()
+    image.close()
+    mask.close()
 
     # Return image
-    image.seek(0)
-    return image
+    colour_image.seek(0)
+    return colour_image
 
 
-def gif_test(image_bytes):
+def colour_gif(image_bytes, image_colour):
 
+    # Open the image_bytes as an image and covert it to an RGBA type image.
+    image = Image.open(BytesIO(image_bytes))
+
+    # Define a list to store changed frames in.
     frames = []
 
-    x = 0
-    y = x
+    # Loop through the frames of the gif.
+    for frame in ImageSequence.Iterator(image):
 
-    image = Image.open(BytesIO(image_bytes)).copy()
+        # Convert the frame to RGBA format
+        frame = frame.convert("RGBA")
 
-    for frame in range(100):
+        # Create a mask for the image with the alpha layer.
+        mask = frame.convert("L")
 
-        new_image = Image.new('RGBA', (512, 512), (0, 0, 0))
-        new_image.paste(image, (x, y))
+        # Switch pixels colours with the value specified.
+        lx, ly = frame.size
+        pixel = frame.load()
+        for y in range(ly):
+            for x in range(lx):
+                if pixel[x, y] == (0, 0, 0, 0):
+                    continue
+                else:
+                    pixel[x, y] = image_colour
 
-        frames.append(new_image)
+        # Put a mask of the original image over the colour-changed one.
+        frame.putalpha(mask)
 
-        x += 2
-        y = x + 64
+        # Append the frame to the list of frames.
+        frames.append(frame)
 
-    gif = BytesIO()
-    frames[0].save(gif, save_all=True, format='gif', append_images=frames, loop=0)
+    # Save the image to a buffer.
+    colour_image = BytesIO()
+    frames[0].save(colour_image, save_all=True, format='gif', append_images=frames[1:], loop=0, transparency=100, disposal=2)
 
+    # Close images.
     image.close()
     for frame in frames:
         frame.close()
 
-    gif.seek(0)
-    return gif
+    # Return image
+    colour_image.seek(0)
+    return colour_image
+
+

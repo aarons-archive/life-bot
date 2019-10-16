@@ -110,7 +110,7 @@ class Owner(commands.Cog):
         entries = []
 
         # Set a title for the paginator.
-        title = "Guild id           |Total    |Humans   |Bots     |Name\n"
+        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
 
         # Loop through all the guilds the bot can see.
         for guild in sorted(self.bot.guilds, key=key, reverse=True):
@@ -118,10 +118,11 @@ class Owner(commands.Cog):
             # Count how many members are bot/humans.
             bots = sum(1 for m in guild.members if m.bot)
             humans = sum(1 for m in guild.members if not m.bot)
-            total = len(guild.members)
+            total = guild.member_count
+            percent = f"{round((bots / total) * 100, 2)}%"
 
             # Create a message with the current guilds information.
-            message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{guild.name}"
+            message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
 
             # Append the message to the list of entries.
             entries.append(message)
