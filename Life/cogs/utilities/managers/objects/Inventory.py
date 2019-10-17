@@ -27,7 +27,3 @@ class Inventory:
 
         self.raw_inventory = raw_inventory
         self.inventory = [self.item_manager.get_item(item) for item in self.raw_inventory]
-
-    def get_item(self):
-        for item in self.inventory:
-            if item
