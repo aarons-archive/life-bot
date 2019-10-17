@@ -1,11 +1,13 @@
+import inspect
+import os
+import time
+
+import discord
+import psutil
 from discord.ext import commands
+
 from .utilities import formatting
 from .utilities import utils
-import discord
-import inspect
-import psutil
-import time
-import os
 
 
 class Information(commands.Cog):

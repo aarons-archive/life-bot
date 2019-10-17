@@ -9,5 +9,3 @@ class MrBotError(commands.CommandError):
 class WrongGuild(MrBotError):
     """Raised when a command is used in the wrong guild."""
     pass
-
-

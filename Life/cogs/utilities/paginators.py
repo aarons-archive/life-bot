@@ -1,6 +1,7 @@
 import asyncio
-import discord
 import math
+
+import discord
 
 
 class Paginator:

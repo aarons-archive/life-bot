@@ -1,8 +1,10 @@
+import traceback
+
+import discord
 from discord.ext import commands
+
 from .utilities import exceptions
 from .utilities import formatting
-import traceback
-import discord
 
 
 class Events(commands.Cog):

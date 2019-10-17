@@ -45,8 +45,7 @@ def colour(image_bytes, image_colour):
         for x in range(lx):
             if pixel[x, y] == (0, 0, 0, 0):
                 continue
-            else:
-                pixel[x, y] = image_colour
+            pixel[x, y] = image_colour
 
     # Put a mask of the original image over the colour-changed one.
     image.putalpha(mask)
@@ -88,8 +87,7 @@ def colour_gif(image_bytes, image_colour):
             for x in range(lx):
                 if pixel[x, y] == (0, 0, 0, 0):
                     continue
-                else:
-                    pixel[x, y] = image_colour
+                pixel[x, y] = image_colour
 
         # Put a mask of the original image over the colour-changed one.
         frame.putalpha(mask)
@@ -109,5 +107,3 @@ def colour_gif(image_bytes, image_colour):
     # Return image
     colour_image.seek(0)
     return colour_image
-
-

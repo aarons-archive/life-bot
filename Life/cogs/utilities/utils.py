@@ -1,10 +1,11 @@
-import discord
-import pathlib
 import codecs
-import random
-import time
-import ssl
 import os
+import pathlib
+import random
+import ssl
+import time
+
+import discord
 
 
 def random_colour():
@@ -29,8 +30,7 @@ def linecount():
                             functions += 1
                         if len(l.strip()) == 0:
                             continue
-                        else:
-                            lines += 1
+                        lines += 1
     return file_amount, functions, comments, lines
 
 
@@ -75,11 +75,11 @@ async def ping(bot, ctx):
 def embed_color(user):
     if user.status == discord.Status.online:
         return 0x008000
-    elif user.status == discord.Status.idle:
+    if user.status == discord.Status.idle:
         return 0xFF8000
-    elif user.status == discord.Status.dnd:
+    if user.status == discord.Status.dnd:
         return 0xFF0000
-    elif user.status == discord.Status.offline:
+    if user.status == discord.Status.offline:
         return 0x808080
     else:
         return 0xFF8000
@@ -114,14 +114,13 @@ def user_activity(user):
 def user_status(user):
     if user.status == discord.Status.online:
         return "Online"
-    elif user.status == discord.Status.idle:
+    if user.status == discord.Status.idle:
         return "Idle"
-    elif user.status == discord.Status.dnd:
+    if user.status == discord.Status.dnd:
         return "Do not Disturb"
-    elif user.status == discord.Status.offline:
+    if user.status == discord.Status.offline:
         return "Offline"
-    else:
-        return "Offline"
+    return "Offline"
 
 
 def guild_user_status_count(guild):
@@ -144,75 +143,68 @@ def guild_user_status_count(guild):
 def guild_region(guild):
     if guild.region == discord.VoiceRegion.amsterdam:
         return "Amsterdam"
-    elif guild.region == discord.VoiceRegion.brazil:
+    if guild.region == discord.VoiceRegion.brazil:
         return "Brazil"
-    elif guild.region == discord.VoiceRegion.eu_central:
+    if guild.region == discord.VoiceRegion.eu_central:
         return "Central-Europe"
-    elif guild.region == discord.VoiceRegion.eu_west:
+    if guild.region == discord.VoiceRegion.eu_west:
         return "Western-Europe"
-    elif guild.region == discord.VoiceRegion.frankfurt:
+    if guild.region == discord.VoiceRegion.frankfurt:
         return "Frankfurt"
-    elif guild.region == discord.VoiceRegion.hongkong:
+    if guild.region == discord.VoiceRegion.hongkong:
         return "Hong-Kong"
-    elif guild.region == discord.VoiceRegion.india:
+    if guild.region == discord.VoiceRegion.india:
         return "India"
-    elif guild.region == discord.VoiceRegion.japan:
+    if guild.region == discord.VoiceRegion.japan:
         return "Japan"
-    elif guild.region == discord.VoiceRegion.london:
+    if guild.region == discord.VoiceRegion.london:
         return "London"
-    elif guild.region == discord.VoiceRegion.russia:
+    if guild.region == discord.VoiceRegion.russia:
         return "Russia"
-    elif guild.region == discord.VoiceRegion.singapore:
+    if guild.region == discord.VoiceRegion.singapore:
         return "Singapore"
-    elif guild.region == discord.VoiceRegion.southafrica:
+    if guild.region == discord.VoiceRegion.southafrica:
         return "South-Africa"
-    elif guild.region == discord.VoiceRegion.sydney:
+    if guild.region == discord.VoiceRegion.sydney:
         return "Sydney"
-    elif guild.region == discord.VoiceRegion.us_central:
+    if guild.region == discord.VoiceRegion.us_central:
         return "US-Central"
-    elif guild.region == discord.VoiceRegion.us_east:
+    if guild.region == discord.VoiceRegion.us_east:
         return "US-East"
-    elif guild.region == discord.VoiceRegion.us_south:
+    if guild.region == discord.VoiceRegion.us_south:
         return "US-South"
-    elif guild.region == discord.VoiceRegion.us_west:
+    if guild.region == discord.VoiceRegion.us_west:
         return "US-West"
-    else:
-        return "N/A"
+    return "N/A"
 
 
 def guild_mfa_level(guild):
     if guild.mfa_level == 0:
         return "Not required"
-    elif guild.mfa_level == 1:
+    if guild.mfa_level == 1:
         return "Required"
-    else:
-        return "N/A"
+    return "N/A"
 
 
 def guild_verification_level(guild):
     if guild.verification_level == discord.VerificationLevel.none:
         return "None - No criteria set."
-    elif guild.verification_level == discord.VerificationLevel.low:
+    if guild.verification_level == discord.VerificationLevel.low:
         return "Low - Must have a verified email."
-    elif guild.verification_level == discord.VerificationLevel.medium:
+    if guild.verification_level == discord.VerificationLevel.medium:
         return "Medium - Must have a verified email and be registered on discord for more than 5 minutes."
-    elif guild.verification_level == discord.VerificationLevel.high:
+    if guild.verification_level == discord.VerificationLevel.high:
         return "High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 minutes."
-    elif guild.verification_level == discord.VerificationLevel.extreme:
+    if guild.verification_level == discord.VerificationLevel.extreme:
         return "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 minutes and a have a verified phone number."
-    else:
-        return "N/A"
+    return "N/A"
 
 
 def guild_content_filter_level(guild):
     if guild.explicit_content_filter == discord.ContentFilter.disabled:
         return "None - Content filter disabled."
-    elif guild.explicit_content_filter == discord.ContentFilter.no_role:
+    if guild.explicit_content_filter == discord.ContentFilter.no_role:
         return "No role - Content filter enabled only for users with no roles."
-    elif guild.explicit_content_filter == discord.ContentFilter.all_members:
+    if guild.explicit_content_filter == discord.ContentFilter.all_members:
         return "All members - Content filter enabled for all users."
-    else:
-        return "N/A"
-
-
-
+    return "N/A"

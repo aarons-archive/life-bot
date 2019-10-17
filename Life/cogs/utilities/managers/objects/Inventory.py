@@ -11,12 +11,12 @@ items = {
 
 class Items:
 
-    def get_item(self, item):
+    @staticmethod
+    def get_item(item):
         item_object = items.get(item["id"], None)
         if item_object is None:
             return None
-        else:
-            return item_object(item)
+        return item_object(item)
 
 
 class Inventory:
@@ -49,8 +49,7 @@ class Inventory:
                     return item
 
                 # If the item is non-stackable, add it to the list to return later.
-                else:
-                    non_stackables.append(item)
+                non_stackables.append(item)
 
         # Return the non-stackable items.
         return non_stackables

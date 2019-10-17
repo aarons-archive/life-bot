@@ -1,5 +1,6 @@
-from .objects import Account
 import asyncpg
+
+from .objects import Account
 
 
 class AccountManager:

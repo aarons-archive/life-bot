@@ -16,11 +16,3 @@ class Account:
 
     def __repr__(self):
         return "<Account id={0.id} cash={0.cash} bank={0.bank} inventory={0.inventory}>".format(self)
-
-    def __str__(self):
-        return self.id
-
-
-
-
-

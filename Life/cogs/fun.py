@@ -1,10 +1,12 @@
-from discord.ext import commands
-from .utilities import imaging
-import discord
-import typing
 import random
-import time
 import re
+import time
+import typing
+
+import discord
+from discord.ext import commands
+
+from .utilities import imaging
 
 
 class Fun(commands.Cog):
@@ -23,11 +25,11 @@ class Fun(commands.Cog):
         # Get the image bytes.
         image_bytes = await imaging.get_image(self.bot, url)
 
-        if url.endswith(".gif"):
+        if url.contains(".gif"):
             image = await self.bot.loop.run_in_executor(None, imaging.colour_gif, image_bytes, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
             await ctx.send(content=f"Here is your randomly coloured image.", file=discord.File(filename=f"Image.gif", fp=image))
         else:
-            image = await self.bot.loop.run_in_executor(None, imaging.colour, image_bytes,  (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+            image = await self.bot.loop.run_in_executor(None, imaging.colour, image_bytes, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
             await ctx.send(content=f"Here is your randomly coloured image.", file=discord.File(filename=f"Image.png", fp=image))
 
         # End timer and log how long operation took.

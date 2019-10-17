@@ -1,7 +1,8 @@
-from discord.ext import commands
-from .utilities import utils
-import discord
 import asyncpg
+import discord
+from discord.ext import commands
+
+from .utilities import utils
 
 
 class Owner(commands.Cog):
