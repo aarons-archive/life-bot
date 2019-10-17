@@ -4,7 +4,7 @@ from .PowerWeapons import *
 
 items = {
     1: Pistol,
-    101: SubmachineGun,
+    101: SubMachineGun,
     201: RocketLauncher,
 }
 
@@ -54,3 +54,43 @@ class Inventory:
 
         # Return the non-stackable items.
         return non_stackables
+
+    def get_item_type(self, item_type):
+        # If the account has no items.
+        if not self.inventory:
+            return None
+
+        # Define a list of items of the type to return.
+        items_of_type = []
+
+        # Loop through the items.
+        for item in self.inventory:
+
+            # If the items id is equal to the one the user wants to get.
+            if item.type == item_type:
+
+                # Append the items to the list.
+                items_of_type.append(item)
+
+        # Return the items.
+        return items_of_type
+
+    def get_item_name(self, item_name):
+        # If the account has no items.
+        if not self.inventory:
+            return None
+
+        # Define a list of items of the type to return.
+        items_of_type = []
+
+        # Loop through the items.
+        for item in self.inventory:
+
+            # If the items id is equal to the one the user wants to get.
+            if item.base_name == item_name:
+
+                # Append the items to the list.
+                items_of_type.append(item)
+
+        # Return the items.
+        return items_of_type
