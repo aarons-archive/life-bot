@@ -1,11 +1,17 @@
 from .PrimaryWeapons import *
 from .SecondaryWeapons import *
 from .PowerWeapons import *
+from .Helmet import *
+from .Cloak import *
+from .Boots import *
 
 items = {
-    1: Pistol,
-    101: SubMachineGun,
-    201: RocketLauncher,
+    1: Glock19,
+    101: MP5,
+    201: Bazooka,
+    301: StarterHelmet,
+    401: StarterCloak,
+    501: StarterBoots,
 }
 
 
@@ -27,6 +33,11 @@ class Inventory:
 
         self.raw_inventory = raw_inventory
         self.inventory = [self.item_manager.get_item(item) for item in self.raw_inventory]
+
+    def get_item_slot(self, slot):
+        for item in self.inventory:
+            if item.slot == slot:
+                return item
 
     def get_item_id(self, item_id):
 
@@ -72,7 +83,10 @@ class Inventory:
                 items_of_type.append(item)
 
         # Return the items.
-        return items_of_type
+        if len(items_of_type) == 1:
+            return items_of_type[0]
+        else:
+            return items_of_type
 
     def get_item_name(self, item_name):
         # If the account has no items.
@@ -80,7 +94,7 @@ class Inventory:
             return None
 
         # Define a list of items of the type to return.
-        items_of_type = []
+        items_of_name = []
 
         # Loop through the items.
         for item in self.inventory:
@@ -89,7 +103,12 @@ class Inventory:
             if item.base_name == item_name:
 
                 # Append the items to the list.
-                items_of_type.append(item)
+                items_of_name.append(item)
 
         # Return the items.
-        return items_of_type
+        # Return the items.
+        if len(items_of_name) == 1:
+            return items_of_name[0]
+        else:
+            return items_of_name
+

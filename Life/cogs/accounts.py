@@ -45,7 +45,7 @@ class Accounts(commands.Cog):
         )
         embed.set_footer(text=f"ID: {account.id}")
         for item in account.inventory:
-            embed.description += f"{item['name']} - Id: {item['id']}\n"
+            embed.description += f"{item.name} - Id: {item.id}\n"
 
         # Send the embed.
         return await ctx.send(embed=embed)

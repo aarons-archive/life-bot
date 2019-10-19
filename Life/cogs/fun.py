@@ -25,7 +25,7 @@ class Fun(commands.Cog):
         # Get the image bytes.
         image_bytes = await imaging.get_image(self.bot, url)
 
-        if url.contains(".gif"):
+        if url.endswith(".gif"):
             image = await self.bot.loop.run_in_executor(None, imaging.colour_gif, image_bytes, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
             await ctx.send(content=f"Here is your randomly coloured image.", file=discord.File(filename=f"Image.gif", fp=image))
         else:

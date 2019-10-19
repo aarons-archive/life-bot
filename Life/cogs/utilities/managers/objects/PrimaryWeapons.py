@@ -4,22 +4,25 @@ class BasePrimary:
     def __init__(self):
         self.count = 0
         self.stackable = False
-        self.type = "PrimaryWeapon"
+        self.base_type = "PrimaryWeapon"
 
     def __repr__(self):
-        return "<{0.__class__.__name__} id={0.id} base_name={0.base_name!r} name={0.name!r} power={0.power} owner={0.owner} count={0.count} stackable={0.stackable} type={0.type!r}>".format(self)
+        return "<{0.__class__.__name__} id={0.id} base_name={0.base_name!r} name={0.name!r} power={0.power} owner={0.owner} count={0.count} slot={0.slot!r} stackable={0.stackable} base_type={0.base_type!r} sub_type={0.sub_type!r}>".format(self)
 
 
-class Pistol(BasePrimary):
+class Glock19(BasePrimary):
 
     def __init__(self, item):
         super().__init__()
 
-        self.id = 201
+        self.id = 1
 
-        self.base_name = "Pistol"
+        self.sub_type = "Pistol"
+
+        self.base_name = "Glock-19"
         self.name = item["name"]
 
         self.power = item["power"]
         self.owner = item["owner"]
         self.count = item["count"]
+        self.slot = item["slot"]
