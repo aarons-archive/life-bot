@@ -2,8 +2,8 @@
 Life is an RPG discord bot coded by MrRandom#9258. Click the link below to invite it to your discord server and do `l-help` for more information.
 
 ## Links
-[Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)
-[Support Server](https://discord.gg/8a2a486)
+* [Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)
+* [Support Server](https://discord.gg/8a2a486)
 
 ## Installing/Running
 While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
