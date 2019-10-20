@@ -20,9 +20,9 @@ class Bazooka(BasePower):
         self.sub_type = "RockerLauncher"
 
         self.base_name = "Bazooka"
-        self.name = item["name"]
+        self.name = item.get("name")
 
-        self.power = item["power"]
-        self.owner = item["owner"]
-        self.count = item["count"]
-        self.slot = item["slot"]
+        self.power = item.get("power")
+        self.owner = item.get("owner")
+        self.count = item.get("count")
+        self.slot = item.get("slot")

@@ -20,9 +20,9 @@ class Glock19(BasePrimary):
         self.sub_type = "Pistol"
 
         self.base_name = "Glock-19"
-        self.name = item["name"]
+        self.name = item.get("name")
 
-        self.power = item["power"]
-        self.owner = item["owner"]
-        self.count = item["count"]
-        self.slot = item["slot"]
+        self.power = item.get("power")
+        self.owner = item.get("owner")
+        self.count = item.get("count")
+        self.slot = item.get("slot")

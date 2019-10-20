@@ -20,10 +20,10 @@ class MP5(BaseSecondary):
         self.sub_type = "SubMachineGun"
 
         self.base_name = "MP5"
-        self.name = item["name"]
+        self.name = item.get("name")
 
-        self.power = item["power"]
-        self.owner = item["owner"]
-        self.count = item["count"]
-        self.slot = item["slot"]
+        self.power = item.get("power")
+        self.owner = item.get("owner")
+        self.count = item.get("count")
+        self.slot = item.get("slot")
 
