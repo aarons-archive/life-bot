@@ -7,10 +7,6 @@ class Account:
 
         self.inventory_manager = Inventory(raw_inventory)
 
-        self.id = data.get("id", 0)
-        self.cash = data.get("cash", 0)
-        self.bank = data.get("bank", 0)
-
         self.raw_inventory = self.inventory_manager.raw_inventory
         self.inventory = self.inventory_manager.inventory
 
@@ -21,5 +17,10 @@ class Account:
         self.cloak = self.inventory_manager.get_item_slot("Cloak")
         self.boots = self.inventory_manager.get_item_slot("Boots")
 
+        self.id = data.get("id", 0)
+        self.cash = data.get("cash", 0)
+        self.bank = data.get("bank", 0)
+        self.level = (self.primary_weapon.power + self.secondary_weapon.power + self.power_weapon.power + self.helmet.power + self.cloak.power + self.boots.power) / 6
+
     def __repr__(self):
-        return "<Account id={0.id} cash={0.cash} bank={0.bank} inventory={0.inventory}>".format(self)
+        return "<Account id={0.id} cash={0.cash} bank={0.bank} level={0.level}".format(self)

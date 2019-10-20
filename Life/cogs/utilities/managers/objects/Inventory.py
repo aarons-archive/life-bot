@@ -1,8 +1,8 @@
 from .PrimaryWeapons import *
 from .SecondaryWeapons import *
 from .PowerWeapons import *
-from .Helmet import *
-from .Cloak import *
+from .Helmets import *
+from .Cloaks import *
 from .Boots import *
 
 items = {
@@ -32,83 +32,91 @@ class Inventory:
         self.item_manager = Items()
 
         self.raw_inventory = raw_inventory
-        self.inventory = [self.item_manager.get_item(item) for item in self.raw_inventory]
+        self.inventory = [self.item_manager.get_item(dict(item)) for item in self.raw_inventory]
 
-    def get_item_slot(self, slot):
-        for item in self.inventory:
-            if item.slot == slot:
-                return item
+    def get_item_slot(self, item_slot):
+        items_of_slot = [item for item in self.inventory if item.slot == item_slot]
+        if len(items_of_slot) > 0:
+            return items_of_slot[0]
+        else:
+            return None
 
     def get_item_id(self, item_id):
 
-        # If the account has no items.
-        if not self.inventory:
+        # Get all items with the given id.
+        items_of_id = [item for item in self.inventory if item.id == item_id]
+
+        # If no items were found, return None.
+        if not items_of_id:
             return None
 
-        # Define a list for if the item we want to find is non-stackable.
-        non_stackables = []
+        # If there is more then 1 item, return the list.
+        if len(items_of_id) > 1:
+            return items_of_id
+        # Otherwise return just the 1st item in the list.
+        else:
+            return items_of_id[0]
 
-        # Loop through the items.
-        for item in self.inventory:
+    def get_item_sub_type(self, item_sub_type):
 
-            # If the items id is equal to the one the user wants to get.
-            if item.id == item_id:
+        # Get all items with the given sub_type.
+        items_of_id = [item for item in self.inventory if item.base_type == item_sub_type]
 
-                # And the item is stackable.
-                if item.stackable:
-                    # Return it.
-                    return item
+        # If no items were found, return None.
+        if not items_of_id:
+            return None
 
-                # If the item is non-stackable, add it to the list to return later.
-                non_stackables.append(item)
-
-        # Return the non-stackable items.
-        return non_stackables
+        # If there is more then 1 item, return the list.
+        if len(items_of_id) > 1:
+            return items_of_id
+        # Otherwise return just the 1st item in the list.
+        else:
+            return items_of_id[0]
 
     def get_item_type(self, item_type):
-        # If the account has no items.
-        if not self.inventory:
+
+        # Get all items with the given type.
+        items_of_id = [item for item in self.inventory if item.type == item_type]
+
+        # If no items were found, return None.
+        if not items_of_id:
             return None
 
-        # Define a list of items of the type to return.
-        items_of_type = []
-
-        # Loop through the items.
-        for item in self.inventory:
-
-            # If the items id is equal to the one the user wants to get.
-            if item.type == item_type:
-
-                # Append the items to the list.
-                items_of_type.append(item)
-
-        # Return the items.
-        if len(items_of_type) == 1:
-            return items_of_type[0]
+        # If there is more then 1 item, return the list.
+        if len(items_of_id) > 1:
+            return items_of_id
+        # Otherwise return just the 1st item in the list.
         else:
-            return items_of_type
+            return items_of_id[0]
+
+    def get_item_base_name(self, item_base_name):
+
+        # Get all items with the given base_name.
+        items_of_id = [item for item in self.inventory if item.base_name == item_base_name]
+
+        # If no items were found, return None.
+        if not items_of_id:
+            return None
+
+        # If there is more then 1 item, return the list.
+        if len(items_of_id) > 1:
+            return items_of_id
+        # Otherwise return just the 1st item in the list.
+        else:
+            return items_of_id[0]
 
     def get_item_name(self, item_name):
-        # If the account has no items.
-        if not self.inventory:
+
+        # Get all items with the given name.
+        items_of_id = [item for item in self.inventory if item.name == item_name]
+
+        # If no items were found, return None.
+        if not items_of_id:
             return None
 
-        # Define a list of items of the type to return.
-        items_of_name = []
-
-        # Loop through the items.
-        for item in self.inventory:
-
-            # If the items id is equal to the one the user wants to get.
-            if item.base_name == item_name:
-
-                # Append the items to the list.
-                items_of_name.append(item)
-
-        # Return the items.
-        # Return the items.
-        if len(items_of_name) == 1:
-            return items_of_name[0]
+        # If there is more then 1 item, return the list.
+        if len(items_of_id) > 1:
+            return items_of_id
+        # Otherwise return just the 1st item in the list.
         else:
-            return items_of_name
-
+            return items_of_id[0]
