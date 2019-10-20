@@ -55,10 +55,10 @@ class Life(commands.Bot):
         )
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
+
         self.account_manager = AccountManager(self)
 
         self.config = config
-
         self.start_time = time.time()
         self.process = psutil.Process()
 
@@ -116,7 +116,7 @@ class Life(commands.Bot):
         await self.session.close()
 
     async def is_owner(self, user):
-        # Allows me to set custom owners ids dynamically.
+        # Set custom owner ids.
         return user.id in self.owner_ids
 
     async def get_context(self, message, *, cls=None):
