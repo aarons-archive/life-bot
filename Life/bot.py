@@ -30,6 +30,9 @@ import config
 from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 # noinspection PyUnresolvedReferences
 from cogs.utilities.managers import AccountManager
+# noinspection PyUnresolvedReferences
+from cogs.music.player import Player
+
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -43,6 +46,7 @@ EXTENSIONS = [
     "jishaku",
     "cogs.background",
     "cogs.events",
+    "cogs.music.music"
 ]
 
 
@@ -125,6 +129,11 @@ class Life(commands.Bot):
 
 class MyContext(commands.Context):
 
+    @property
+    def player(self):
+        # Get the current guilds player.
+        return self.bot.andesite.get_player(self.guild.id, cls=Player)
+
     async def paginate(self, **kwargs):
         # Get the aruguements.
         title = kwargs.get("title")
@@ -145,11 +154,13 @@ class MyContext(commands.Context):
         title = kwargs.get("title")
         entries = kwargs.get("entries")
         entries_per_page = kwargs.get("entries_per_page")
+        footer = kwargs.get("footer")
 
         # Start pagination
         paginator = EmbedPaginator(
             ctx=self,
             title=title,
+            footer=footer,
             entries=entries,
             entries_per_page=entries_per_page,
             total_entries=len(entries))

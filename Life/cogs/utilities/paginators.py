@@ -115,6 +115,7 @@ class EmbedPaginator:
         self.original_entries = kwargs.get("entries")
         self.entries_per_page = kwargs.get("entries_per_page")
         self.total_entries = kwargs.get("total_entries")
+        self.footer = kwargs.get("footer")
 
         self.entries = []
         self.pages = 0
@@ -132,6 +133,10 @@ class EmbedPaginator:
         if self.title is None:
             self.title = f"There are `{self.total_entries}` entries in this list and I am showing `{self.entries_per_page}` entries per page.\n\n"
 
+        # If the footer is not set.
+        if self.footer is None:
+            self.footer = ""
+
     async def react(self):
         # If the amount of pages is bigger then 1, add the full range of emotes to the message.
         if self.pages > 1:
@@ -143,7 +148,7 @@ class EmbedPaginator:
 
     async def stop(self):
         # Delete the message.
-        return await self.message.delete
+        return await self.message.delete()
 
     async def page_forward(self):
         # If the current page is bigger then or equal to the amount of pages, return
@@ -152,8 +157,8 @@ class EmbedPaginator:
 
         # Edit the embed.
         embed = discord.Embed(
-            colour=0x57FFF5,
-            description=f"{self.title}{self.entries[self.page + 1]}"
+            colour=discord.Color.gold(),
+            description=f"{self.title}{self.entries[self.page + 1]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page + 2}/{self.pages} | Total entries: {self.total_entries}")
         await self.message.edit(embed=embed)
@@ -167,8 +172,8 @@ class EmbedPaginator:
 
         # Edit the embed.
         embed = discord.Embed(
-            colour=0x57FFF5,
-            description=f"{self.title}{self.entries[self.page - 1]}"
+            colour=discord.Color.gold(),
+            description=f"{self.title}{self.entries[self.page - 1]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page}/{self.pages} | Total entries: {self.total_entries}")
         await self.message.edit(embed=embed)
@@ -198,8 +203,8 @@ class EmbedPaginator:
 
         # Send the message for the first page.
         embed = discord.Embed(
-            colour=0x57FFF5,
-            description=f"{self.title}{self.entries[self.page]}"
+            colour=discord.Color.gold(),
+            description=f"{self.title}{self.entries[self.page]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page + 1}/{self.pages} | Total entries: {self.total_entries}")
         self.message = await self.ctx.send(embed=embed)
