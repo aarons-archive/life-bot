@@ -4,11 +4,9 @@ import asyncio
 
 class Queue:
 
-    def __init__(self, maxsize=0, *, loop=None):
-        if loop is None:
-            self._loop = asyncio.events.get_event_loop()
-        else:
-            self._loop = loop
+    def __init__(self, bot, maxsize=0):
+        self.bot = bot
+        self._loop = asyncio.events.get_event_loop()
         self._maxsize = maxsize
         self._getters = collections.deque()
         self._putters = collections.deque()
@@ -78,12 +76,12 @@ class Queue:
         """
         if self._maxsize <= 0:
             return False
-        return self.qsize() >= self._maxsize
+        return self.size() >= self._maxsize
 
     def clear(self):
         self.queue.clear()
 
-    def qsize(self):
+    def size(self):
         """
         Return number of items in the queue.
         """
@@ -101,22 +99,18 @@ class Queue:
             try:
                 await putter
             except:
-                putter.cancel()  # Just in case putter is not done yet.
+                putter.cancel()
                 try:
-                    # Clean self._putters from canceled putters.
                     self._putters.remove(putter)
                 except ValueError:
-                    # The putter could be removed from self._putters by a
-                    # previous get_nowait call.
                     pass
                 if not self.full() and not putter.cancelled():
-                    # We were woken up by get_nowait(), but can't take
-                    # the call.  Wake up the next in line.
                     self._wakeup_next(self._putters)
                 raise
         self._unfinished_tasks += 1
         self._finished.clear()
         self._wakeup_next(self._getters)
+        self.bot.dispatch("queue_add", item)
         return self.queue.append(item)
 
     async def put_pos(self, item, pos):
@@ -131,22 +125,18 @@ class Queue:
             try:
                 await putter
             except:
-                putter.cancel()  # Just in case putter is not done yet.
+                putter.cancel()
                 try:
-                    # Clean self._putters from canceled putters.
                     self._putters.remove(putter)
                 except ValueError:
-                    # The putter could be removed from self._putters by a
-                    # previous get_nowait call.
                     pass
                 if not self.full() and not putter.cancelled():
-                    # We were woken up by get_nowait(), but can't take
-                    # the call.  Wake up the next in line.
                     self._wakeup_next(self._putters)
                 raise
         self._unfinished_tasks += 1
         self._finished.clear()
         self._wakeup_next(self._getters)
+        self.bot.dispatch("queue_add", item)
         return self.queue.insert(pos, item)
 
     async def get(self):
@@ -160,17 +150,12 @@ class Queue:
             try:
                 await getter
             except:
-                getter.cancel()  # Just in case getter is not done yet.
+                getter.cancel()
                 try:
-                    # Clean self._getters from canceled getters.
                     self._getters.remove(getter)
                 except ValueError:
-                    # The getter could be removed from self._getters by a
-                    # previous put_nowait call.
                     pass
                 if not self.empty() and not getter.cancelled():
-                    # We were woken up by put_nowait(), but can't take
-                    # the call.  Wake up the next in line.
                     self._wakeup_next(self._getters)
                 raise
         item = self.queue.pop(0)
@@ -188,17 +173,12 @@ class Queue:
             try:
                 await getter
             except:
-                getter.cancel()  # Just in case getter is not done yet.
+                getter.cancel()
                 try:
-                    # Clean self._getters from canceled getters.
                     self._getters.remove(getter)
                 except ValueError:
-                    # The getter could be removed from self._getters by a
-                    # previous put_nowait call.
                     pass
                 if not self.empty() and not getter.cancelled():
-                    # We were woken up by put_nowait(), but can't take
-                    # the call.  Wake up the next in line.
                     self._wakeup_next(self._getters)
                 raise
         item = self.queue.pop(pos)

@@ -1,9 +1,9 @@
 import traceback
 
+import andesite
 import discord
 from discord.ext import commands
 
-from .utilities import exceptions
 from .utilities import formatting
 
 
@@ -138,8 +138,8 @@ class Events(commands.Cog):
                 message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{formatting.get_time_friendly(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
                 message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{formatting.get_time_friendly(error.retry_after)}`."
-        if isinstance(error, exceptions.WrongGuild):
-            message = "This command can't be used in this guild."
+        if isinstance(error, andesite.NodesUnavailable):
+            message = "There are no nodes available."
 
         # If an error was caught, send it.
         if message:

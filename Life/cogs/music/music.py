@@ -12,7 +12,6 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot.andesite = andesite.Client(self.bot)
-        self.bot.loop.create_task(self.initiate_nodes())
 
     async def initiate_nodes(self):
 
@@ -48,11 +47,15 @@ class Music(commands.Cog):
         if not ctx.player.is_connected or not ctx.guild.me.voice.channel:
             # Join the channel.
             await ctx.player.connect(channel.id)
+            # Set the players channel to this one.
+            ctx.player.channel = ctx.channel
             return await ctx.send(f"Joined the voice channel `{channel}`.")
 
         # If the player is connected but the user is in another voice channel then move to that channel.
         if ctx.guild.me.voice.channel.id != channel.id:
             await ctx.player.connect(channel.id)
+            # Set the players channel to this one.
+            ctx.player.channel = ctx.channel
             return await ctx.send(f"Moved to the voice channel `{channel}`.")
 
         # The bot must already be in this voice channel.
@@ -79,8 +82,8 @@ class Music(commands.Cog):
         # Clear the queue, destroy and disconnect the player.
         ctx.player.queue.clear()
         ctx.player.current = None
-        await ctx.player.destroy()
         await ctx.player.disconnect()
+        await ctx.player.destroy()
         return await ctx.send(f"Left the voice channel `{ctx.guild.me.voice.channel}`.")
 
     @commands.command(name="search")
@@ -125,6 +128,8 @@ class Music(commands.Cog):
         # If the player is not already connected, join the users voice channel.
         if not ctx.player.is_connected:
             await ctx.player.connect(channel.id)
+
+        ctx.player.channel = ctx.channel
 
         # Trigger typing.
         await ctx.trigger_typing()
@@ -241,8 +246,8 @@ class Music(commands.Cog):
             return await ctx.send(f"The current tracks requester has skipped the current track.")
 
         # If the amount of tracks to skip is smaller then 1 or larger then the amount of tracks in the queue.
-        if amount <= 0 or amount > ctx.player.queue.qsize():
-            return await ctx.send(f"That is not a valid amount of tracks to skip. Please choose a value between `1` and `{ctx.player.queue.qsize()}`")
+        if amount <= 0 or amount > ctx.player.queue.size():
+            return await ctx.send(f"That is not a valid amount of tracks to skip. Please choose a value between `1` and `{ctx.player.queue.size()}`")
 
         # Loop through the next "amount" of tracks in the queue
         for track in ctx.player.queue.queue[:amount - 1]:
@@ -363,7 +368,7 @@ class Music(commands.Cog):
         title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
                   f"`{formatting.get_time(round(ctx.player.current.length) / 1000)}` | " \
                   f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
-                  f"__**Up next:**__: Showing `10` out of `{ctx.player.queue.qsize()}` entries in the queue.\n"
+                  f"__**Up next:**__: Showing `10` out of `{ctx.player.queue.size()}` entries in the queue.\n"
 
         # Create a list of entries representing the tracks in the queue.
         entries = []
@@ -378,7 +383,7 @@ class Music(commands.Cog):
             time += track.length
 
         # Add extra info to the message.
-        footer = f"\nThere are `{ctx.player.queue.qsize()}` tracks in the queue with a total time of `{formatting.get_time(round(time) / 1000)}`"
+        footer = f"\nThere are `{ctx.player.queue.size()}` tracks in the queue with a total time of `{formatting.get_time(round(time) / 1000)}`"
 
         # Paginate the list of queue entries.
         return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
@@ -512,7 +517,7 @@ class Music(commands.Cog):
             return await ctx.send("The queue is empty.")
 
         # Check if the entry is between 0 and queue size.
-        if entry <= 0 or entry > ctx.player.queue.qsize():
+        if entry <= 0 or entry > ctx.player.queue.size():
             return await ctx.send(f"That was not a valid track entry number.")
 
         # Remove the entry from the queue.
@@ -549,11 +554,11 @@ class Music(commands.Cog):
             return await ctx.send("The queue is empty.")
 
         # Check if the entry_1 is between 0 and queue size.
-        if entry_1 <= 0 or entry_1 > ctx.player.queue.qsize():
+        if entry_1 <= 0 or entry_1 > ctx.player.queue.size():
             return await ctx.send(f"That was not a valid track to move from.")
 
         # Check if the entry is between 0 and queue size.
-        if entry_2 <= 0 or entry_2 > ctx.player.queue.qsize():
+        if entry_2 <= 0 or entry_2 > ctx.player.queue.size():
             return await ctx.send(f"That was not a valid track to move too.")
 
         # get the track we want to move.
@@ -570,4 +575,5 @@ class Music(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Music(bot))
+    bot.loop.create_task(Music(bot).initiate_nodes())
 

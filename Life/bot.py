@@ -58,7 +58,7 @@ class Life(commands.Bot):
             reconnect=True,
         )
         self.loop = asyncio.get_event_loop()
-        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.session = aiohttp.ClientSession()
 
         self.account_manager = AccountManager(self)
 
