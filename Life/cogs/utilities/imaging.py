@@ -1,13 +1,13 @@
 from io import BytesIO
 
-from PIL import ImageDraw, Image, ImageSequence
+import matplotlib.pyplot as plt
+from PIL import ImageDraw, Image
 
 
 async def get_image(bot, url):
     async with bot.session.get(url) as response:
         image_bytes = await response.read()
     return image_bytes
-
 
 def round_image(image, rad):
     circle = Image.new("L", (rad * 2, rad * 2))
@@ -22,7 +22,6 @@ def round_image(image, rad):
     image.putalpha(alpha)
     return image
 
-
 def resize_image(image_bytes, height, width):
     image = Image.open(BytesIO(image_bytes))
     img_width, img_height = image.size
@@ -30,7 +29,6 @@ def resize_image(image_bytes, height, width):
         return image
     image = image.resize([height, width])
     return image
-
 
 def colour(image_bytes, image_colour):
 
@@ -62,48 +60,45 @@ def colour(image_bytes, image_colour):
     colour_image.seek(0)
     return colour_image
 
+def do_pie_chart(values, names):
 
-def colour_gif(image_bytes, image_colour):
+    labels = []
+    percentages = []
 
-    # Open the image_bytes as an image and covert it to an RGBA type image.
-    image = Image.open(BytesIO(image_bytes))
+    # Get the total sum of all the values.
+    total = sum(values)
+    # Calculate the percentage each value is out of the total.
+    for value in values:
+        value = round(value / total * 100, 2)
+        percentages.append(value)
 
-    # Define a list to store changed frames in.
-    frames = []
+    # Append each percentage and its name to the labels.
+    for name, percentage in zip(names, percentages):
+        labels.append(f'{name}: {percentage}%')
 
-    # Loop through the frames of the gif.
-    for frame in ImageSequence.Iterator(image):
+    # Create a figure.
+    figure = plt.figure(1, figsize=(4,3))
 
-        # Convert the frame to RGBA format
-        frame = frame.convert("RGBA")
+    # Create a subplot, with equal axis.
+    axes = figure.add_subplot(111)
+    axes.axis('equal')
+    # Create the pir chart on the subplot.
+    pie = axes.pie(values)
 
-        # Create a mask for the image with the alpha layer.
-        mask = frame.convert("L")
+    # Set the positon of the axis to the left of the firgure.
+    box = axes.get_position()
+    axes.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-        # Switch pixels colours with the value specified.
-        lx, ly = frame.size
-        pixel = frame.load()
-        for y in range(ly):
-            for x in range(lx):
-                if pixel[x, y] == (0, 0, 0, 0):
-                    continue
-                pixel[x, y] = image_colour
-
-        # Put a mask of the original image over the colour-changed one.
-        frame.putalpha(mask)
-
-        # Append the frame to the list of frames.
-        frames.append(frame)
+    # Create a legend, which outside the area of the axis.
+    axes.legend(pie[0], labels, loc="center left", fontsize=6, fancybox=True, bbox_to_anchor=(1, 0.5))
 
     # Save the image to a buffer.
-    colour_image = BytesIO()
-    frames[0].save(colour_image, save_all=True, format='gif', append_images=frames[1:], loop=0, transparency=100, disposal=2)
+    pie_chart = BytesIO()
+    plt.savefig(pie_chart, bbox_inches="tight", transparent=True)
 
-    # Close images.
-    image.close()
-    for frame in frames:
-        frame.close()
+    # Close the image.
+    plt.close()
 
     # Return image
-    colour_image.seek(0)
-    return colour_image
+    pie_chart.seek(0)
+    return pie_chart

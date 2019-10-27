@@ -15,7 +15,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}")
+        print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}\n")
 
         # Fetch players from the database, and cache them.
         await self.bot.account_manager.cache_all_accounts()
@@ -80,15 +80,24 @@ class Events(commands.Cog):
         else:
             command = f"{ctx.command.name}"
 
+        # Handle Guild usage stats.
+
         # If the guild id is not already in the bots usage dict, add it.
-        if ctx.guild.id not in self.bot.stats:
-            self.bot.stats[ctx.guild.id] = {}
+        if ctx.guild.id not in self.bot.usage:
+            self.bot.usage[ctx.guild.id] = {}
         # If the command is not aleady in the guilds command usage, add it
-        if command not in self.bot.stats[ctx.guild.id]:
-            self.bot.stats[ctx.guild.id][command] = 1
+        if command not in self.bot.usage[ctx.guild.id]:
+            self.bot.usage[ctx.guild.id][command] = 1
         # Otherwise increment the command usage by 1.
         else:
-            self.bot.stats[ctx.guild.id][command] += 1
+            self.bot.usage[ctx.guild.id][command] += 1
+
+        # Handle Total usage stats.
+        if command not in self.bot.total_usage:
+            self.bot.total_usage[command] = 1
+        else:
+            self.bot.total_usage[command] += 1
+
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

@@ -54,8 +54,9 @@ class Life(commands.Bot):
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
+        self.usage = {}
+        self.total_usage = {}
 
-        self.stats = {}
         self.accounts = {}
 
         for extension in EXTENSIONS:

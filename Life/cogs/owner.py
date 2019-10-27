@@ -1,8 +1,11 @@
+import time
+
 import asyncpg
 import discord
 from discord.ext import commands
 
 from .utilities import utils
+from .utilities import imaging
 
 
 class Owner(commands.Cog):
@@ -11,46 +14,58 @@ class Owner(commands.Cog):
         self.bot = bot
 
     @commands.is_owner()
-    @commands.command(name="stats", hidden=True)
-    async def stats(self, ctx):
+    @commands.command(name="usage", hidden=True)
+    async def usage(self, ctx, display: str = None):
         """
         Show command usage/message stats.
         """
 
         # If no stats have been collected yet.
-        if not self.bot.stats:
+        if not self.bot.usage:
             return await ctx.send("No usage of commands yet.")
 
-        # Define a list to store embeds in.
-        embeds = []
+        if display is None:
+            # Define a list to store embeds in.
+            embeds = []
+            # Loop through bot.usage to get the guild and its command uses.
+            for guild_id, usage in self.bot.usage.items():
+                # Get the guild by its stored id.
+                guild = self.bot.get_guild(guild_id)
+                # If the guild is not found anymore, skip it.
+                if guild is None:
+                    continue
+                # Create the embed.
+                embed = discord.Embed(
+                    colour=discord.Color.gold(),
+                    title=f"{guild.name}",
+                    description=f"```py\n"
+                )
+                embed.set_footer(text=f"{guild.id}")
+                embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
+                for command in usage:
+                    embed.description += f"{command} : {usage[command]}\n"
+                embed.description += "```"
+                # Append the embed to the list of embeds
+                embeds.append(embed)
+            # Send the message
+            return await ctx.paginate_embeds(entries=embeds)
 
-        # Loop through bot.usage to get the guild and its command uses.
-        for guild_id, usage in self.bot.stats.items():
+        if display in ["pie", "piechart"]:
+            # Get the commands and their usages.
+            names = []
+            values = []
+            for command, usage in self.bot.total_usage.items():
+                names.append(command)
+                values.append(int(usage))
 
-            # Get the guild by its stored id.
-            guild = self.bot.get_guild(guild_id)
-
-            # If the guild is not found anymore, skip it.
-            if guild is None:
-                continue
-
-            # Create the embed.
-            embed = discord.Embed(
-                colour=discord.Color.gold(),
-                title=f"{guild.name}",
-                description=f"```py\n"
-            )
-            embed.set_footer(text=f"{guild.id}")
-            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-            for command in usage:
-                embed.description += f"{command} : {usage[command]}\n"
-            embed.description += "```"
-
-            # Append the embed to the list of embeds
-            embeds.append(embed)
-
-        # Send the message
-        return await ctx.paginate_embeds(entries=embeds)
+            # Start timer.
+            start = time.perf_counter()
+            # Create the image.
+            pie_chart = await self.bot.loop.run_in_executor(None, imaging.do_pie_chart, values, names)
+            await ctx.send(content=f"Here is your randomly coloured image.",file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
+            # End timer and log how long operation took.
+            end = time.perf_counter()
+            return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
     @commands.command(name="guilds", hidden=True)
@@ -64,7 +79,7 @@ class Owner(commands.Cog):
 
         # Loop through all bots guilds and create an embed for each one.
         for guild in self.bot.guilds:
-            online, offline, idle, dnd = utils.guild_user_status_count(guild)
+            online, offline, idle, dnd = utils.guild_user_status(guild)
             embed = discord.Embed(
                 colour=discord.Color.gold(),
                 title=f"{guild.name}'s Stats and Information."
