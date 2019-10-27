@@ -2,7 +2,6 @@ import codecs
 import os
 import pathlib
 import random
-import ssl
 import time
 
 import discord
@@ -11,8 +10,6 @@ import discord
 def random_colour():
     return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-
-# noinspection PyArgumentEqualDefault
 def linecount():
     file_amount = 0
     functions = 0
@@ -33,17 +30,16 @@ def linecount():
                         lines += 1
     return file_amount, functions, comments, lines
 
-
 async def ping(bot, ctx):
     # Define variables.
     pings = []
-    number = 0
+    total_ping = 0
 
     # Get typing time and append.
-    typings = time.monotonic()
+    typing_start = time.monotonic()
     await ctx.trigger_typing()
-    typinge = time.monotonic()
-    typingms = round((typinge - typings) * 1000, 2)
+    typing_end = time.monotonic()
+    typingms = round((typing_end - typing_start) * 1000, 2)
     pings.append(typingms)
 
     # Get latency and append.
@@ -51,39 +47,22 @@ async def ping(bot, ctx):
     pings.append(latencyms)
 
     # Ping discord and append.
-    discords = time.monotonic()
-    try:
-        async with bot.session.get("https://discordapp.com/") as resp:
-            if resp.status == 200:
-                discorde = time.monotonic()
-                discordms = round((discorde - discords) * 1000, 2)
-                pings.append(discordms)
-            else:
-                discordms = "Failed"
-    except ssl.SSLError:
-        pass
+    discord_start = time.monotonic()
+    async with bot.session.get("https://discordapp.com/") as resp:
+        if resp.status == 200:
+            discord_end = time.monotonic()
+            discordms = round((discord_end - discord_start) * 1000, 2)
+            pings.append(discordms)
+        else:
+            discordms = "Failed"
 
     # Calculate the average.
-    for ms in pings:
-        number += ms
-    averagems = round(number / len(pings), 2)
+    for ping_ms in pings:
+        total_ping += ping_ms
+    averagems = round(total_ping / len(pings), 2)
 
     # Return values.
     return typingms, latencyms, discordms, averagems
-
-
-def embed_color(user):
-    if user.status == discord.Status.online:
-        return 0x008000
-    if user.status == discord.Status.idle:
-        return 0xFF8000
-    if user.status == discord.Status.dnd:
-        return 0xFF0000
-    if user.status == discord.Status.offline:
-        return 0x808080
-    else:
-        return 0xFF8000
-
 
 def user_activity(user):
     # If the user is offline they wont have an activity.
@@ -110,101 +89,76 @@ def user_activity(user):
             activity += f"Listening to **{user.activity.name}**"
     return activity
 
+def user_colour(user):
+    colours = {
+        discord.Status.online: 0x008000,
+        discord.Status.idle: 0xFF8000,
+        discord.Status.dnd: 0xFF0000,
+        discord.Status.offline: 0x808080
+    }
+    return colours[user.status]
 
 def user_status(user):
-    if user.status == discord.Status.online:
-        return "Online"
-    if user.status == discord.Status.idle:
-        return "Idle"
-    if user.status == discord.Status.dnd:
-        return "Do not Disturb"
-    if user.status == discord.Status.offline:
-        return "Offline"
-    return "Offline"
+    status = {
+        discord.Status.online: "Online",
+        discord.Status.idle: "Idle",
+        discord.Status.dnd: "Do not disturb",
+        discord.Status.offline: "Offline"
+    }
+    return status[user.status]
 
-
-def guild_user_status_count(guild):
-    online = 0
-    offline = 0
-    idle = 0
-    dnd = 0
-    for member in guild.members:
-        if member.status == discord.Status.online:
-            online += 1
-        if member.status == discord.Status.idle:
-            idle += 1
-        if member.status == discord.Status.dnd:
-            dnd += 1
-        if member.status == discord.Status.offline:
-            offline += 1
-    return online, offline, idle, dnd
-
+def guild_user_status(guild):
+    online = sum(1 for member in guild.members if member.status == discord.Status.online)
+    idle = sum(1 for member in guild.members if member.status == discord.Status.idle)
+    dnd = sum(1 for member in guild.members if member.status == discord.Status.do_not_disturb)
+    offline = sum(1 for member in guild.members if member.status == discord.Status.offline)
+    return online, idle, dnd, offline
 
 def guild_region(guild):
-    if guild.region == discord.VoiceRegion.amsterdam:
-        return "Amsterdam"
-    if guild.region == discord.VoiceRegion.brazil:
-        return "Brazil"
-    if guild.region == discord.VoiceRegion.eu_central:
-        return "Central-Europe"
-    if guild.region == discord.VoiceRegion.eu_west:
-        return "Western-Europe"
-    if guild.region == discord.VoiceRegion.frankfurt:
-        return "Frankfurt"
-    if guild.region == discord.VoiceRegion.hongkong:
-        return "Hong-Kong"
-    if guild.region == discord.VoiceRegion.india:
-        return "India"
-    if guild.region == discord.VoiceRegion.japan:
-        return "Japan"
-    if guild.region == discord.VoiceRegion.london:
-        return "London"
-    if guild.region == discord.VoiceRegion.russia:
-        return "Russia"
-    if guild.region == discord.VoiceRegion.singapore:
-        return "Singapore"
-    if guild.region == discord.VoiceRegion.southafrica:
-        return "South-Africa"
-    if guild.region == discord.VoiceRegion.sydney:
-        return "Sydney"
-    if guild.region == discord.VoiceRegion.us_central:
-        return "US-Central"
-    if guild.region == discord.VoiceRegion.us_east:
-        return "US-East"
-    if guild.region == discord.VoiceRegion.us_south:
-        return "US-South"
-    if guild.region == discord.VoiceRegion.us_west:
-        return "US-West"
-    return "N/A"
-
+    regions = {
+        discord.VoiceRegion.amsterdam: "Amsterdam",
+        discord.VoiceRegion.brazil: "Brazil",
+        discord.VoiceRegion.eu_central: "EU-Central",
+        discord.VoiceRegion.eu_west: "EU-West",
+        discord.VoiceRegion.europe: "Europe",
+        discord.VoiceRegion.frankfurt: "Frankfurt",
+        discord.VoiceRegion.hongkong: "Hong kong",
+        discord.VoiceRegion.india: "India",
+        discord.VoiceRegion.japan: "Japan",
+        discord.VoiceRegion.london: "Londom",
+        discord.VoiceRegion.russia: "Russia",
+        discord.VoiceRegion.singapore: "Singapore",
+        discord.VoiceRegion.southafrica: "South Africa",
+        discord.VoiceRegion.sydney: "Sydney",
+        discord.VoiceRegion.us_central: "US-Central",
+        discord.VoiceRegion.us_east: "US-East",
+        discord.VoiceRegion.us_south: "US-South",
+        discord.VoiceRegion.us_west: "US-West"
+    }
+    return regions[guild.region]
 
 def guild_mfa_level(guild):
-    if guild.mfa_level == 0:
-        return "Not required"
-    if guild.mfa_level == 1:
-        return "Required"
-    return "N/A"
-
+    mfa_levels = {
+        0: "Not required",
+        1: "Required"
+    }
+    return mfa_levels[guild.mfa_level]
 
 def guild_verification_level(guild):
-    if guild.verification_level == discord.VerificationLevel.none:
-        return "None - No criteria set."
-    if guild.verification_level == discord.VerificationLevel.low:
-        return "Low - Must have a verified email."
-    if guild.verification_level == discord.VerificationLevel.medium:
-        return "Medium - Must have a verified email and be registered on discord for more than 5 minutes."
-    if guild.verification_level == discord.VerificationLevel.high:
-        return "High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 minutes."
-    if guild.verification_level == discord.VerificationLevel.extreme:
-        return "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 minutes and a have a verified phone number."
-    return "N/A"
-
+    verification_levels = {
+        discord.VerificationLevel.none: "None - No criteria set.",
+        discord.VerificationLevel.low: "Low - Must have a verified email.",
+        discord.VerificationLevel.medium: "Medium - Must have a verified email and be registered on discord for more than 5 minutes.",
+        discord.VerificationLevel.high: "High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 minutes.",
+        discord.VerificationLevel.extreme: "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 minutes and a have a verified phone number."
+    }
+    return verification_levels[guild.verification_level]
 
 def guild_content_filter_level(guild):
-    if guild.explicit_content_filter == discord.ContentFilter.disabled:
-        return "None - Content filter disabled."
-    if guild.explicit_content_filter == discord.ContentFilter.no_role:
-        return "No role - Content filter enabled only for users with no roles."
-    if guild.explicit_content_filter == discord.ContentFilter.all_members:
-        return "All members - Content filter enabled for all users."
-    return "N/A"
+    explicit_content_filters = {
+        discord.ContentFilter.disabled: "None - Content filter disabled.",
+        discord.ContentFilter.no_role: "No role - Content filter enabled only for users with no roles.",
+        discord.ContentFilter.all_members: "All members - Content filter enabled for all users.",
+    }
+    return explicit_content_filters[guild.explicit_content_filter]
+

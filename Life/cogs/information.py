@@ -79,9 +79,14 @@ class Information(commands.Cog):
         Gets the bots ping.
         """
 
-        typingms, latencyms, discordms, average = await utils.ping(self.bot, ctx)
-        return await ctx.send(f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
-                              f"**Discord:** {discordms}ms\n**Average:** {average}ms")
+        typingms, latencyms, discordms, averagems = await utils.ping(self.bot, ctx)
+        return await ctx.send(f"```py\n"
+                              f"Type    |Ping\n"
+                              f"Typing  |{typingms}ms\n"
+                              f"Latency |{latencyms}ms\n"
+                              f"Discord |{discordms}ms\n"
+                              f"Average |{averagems}ms\n"
+                              f"```")
 
     @commands.command(name="source")
     async def source(self, ctx, *, command: str = None):
@@ -91,9 +96,8 @@ class Information(commands.Cog):
         `command`: The name of the command you want the source for.
         """
 
-        github_url = "https://github.com/MyNameBeMrRandom/Life"
         if command is None:
-            return await ctx.send(f"<{github_url}>")
+            return await ctx.send(f"<https://github.com/MyNameBeMrRandom/Life>")
         obj = self.bot.get_command(command.replace(".", " "))
         if obj is None:
             return await ctx.send("I could not find that command.")
@@ -102,8 +106,7 @@ class Information(commands.Cog):
         location = ""
         if not obj.callback.__module__.startswith("discord"):
             location = os.path.relpath(src.co_filename).replace("\\", "/")
-        final_url = f"<{github_url}/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>"
-        await ctx.send(final_url)
+        return await ctx.send(f"<https://github.com/MyNameBeMrRandom/Life/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>")
 
     @commands.command(name="avatar")
     async def avatar(self, ctx, *, user: discord.Member = None):
@@ -114,7 +117,7 @@ class Information(commands.Cog):
         `user`: The user who you want the avatar of. Can be an ID, mention or name.
         """
 
-        # If the user didnt choose someone.
+        # If the user didnt specify another use, use them.
         if not user:
             user = ctx.author
 
@@ -141,7 +144,7 @@ class Information(commands.Cog):
         Get information about the current server.
         """
 
-        online, offline, idle, dnd = utils.guild_user_status_count(ctx.guild)
+        online, idle, dnd, offline = utils.guild_user_status(ctx.guild)
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
@@ -175,11 +178,13 @@ class Information(commands.Cog):
         `user`: The user who you want information about. Can be an ID, mention or name.
         """
 
-        if not user:
-            user = ctx.author
         user = ctx.guild.get_member(user.id)
+
+        if user is None:
+            user = ctx.author
+
         embed = discord.Embed(
-            colour=utils.embed_color(user),
+            colour=utils.user_colour(user),
             title=f"{user.name}'s Stats and Information."
         )
         embed.set_footer(text=f"ID: {user.id}")
