@@ -11,6 +11,7 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 ### Prerequisites
 * Python-3.6 or higher
 * PostgreSQL database
+* A running andesite node
 
 ### Setup
 1. Install dependancies
@@ -32,6 +33,14 @@ DB_CONN_INFO = {
     "database": "database_name"
 }
 
+NODES = {"node_name": {"ip": "node_ip",
+                       "port": node_port,
+                       "rest_uri": "node_url",
+                       "password": "node_password",
+                       "identifier": "node_custom_identifier",
+                      }
+         }
+
 ```
 
 ## Built with
@@ -40,3 +49,5 @@ DB_CONN_INFO = {
 * [psutil](https://github.com/giampaolo/psutil)
 * [jishaku](https://github.com/Gorialis/jishaku)
 * [Pillow](https://github.com/python-pillow/Pillow)
+* [andesite](https://github.com/natanbc/andesite-node)
+* [granitepy](https://pypi.org/project/granitepy/)
