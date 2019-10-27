@@ -178,8 +178,6 @@ class Information(commands.Cog):
         `user`: The user who you want information about. Can be an ID, mention or name.
         """
 
-        user = ctx.guild.get_member(user.id)
-
         if user is None:
             user = ctx.author
 
