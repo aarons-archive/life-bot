@@ -69,7 +69,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing.
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not in a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -160,7 +160,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -189,7 +189,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -222,7 +222,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -269,7 +269,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If nothing is current playing.
         if not ctx.player.current:
@@ -288,7 +288,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -320,7 +320,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -358,7 +358,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing.
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the queue is empty.
         if ctx.player.queue.empty():
@@ -396,7 +396,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -422,7 +422,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -448,7 +448,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -474,7 +474,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -502,7 +502,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -539,7 +539,7 @@ class Music(commands.Cog):
 
         # If the player is not connected then do nothing
         if not ctx.player.is_connected:
-            return await ctx.send(f"MrBot is not connected to any voice channels.")
+            return await ctx.send(f"I am not connected to any voice channels.")
 
         # If the user is not a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:

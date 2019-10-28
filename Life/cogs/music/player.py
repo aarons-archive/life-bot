@@ -71,11 +71,14 @@ class Player(andesite.Player):
             # If no track is added to the queue for 5 minutes, disconnect.
             except asyncio.TimeoutError:
 
-                # If there is no current track channel, send the disconnect error to the original channel, else, send it to the track channel.
-                if self.track_channel is None:
-                    await self.channel.send("Leaving voice chat due to inactivity.")
-                else:
-                    await self.track_channel.send("Leaving voice chat due to inactivity.")
+                try:
+                    # If there is no current track channel, send the disconnect error to the original channel, else, send it to the track channel.
+                    if self.track_channel is None:
+                        await self.channel.send("Leaving voice chat due to inactivity.")
+                    else:
+                        await self.track_channel.send("Leaving voice chat due to inactivity.")
+                except AttributeError:
+                    pass
 
                 # Clear the queue, disconnect and then destroy the player.
                 self.queue.clear()

@@ -62,7 +62,7 @@ class Owner(commands.Cog):
             start = time.perf_counter()
             # Create the image.
             pie_chart = await self.bot.loop.run_in_executor(None, imaging.do_pie_chart, values, names)
-            await ctx.send(content=f"Here is your randomly coloured image.",file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
+            await ctx.send(content=f"Total command usage.",file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
             # End timer and log how long operation took.
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
