@@ -138,6 +138,7 @@ class MyContext(commands.Context):
         entries = kwargs.get("entries")
         entries_per_page = kwargs.get("entries_per_page")
         footer = kwargs.get("footer")
+        colour = kwargs.get("colour")
 
         # Start pagination
         paginator = EmbedPaginator(
@@ -145,6 +146,7 @@ class MyContext(commands.Context):
             title=title,
             footer=footer,
             entries=entries,
+            colour=colour,
             entries_per_page=entries_per_page,
             total_entries=len(entries))
         return await paginator.paginate()

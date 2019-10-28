@@ -116,6 +116,7 @@ class EmbedPaginator:
         self.entries_per_page = kwargs.get("entries_per_page")
         self.total_entries = kwargs.get("total_entries")
         self.footer = kwargs.get("footer")
+        self.colour = kwargs.get("colour")
 
         self.entries = []
         self.pages = 0
@@ -137,6 +138,10 @@ class EmbedPaginator:
         if self.footer is None:
             self.footer = ""
 
+        # If the colour is not set
+        if self.colour is None:
+            self.colour = discord.Colour.gold()
+
     async def react(self):
         # If the amount of pages is bigger then 1, add the full range of emotes to the message.
         if self.pages > 1:
@@ -157,7 +162,7 @@ class EmbedPaginator:
 
         # Edit the embed.
         embed = discord.Embed(
-            colour=discord.Color.gold(),
+            colour=self.colour,
             description=f"{self.title}{self.entries[self.page + 1]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page + 2}/{self.pages} | Total entries: {self.total_entries}")
@@ -172,7 +177,7 @@ class EmbedPaginator:
 
         # Edit the embed.
         embed = discord.Embed(
-            colour=discord.Color.gold(),
+            colour=self.colour,
             description=f"{self.title}{self.entries[self.page - 1]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page}/{self.pages} | Total entries: {self.total_entries}")
@@ -203,7 +208,7 @@ class EmbedPaginator:
 
         # Send the message for the first page.
         embed = discord.Embed(
-            colour=discord.Color.gold(),
+            colour=self.colour,
             description=f"{self.title}{self.entries[self.page]}{self.footer}"
         )
         embed.set_footer(text=f"Page: {self.page + 1}/{self.pages} | Total entries: {self.total_entries}")
