@@ -11,7 +11,7 @@ import config
 # noinspection PyUnresolvedReferences
 from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 # noinspection PyUnresolvedReferences
-from cogs.utilities.managers import AccountManager
+from cogs.rpg.managers import AccountManager
 # noinspection PyUnresolvedReferences
 from cogs.music.player import Player
 
@@ -21,14 +21,14 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 
 EXTENSIONS = [
     "cogs.information",
-    "cogs.accounts",
     "cogs.fun",
     "cogs.help",
     "cogs.owner",
     "jishaku",
     "cogs.background",
     "cogs.events",
-    "cogs.music.music"
+    "cogs.music.music",
+    "cogs.rpg.accounts"
 ]
 
 
