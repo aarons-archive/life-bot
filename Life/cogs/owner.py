@@ -15,26 +15,6 @@ class Owner(commands.Cog):
         self.bot = bot
 
     @commands.is_owner()
-    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
-    async def socket_stats(self, ctx):
-
-        # Get the total amount of socket events.
-        total = sum(self.bot.socket_stats.values())
-        # Get the bots uptime in seconds.
-        uptime = round(time.time() - self.bot.start_time)
-
-        # Loop through the socketstats and create a message for it.
-        socket_stats = ""
-        for event, count in self.bot.socket_stats.items():
-            socket_stats += f"{event}:{' ' * int(27 - len(str(event)))}{count}\n"
-
-        # Send a message with the socket stats.
-        return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
-                              f"{socket_stats}\n"
-                              f"```")
-
-    @commands.is_owner()
     @commands.command(name="usage", hidden=True)
     async def usage(self, ctx, display: str = None):
         """
@@ -235,6 +215,26 @@ class Owner(commands.Cog):
         # Paginate the entries.
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
 
+    @commands.is_owner()
+    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
+    async def socket_stats(self, ctx):
+
+        # Get the total amount of socket events.
+        total = sum(self.bot.socket_stats.values())
+        # Get the bots uptime in seconds.
+        uptime = round(time.time() - self.bot.start_time)
+
+        # Loop through the socketstats and create a message for it.
+        socket_stats = ""
+        for event, count in self.bot.socket_stats.items():
+            socket_stats += f"{event}:{' ' * int(27 - len(str(event)))}{count}\n"
+
+        # Send a message with the socket stats.
+        return await ctx.send(f"```\n"
+                              f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
+                              f"{socket_stats}\n"
+                              f"```")
+    
     @commands.is_owner()
     @commands.group(name="blacklist", hidden=True, invoke_without_command=True)
     async def blacklist(self, ctx):
