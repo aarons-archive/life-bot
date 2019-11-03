@@ -1,11 +1,12 @@
+import collections
 import time
 
 import asyncpg
 import discord
 from discord.ext import commands
 
-from .utilities import utils
 from .utilities import imaging
+from .utilities import utils
 
 
 class Owner(commands.Cog):
@@ -24,16 +25,42 @@ class Owner(commands.Cog):
         if not self.bot.usage:
             return await ctx.send("No usage of commands yet.")
 
+        # Get the total usage of all commands.
+        total_usage = {}
+        for guild_usage in self.bot.usage.values():
+            for command, usage in guild_usage.items():
+                if command not in total_usage:
+                    total_usage[command] = usage
+                else:
+                    total_usage[command] += usage
+        total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
+
+        # If the user doesnt want a pie/bar chart.
         if display is None:
+
             # Define a list to store embeds in.
             embeds = []
-            # Loop through bot.usage to get the guild and its command uses.
-            for guild_id, usage in self.bot.usage.items():
+
+            # Add a total usage embed.
+            embed = discord.Embed(
+                colour=discord.Color.gold(),
+                title=f"Total usage",
+                description=f"```py\n"
+            )
+            embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
+            for command, usage in total_usage.items():
+                embed.description += f"{command} : {usage}\n"
+            embed.description += "```"
+            embeds.append(embed)
+
+            # Loop through all the guilds in the bots usage to get the guild and its command uses.
+            for guild_id, guild_usage in self.bot.usage.items():
                 # Get the guild by its stored id.
                 guild = self.bot.get_guild(guild_id)
                 # If the guild is not found anymore, skip it.
                 if guild is None:
                     continue
+                usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
                 # Create the embed.
                 embed = discord.Embed(
                     colour=discord.Color.gold(),
@@ -42,30 +69,67 @@ class Owner(commands.Cog):
                 )
                 embed.set_footer(text=f"{guild.id}")
                 embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-                for command in usage:
-                    embed.description += f"{command} : {usage[command]}\n"
+                for command, command_usage in usage.items():
+                    embed.description += f"{command} : {command_usage}\n"
                 embed.description += "```"
                 # Append the embed to the list of embeds
                 embeds.append(embed)
             # Send the message
             return await ctx.paginate_embeds(entries=embeds)
 
+        # Generate a pie chart.
         if display in ["pie", "piechart"]:
-            # Get the commands and their usages.
-            names = []
-            values = []
-            for command, usage in self.bot.total_usage.items():
-                names.append(command)
-                values.append(int(usage))
 
             # Start timer.
             start = time.perf_counter()
             # Create the image.
-            pie_chart = await self.bot.loop.run_in_executor(None, imaging.do_pie_chart, values, names)
-            await ctx.send(content=f"Total command usage.",file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
+            pie_chart = imaging.do_pie_chart([v for v in total_usage.values()], [k for k in total_usage.keys()])
+            await ctx.send(file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
             # End timer and log how long operation took.
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+        # Generate a bar chart.
+        if display in ["bar", "barchart"]:
+
+            # Start timer.
+            start = time.perf_counter()
+            # Create the image.
+            pie_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
+            await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=pie_chart))
+            # End timer and log how long operation took.
+            end = time.perf_counter()
+            return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
+    @commands.command(name="user_growth", aliases=["ug"], hidden=True)
+    async def user_growth(self, ctx):
+
+        user_growth = await self.bot.db.fetch("SELECT * FROM user_growth ORDER BY count LIMIT 15")
+
+        # Start timer.
+        start = time.perf_counter()
+        # Create the image.
+        pie_chart = imaging.do_plot("User growth", "Datetime", "Users", [record["count"] for record in user_growth], [record["date"] for record in user_growth])
+        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=pie_chart))
+        # End timer and log how long operation took.
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
+    @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
+    async def guild_growth(self, ctx):
+
+        user_growth = await self.bot.db.fetch("SELECT * FROM guild_growth ORDER BY count LIMIT 15")
+
+        # Start timer.
+        start = time.perf_counter()
+        # Create the image.
+        pie_chart = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["count"] for record in user_growth], [record["date"] for record in user_growth])
+        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=pie_chart))
+        # End timer and log how long operation took.
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
     @commands.command(name="guilds", hidden=True)
