@@ -1,34 +1,13 @@
 from io import BytesIO
 
 import matplotlib.pyplot as plt
-from PIL import ImageDraw, Image
+from PIL import Image
 
 
 async def get_image(bot, url):
     async with bot.session.get(url) as response:
         image_bytes = await response.read()
     return image_bytes
-
-def round_image(image, rad):
-    circle = Image.new("L", (rad * 2, rad * 2))
-    draw = ImageDraw.Draw(circle)
-    draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
-    alpha = Image.new("L", image.size, 255)
-    w, h = image.size
-    alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
-    alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
-    alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
-    alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
-    image.putalpha(alpha)
-    return image
-
-def resize_image(image_bytes, height, width):
-    image = Image.open(BytesIO(image_bytes))
-    img_width, img_height = image.size
-    if img_height == height and img_width == width:
-        return image
-    image = image.resize([height, width])
-    return image
 
 def colour(image_bytes, image_colour):
 
@@ -102,3 +81,61 @@ def do_pie_chart(values, names):
     # Return image
     pie_chart.seek(0)
     return pie_chart
+
+def do_bar_chart(title, x_label, y_label, values, names):
+
+    # Clear the plot.
+    plt.clf()
+
+    #Create a bar graph with grid lines
+    plt.bar(names, values, width=0.5, zorder=1)
+    plt.grid(zorder=0)
+
+    # Add labels
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    plt.title(title)
+
+    # Rotate x-labels by 90 degrees
+    plt.xticks(rotation=90)
+
+    # Save the image to a buffer.
+    bar_chart = BytesIO()
+    plt.savefig(bar_chart, bbox_inches="tight")
+
+    # Close the image.
+    plt.close()
+
+    # Return image
+    bar_chart.seek(0)
+    return bar_chart
+
+def do_plot(title, x_label, y_label, values, names):
+
+    # Clear the current figure
+    plt.clf()
+
+    # Create a plot and add grid lines.
+    plt.plot(names, values, zorder=1)
+    plt.grid(zorder=0)
+
+    # Add text labels
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    plt.title(title)
+
+    # Rotate x-labels by 90 degrees
+    plt.xticks(rotation=90)
+
+    # Save the image to a buffer.
+    plot = BytesIO()
+    plt.savefig(plot, bbox_inches="tight")
+
+    # Close the image.
+    plt.close()
+
+    # Return image
+    plot.seek(0)
+    return plot
+
+
