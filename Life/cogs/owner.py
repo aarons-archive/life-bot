@@ -15,6 +15,26 @@ class Owner(commands.Cog):
         self.bot = bot
 
     @commands.is_owner()
+    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
+    async def socket_stats(self, ctx):
+
+        # Get the total amount of socket events.
+        total = sum(self.bot.socket_stats.values())
+        # Get the bots uptime in seconds.
+        uptime = round(time.time() - self.bot.start_time)
+
+        # Loop through the socketstats and create a message for it.
+        socket_stats = ""
+        for event, count in self.bot.socket_stats.items():
+            socket_stats += f"{event}:{' ' * int(27 - len(str(event)))}{count}\n"
+
+        # Send a message with the socket stats.
+        return await ctx.send(f"```\n"
+                              f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
+                              f"{socket_stats}\n"
+                              f"```")
+
+    @commands.is_owner()
     @commands.command(name="usage", hidden=True)
     async def usage(self, ctx, display: str = None):
         """
@@ -25,7 +45,7 @@ class Owner(commands.Cog):
         if not self.bot.usage:
             return await ctx.send("No usage of commands yet.")
 
-        # Get the total usage of all commands.
+        # Get the total usage of all commands in all guilds.
         total_usage = {}
         for guild_usage in self.bot.usage.values():
             for command, usage in guild_usage.items():
@@ -40,7 +60,6 @@ class Owner(commands.Cog):
 
             # Define a list to store embeds in.
             embeds = []
-
             # Add a total usage embed.
             embed = discord.Embed(
                 colour=discord.Color.gold(),
@@ -95,38 +114,44 @@ class Owner(commands.Cog):
             # Start timer.
             start = time.perf_counter()
             # Create the image.
-            pie_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
-            await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=pie_chart))
+            bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
+            await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=bar_chart))
             # End timer and log how long operation took.
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
-    async def user_growth(self, ctx):
+    async def user_growth(self, ctx, history: int = None):
 
-        user_growth = await self.bot.db.fetch("SELECT * FROM user_growth ORDER BY count LIMIT 15")
+        if history is None:
+            history = 15
+
+        user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
         # Start timer.
         start = time.perf_counter()
         # Create the image.
-        pie_chart = imaging.do_plot("User growth", "Datetime", "Users", [record["count"] for record in user_growth], [record["date"] for record in user_growth])
-        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=pie_chart))
+        plot = imaging.do_plot("User growth", "Datetime", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
+        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
         # End timer and log how long operation took.
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
     @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
-    async def guild_growth(self, ctx):
+    async def guild_growth(self, ctx, history: int = None):
 
-        user_growth = await self.bot.db.fetch("SELECT * FROM guild_growth ORDER BY count LIMIT 15")
+        if history is None:
+            history = 15
+
+        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
         # Start timer.
         start = time.perf_counter()
         # Create the image.
-        pie_chart = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["count"] for record in user_growth], [record["date"] for record in user_growth])
-        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=pie_chart))
+        plot = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
+        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
         # End timer and log how long operation took.
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
@@ -143,11 +168,12 @@ class Owner(commands.Cog):
 
         # Loop through all bots guilds and create an embed for each one.
         for guild in self.bot.guilds:
-            online, offline, idle, dnd = utils.guild_user_status(guild)
+            online, idle, dnd, offline = utils.guild_user_status(guild)
             embed = discord.Embed(
                 colour=discord.Color.gold(),
                 title=f"{guild.name}'s Stats and Information."
             )
+            embed.set_thumbnail(url=guild.icon_url)
             embed.set_footer(text=f"ID: {guild.id}")
             embed.add_field(name="__**General information:**__", value=f"**Owner:** {guild.owner}\n"
                                                                        f"**Server created at:** {guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
@@ -165,7 +191,6 @@ class Owner(commands.Cog):
                                                             f"**Voice region:** {utils.guild_region(guild)}\n"
                                                             f"**AFK timeout:** {int(guild.afk_timeout / 60)} minutes\n"
                                                             f"**AFK channel:** {guild.afk_channel}\n", inline=False)
-            embed.set_thumbnail(url=guild.icon_url)
 
             # Append the embed to the list of embeds.
             embeds.append(embed)

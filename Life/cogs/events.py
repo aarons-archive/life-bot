@@ -152,6 +152,10 @@ class Events(commands.Cog):
         # Log the guild that was left.
         print(f"\n[BOT] Left a guild - {guild.name}")
 
+    @commands.Cog.listener()
+    async def on_socket_response(self, msg):
+        self.bot.socket_stats[msg.get('t')] += 1
+
 
 def setup(bot):
     bot.add_cog(Events(bot))

@@ -1,17 +1,17 @@
 import asyncio
-import time
-import os
+import collections
 import json
+import os
+import time
 
-from discord.ext import commands
 import aiohttp
 import asyncpg
-import psutil
 import config
+import psutil
+from discord.ext import commands
 
-from Life.Life.cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 from Life.Life.cogs.music.player import Player
-
+from Life.Life.cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -50,6 +50,7 @@ class Life(commands.Bot):
         self.user_blacklist = []
         self.guild_blacklist = []
 
+        self.socket_stats = collections.Counter()
         self.usage = {}
 
         for extension in EXTENSIONS:
