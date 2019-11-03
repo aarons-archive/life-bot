@@ -1,6 +1,7 @@
 import asyncio
 import time
 import os
+import json
 
 from discord.ext import commands
 import aiohttp
@@ -8,12 +9,8 @@ import asyncpg
 import psutil
 import config
 
-# noinspection PyUnresolvedReferences
-from cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
-# noinspection PyUnresolvedReferences
-from cogs.rpg.managers import AccountManager
-# noinspection PyUnresolvedReferences
-from cogs.music.player import Player
+from Life.Life.cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
+from Life.Life.cogs.music.player import Player
 
 
 os.environ["JISHAKU_HIDE"] = "True"
@@ -42,8 +39,6 @@ class Life(commands.Bot):
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession()
 
-        self.account_manager = AccountManager(self)
-
         self.config = config
         self.start_time = time.time()
         self.process = psutil.Process()
@@ -54,10 +49,8 @@ class Life(commands.Bot):
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
-        self.usage = {}
-        self.total_usage = {}
 
-        self.accounts = {}
+        self.usage = {}
 
         for extension in EXTENSIONS:
             try:
@@ -86,6 +79,23 @@ class Life(commands.Bot):
 
             # Tell the bot that the databse is ready.
             self.db_ready = True
+
+            # Fetch command usage from database.
+            usage = await self.db.fetch("SELECT * FROM bot_usage")
+
+            # Add the usage of each guild to the bots usage.
+            for guild in usage:
+                self.usage[guild["id"]] = json.loads(guild["usage"])
+
+            # Fetch user/guild blacklists.
+            blacklisted_users = await self.db.fetch("SELECT * FROM user_blacklist")
+            blacklisted_guilds = await self.db.fetch("SELECT * FROM guild_blacklist")
+
+            # Append blacklisted users and guilds to the respective blacklists.
+            for user in range(len(blacklisted_users)):
+                self.user_blacklist.append(int(blacklisted_users[user]["id"]))
+            for user in range(len(blacklisted_guilds)):
+                self.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
 
         # Accept any exceptions we might find.
         except ConnectionRefusedError:

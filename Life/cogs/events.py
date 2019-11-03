@@ -17,19 +17,6 @@ class Events(commands.Cog):
 
         print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}\n")
 
-        # Fetch players from the database, and cache them.
-        await self.bot.account_manager.cache_all_accounts()
-
-        # Fetch user/guild blacklists.
-        blacklisted_users = await self.bot.db.fetch("SELECT * FROM user_blacklist")
-        blacklisted_guilds = await self.bot.db.fetch("SELECT * FROM guild_blacklist")
-
-        # Append blacklisted users and guilds to the respective blacklists.
-        for user in range(len(blacklisted_users)):
-            self.bot.user_blacklist.append(int(blacklisted_users[user]["id"]))
-        for user in range(len(blacklisted_guilds)):
-            self.bot.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
-
         # Loop through the bots guilds.
         for guild in self.bot.guilds:
             # Check if the guild is in the blacklist.
@@ -80,8 +67,6 @@ class Events(commands.Cog):
         else:
             command = f"{ctx.command.name}"
 
-        # Handle Guild usage stats.
-
         # If the guild id is not already in the bots usage dict, add it.
         if ctx.guild.id not in self.bot.usage:
             self.bot.usage[ctx.guild.id] = {}
@@ -91,13 +76,6 @@ class Events(commands.Cog):
         # Otherwise increment the command usage by 1.
         else:
             self.bot.usage[ctx.guild.id][command] += 1
-
-        # Handle Total usage stats.
-        if command not in self.bot.total_usage:
-            self.bot.total_usage[command] = 1
-        else:
-            self.bot.total_usage[command] += 1
-
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
