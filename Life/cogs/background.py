@@ -43,8 +43,7 @@ class Background(commands.Cog):
     @tasks.loop(hours=1.0)
     async def store_bot_growth(self):
         try:
-            await self.bot.db.execute(f"INSERT INTO user_growth VALUES ($1, $2)", datetime.today().strftime('%Y-%m-%d: %H:00'), len(self.bot.users))
-            await self.bot.db.execute(f"INSERT INTO guild_growth VALUES ($1, $2)", datetime.today().strftime('%Y-%m-%d: %H:00'), len(self.bot.guilds))
+            await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.today().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
         except asyncpg.UniqueViolationError:
             pass
 
