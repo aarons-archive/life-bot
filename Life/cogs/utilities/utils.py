@@ -21,13 +21,15 @@ def linecount():
                 file_amount += 1
                 with codecs.open("./" + str(pathlib.PurePath(path, name)), "r", "utf-8") as f:
                     for i, l in enumerate(f):
-                        if l.strip().startswith("#"):
-                            comments += 1
-                        if l.strip().startswith("async def") or l.strip().startswith("async"):
-                            functions += 1
                         if len(l.strip()) == 0:
                             continue
-                        lines += 1
+                        elif l.strip().startswith("#"):
+                            comments += 1
+                        elif l.strip().startswith("async def") or l.strip().startswith("async"):
+                            functions += 1
+                            lines += 1
+                        else:
+                            lines += 1
     return file_amount, functions, comments, lines
 
 async def ping(bot, ctx):
