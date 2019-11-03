@@ -1,4 +1,5 @@
 from io import BytesIO
+import math
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -88,7 +89,7 @@ def do_bar_chart(title, x_label, y_label, values, names):
     plt.clf()
 
     #Create a bar graph with grid lines
-    plt.bar(names, values, width=0.5, zorder=1)
+    plt.bar(names, values, width=0.5, zorder=3)
     plt.grid(zorder=0)
 
     # Add labels
@@ -97,11 +98,14 @@ def do_bar_chart(title, x_label, y_label, values, names):
     plt.title(title)
 
     # Rotate x-labels by 90 degrees
-    plt.xticks(rotation=90)
+    plt.xticks(rotation=-90)
+
+    # Make the layout of plot conform to the text
+    plt.tight_layout()
 
     # Save the image to a buffer.
     bar_chart = BytesIO()
-    plt.savefig(bar_chart, bbox_inches="tight")
+    plt.savefig(bar_chart)
 
     # Close the image.
     plt.close()
@@ -116,7 +120,7 @@ def do_plot(title, x_label, y_label, values, names):
     plt.clf()
 
     # Create a plot and add grid lines.
-    plt.plot(names, values, zorder=1)
+    plt.plot(names, values, zorder=3)
     plt.grid(zorder=0)
 
     # Add text labels
@@ -125,11 +129,14 @@ def do_plot(title, x_label, y_label, values, names):
     plt.title(title)
 
     # Rotate x-labels by 90 degrees
-    plt.xticks(rotation=90)
+    plt.xticks(rotation=-90)
+
+    # Make the layout of plot conform to the text
+    plt.tight_layout()
 
     # Save the image to a buffer.
     plot = BytesIO()
-    plt.savefig(plot, bbox_inches="tight")
+    plt.savefig(plot)
 
     # Close the image.
     plt.close()
