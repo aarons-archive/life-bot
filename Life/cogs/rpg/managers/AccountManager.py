@@ -31,6 +31,26 @@ class AccountManager:
             # Add the account to the cache.
             self.bot.accounts[account.id] = account
 
+    def get_account(self, account_id):
+        try:
+            # Get account from local cache.
+            return self.bot.accounts.get(account_id)
+        except ValueError:
+            # Return none if no account was found.
+            return None
+
+    async def fetch_account(self, account_id):
+        try:
+            # Fetch user from database.
+            account = await self.bot.db.fetch("SELECT * FROM accounts where id = $1", account_id)
+            items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
+            # Return an account object.
+            return Account(dict(account[0]), items)
+
+        except ValueError:
+            # Return None if no account was found.
+            return None
+
     async def create_account(self, ctx, user_id):
         try:
             # Add the account to the database.
@@ -56,23 +76,3 @@ class AccountManager:
         await self.bot.db.execute(f"DELETE FROM accounts WHERE id = $1", user_id)
         self.bot.accounts.pop(user_id, None)
         await ctx.send("Deleted your account.")
-
-    def get_account(self, account_id):
-        try:
-            # Get account from local cache.
-            return self.bot.accounts.get(account_id)
-        except ValueError:
-            # Return none if no account was found.
-            return None
-
-    async def fetch_account(self, account_id):
-        try:
-            # Fetch user from database.
-            account = await self.bot.db.fetch("SELECT * FROM accounts where id = $1", account_id)
-            items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
-            # Return an account object.
-            return Account(dict(account[0]), items)
-
-        except ValueError:
-            # Return None if no account was found.
-            return None

@@ -1,9 +1,9 @@
-from .PrimaryWeapons import *
-from .SecondaryWeapons import *
-from .PowerWeapons import *
-from .Helmets import *
-from .Cloaks import *
-from .Boots import *
+from .objects.PrimaryWeapons import *
+from .objects.SecondaryWeapons import *
+from .objects.PowerWeapons import *
+from .objects.Helmets import *
+from .objects.Cloaks import *
+from .objects.Boots import *
 
 items = {
     1: Glock19,
@@ -25,14 +25,13 @@ class Items:
         return item_object(item)
 
 
-class Inventory:
+class InventoryManager:
 
     def __init__(self, raw_inventory):
 
         self.item_manager = Items()
 
-        self.raw_inventory = raw_inventory
-        self.inventory = [self.item_manager.get_item(dict(item)) for item in self.raw_inventory]
+        self.inventory = {}
 
     def get_item_slot(self, item_slot):
         items_of_slot = [item for item in self.inventory if item.slot == item_slot]
