@@ -13,6 +13,7 @@ class Owner(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.bot.socket_stats = collections.Counter()
 
     @commands.is_owner()
     @commands.command(name="usage", hidden=True)
@@ -81,7 +82,7 @@ class Owner(commands.Cog):
 
             # Start timer.
             start = time.perf_counter()
-            # Create the image.
+            # Create the image and send it.
             pie_chart = imaging.do_pie_chart([v for v in total_usage.values()], [k for k in total_usage.keys()])
             await ctx.send(file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
             # End timer and log how long operation took.
@@ -93,7 +94,7 @@ class Owner(commands.Cog):
 
             # Start timer.
             start = time.perf_counter()
-            # Create the image.
+            # Create the image and send it.
             bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
             await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=bar_chart))
             # End timer and log how long operation took.
@@ -111,7 +112,7 @@ class Owner(commands.Cog):
 
         # Start timer.
         start = time.perf_counter()
-        # Create the image.
+        # Create the image and send it.
         plot = imaging.do_plot("User growth", "Datetime", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
         await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
         # End timer and log how long operation took.
@@ -129,7 +130,7 @@ class Owner(commands.Cog):
 
         # Start timer.
         start = time.perf_counter()
-        # Create the image.
+        # Create the image and send it.
         plot = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
         await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
         # End timer and log how long operation took.
@@ -234,7 +235,7 @@ class Owner(commands.Cog):
                               f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
                               f"{socket_stats}\n"
                               f"```")
-    
+
     @commands.is_owner()
     @commands.group(name="blacklist", hidden=True, invoke_without_command=True)
     async def blacklist(self, ctx):

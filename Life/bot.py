@@ -50,7 +50,6 @@ class Life(commands.Bot):
         self.user_blacklist = []
         self.guild_blacklist = []
 
-        self.socket_stats = collections.Counter()
         self.usage = {}
 
         for extension in EXTENSIONS:
