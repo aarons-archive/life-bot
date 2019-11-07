@@ -110,6 +110,9 @@ class Owner(commands.Cog):
 
         user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
+        if not user_growth:
+            return await ctx.send("No growth data.")
+
         # Start timer.
         start = time.perf_counter()
         # Create the image and send it.
@@ -127,6 +130,9 @@ class Owner(commands.Cog):
             history = 15
 
         guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
+
+        if not guild_growth:
+            return await ctx.send("No growth data.")
 
         # Start timer.
         start = time.perf_counter()
