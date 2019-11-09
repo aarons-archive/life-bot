@@ -19,7 +19,9 @@ class Owner(commands.Cog):
     @commands.command(name="usage", hidden=True)
     async def usage(self, ctx, display: str = None):
         """
-        Show command usage/message stats.
+        Show total command usage per guild.
+
+        `display`: Can be "pie/piechart" or "bar/barchart", produces an image of their repective charts.
         """
 
         # If no stats have been collected yet.
@@ -103,7 +105,12 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
-    async def user_growth(self, ctx, history: int = None):
+    async def user_growth(self, ctx, history: int = 15):
+        """
+        Show user count over the past 15 (by default) hours.
+
+        `history`: The amount of hours to get the history of.
+        """
 
         if history is None:
             history = 15
@@ -124,10 +131,12 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
-    async def guild_growth(self, ctx, history: int = None):
+    async def guild_growth(self, ctx, history: int = 15):
+        """
+        Show guild count over the past 15 (by default) hours.
 
-        if history is None:
-            history = 15
+        `history`: The amount of hours to get the history of.
+        """
 
         guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
@@ -144,10 +153,47 @@ class Owner(commands.Cog):
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
+    @commands.command(name="farms", hidden=True)
+    async def farms(self, ctx, guilds_per_page = 20):
+        """
+        Display how many bots/humans there are in each of the bots guilds.
+
+        `guilds_per_page`: How many guilds to show per page.
+        """
+
+        # Define a key to sort guilds by.
+        def key(e):
+            return sum([m.bot for m in e.members])
+
+        # Define a list of entries to paginate through.
+        entries = []
+
+        # Set a title for the paginator.
+        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
+
+        # Loop through all the guilds the bot can see.
+        for guild in sorted(self.bot.guilds, key=key, reverse=True):
+
+            # Count how many members are bot/humans.
+            bots = sum(1 for m in guild.members if m.bot)
+            humans = sum(1 for m in guild.members if not m.bot)
+            total = guild.member_count
+            percent = f"{round((bots / total) * 100, 2)}%"
+
+            # Create a message with the current guilds information.
+            message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
+
+            # Append the message to the list of entries.
+            entries.append(message)
+
+        # Paginate the entries.
+        return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
+
+    @commands.is_owner()
     @commands.command(name="guilds", hidden=True)
     async def guilds(self, ctx):
         """
-        Display information about all the different guilds the bot is in.
+        Display information about each guild the bot is in.
         """
 
         # Define a list for all the embeds.
@@ -186,45 +232,11 @@ class Owner(commands.Cog):
         return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
-    @commands.command(name="farms", hidden=True)
-    async def farms(self, ctx, guilds_per_page=15):
-        """
-        Display how many bots/humans there are in each guild the bot can see.
-
-        `guilds_per_page`: How many guilds to show per page, this is to reduce spam.
-        """
-
-        # Define a key to sort guilds by.
-        def key(e):
-            return sum([m.bot for m in e.members])
-
-        # Define a list of entries to paginate through.
-        entries = []
-
-        # Set a title for the paginator.
-        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
-
-        # Loop through all the guilds the bot can see.
-        for guild in sorted(self.bot.guilds, key=key, reverse=True):
-
-            # Count how many members are bot/humans.
-            bots = sum(1 for m in guild.members if m.bot)
-            humans = sum(1 for m in guild.members if not m.bot)
-            total = guild.member_count
-            percent = f"{round((bots / total) * 100, 2)}%"
-
-            # Create a message with the current guilds information.
-            message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
-
-            # Append the message to the list of entries.
-            entries.append(message)
-
-        # Paginate the entries.
-        return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
-
-    @commands.is_owner()
     @commands.command(name="socketstats", aliases=["ss"], hidden=True)
     async def socket_stats(self, ctx):
+        """
+        Get the total amount of each socket event.
+        """
 
         # Get the total amount of socket events.
         total = sum(self.bot.socket_stats.values())
@@ -248,7 +260,8 @@ class Owner(commands.Cog):
         """
         Base command for blacklisting.
         """
-        return await ctx.send("Please choose a valid subcommand.")
+
+        return await ctx.send("Please choose a valid subcommand. See `l-help blacklist` for more information.")
 
     @commands.is_owner()
     @blacklist.group(name="user", invoke_without_command=True)
@@ -256,6 +269,7 @@ class Owner(commands.Cog):
         """
         Display a list of all blacklisted users.
         """
+
         # Define a list for all blacklisted users.
         blacklisted = []
 
@@ -281,11 +295,12 @@ class Owner(commands.Cog):
     @blacklist_user.command(name="add")
     async def blacklist_user_add(self, ctx, user: int = None, *, reason=None):
         """
-        Add a user to the user blacklist.
+        Add a user to the blacklist.
 
         `user`: The users id.
         `reason`: Why the user is blacklisted.
         """
+
         # If the user doesnt specify a reason, add one.
         if not reason:
             reason = "No reason"
@@ -313,7 +328,7 @@ class Owner(commands.Cog):
     @blacklist_user.command(name="remove")
     async def blacklist_user_remove(self, ctx, user: int = None):
         """
-        Remove a user from the user blacklist.
+        Remove a user from the blacklist.
 
         `user`: The users id.
         """
@@ -337,6 +352,7 @@ class Owner(commands.Cog):
         """
         Display a list of all blacklisted guilds.
         """
+
         # Define a list of blacklisted guilds.
         blacklisted = []
 
@@ -357,11 +373,12 @@ class Owner(commands.Cog):
     @blacklist_guild.command(name="add")
     async def blacklist_guild_add(self, ctx, guild: int = None, *, reason=None):
         """
-        Add a guild to the guild blacklist.
+        Add a guild to the blacklist.
 
         `user`: The guilds id.
         `reason`: Why the guild is blacklisted.
         """
+
         # If the user doesnt specify a reason, add one.
         if not reason:
             reason = "No reason"
@@ -396,10 +413,11 @@ class Owner(commands.Cog):
     @blacklist_guild.command(name="remove")
     async def blacklist_guild_remove(self, ctx, guild: int = None):
         """
-        Remove a guild from the guild blacklist.
+        Remove a guild from the blacklist.
 
         `user`: The guilds id.
         """
+
         # If the user doesn't specify a guild to unblacklist.
         if not guild:
             return await ctx.send("You must specify a user id.")
