@@ -106,9 +106,11 @@ def do_bar_chart(title, x_label, y_label, values, names):
     min_value = min(values)
     total_values = len(values)
 
-    steps = math.ceil(((max_value - min_value) / total_values))
+    steps = math.ceil((((max_value - min_value) + 1) / total_values))
 
-    plt.yticks(numpy.arange(min_value, max_value, steps))
+    y_ticks = numpy.arange(min_value, max_value + steps, steps)
+
+    plt.yticks(y_ticks, y_ticks)
 
     # Make the layout of plot conform to the text
     plt.tight_layout()
@@ -142,13 +144,15 @@ def do_plot(title, x_label, y_label, values, names):
     plt.xticks(rotation=-90)
 
     # Create yticks values
-    max_value = max(values) + 1
+    max_value = max(values)
     min_value = min(values)
     total_values = len(values)
 
-    steps = math.ceil(((max_value - min_value) / total_values))
+    steps = math.ceil((((max_value - min_value) + 1) / total_values))
 
-    plt.yticks(numpy.arange(min_value, max_value, steps))
+    y_ticks = numpy.arange(min_value, max_value + steps, steps)
+
+    plt.yticks(y_ticks, y_ticks)
 
     # Make the layout of plot conform to the text
     plt.tight_layout()
