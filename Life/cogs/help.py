@@ -11,9 +11,9 @@ class HelpCommand(commands.HelpCommand):
                     "**'A' or 'B'.**\n**[arguement...]** means you can have **multiple arguements.** "
         })
 
-    def get_full_command(self, command):
+    def get_full_command(self, command, aliases=True):
         parent = command.full_parent_name
-        if len(command.aliases) > 0:
+        if len(command.aliases) > 0 and aliases == True:
             aliases = "/".join(command.aliases)
             command_name = f"{command.name}/{aliases}"
             if parent:
@@ -63,6 +63,32 @@ class HelpCommand(commands.HelpCommand):
         # Send the embed.
         return await ctx.send(embed=embed)
 
+    def formatter(self, command_list, level=0, groups=True, group_levels=10, aliases=True):
+        for command in command_list:
+
+            # Get the commands full name.
+            command_name = self.get_full_command(command, aliases=aliases)
+
+            # If the command has a help, get the first line of it.
+            if command.help:
+                command_help = command.help.strip().split("\n")[0]
+            # Else, say no help found for this command.
+            else:
+                command_help = "No help provided for this command."
+
+            # Return the command name and help.
+            indent = ""
+            arrow = ""
+            if level > 1:
+                indent = "\u200b " * level * 2
+            if level > 0:
+                arrow = "`╚╡`"
+
+            yield f"{indent}{arrow}**{command_name}** - {command_help}"
+
+            if isinstance(command, commands.Group) and groups == True and level < group_levels:
+                yield from self.formatter(command.commands, level=level+1)
+
     async def send_cog_help(self, cog):
         # Get the current context.
         ctx = self.context
@@ -71,7 +97,7 @@ class HelpCommand(commands.HelpCommand):
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"__{cog.qualified_name} cog help page__",
-            description=f"Use `{ctx.prefix}help [command]` for more info on a command.\n\n"
+            description=""
         )
 
         # If the author is a bot owner, fetch all commands.
@@ -85,22 +111,19 @@ class HelpCommand(commands.HelpCommand):
         if len(cog_commands) == 0:
             return await ctx.send("This cog has no commands. This could be because they are hidden, or there are just no commands.")
 
-        for command in cog_commands:
-            command_name = self.get_full_command(command)
-            if command.help:
-                command_help = command.help.strip().split("\n")[0]
-            else:
-                command_help = "No help provided for this command."
-            embed.description += f"**{command_name}** - {command_help}\n"
-            if isinstance(command, commands.Group):
-                for group_command in command.commands:
-                    group_command_name = self.get_full_command(group_command)
-                    if group_command.help:
-                        group_command_help = group_command.help.strip().split("\n")[0]
-                    else:
-                        group_command_help = "No help provided for this command."
-                    embed.description += f"`⮡\u200b` **{group_command_name}** - {group_command_help}\n"
-        return await ctx.send(embed=embed)
+        # Try to add all command and sumcommands to the description.
+        embed.description += "\n".join(self.formatter(cog_commands, aliases=False))
+
+        # If this make the description over 2000 chars long, only allow 1 level of subcommands.
+        if len(embed.description) >= 2048:
+            embed.description = f"Use `{ctx.prefix}help [command]` for more info on a command.\n\n"
+            embed.description += "\n".join(self.formatter(cog_commands, aliases=False, group_levels=1))
+        if len(embed.description) >= 2048:
+            embed.description = f"Use `{ctx.prefix}help [command]` for more info on a command.\n\n"
+            embed.description += "\n".join(self.formatter(cog_commands, aliases=False, groups=False))
+
+        await ctx.send(embed=embed)
+
 
     async def send_command_help(self, command):
         # Get the ctx.
