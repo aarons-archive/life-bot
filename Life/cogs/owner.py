@@ -163,7 +163,10 @@ class Owner(commands.Cog):
 
         # Define a key to sort guilds by.
         def key(e):
-            return sum([m.bot for m in e.members])
+
+            guild_bots = sum(1 for m in e.members if m.bot)
+            guild_total = e.member_count
+            return round((guild_bots / guild_total) * 100, 2)
 
         # Define a list of entries to paginate through.
         entries = []
