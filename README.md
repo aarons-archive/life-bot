@@ -34,7 +34,7 @@ DB_CONN_INFO = {
 }
 
 NODES = {"node_name": {"ip": "node_ip",
-                       "port": node_port,
+                       "port": "node_port",
                        "rest_uri": "node_url",
                        "password": "node_password",
                        "identifier": "node_custom_identifier",
