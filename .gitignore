@@ -1,6 +1,4 @@
 *.pyc
 *.png
-*.mp3
-*.webm
 *.ini
 Life/config.py
