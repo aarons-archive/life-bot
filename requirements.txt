@@ -1,7 +1,7 @@
 Pillow==6.2.1
-asyncpg==0.19.0
-discord.py==1.2.4
-jishaku==1.16.6.163
-psutil==5.6.3
+asyncpg==0.20.0
+discord.py==1.2.5
+jishaku==1.17.0.169
+psutil==5.6.6
 granitepy==0.0.20a0
 matplotlib==3.2.0rc1
