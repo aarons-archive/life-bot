@@ -10,7 +10,7 @@ import psutil
 from discord.ext import commands
 
 from Life.Life.cogs.music.player import Player
-from Life.Life.cogs.utilities.paginators import CodeblockPaginator, Paginator, EmbedPaginator, EmbedsPaginator
+from Life.Life.cogs.utilities.paginators import Paginator, CodeBlockPaginator, EmbedPaginator, EmbedsPaginator
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -24,7 +24,7 @@ EXTENSIONS = [
     "cogs.background",
     "cogs.events",
     "cogs.music.music",
-    "cogs.rpg.accounts"
+    #"cogs.rpg.accounts",
 ]
 
 
@@ -115,73 +115,61 @@ class Life(commands.Bot):
         # Set custom owner ids.
         return user.id in self.owner_ids
 
+    async def on_message(self, message):
+
+        if message.author.bot:
+            return
+
+        ctx = await self.get_context(message)
+
+        if ctx.command:
+            if message.author.id in self.user_blacklist:
+                return await message.channel.send(f"Sorry, you are blacklisted.")
+            await self.process_commands(message)
+
+    async def on_message_edit(self, before, after):
+
+        # If the edited message is not embedded or pinned, process it, this allows for users to edit commands.
+        if not after.embeds and not after.pinned and not before.pinned and not before.embeds:
+
+            # Get the context of the message.
+            ctx = await self.get_context(after)
+
+            # If the message was a command.
+            if ctx.command:
+                # And the author is in the user blacklist, dont process the command.
+                if after.author.id in self.user_blacklist:
+                    return await after.channel.send(f"Sorry, you are blacklisted.")
+                # Otherwise, process the message.
+                await self.process_commands(after)
+
     async def get_context(self, message, *, cls=None):
         return await super().get_context(message, cls=MyContext)
-
 
 class MyContext(commands.Context):
 
     @property
     def player(self):
-        # Get the current guilds player.
-        return self.bot.andesite.get_player(self.guild.id, cls=Player)
+        return self.bot.granitepy.get_player(self.guild.id, cls=Player)
 
     async def paginate(self, **kwargs):
-        # Get the aruguements.
-        title = kwargs.get("title")
-        entries = kwargs.get("entries")
-        entries_per_page = kwargs.get("entries_per_page")
 
-        # Start pagination
-        paginator = Paginator(
-            ctx=self,
-            title=title,
-            entries=entries,
-            entries_per_page=entries_per_page,
-            total_entries=len(entries))
+        paginator = Paginator(ctx=self, **kwargs)
         return await paginator.paginate()
 
     async def paginate_embed(self, **kwargs):
-        # Get the aruguements.
-        title = kwargs.get("title")
-        entries = kwargs.get("entries")
-        entries_per_page = kwargs.get("entries_per_page")
-        footer = kwargs.get("footer")
-        colour = kwargs.get("colour")
 
-        # Start pagination
-        paginator = EmbedPaginator(
-            ctx=self,
-            title=title,
-            footer=footer,
-            entries=entries,
-            colour=colour,
-            entries_per_page=entries_per_page,
-            total_entries=len(entries))
+        paginator = EmbedPaginator(ctx=self, **kwargs)
         return await paginator.paginate()
 
     async def paginate_codeblock(self, **kwargs):
-        # Get the aruguements.
-        title = kwargs.get("title")
-        entries = kwargs.get("entries")
-        entries_per_page = kwargs.get("entries_per_page")
 
-        # Start pagination
-        paginator = CodeblockPaginator(
-            ctx=self,
-            title=title,
-            entries=entries,
-            entries_per_page=entries_per_page,
-            total_entries=len(entries))
-        return await paginator.paginate()
+        paginator = CodeBlockPaginator(ctx=self, **kwargs)
+        await paginator.paginate()
 
     async def paginate_embeds(self, **kwargs):
-        # Get the aruguements.
-        entries = kwargs.get("entries")
 
-        paginator = EmbedsPaginator(ctx=self, entries=entries)
-
-        # Start pagination
+        paginator = EmbedsPaginator(ctx=self, **kwargs)
         return await paginator.paginate()
 
 
