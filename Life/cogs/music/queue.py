@@ -110,7 +110,7 @@ class Queue:
         self._unfinished_tasks += 1
         self._finished.clear()
         self._wakeup_next(self._getters)
-        self.bot.dispatch("queue_add", item)
+        self.bot.dispatch("queue_add")
         return self.queue.append(item)
 
     async def put_pos(self, item, pos):
@@ -136,7 +136,7 @@ class Queue:
         self._unfinished_tasks += 1
         self._finished.clear()
         self._wakeup_next(self._getters)
-        self.bot.dispatch("queue_add", item)
+        self.bot.dispatch("queue_add")
         return self.queue.insert(pos, item)
 
     async def get(self):

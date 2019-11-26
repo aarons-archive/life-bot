@@ -1,6 +1,6 @@
 import traceback
 
-import andesite
+import granitepy
 import discord
 from discord.ext import commands
 
@@ -37,28 +37,7 @@ class Events(commands.Cog):
         print(f"\n[BOT] Disconnected.")
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before, after):
-
-        # If the edited message is not embedded or pinned, process it, this allows for users to edit commands.
-        if not after.embeds and not after.pinned and not before.pinned and not before.embeds:
-
-            # Get the context of the message.
-            ctx = await self.bot.get_context(after)
-
-            # If the message was a command.
-            if ctx.command:
-                # And the author is in the user blacklist, dont process the command.
-                if after.author.id in self.bot.user_blacklist:
-                    return await after.channel.send(f"Sorry, you are blacklisted.")
-                # Otherwise, process the message.
-                await self.bot.process_commands(after)
-
-    @commands.Cog.listener()
     async def on_command(self, ctx):
-
-        # If the author is blacklisted, dont let them use this command.
-        if ctx.author.id in self.bot.user_blacklist:
-            return await ctx.channel.send(f"Sorry, you are blacklisted.")
 
         # Get the commands full name.
         parent = ctx.command.full_parent_name
@@ -107,14 +86,14 @@ class Events(commands.Cog):
         if isinstance(error, commands.NotOwner):
             message = f"The command `{ctx.command}` is owner only."
         if isinstance(error, commands.MissingPermissions):
-            missing_perms = ""
+            missing_perms = ">>> \n"
             for perm in error.missing_perms:
-                missing_perms += f"\n> {perm}"
+                missing_perms += f"{perm}\n"
             message = f"You don't have the following permissions required to run the command `{ctx.command}`.\n{missing_perms}"
         if isinstance(error, commands.BotMissingPermissions):
-            missing_perms = ""
+            missing_perms = ">>> \n"
             for perm in error.missing_perms:
-                missing_perms += f"\n> {perm}"
+                missing_perms += f"{perm}\n"
             message = f"I am missing the following permissions to run the command `{ctx.command}`.\n{missing_perms}"
         if isinstance(error, commands.DisabledCommand):
             message = f"The command `{ctx.command}` is currently disabled."
@@ -125,7 +104,7 @@ class Events(commands.Cog):
                 message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{formatting.get_time_friendly(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
                 message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{formatting.get_time_friendly(error.retry_after)}`."
-        if isinstance(error, andesite.NodesUnavailable):
+        if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
 
         # If an error was caught, send it.

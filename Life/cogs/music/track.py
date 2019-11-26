@@ -1,9 +1,10 @@
-import andesite
+from granitepy import objects
 
-class Track(andesite.Track):
 
-    def __init__(self, id_, info, *, ctx=None):
-        super(Track, self).__init__(id_, info)
+class Track(objects.Track):
+
+    def __init__(self, track, data, *, ctx=None):
+        super(Track, self).__init__(track, data)
 
         # Store the author and channel the track was requested in when playing it.
         self.channel = ctx.channel
