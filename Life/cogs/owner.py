@@ -246,7 +246,7 @@ class Owner(commands.Cog):
         # Loop through the socketstats and create a message for it.
         socket_stats = ""
         for event, count in self.bot.socket_stats.items():
-            socket_stats += f"{event}:{' ' * int(27 - len(str(event)))}{count}\n"
+            socket_stats += f"{event}:{' ' * int(28 - len(str(event)))}{count}\n"
 
         # Send a message with the socket stats.
         return await ctx.send(f"```\n"
@@ -316,7 +316,7 @@ class Owner(commands.Cog):
         try:
             # Fetch the user and add them to the local blacklist and database.
             user = await self.bot.fetch_user(user)
-            self.bot.guild_blacklist.append(user.id)
+            self.bot.user_blacklist.append(user.id)
             await self.bot.db.execute("INSERT INTO user_blacklist (id, reason) VALUES ($1, $2)", user.id, reason)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been blacklisted with reason `{reason}`")
 
@@ -339,7 +339,7 @@ class Owner(commands.Cog):
         try:
             # Fetch the user and remove them from the local blacklist and database.
             user = await self.bot.fetch_user(user)
-            self.bot.guild_blacklist.remove(user.id)
+            self.bot.user_blacklist.remove(user.id)
             await self.bot.db.execute("DELETE FROM user_blacklist WHERE id = $1", user.id)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been unblacklisted.")
         # Accept an error if the user is not blacklisted.
