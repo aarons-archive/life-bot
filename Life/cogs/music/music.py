@@ -1,10 +1,8 @@
-import random
-
 import granitepy
 from discord.ext import commands
 
-from .track import Track
-from ..utilities import formatting
+from cogs.music.track import Track
+from utilities import utils
 
 
 class Music(commands.Cog):
@@ -265,14 +263,14 @@ class Music(commands.Cog):
             return await ctx.send("This track is not seekable.")
 
         if not seconds and not seconds == 0:
-            return await ctx.send(f"The current position is {formatting.get_time(ctx.player.position / 1000)}")
+            return await ctx.send(f"The current position is {utils.format_time(ctx.player.position / 1000)}")
 
         milliseconds = seconds * 1000
         if milliseconds < 0 or milliseconds > ctx.player.current.length:
             return await ctx.send(f"Please enter a value between `1` and `{round(ctx.player.current.length / 1000)}`.")
 
         await ctx.player.seek(milliseconds)
-        return await ctx.send(f"Changed the players position to `{formatting.get_time(milliseconds / 1000)}`.")
+        return await ctx.send(f"Changed the players position to `{utils.format_time(milliseconds / 1000)}`.")
 
     @commands.command(name="queue")
     async def queue(self, ctx):
@@ -285,19 +283,19 @@ class Music(commands.Cog):
             return await ctx.send("The queue is empty.")
 
         title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
-                  f"`{formatting.get_time(round(ctx.player.current.length) / 1000)}` | " \
+                  f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
                   f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
                   f"__**Up next:**__: Showing `10` out of `{ctx.player.queue.size()}` entries in the queue.\n"
 
         entries = []
         for index, track in enumerate(ctx.player.queue.queue):
             entries.append(f"**{index + 1}.** [{str(track.title)}]({track.uri}) | " 
-                           f"`{formatting.get_time(round(track.length) / 1000)}` | " 
+                           f"`{utils.format_time(round(track.length) / 1000)}` | " 
                            f"`Requested by:` {track.requester.mention}\n")
 
         time = sum(track.length for track in ctx.player.queue.queue)
 
-        footer = f"\nThere are `{ctx.player.queue.size()}` tracks in the queue with a total time of `{formatting.get_time(round(time) / 1000)}`"
+        footer = f"\nThere are `{ctx.player.queue.size()}` tracks in the queue with a total time of `{utils.format_time(round(time) / 1000)}`"
 
         return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
 
@@ -317,7 +315,7 @@ class Music(commands.Cog):
         if ctx.player.queue.empty():
             return await ctx.send("The queue is empty.")
 
-        random.shuffle(ctx.player.queue.queue)
+        ctx.player.queue.shuffle()
         return await ctx.send(f"The queue has been shuffled.")
 
     @commands.command(name="clear")
@@ -336,7 +334,7 @@ class Music(commands.Cog):
         if ctx.player.queue.empty():
             return await ctx.send("The queue is empty.")
 
-        ctx.player.queue.queue.clear()
+        ctx.player.queue.clear()
         return await ctx.send(f"Cleared the queue.")
 
     @commands.command(name="reverse")
@@ -355,7 +353,7 @@ class Music(commands.Cog):
         if ctx.player.queue.empty():
             return await ctx.send("The queue is empty.")
 
-        ctx.player.queue.queue.reverse()
+        ctx.player.queue.reverse()
         return await ctx.send(f"Reversed the queue.")
 
     @commands.command(name="loop")

@@ -1,10 +1,10 @@
 import traceback
 
-import granitepy
 import discord
+import granitepy
 from discord.ext import commands
 
-from .utilities import formatting
+from utilities import utils
 
 
 class Events(commands.Cog):
@@ -99,11 +99,11 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is currently disabled."
         if isinstance(error, commands.CommandOnCooldown):
             if error.cooldown.type == commands.BucketType.user:
-                message = f"The command `{ctx.command}` is on cooldown for you, retry in `{formatting.get_time_friendly(error.retry_after)}`."
+                message = f"The command `{ctx.command}` is on cooldown for you, retry in `{utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.default:
-                message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{formatting.get_time_friendly(error.retry_after)}`."
+                message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
-                message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{formatting.get_time_friendly(error.retry_after)}`."
+                message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{utils.format_time(error.retry_after)}`."
         if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
 

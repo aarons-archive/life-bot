@@ -7,31 +7,6 @@ import time
 import discord
 
 
-def random_colour():
-    return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-def linecount():
-    file_amount = 0
-    functions = 0
-    comments = 0
-    lines = 0
-    for path, subdirs, files in os.walk("."):
-        for name in files:
-            if name.endswith(".py"):
-                file_amount += 1
-                with codecs.open("./" + str(pathlib.PurePath(path, name)), "r", "utf-8") as f:
-                    for i, l in enumerate(f):
-                        if len(l.strip()) == 0:
-                            continue
-                        elif l.strip().startswith("#"):
-                            comments += 1
-                        elif l.strip().startswith("async def") or l.strip().startswith("async"):
-                            functions += 1
-                            lines += 1
-                        else:
-                            lines += 1
-    return file_amount, functions, comments, lines
-
 async def ping(bot, ctx):
     # Define variables.
     pings = []
@@ -65,6 +40,53 @@ async def ping(bot, ctx):
 
     # Return values.
     return typingms, latencyms, discordms, averagems
+
+def random_colour():
+    return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+def linecount():
+    file_amount = 0
+    functions = 0
+    comments = 0
+    lines = 0
+    for dirpath, dirname, filename in os.walk("."):
+        python_files = [name for name in filename if name.endswith(".py")]
+        for name in python_files:
+            file_amount += 1
+            with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as f:
+                for index, line in enumerate(f):
+                    if len(line.strip()) == 0:
+                        continue
+                    elif line.strip().startswith("#"):
+                        comments += 1
+                        continue
+                    elif line.strip().startswith(("async", "async def")):
+                        functions += 1
+                        lines += 1
+                        continue
+                    else:
+                        lines += 1
+    return file_amount, functions, comments, lines
+
+def format_time(second):
+    minute, second = divmod(second, 60)
+    hour, minute = divmod(minute, 60)
+    day, hour = divmod(hour, 24)
+    seconds = round(second)
+    minutes = round(minute)
+    hours = round(hour)
+    days = round(day)
+
+    if minutes == 0 and hours == 0 and days == 0:
+        formatted = f"{seconds}s"
+    elif hours == 0 and days == 0:
+        formatted = f"%02d:%02d" % (minutes, seconds)
+    elif days == 0:
+        formatted = f"%02d:%02d:%02d" % (hours, minutes, seconds)
+    else:
+        formatted = f"%02d:%02d:%02d:%02d" % (days, hours, minutes, seconds)
+
+    return formatted
 
 def user_activity(user):
     # If the user is offline they wont have an activity.
@@ -108,13 +130,6 @@ def user_status(user):
         discord.Status.offline: "Offline"
     }
     return status[user.status]
-
-def guild_user_status(guild):
-    online = sum(1 for member in guild.members if member.status == discord.Status.online)
-    idle = sum(1 for member in guild.members if member.status == discord.Status.idle)
-    dnd = sum(1 for member in guild.members if member.status == discord.Status.do_not_disturb)
-    offline = sum(1 for member in guild.members if member.status == discord.Status.offline)
-    return online, idle, dnd, offline
 
 def guild_region(guild):
     regions = {
@@ -163,4 +178,12 @@ def guild_content_filter_level(guild):
         discord.ContentFilter.all_members: "All members - Content filter enabled for all users.",
     }
     return explicit_content_filters[guild.explicit_content_filter]
+
+def guild_user_status(guild):
+    online = sum(1 for member in guild.members if member.status == discord.Status.online)
+    idle = sum(1 for member in guild.members if member.status == discord.Status.idle)
+    dnd = sum(1 for member in guild.members if member.status == discord.Status.do_not_disturb)
+    offline = sum(1 for member in guild.members if member.status == discord.Status.offline)
+    return online, idle, dnd, offline
+
 

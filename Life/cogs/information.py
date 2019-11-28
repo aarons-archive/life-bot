@@ -6,8 +6,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from .utilities import formatting
-from .utilities import utils
+from utilities import utils
 
 
 class Information(commands.Cog):
@@ -33,7 +32,7 @@ class Information(commands.Cog):
         embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s Info")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
         embed.set_footer(text=f"ID: {self.bot.user.id}")
-        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {formatting.get_time_friendly(uptime)}\n"
+        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {utils.format_time(uptime)}\n"
                                                         f"**Total users:** {len(self.bot.users)}\n"
                                                         f"**Guilds:** {len(self.bot.guilds)}\n")
         embed.add_field(name="__**Stats:**__", value=f"**Discord.py Version:** {str(discord.__version__)}\n"

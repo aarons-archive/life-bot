@@ -1,6 +1,4 @@
 from io import BytesIO
-import math
-import numpy
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -101,17 +99,6 @@ def do_bar_chart(title, x_label, y_label, values, names):
     # Rotate x-labels by 90 degrees
     plt.xticks(rotation=-90)
 
-    # Create yticks values
-    max_value = max(values)
-    min_value = min(values)
-    total_values = len(values)
-
-    steps = math.ceil((((max_value - min_value) + 1) / total_values))
-
-    y_ticks = numpy.arange(min_value, max_value + steps, steps)
-
-    plt.yticks(y_ticks, y_ticks)
-
     # Make the layout of plot conform to the text
     plt.tight_layout()
 
@@ -142,17 +129,6 @@ def do_plot(title, x_label, y_label, values, names):
 
     # Rotate x-labels by 90 degrees
     plt.xticks(rotation=-90)
-
-    # Create yticks values
-    max_value = max(values)
-    min_value = min(values)
-    total_values = len(values)
-
-    steps = math.ceil((((max_value - min_value) + 1) / total_values))
-
-    y_ticks = numpy.arange(min_value, max_value + steps, steps)
-
-    plt.yticks(y_ticks, y_ticks)
 
     # Make the layout of plot conform to the text
     plt.tight_layout()

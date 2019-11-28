@@ -5,8 +5,8 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from .utilities import imaging
-from .utilities import utils
+from utilities import imaging
+from utilities import utils
 
 
 class Owner(commands.Cog):
@@ -105,15 +105,12 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
-    async def user_growth(self, ctx, history: int = 15):
+    async def user_growth(self, ctx, history: int = 24):
         """
-        Show user count over the past 15 (by default) hours.
+        Show user count over the past 24 (by default) hours.
 
         `history`: The amount of hours to get the history of.
         """
-
-        if history is None:
-            history = 15
 
         user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
@@ -131,9 +128,9 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
-    async def guild_growth(self, ctx, history: int = 15):
+    async def guild_growth(self, ctx, history: int = 24):
         """
-        Show guild count over the past 15 (by default) hours.
+        Show guild count over the past 24 (by default) hours.
 
         `history`: The amount of hours to get the history of.
         """

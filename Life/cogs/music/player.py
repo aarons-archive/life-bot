@@ -1,10 +1,10 @@
 import asyncio
 
 import discord
-
 import granitepy
-from .queue import Queue
-from ..utilities import formatting
+
+from cogs.music import queue
+from utilities import utils
 
 
 class Player(granitepy.Player):
@@ -14,7 +14,7 @@ class Player(granitepy.Player):
 
         self.bot.loop.create_task(self.player_loop())
 
-        self.queue = Queue(bot)
+        self.queue = queue.Queue(bot)
         self.queue_loop = False
 
     async def player_loop(self):
@@ -76,8 +76,8 @@ class Player(granitepy.Player):
         if self.current.is_stream:
             embed.add_field(name="Time:", value="`Live stream`")
         else:
-            embed.add_field(name="Time:", value=f"`{formatting.get_time(round(self.position) / 1000)}` / "
-                                                f"`{formatting.get_time(self.current.length / 1000)}`")
+            embed.add_field(name="Time:", value=f"`{utils.format_time(round(self.position) / 1000)}` / "
+                                                f"`{utils.format_time(self.current.length / 1000)}`")
         embed.add_field(name="Queue looped:", value=f"`{self.queue_loop}`")
         embed.add_field(name="Queue Length:", value=f"`{str(self.queue.size())}`")
         embed.add_field(name="Requester:", value=self.current.requester.mention)
