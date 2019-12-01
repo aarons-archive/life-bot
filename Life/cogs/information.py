@@ -34,12 +34,14 @@ class Information(commands.Cog):
         embed.set_footer(text=f"ID: {self.bot.user.id}")
         embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {utils.format_time(uptime)}\n"
                                                         f"**Total users:** {len(self.bot.users)}\n"
-                                                        f"**Guilds:** {len(self.bot.guilds)}\n")
+                                                        f"**Guilds:** {len(self.bot.guilds)}")
+        embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**Stats:**__", value=f"**Discord.py Version:** {str(discord.__version__)}\n"
                                                      f"**Commands:** {len(self.bot.commands)}\n"
-                                                     f"**Cogs:** {len(self.bot.cogs)}\n")
+                                                     f"**Cogs:** {len(self.bot.cogs)}")
         embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n**Functions:** {functions}\n"
-                                                    f"**Lines:** {lines}\n**Files:** {files}\n")
+                                                    f"**Lines:** {lines}\n**Files:** {files}")
+        embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
         embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot)** | "
@@ -61,12 +63,14 @@ class Information(commands.Cog):
         embed.add_field(name="__**System CPU:**__", value=f"**Cores:** {psutil.cpu_count()}\n"
                                                           f"**Usage:** {psutil.cpu_percent(interval=0.1)}%\n"
                                                           f"**Frequency:** {round(psutil.cpu_freq().current, 2)} Mhz")
+        embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**System Memory:**__", value=f"**Total:** {round(psutil.virtual_memory().total/1048576)} mb\n"
                                                              f"**Used:** {round(psutil.virtual_memory().used/1048576)} mb\n"
                                                              f"**Available:** {round(psutil.virtual_memory().available/1048576)} mb")
         embed.add_field(name="__**System Disk:**__", value=f"**Total:** {round(psutil.disk_usage('/').total/1073741824, 2)} GB\n"
                                                            f"**Used:** {round(psutil.disk_usage('/').used/1073741824, 2)} GB\n"
                                                            f"**Free:** {round(psutil.disk_usage('/').free/1073741824, 2)} GB")
+        embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**Process information:**__", value=f"**Memory usage:** {round(self.bot.process.memory_full_info().rss/1048576, 2)} mb\n"
                                                                    f"**CPU usage:** {self.bot.process.cpu_percent()}%\n"
                                                                    f"**Threads:** {self.bot.process.num_threads()}")

@@ -27,7 +27,6 @@ EXTENSIONS = [
     #"cogs.rpg.accounts",
 ]
 
-
 class Life(commands.Bot):
 
     def __init__(self):
@@ -137,6 +136,7 @@ class Life(commands.Bot):
 
     async def get_context(self, message, *, cls=None):
         return await super().get_context(message, cls=MyContext)
+
 
 class MyContext(commands.Context):
 
