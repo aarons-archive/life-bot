@@ -24,7 +24,7 @@ EXTENSIONS = [
     "cogs.background",
     "cogs.events",
     "cogs.music.music",
-    #"cogs.rpg.accounts",
+    "cogs.rpg.accounts",
 ]
 
 class Life(commands.Bot):

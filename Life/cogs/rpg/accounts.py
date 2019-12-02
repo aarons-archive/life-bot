@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-from Life.Life.cogs.rpg.managers import AccountManager
+from cogs.rpg.managers.AccountManager import AccountManager
 
 
 class Accounts(commands.Cog):
@@ -17,8 +17,7 @@ class Accounts(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        # Fetch players from the database, and cache them.
-        await self.bot.account_manager.cache_all_accounts()
+        await self.bot.account_manager.cache_accounts()
 
     @commands.command(name="create")
     async def create(self, ctx):

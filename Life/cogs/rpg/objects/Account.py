@@ -1,5 +1,4 @@
-from ..InventoryManager import InventoryManager
-
+from cogs.rpg.managers.InventoryManager import InventoryManager
 
 class Account:
 
