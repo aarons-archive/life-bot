@@ -45,7 +45,7 @@ class Information(commands.Cog):
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
         embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot)** | "
-                                                     f"**[Support server](https://discord.gg/XejxSqT)** | "
+                                                     f"**[Support server](https://discord.gg/8a2a486)** | "
                                                      f"**[Source code](https://github.com/MyNameBeMrRandom/Life)**", inline=False)
         return await ctx.send(embed=embed)
 
