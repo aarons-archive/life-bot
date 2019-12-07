@@ -1,9 +1,9 @@
-from cogs.rpg.objects.PrimaryWeapons import *
-from cogs.rpg.objects.SecondaryWeapons import *
-from cogs.rpg.objects.PowerWeapons import *
-from cogs.rpg.objects.Helmets import *
-from cogs.rpg.objects.Cloaks import *
-from cogs.rpg.objects.Boots import *
+from .objects.PrimaryWeapons import *
+from .objects.SecondaryWeapons import *
+from .objects.PowerWeapons import *
+from .objects.Helmets import *
+from .objects.Cloaks import *
+from .objects.Boots import *
 
 items = {
     1: Glock19,

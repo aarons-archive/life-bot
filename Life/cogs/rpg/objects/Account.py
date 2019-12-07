@@ -1,18 +1,18 @@
-from cogs.rpg.managers.InventoryManager import InventoryManager
+from cogs.rpg.objects.inventory import Inventory
+
 
 class Account:
 
-    def __init__(self, data, raw_inventory):
+    def __init__(self, account, items):
 
-        self.InventoryManager = InventoryManager(raw_inventory)
+        self.inventory = Inventory(items)
 
-        self.inventory = self.InventoryManager.inventory
-        self.raw_inventory = raw_inventory
+        self.raw_account = account
 
-        self.id = data.get("id", 0)
-        self.cash = data.get("cash", 0)
-        self.bank = data.get("bank", 0)
-        self.level = "PLACHOLDER"
+        self.id = account.get("id", 0)
+        self.cash = account.get("cash", 0)
+        self.bank = account.get("bank", 0)
+        self.level = account.get("level", 0)
 
     def __repr__(self):
-        return "<Account id={0.id} cash={0.cash} bank={0.bank} level={0.level}>".format(self)
+        return f"<Account id={self.id} cash={self.cash} bank={self.bank} level={self.level}>"

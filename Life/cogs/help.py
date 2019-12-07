@@ -50,7 +50,6 @@ class HelpCommand(commands.HelpCommand):
                 command_name += f"{command_aliases} "
         if short_name is True:
             command_names = command.aliases + [command.name]
-            print(command_names)
             command_name += f"{min(command_names, key=len)} "
         elif aliases is True:
             command_aliases = "/".join([command.name] + command.aliases)
@@ -126,28 +125,19 @@ class HelpCommand(commands.HelpCommand):
 
         ctx = self.context
 
-        embed = discord.Embed(
-            colour=discord.Color.gold(),
-            title=f"",
-            description=""
-        )
-
         group_name = self.get_command(group, aliases=True, short_name=False)
 
         if group.signature:
-            embed.title += f"{group_name}{group.signature}:"
+            embed_title = f"{group_name}{group.signature}:"
         else:
-            embed.title += f"{group_name}:"
+            embed_title = f"{group_name}:"
 
         if group.help:
-            embed.description += f"{group.help}\n\n"
+            embed_description = f"{group.help}"
         else:
-            embed.description += f"No help provided for this command.\n\n"
+            embed_description = f"No help provided for this command."
 
-        group_commands = self.formatter(group.commands)
-        embed.description += "\n".join(list(group_commands))
-
-        return await ctx.send(embed=embed)
+        return await ctx.paginate_embed(title=f"__**{embed_title}**__\n{embed_description}\n\n", entries=list(self.formatter(group.commands)), entries_per_page=15)
 
 
 class Help(commands.Cog):

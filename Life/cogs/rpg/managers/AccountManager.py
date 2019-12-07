@@ -1,6 +1,6 @@
 import asyncpg
 
-from cogs.rpg.objects import Account
+from cogs.rpg.objects.account import Account
 
 
 class AccountManager:
@@ -10,13 +10,13 @@ class AccountManager:
 
     async def cache_accounts(self):
 
-        self.bot.accounts = {}
-
+        self.bot.accounts.clear()
         accounts = await self.bot.db.fetch("SELECT * FROM accounts")
 
-        for account in accounts:
-            items = await self.bot.db.fetch("SELECT * FROM inventory WHERE owner = $1", account["id"])
-            self.bot.accounts[account["id"]] = Account(dict(account), items)
+        for entry in accounts:
+            items = await self.bot.db.fetch("SELECT * FROM inventory WHERE owner = $1", entry["id"])
+
+            self.bot.accounts[entry["id"]] = Account(dict(entry), items)
 
         print(f"\n[RPG] Successfully cached {len(accounts)} accounts.")
 
@@ -25,9 +25,9 @@ class AccountManager:
         account = await self.fetch_account(account_id)
 
         if account:
-            self.bot.accounts[account.id] = account
-
-        return account
+            self.bot.accounts[account_id] = account
+        else:
+            raise KeyError(f"Unable to cache account, No account found with id {account_id}")
 
     def get_account(self, account_id):
 
@@ -38,12 +38,13 @@ class AccountManager:
 
     async def fetch_account(self, account_id):
 
-        try:
-            account = await self.bot.db.fetch("SELECT * FROM accounts where id = $1", account_id)
-            items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
-            return Account(dict(account[0]), items)
-        except ValueError:
-            return None
+        account = await self.bot.db.fetchrow("SELECT * FROM accounts where id = $1", account_id)
+        items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
+
+        if not account:
+            raise KeyError(f"Unable to fetch account, No account found with id {account_id}")
+
+        return Account(dict(account), items)
 
     async def create_account(self, ctx, user_id):
         try:
