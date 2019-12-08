@@ -63,38 +63,23 @@ class Life(commands.Bot):
             self.loop.run_until_complete(self.bot_close())
 
     async def db_connect(self):
-        # Try to connect to the database.
         try:
             self.db = await asyncpg.create_pool(**config.DB_CONN_INFO)
             print(f"\n[DB] Connected to database.")
 
-            # Create tables if they dont exist.
-            print("\n[DB] Creating tables.")
-            with open("schema.sql") as r:
-                await self.db.execute(r.read())
-            print("[DB] Done creating tables.")
-
-            # Tell the bot that the database is ready.
             self.db_ready = True
 
-            # Fetch command usage from database.
             usage = await self.db.fetch("SELECT * FROM bot_usage")
-
-            # Add the usage of each guild to the bots usage.
             for guild in usage:
                 self.usage[guild["id"]] = json.loads(guild["usage"])
 
-            # Fetch user/guild blacklists.
             blacklisted_users = await self.db.fetch("SELECT * FROM user_blacklist")
             blacklisted_guilds = await self.db.fetch("SELECT * FROM guild_blacklist")
-
-            # Append blacklisted users and guilds to the respective blacklists.
             for user in range(len(blacklisted_users)):
                 self.user_blacklist.append(int(blacklisted_users[user]["id"]))
             for user in range(len(blacklisted_guilds)):
                 self.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
 
-        # Accept any exceptions we might find.
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to database was denied.")
         except Exception as e:
