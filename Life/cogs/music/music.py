@@ -285,7 +285,7 @@ class Music(commands.Cog):
         title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
                   f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
                   f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
-                  f"__**Up next:**__: Showing `10` out of `{ctx.player.queue.size()}` entries in the queue.\n"
+                  f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size()])}` out of `{ctx.player.queue.size()}` entries in the queue.\n"
 
         entries = []
         for index, track in enumerate(ctx.player.queue.queue):
