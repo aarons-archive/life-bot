@@ -23,6 +23,7 @@ EXTENSIONS = [
     "jishaku",
     "cogs.background",
     "cogs.events",
+    "cogs.kross",
     "cogs.music.music",
     "cogs.rpg.accounts",
 ]
