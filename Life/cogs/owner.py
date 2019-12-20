@@ -24,11 +24,9 @@ class Owner(commands.Cog):
         `display`: Can be "pie/piechart" or "bar/barchart", produces an image of their repective charts.
         """
 
-        # If no stats have been collected yet.
         if not self.bot.usage:
             return await ctx.send("No usage of commands yet.")
 
-        # Get the total usage of all commands in all guilds.
         total_usage = {}
         for guild_usage in self.bot.usage.values():
             for command, usage in guild_usage.items():
@@ -38,12 +36,10 @@ class Owner(commands.Cog):
                     total_usage[command] += usage
         total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
 
-        # If the user doesnt want a pie/bar chart.
         if display is None:
 
-            # Define a list to store embeds in.
             embeds = []
-            # Add a total usage embed.
+
             embed = discord.Embed(
                 colour=discord.Color.gold(),
                 title=f"Total usage",
@@ -55,15 +51,14 @@ class Owner(commands.Cog):
             embed.description += "```"
             embeds.append(embed)
 
-            # Loop through all the guilds in the bots usage to get the guild and its command uses.
             for guild_id, guild_usage in self.bot.usage.items():
-                # Get the guild by its stored id.
+
                 guild = self.bot.get_guild(guild_id)
-                # If the guild is not found anymore, skip it.
                 if guild is None:
                     continue
+
                 usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
-                # Create the embed.
+
                 embed = discord.Embed(
                     colour=discord.Color.gold(),
                     title=f"{guild.name}",
@@ -74,32 +69,21 @@ class Owner(commands.Cog):
                 for command, command_usage in usage.items():
                     embed.description += f"{command} : {command_usage}\n"
                 embed.description += "```"
-                # Append the embed to the list of embeds
                 embeds.append(embed)
-            # Send the message
+
             return await ctx.paginate_embeds(entries=embeds)
 
-        # Generate a pie chart.
         if display in ["pie", "piechart"]:
-
-            # Start timer.
             start = time.perf_counter()
-            # Create the image and send it.
             pie_chart = imaging.do_pie_chart([v for v in total_usage.values()], [k for k in total_usage.keys()])
             await ctx.send(file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
-            # End timer and log how long operation took.
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
-        # Generate a bar chart.
         if display in ["bar", "barchart"]:
-
-            # Start timer.
             start = time.perf_counter()
-            # Create the image and send it.
             bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
             await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=bar_chart))
-            # End timer and log how long operation took.
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
@@ -117,12 +101,9 @@ class Owner(commands.Cog):
         if not user_growth:
             return await ctx.send("No growth data.")
 
-        # Start timer.
         start = time.perf_counter()
-        # Create the image and send it.
         plot = imaging.do_plot("User growth", "Datetime", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
         await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
-        # End timer and log how long operation took.
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
@@ -140,12 +121,9 @@ class Owner(commands.Cog):
         if not guild_growth:
             return await ctx.send("No growth data.")
 
-        # Start timer.
         start = time.perf_counter()
-        # Create the image and send it.
         plot = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
         await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
-        # End timer and log how long operation took.
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
@@ -158,32 +136,24 @@ class Owner(commands.Cog):
         `guilds_per_page`: How many guilds to show per page.
         """
 
-        # Define a key to sort guilds by.
         def key(e):
-
             guild_bots = sum(1 for m in e.members if m.bot)
             guild_total = e.member_count
             return round((guild_bots / guild_total) * 100, 2)
 
-        # Define a list of entries to paginate through.
         entries = []
 
-        # Set a title for the paginator.
         title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
 
-        # Loop through all the guilds the bot can see.
         for guild in sorted(self.bot.guilds, key=key, reverse=True):
 
-            # Count how many members are bot/humans.
             bots = sum(1 for m in guild.members if m.bot)
             humans = sum(1 for m in guild.members if not m.bot)
             total = guild.member_count
             percent = f"{round((bots / total) * 100, 2)}%"
 
-            # Create a message with the current guilds information.
             message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
 
-            # Append the message to the list of entries.
             entries.append(message)
 
         # Paginate the entries.
@@ -196,10 +166,8 @@ class Owner(commands.Cog):
         Display information about each guild the bot is in.
         """
 
-        # Define a list for all the embeds.
         embeds = []
 
-        # Loop through all bots guilds and create an embed for each one.
         for guild in self.bot.guilds:
             online, idle, dnd, offline = utils.guild_user_status(guild)
             embed = discord.Embed(
@@ -224,11 +192,8 @@ class Owner(commands.Cog):
                                                             f"**Voice region:** {utils.guild_region(guild)}\n"
                                                             f"**AFK timeout:** {int(guild.afk_timeout / 60)} minutes\n"
                                                             f"**AFK channel:** {guild.afk_channel}\n", inline=False)
-
-            # Append the embed to the list of embeds.
             embeds.append(embed)
 
-        # Paginate the list of embeds.
         return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
@@ -238,17 +203,13 @@ class Owner(commands.Cog):
         Get the total amount of each socket event.
         """
 
-        # Get the total amount of socket events.
         total = sum(self.bot.socket_stats.values())
-        # Get the bots uptime in seconds.
         uptime = round(time.time() - self.bot.start_time)
 
-        # Loop through the socketstats and create a message for it.
         socket_stats = ""
         for event, count in self.bot.socket_stats.items():
             socket_stats += f"{event}:{' ' * int(28 - len(str(event)))}{count}\n"
 
-        # Send a message with the socket stats.
         return await ctx.send(f"```\n"
                               f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
                               f"{socket_stats}\n"
@@ -270,17 +231,13 @@ class Owner(commands.Cog):
         Display a list of all blacklisted users.
         """
 
-        # Define a list for all blacklisted users.
         blacklisted = []
 
-        # Fetch blacklisted users from the database.
-        blacklist = await self.bot.db.fetch("SELECT * FROM user_blacklist")
+        blacklist = await self.bot.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
 
-        # If no blacklisted users where found, return.
         if not blacklist:
             return await ctx.send("No blacklisted users.")
 
-        # Loop through users in the blacklist add them to the list of blacklisted users with their reason.
         for entry in blacklist:
             user = self.bot.get_user(entry['id'])
             if not user:
@@ -288,7 +245,6 @@ class Owner(commands.Cog):
             else:
                 blacklisted.append(f"{user.name} - {user.id} - Reason: {entry['reason']}")
 
-        # Paginate the list of blacklisted users.
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
 
     @commands.is_owner()
@@ -301,26 +257,21 @@ class Owner(commands.Cog):
         `reason`: Why the user is blacklisted.
         """
 
-        # If the user doesnt specify a reason, add one.
         if not reason:
             reason = "No reason"
 
-        # If the user picks a reason over 512 chars.
         if len(reason) > 512:
             return await ctx.caution("The reason can't be more than 512 characters.")
 
-        # If the user doesn't specify a user to blacklist.
         if not user:
-            return await ctx.send("You must specify a user id.")
+            return await ctx.send("You must specify a user's id.")
 
         try:
-            # Fetch the user and add them to the local blacklist and database.
             user = await self.bot.fetch_user(user)
             self.bot.user_blacklist.append(user.id)
-            await self.bot.db.execute("INSERT INTO user_blacklist (id, reason) VALUES ($1, $2)", user.id, reason)
+            await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", user.id, "user", reason)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been blacklisted with reason `{reason}`")
 
-        # Accept an error if the user is already blacklisted.
         except asyncpg.UniqueViolationError:
             return await ctx.send("That user is already blacklisted.")
 
@@ -333,16 +284,14 @@ class Owner(commands.Cog):
         `user`: The users id.
         """
 
-        # If the user doesn't specify a user to unblacklist.
         if not user:
-            return await ctx.send("You must specify a user id.")
+            return await ctx.send("You must specify a user's id.")
+
         try:
-            # Fetch the user and remove them from the local blacklist and database.
             user = await self.bot.fetch_user(user)
             self.bot.user_blacklist.remove(user.id)
-            await self.bot.db.execute("DELETE FROM user_blacklist WHERE id = $1", user.id)
+            await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", user.id)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been unblacklisted.")
-        # Accept an error if the user is not blacklisted.
         except ValueError:
             return await ctx.send(f"User: `{user.name} - {user.id}` is not blacklisted.")
 
@@ -353,20 +302,20 @@ class Owner(commands.Cog):
         Display a list of all blacklisted guilds.
         """
 
-        # Define a list of blacklisted guilds.
         blacklisted = []
 
-        # Fetch blacklisted guilds from the database.
-        blacklist = await self.bot.db.fetch("SELECT * FROM guild_blacklist")
+        blacklist = await self.bot.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
 
-        # If no guilds are blacklisted, return
         if not blacklist:
             return await ctx.send("No blacklisted guilds.")
-        # Loop through blacklisted guilds and append to the list with their reason.
-        for entry in blacklist:
-            blacklisted.append(f"{entry['id']} - Reason: {entry['reason']}")
 
-        # Paginate the list of blacklisted guilds.
+        for entry in blacklist:
+            guild = self.bot.get_guild(entry["id"])
+            if not guild:
+                blacklisted.append(f"Guild not found - {entry['id']} - Reason: {entry['reason']}")
+            else:
+                blacklisted.append(f"{guild.name} - {guild.id} - Reason: {entry['reason']}")
+
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
 
     @commands.is_owner()
@@ -379,24 +328,20 @@ class Owner(commands.Cog):
         `reason`: Why the guild is blacklisted.
         """
 
-        # If the user doesnt specify a reason, add one.
         if not reason:
             reason = "No reason"
 
-        # If the user picks a reason over 512 chars.
         if len(reason) > 512:
             return await ctx.caution("The reason can't be more than 512 characters.")
 
-        # If the user doesn't specify a guild to blacklist.
         if not guild:
-            return await ctx.send("You must specify a guild id.")
+            return await ctx.send("You must specify a guild's id.")
 
         try:
-            # Add the guild to the local blacklist and database.
-            self.bot.guild_blacklist.append(guild)
-            await self.bot.db.execute("INSERT INTO guild_blacklist (id, reason) VALUES ($1, $2)", guild, reason)
 
-            # Try to fetch the guild and leave it, accepting an error if we are not in the guild.
+            self.bot.guild_blacklist.append(guild)
+            await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", guild, "guild", reason)
+
             try:
                 guild = await self.bot.fetch_guild(guild)
                 await guild.leave()
@@ -405,7 +350,6 @@ class Owner(commands.Cog):
 
             return await ctx.send(f"Guild: `{guild}` has been blacklisted with reason `{reason}`")
 
-        # Accept an error if the quild is already blacklisted.
         except asyncpg.UniqueViolationError:
             return await ctx.send("That guild is already blacklisted.")
 
@@ -418,16 +362,13 @@ class Owner(commands.Cog):
         `user`: The guilds id.
         """
 
-        # If the user doesn't specify a guild to unblacklist.
         if not guild:
-            return await ctx.send("You must specify a user id.")
+            return await ctx.send("You must specify a guild's id.")
 
         try:
-            # Remove the guild from the local blacklist and database.
             self.bot.guild_blacklist.remove(guild)
-            await self.bot.db.execute("DELETE FROM guild_blacklist WHERE id = $1", guild)
+            await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", guild)
             return await ctx.send(f"Guild: `{guild}` has been unblacklisted.")
-        # Accept an error if the guild is not blacklisted.
         except ValueError:
             return await ctx.send(f"Guild: `{guild}` is not blacklisted.")
 

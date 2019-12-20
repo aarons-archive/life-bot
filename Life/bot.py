@@ -74,8 +74,8 @@ class Life(commands.Bot):
             for guild in usage:
                 self.usage[guild["id"]] = json.loads(guild["usage"])
 
-            blacklisted_users = await self.db.fetch("SELECT * FROM user_blacklist")
-            blacklisted_guilds = await self.db.fetch("SELECT * FROM guild_blacklist")
+            blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
+            blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
             for user in range(len(blacklisted_users)):
                 self.user_blacklist.append(int(blacklisted_users[user]["id"]))
             for user in range(len(blacklisted_guilds)):

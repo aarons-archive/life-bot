@@ -17,15 +17,12 @@ class Events(commands.Cog):
 
         print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}\n")
 
-        # Loop through the bots guilds.
         for guild in self.bot.guilds:
-            # Check if the guild is in the blacklist.
+
             if guild.id in self.bot.guild_blacklist:
-                # The guild was in the blacklist, so leave it.
                 print(f"[BOT] Left blacklisted guild - {guild.id}")
                 await guild.leave()
             else:
-                # The guild wasn't in the blacklist so skip it.
                 continue
 
     @commands.Cog.listener()
@@ -39,20 +36,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx):
 
-        # Get the commands full name.
         parent = ctx.command.full_parent_name
         if parent:
             command = f"{parent} {ctx.command.name}"
         else:
             command = f"{ctx.command.name}"
 
-        # If the guild id is not already in the bots usage dict, add it.
         if ctx.guild.id not in self.bot.usage:
             self.bot.usage[ctx.guild.id] = {}
-        # If the command is not aleady in the guilds command usage, add it
         if command not in self.bot.usage[ctx.guild.id]:
             self.bot.usage[ctx.guild.id][command] = 1
-        # Otherwise increment the command usage by 1.
         else:
             self.bot.usage[ctx.guild.id][command] += 1
 
@@ -104,6 +97,8 @@ class Events(commands.Cog):
                 message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
                 message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{utils.format_time(error.retry_after)}`."
+        if isinstance(error, commands.CheckFailure):
+            message = f"{error}"
         if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
 
