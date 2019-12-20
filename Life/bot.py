@@ -42,6 +42,7 @@ class Life(commands.Bot):
         self.start_time = time.time()
         self.process = psutil.Process()
 
+        self.granitepy = None
         self.db = None
         self.db_ready = False
 
