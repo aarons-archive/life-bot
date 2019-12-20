@@ -15,7 +15,7 @@ class KrossServer(commands.Cog):
         if ctx.guild.id == 491312179476299786:
             return True
         else:
-            return False
+            raise commands.CheckFailure("This command can only be used in a certain guild.")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -37,13 +37,13 @@ class KrossServer(commands.Cog):
         phoenix_count = len(phoenix.members)
 
         try:
-            if kodama_count <= phoenix_count and kodama_count <= leviathan_count and kodama_count <= sylph_count:
+            if kodama_count < phoenix_count and kodama_count < leviathan_count and kodama_count < sylph_count:
                 await member.add_roles(kodama)
-            elif phoenix_count <= kodama_count and phoenix_count <= leviathan_count and phoenix_count <= sylph_count:
+            elif phoenix_count < kodama_count and phoenix_count < leviathan_count and phoenix_count < sylph_count:
                 await member.add_roles(phoenix)
-            elif leviathan_count <= phoenix_count and leviathan_count <= kodama_count and leviathan_count <= sylph_count:
+            elif leviathan_count < phoenix_count and leviathan_count < kodama_count and leviathan_count < sylph_count:
                 await member.add_roles(leviathan)
-            elif sylph_count <= phoenix_count and sylph_count <= leviathan_count and sylph_count <= kodama_count:
+            elif sylph_count < phoenix_count and sylph_count < leviathan_count and sylph_count < kodama_count:
                 await member.add_roles(sylph)
             else:
                 await member.add_roles(phoenix)
