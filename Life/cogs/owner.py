@@ -205,14 +205,15 @@ class Owner(commands.Cog):
 
         total = sum(self.bot.socket_stats.values())
         uptime = round(time.time() - self.bot.start_time)
+        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
 
-        socket_stats = ""
-        for event, count in self.bot.socket_stats.items():
-            socket_stats += f"{event}:{' ' * int(28 - len(str(event)))}{count}\n"
+        message = ""
+        for event, count in socket_stats.items():
+            message += f"{event}:{' ' * int(28 - len(str(event)))}{count}\n"
 
         return await ctx.send(f"```\n"
                               f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
-                              f"{socket_stats}\n"
+                              f"{message}\n"
                               f"```")
 
     @commands.is_owner()
