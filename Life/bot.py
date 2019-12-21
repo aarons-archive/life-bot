@@ -1,14 +1,15 @@
 import asyncio
+import collections
 import json
 import os
 import time
 
 import aiohttp
 import asyncpg
-import config
 import psutil
 from discord.ext import commands
 
+import config
 from cogs.music import player
 from utilities import paginators
 
@@ -42,12 +43,11 @@ class Life(commands.Bot):
         self.start_time = time.time()
         self.process = psutil.Process()
 
-        self.granitepy = None
         self.db = None
-        self.db_ready = False
 
-        self.usage = {}
+        self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
+        self.usage = {}
         self.user_blacklist = []
         self.guild_blacklist = []
 
@@ -68,8 +68,6 @@ class Life(commands.Bot):
         try:
             self.db = await asyncpg.create_pool(**config.DB_CONN_INFO)
             print(f"\n[DB] Connected to database.")
-
-            self.db_ready = True
 
             usage = await self.db.fetch("SELECT * FROM bot_usage")
             for guild in usage:

@@ -13,7 +13,6 @@ class Owner(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.bot.socket_stats = collections.Counter()
 
     @commands.is_owner()
     @commands.command(name="usage", hidden=True)
