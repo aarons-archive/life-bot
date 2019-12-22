@@ -152,10 +152,8 @@ class Owner(commands.Cog):
             percent = f"{round((bots / total) * 100, 2)}%"
 
             message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
-
             entries.append(message)
 
-        # Paginate the entries.
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
 
     @commands.is_owner()
@@ -173,7 +171,7 @@ class Owner(commands.Cog):
                 colour=discord.Color.gold(),
                 title=f"{guild.name}'s Stats and Information."
             )
-            embed.set_thumbnail(url=guild.icon_url)
+            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
             embed.set_footer(text=f"ID: {guild.id}")
             embed.add_field(name="__**General information:**__", value=f"**Owner:** {guild.owner}\n"
                                                                        f"**Server created at:** {guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
@@ -206,12 +204,10 @@ class Owner(commands.Cog):
         uptime = round(time.time() - self.bot.start_time)
         socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
 
-        message = ""
-        for event, count in socket_stats.items():
-            message += f"{event}:{' ' * int(28 - len(str(event)))}{count}\n"
+        message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
 
         return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total/(uptime / 60))}/minute\n\n"
+                              f"{total} socket events observed at a rate of {round(total/uptime)}/second\n\n"
                               f"{message}\n"
                               f"```")
 
