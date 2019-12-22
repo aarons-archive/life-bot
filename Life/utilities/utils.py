@@ -8,22 +8,19 @@ import discord
 
 
 async def ping(bot, ctx):
-    # Define variables.
+
     pings = []
     total_ping = 0
 
-    # Get typing time and append.
     typing_start = time.monotonic()
     await ctx.trigger_typing()
     typing_end = time.monotonic()
     typingms = round((typing_end - typing_start) * 1000, 2)
     pings.append(typingms)
 
-    # Get latency and append.
     latencyms = round(bot.latency * 1000, 2)
     pings.append(latencyms)
 
-    # Ping discord and append.
     discord_start = time.monotonic()
     async with bot.session.get("https://discordapp.com/") as resp:
         if resp.status == 200:
@@ -33,12 +30,10 @@ async def ping(bot, ctx):
         else:
             discordms = "Failed"
 
-    # Calculate the average.
     for ping_ms in pings:
         total_ping += ping_ms
     averagems = round(total_ping / len(pings), 2)
 
-    # Return values.
     return typingms, latencyms, discordms, averagems
 
 def random_colour():
@@ -89,29 +84,38 @@ def format_time(second):
     return formatted
 
 def user_activity(user):
-    # If the user is offline they wont have an activity.
-    if user.status == discord.Status.offline:
-        return "N/A"
-    # If the user is doing nothing.
-    if not user.activity:
-        return "N/A"
-    activity = ""
-    if user.activity.type == discord.ActivityType.playing:
-        activity += f"Playing **{user.activity.name}**"
-        if not isinstance(user.activity, discord.Game) and user.activity.details:
-            activity += f" ** - {user.activity.details}**"
-    if user.activity.type == discord.ActivityType.streaming:
-        activity += f"Streaming **[{user.activity.name}]({user.activity.url})**"
-    if user.activity.type == discord.ActivityType.watching:
-        activity += f"Watching **{user.activity.name}**"
-    if user.activity.type == discord.ActivityType.listening:
-        if user.activity.name == "Spotify":
-            activity += f"Listening to **{user.activity.title}** by **{user.activity.artist}**"
-            if user.activity.album:
-                activity += f" from the album **{user.activity.album}**"
-        else:
-            activity += f"Listening to **{user.activity.name}**"
-    return activity
+    message = ""
+
+    if not user.activity or not user.activities:
+        message = "N/A"
+
+    for activity in user.activities:
+
+        # Type 4 is custom status, skip it.
+        if activity.type == 4:
+            continue
+
+        if activity.type == discord.ActivityType.playing:
+            message += f"Playing **{activity.name}** "
+            if activity.details:
+                message += f"**| {activity.details}** "
+            if activity.state:
+                message += f"**| {activity.state}** "
+
+        elif activity.type == discord.ActivityType.streaming:
+            message += f"Streaming **[{activity.name}]({activity.url})** on **{activity.platform}** "
+
+        if user.activity.type == discord.ActivityType.watching:
+            activity += f"Watching **{user.activity.name}**"
+        if user.activity.type == discord.ActivityType.listening:
+            if user.activity.name == "Spotify":
+                activity += f"Listening to **{user.activity.title}** by **{user.activity.artist}**"
+                if user.activity.album:
+                    activity += f" from the album **{user.activity.album}**"
+            else:
+                activity += f"Listening to **{user.activity.name}**"
+
+    return message
 
 def user_colour(user):
     colours = {

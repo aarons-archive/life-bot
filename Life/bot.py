@@ -47,9 +47,9 @@ class Life(commands.Bot):
 
         self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
-        self.usage = {}
         self.user_blacklist = []
         self.guild_blacklist = []
+        self.usage = {}
 
         for extension in EXTENSIONS:
             try:

@@ -45,7 +45,7 @@ class Information(commands.Cog):
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
         embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot)** | "
-                                                     f"**[Support server](https://discord.gg/8a2a486)** | "
+                                                     f"**[Support server](https://discord.gg/xP8xsHr)** | "
                                                      f"**[Source code](https://github.com/MyNameBeMrRandom/Life)**", inline=False)
         return await ctx.send(embed=embed)
 
@@ -152,6 +152,7 @@ class Information(commands.Cog):
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
+        embed.set_thumbnail(url=ctx.guild.icon_url_as(format="png", size=1024))
         embed.set_footer(text=f"ID: {ctx.guild.id}")
         embed.add_field(name="__**General information:**__", value=f"**Owner:** {ctx.guild.owner}\n"
                                                                    f"**Server created at:** {ctx.guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
@@ -170,7 +171,6 @@ class Information(commands.Cog):
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
         embed.add_field(name="__**Role information:**__", value=f"**Roles:** {' '.join([r.mention for r in ctx.guild.roles[1:]])}\n"
                                                                 f"**Count:** {len(ctx.guild.roles)}\n", inline=False)
-        embed.set_thumbnail(url=ctx.guild.icon_url)
         return await ctx.send(embed=embed)
 
     @commands.command(name="userinfo")
@@ -189,6 +189,7 @@ class Information(commands.Cog):
             title=f"{user.name}'s Stats and Information."
         )
         embed.set_footer(text=f"ID: {user.id}")
+        embed.set_thumbnail(url=user.avatar_url_as(format="png"))
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {user}\n"
                                                                    f"**Account created:** {user.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
                                                                    f"**Status:** {utils.user_status(user)}\n"
@@ -196,7 +197,6 @@ class Information(commands.Cog):
         embed.add_field(name="__**Server-related information:**__", value=f"**Nickname:** {user.nick}\n"
                                                                           f"**Joined server:** {user.joined_at.__format__('%A %d %B %Y at %H:%M')}\n"
                                                                           f"**Roles:** {' '.join([r.mention for r in user.roles[1:]])}")
-        embed.set_thumbnail(url=user.avatar_url)
         return await ctx.send(embed=embed)
 
 
