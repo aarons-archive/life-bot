@@ -103,7 +103,10 @@ def user_activity(user):
                 message += f"**| {activity.state}** "
 
         elif activity.type == discord.ActivityType.streaming:
-            message += f"Streaming **[{activity.name}]({activity.url})** on **{activity.platform}** "
+            if isinstance(activity, discord.Streaming):
+                message += f"Streaming **[{activity.name}]({activity.url})** on **{activity.platform}** "
+            else:
+                message += f"Streaming **[{activity.name}]({activity.url})** "
 
         if user.activity.type == discord.ActivityType.watching:
             activity += f"Watching **{user.activity.name}**"
