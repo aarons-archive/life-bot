@@ -84,39 +84,44 @@ def format_time(second):
     return formatted
 
 def user_activity(user):
-    message = ""
+    message = "\n"
 
     if not user.activity or not user.activities:
         message = "N/A"
 
     for activity in user.activities:
 
-        # Type 4 is custom status, skip it.
+        # Type 4 is custom status, ignore
         if activity.type == 4:
             continue
 
         if activity.type == discord.ActivityType.playing:
-            message += f"Playing **{activity.name}** "
-            if activity.details:
-                message += f"**| {activity.details}** "
-            if activity.state:
-                message += f"**| {activity.state}** "
+
+            message += f"• Playing **{activity.name}** "
+            if not isinstance(activity, discord.Game):
+                if activity.details:
+                    message += f"**| {activity.details}** "
+                if activity.state:
+                    message += f"**| {activity.state}** "
+
+                message += "\n"
 
         elif activity.type == discord.ActivityType.streaming:
-            if isinstance(activity, discord.Streaming):
-                message += f"Streaming **[{activity.name}]({activity.url})** on **{activity.platform}** "
-            else:
-                message += f"Streaming **[{activity.name}]({activity.url})** "
+            message += f"• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**\n"
 
-        if user.activity.type == discord.ActivityType.watching:
-            activity += f"Watching **{user.activity.name}**"
-        if user.activity.type == discord.ActivityType.listening:
-            if user.activity.name == "Spotify":
-                activity += f"Listening to **{user.activity.title}** by **{user.activity.artist}**"
-                if user.activity.album:
-                    activity += f" from the album **{user.activity.album}**"
+        elif activity.type == discord.ActivityType.watching:
+            message += f"• Watching **{activity.name}**\n"
+
+        elif activity.type == discord.ActivityType.listening:
+
+            if isinstance(activity, discord.Spotify):
+                url = f"https://open.spotify.com/track/{activity.track_id}"
+                message += f"• Listening to **[{activity.title}]({url})** by **{', '.join(activity.artists)}** "
+                if activity.album and not activity.album == activity.title:
+                    message += f"from the album **{activity.album}** "
+                message += "\n"
             else:
-                activity += f"Listening to **{user.activity.name}**"
+                message += f"• Listening to **{activity.name}**\n"
 
     return message
 
