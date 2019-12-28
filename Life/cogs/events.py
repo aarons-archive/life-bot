@@ -15,7 +15,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}\n")
+        print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}")
 
         for guild in self.bot.guilds:
 
