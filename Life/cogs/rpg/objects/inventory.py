@@ -28,9 +28,22 @@ class Inventory:
 
         return inventory
 
-    def get_item_slot(self, slot: str):
+    def get_item_id(self, item_id: int):
 
-        items_of_slot = [item for item in self.items if item.slot == slot]
+        items_of_id = [item for item in self.items if item.id == item_id]
+
+        if not items_of_id:
+            return None
+
+        elif len(items_of_id) == 1:
+            return items_of_id[0]
+
+        else:
+            return items_of_id
+
+    def get_item_slot(self, item_slot: str):
+
+        items_of_slot = [item for item in self.items if item.slot == item_slot]
 
         if not items_of_slot:
             return None
@@ -40,3 +53,30 @@ class Inventory:
 
         else:
             return items_of_slot
+
+    def get_item_base_type(self, item_base_type: str):
+
+        items_of_base_type = [item for item in self.items if item.base_type == item_base_type]
+
+        if not items_of_base_type:
+            return None
+
+        elif len(items_of_base_type) == 1:
+            return items_of_base_type[0]
+
+        else:
+            return items_of_base_type
+
+    def get_item_type(self, item_type: str):
+
+        items_of_type = [item for item in self.items if item.type == item_type]
+
+        if not items_of_type:
+            return None
+
+        elif len(items_of_type) == 1:
+            return items_of_type[0]
+
+        else:
+            return items_of_type
+
