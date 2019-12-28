@@ -127,7 +127,7 @@ class Information(commands.Cog):
         embed = discord.Embed(
             colour=discord.Color.gold(),
         )
-        embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author.name)
+        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
         if user.is_avatar_animated():
             embed.add_field(name=f"{user.name}'s Avatar", value=f"[GIF]({user.avatar_url_as(size=1024, format='gif')}) | "
                                                                 f"[PNG]({user.avatar_url_as(size=1024, format='png')}) | "
@@ -152,6 +152,7 @@ class Information(commands.Cog):
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
+        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
         embed.set_thumbnail(url=ctx.guild.icon_url_as(format="png", size=1024))
         embed.set_footer(text=f"ID: {ctx.guild.id}")
         embed.add_field(name="__**General information:**__", value=f"**Owner:** {ctx.guild.owner}\n"
@@ -188,6 +189,7 @@ class Information(commands.Cog):
             colour=utils.user_colour(user),
             title=f"{user.name}'s Stats and Information."
         )
+        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
         embed.set_footer(text=f"ID: {user.id}")
         embed.set_thumbnail(url=user.avatar_url_as(format="png"))
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {user}\n"
