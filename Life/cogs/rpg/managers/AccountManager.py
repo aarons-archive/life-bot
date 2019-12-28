@@ -20,7 +20,7 @@ class AccountManager:
 
         print(f"\n[RPG] Successfully cached {len(accounts)} accounts.")
 
-    async def cache_account(self, account_id):
+    async def cache_account(self, account_id: int):
 
         account = await self.fetch_account(account_id)
 
@@ -29,14 +29,14 @@ class AccountManager:
         else:
             raise KeyError(f"Unable to cache account, No account found with id {account_id}")
 
-    def get_account(self, account_id):
+    def get_account(self, account_id: int):
 
         try:
             return self.bot.accounts.get(account_id)
         except ValueError:
             return None
 
-    async def fetch_account(self, account_id):
+    async def fetch_account(self, account_id: int):
 
         account = await self.bot.db.fetchrow("SELECT * FROM accounts where id = $1", account_id)
         items = await self.bot.db.fetch("SELECT * FROM inventory where owner = $1", account_id)
@@ -46,7 +46,7 @@ class AccountManager:
 
         return Account(dict(account), items)
 
-    async def create_account(self, ctx, user_id):
+    async def create_account(self, ctx, user_id: int):
         try:
             await self.bot.db.execute(f"INSERT INTO accounts VALUES ($1, 'bg_default', 1000, 1000)", user_id)
 
@@ -57,13 +57,14 @@ class AccountManager:
         except asyncpg.UniqueViolationError:
             return await ctx.send("You already have an account.")
 
-    async def delete_account(self, ctx, user_id):
+    async def delete_account(self, ctx, user_id: int):
 
-        account = self.get_account(user_id)
+        account = ctx.account
         if not account:
             return await ctx.send("You don't have an account.")
 
         await self.bot.db.execute(f"DELETE FROM accounts WHERE id = $1", user_id)
+        await self.bot.db.execute(f"DElETE FROM inventory WHERE owner = $1", user_id)
         self.bot.accounts.pop(user_id, None)
 
         return await ctx.send("Deleted your account.")
