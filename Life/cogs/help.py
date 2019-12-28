@@ -38,7 +38,7 @@ class HelpCommand(commands.HelpCommand):
 
     def get_command(self, command, aliases, short_name):
 
-        command_name = f"{self.context.prefix}"
+        command_name = f"{self.context.bot.config.DISCORD_PREFIX}"
 
         command_parents = command.parents
         for command_parent in command_parents[::-1]:
