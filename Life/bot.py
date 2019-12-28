@@ -38,14 +38,14 @@ class Life(commands.Bot):
         )
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession()
-        self.config = config
-
-        self.start_time = time.time()
         self.process = psutil.Process()
+
+        self.socket_stats = collections.Counter()
+        self.start_time = time.time()
+        self.config = config
 
         self.db = None
 
-        self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []
@@ -128,6 +128,10 @@ class MyContext(commands.Context):
     @property
     def player(self):
         return self.bot.granitepy.get_player(self.guild.id, cls=player.Player)
+
+    @property
+    def account(self):
+        return self.bot.account_manager.get_account(self.author.id)
 
     async def paginate(self, **kwargs):
 
