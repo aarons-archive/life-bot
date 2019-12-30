@@ -11,11 +11,9 @@ async def get_image(bot, url):
 
 def colour(image_bytes, image_colour):
 
-    # Open the image_bytes as an image, and convert it to an RGBA type image.
     image = Image.open(BytesIO(image_bytes)).convert("RGBA")
     mask = image.convert("L")
 
-    # Switch pixels colours with the value specified.
     lx, ly = image.size
     pixel = image.load()
     for y in range(ly):
@@ -24,18 +22,14 @@ def colour(image_bytes, image_colour):
                 continue
             pixel[x, y] = image_colour
 
-    # Put a mask of the original image over the colour-changed one.
     image.putalpha(mask)
 
-    # Save the image to a buffer.
     colour_image = BytesIO()
     image.save(colour_image, "png")
 
-    # Close images.
     image.close()
     mask.close()
 
-    # Return image
     colour_image.seek(0)
     return colour_image
 
