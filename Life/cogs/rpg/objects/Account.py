@@ -6,6 +6,8 @@ class Account:
     def __init__(self, account, items):
 
         self.inventory = Inventory(items)
+        self.items = self.inventory.items
+        self.raw_items = self.inventory.raw_items
 
         self.raw_account = account
 
