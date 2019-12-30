@@ -83,7 +83,7 @@ def format_time(second):
 
     return formatted
 
-def user_activity(user):
+def member_activity(user):
     message = "\n"
 
     if not user.activity or not user.activities:
@@ -125,7 +125,7 @@ def user_activity(user):
 
     return message
 
-def user_colour(user):
+def member_colour(user):
     colours = {
         discord.Status.online: 0x008000,
         discord.Status.idle: 0xFF8000,
@@ -134,7 +134,7 @@ def user_colour(user):
     }
     return colours[user.status]
 
-def user_status(user):
+def member_status(user):
     status = {
         discord.Status.online: "Online",
         discord.Status.idle: "Idle",

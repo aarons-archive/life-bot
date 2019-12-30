@@ -94,7 +94,7 @@ class Information(commands.Cog):
     @commands.command(name="source")
     async def source(self, ctx, *, command: str = None):
         """
-        Get a github link for the source of a command.
+        Get a github link to the source of a command.
 
         `command`: The name of the command you want the source for.
         """
@@ -112,42 +112,41 @@ class Information(commands.Cog):
         return await ctx.send(f"<https://github.com/MyNameBeMrRandom/Life/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>")
 
     @commands.command(name="avatar")
-    async def avatar(self, ctx, *, user: discord.Member = None):
+    async def avatar(self, ctx, *, member: discord.Member = None):
         """
-        Get yours or a specified users avatar.
+        Get yours or a specified members avatar.
 
-
-        `user`: The user who you want the avatar of. Can be an ID, mention or name.
+        `member`: The member who you want the avatar of. Can be a Mention, Name or ID
         """
 
-        # If the user didnt specify another use, use them.
-        if not user:
-            user = ctx.author
+        if not member:
+            member = ctx.author
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
+            title=f"{member.name}'s Avatar",
+            description=f"[PNG]({member.avatar_url_as(size=1024, format='png')}) | " \
+                        f"[JPEG]({member.avatar_url_as(size=1024, format='jpeg')}) | " \
+                        f"[WEBP]({member.avatar_url_as(size=1024, format='webp')})"
         )
         embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
-        if user.is_avatar_animated():
-            embed.add_field(name=f"{user.name}'s Avatar", value=f"[GIF]({user.avatar_url_as(size=1024, format='gif')}) | "
-                                                                f"[PNG]({user.avatar_url_as(size=1024, format='png')}) | "
-                                                                f"[JPEG]({user.avatar_url_as(size=1024, format='jpeg')}) | "
-                                                                f"[WEBP]({user.avatar_url_as(size=1024, format='webp')})", inline=False)
-            embed.set_image(url=f"{user.avatar_url_as(size=1024, format='gif')}")
+
+        if member.is_avatar_animated():
+            embed.description += f" | [GIF]({member.avatar_url_as(size=1024, format='gif')})"
+            embed.set_image(url=f"{member.avatar_url_as(size=1024, format='gif')}")
         else:
-            embed.add_field(name=f"{user.name}'s Avatar", value=f"[PNG]({user.avatar_url_as(size=1024, format='png')}) | "
-                                                                f"[JPEG]({user.avatar_url_as(size=1024, format='jpeg')}) | "
-                                                                f"[WEBP]({user.avatar_url_as(size=1024, format='webp')})", inline=False)
-            embed.set_image(url=f"{user.avatar_url_as(size=1024, format='png')}")
+            embed.set_image(url=f"{member.avatar_url_as(size=1024, format='png')}")
+
         return await ctx.send(embed=embed)
 
-    @commands.command(name="serverinfo")
+    @commands.command(name="serverinfo", aliases=["guildinfo"])
     async def serverinfo(self, ctx):
         """
         Get information about the current server.
         """
 
         online, idle, dnd, offline = utils.guild_user_status(ctx.guild)
+
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
@@ -170,35 +169,46 @@ class Information(commands.Cog):
                                                         f"**Voice region:** {utils.guild_region(ctx.guild)}\n"
                                                         f"**AFK timeout:** {int(ctx.guild.afk_timeout/60)} minutes\n"
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
-        embed.add_field(name="__**Role information:**__", value=f"**Roles:** {' '.join([r.mention for r in ctx.guild.roles[1:]])}\n"
-                                                                f"**Count:** {len(ctx.guild.roles)}\n", inline=False)
+
+        roles = ' '.join([r.mention for r in ctx.guild.roles[:-11:-1] if not r.name == "@everyone"])
+        role_count = len(ctx.guild.roles) - 1
+        if role_count > 10:
+            roles += f" ... and {role_count - 10} others"
+        embed.add_field(name="__**Role information:**__", value=f"**Roles:** ({role_count}) {roles}\n", inline=False)
+
         return await ctx.send(embed=embed)
 
     @commands.command(name="userinfo")
-    async def userinfo(self, ctx, *, user: discord.Member = None):
+    async def userinfo(self, ctx, *, member: discord.Member = None):
         """
         Get information about you, or a specified user.
 
-        `user`: The user who you want information about. Can be an ID, mention or name.
+        `member`: The member who you want the information of. Can be a Mention, Name or ID
         """
 
-        if user is None:
-            user = ctx.author
+        if member is None:
+            member = ctx.author
 
         embed = discord.Embed(
-            colour=utils.user_colour(user),
-            title=f"{user.name}'s Stats and Information."
+            colour=utils.member_colour(member),
+            title=f"{member.name}'s Stats and Information."
         )
         embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
-        embed.set_footer(text=f"ID: {user.id}")
-        embed.set_thumbnail(url=user.avatar_url_as(format="png"))
-        embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {user}\n"
-                                                                   f"**Account created:** {user.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
-                                                                   f"**Status:** {utils.user_status(user)}\n"
-                                                                   f"**Activity:** {utils.user_activity(user)}", inline=False)
-        embed.add_field(name="__**Server-related information:**__", value=f"**Nickname:** {user.nick}\n"
-                                                                          f"**Joined server:** {user.joined_at.__format__('%A %d %B %Y at %H:%M')}\n"
-                                                                          f"**Roles:** {' '.join([r.mention for r in user.roles[1:]])}")
+        embed.set_footer(text=f"ID: {member.id}")
+        embed.set_thumbnail(url=member.avatar_url_as(format="png"))
+        embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {member}\n"
+                                                                   f"**Account created:** {member.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
+                                                                   f"**Status:** {utils.member_status(member)}\n"
+                                                                   f"**Activity:** {utils.member_activity(member)}", inline=False)
+
+        roles = ' '.join([r.mention for r in ctx.author.roles[:-11:-1] if not r.name == "@everyone"])
+        role_count = len(ctx.author.roles) - 1
+        if role_count > 10:
+            roles += f" ... and {role_count - 10} others"
+
+        embed.add_field(name="__**Server-related information:**__", value=f"**Nickname:** {member.nick}\n"
+                                                                          f"**Joined server:** {member.joined_at.__format__('%A %d %B %Y at %H:%M')}\n"
+                                                                          f"**Roles:** ({role_count}) {roles}", inline=False)
         return await ctx.send(embed=embed)
 
 
