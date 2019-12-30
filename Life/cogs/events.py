@@ -26,10 +26,6 @@ class Events(commands.Cog):
                 continue
 
     @commands.Cog.listener()
-    async def on_resume(self):
-        print(f"\n[BOT] Connection resumed.")
-
-    @commands.Cog.listener()
     async def on_disconnect(self):
         print(f"\n[BOT] Disconnected.")
 
@@ -51,10 +47,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-
-        # If the command has a local error handler, return
-        if hasattr(ctx.command, "on_error"):
-            return
 
         # Get the original exception or if nothing is found, keep the original exception.
         error = getattr(error, "original", error)
@@ -102,9 +94,10 @@ class Events(commands.Cog):
         if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
 
-        # If an error was caught, send it.
+        # If an error was found, send it.
         if message:
             return await ctx.send(message)
+
         # Otherwise, print the original error as a traceback.
         print(f"Ignoring exception in command {ctx.command}:")
         traceback.print_exception(type(error), error, error.__traceback__)
@@ -112,19 +105,9 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
 
-        # Log the guild that was joined.
-        print(f"\n[BOT] Joined a guild - {guild.name}")
-
-        # If the guild is the blacklist, leave it.
         if guild.id in self.bot.guild_blacklist:
             print(f"[BOT] Left blacklisted guild - {guild.name}")
             return await guild.leave()
-
-    @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
-
-        # Log the guild that was left.
-        print(f"\n[BOT] Left a guild - {guild.name}")
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
