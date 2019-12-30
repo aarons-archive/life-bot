@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"__{ctx.bot.user.name}'s help page__",
-            description=f"Use `{ctx.bot.config.DISCORD_PREFIX}help [command/Category]` for more info on a command or category.\n"
+            description=f"Use `{ctx.bot.config.DISCORD_PREFIX}help [Command/Category]` for more info on a command or category.\n"
         )
 
         for cog in ctx.bot.cogs.values():
