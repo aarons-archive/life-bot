@@ -2,7 +2,7 @@ from discord.ext import commands
 import discord
 
 
-class KrossServer(commands.Cog):
+class Kross(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -155,7 +155,7 @@ class KrossServer(commands.Cog):
         return await self.refresh_points(ctx)
 
     @points_phoenix.command(name="remove", aliases=["subtract", "minus"])
-    async def points_phoenix_minus(self, ctx, points: int):
+    async def points_phoenix_remove(self, ctx, points: int):
         """
         Remove points from the Phoenix house.
 
@@ -191,7 +191,7 @@ class KrossServer(commands.Cog):
         return await self.refresh_points(ctx)
 
     @points_kodama.command(name="remove", aliases=["subtract", "minus"])
-    async def points_kodama_minus(self, ctx, points: int):
+    async def points_kodama_remove(self, ctx, points: int):
         """
         Remove points from the Kodama house.
 
@@ -226,8 +226,8 @@ class KrossServer(commands.Cog):
         await ctx.send(f"Added `{points}` points to house Sylph. They now have `{total_points}` points.")
         return await self.refresh_points(ctx)
 
-    @points_sylph.command(name="minus", aliases=["subtract", "remove"])
-    async def points_sylph_minus(self, ctx, points: int):
+    @points_sylph.command(name="remove", aliases=["subtract", "minus"])
+    async def points_sylph_remove(self, ctx, points: int):
         """
         Remove points from the Sylph house.
 
@@ -265,4 +265,4 @@ class KrossServer(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(KrossServer(bot))
+    bot.add_cog(Kross(bot))
