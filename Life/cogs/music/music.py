@@ -40,12 +40,12 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected or not ctx.guild.me.voice.channel:
             await ctx.player.connect(channel.id)
-            ctx.player.player_channel = ctx.channel
+            ctx.player.channel = ctx.channel
             return await ctx.send(f"Joined the voice channel `{channel}`.")
 
         if ctx.guild.me.voice.channel.id != channel.id:
             await ctx.player.connect(channel.id)
-            ctx.player.player_channel = ctx.channel
+            ctx.player.channel = ctx.channel
             return await ctx.send(f"Moved to the voice channel `{channel}`.")
 
         return await ctx.send("I am already in this voice channel.")
@@ -103,13 +103,13 @@ class Music(commands.Cog):
         if not ctx.player.is_connected:
             await ctx.player.connect(channel.id)
 
-        ctx.player.player_channel = ctx.channel
-
         await ctx.trigger_typing()
 
         tracks = await ctx.player.get_tracks(f"{search}")
         if not tracks:
             return await ctx.send(f"No results were found for the search term `{search}`.")
+
+        ctx.player.channel = ctx.channel
 
         if isinstance(tracks, granitepy.Playlist):
             for track in tracks.tracks:
@@ -283,14 +283,14 @@ class Music(commands.Cog):
             return await ctx.send("The queue is empty.")
 
         title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
-                  f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
-                  f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
-                  f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size()])}` out of `{ctx.player.queue.size()}` entries in the queue.\n"
+                f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
+                f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
+                f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size()])}` out of `{ctx.player.queue.size()}` entries in the queue.\n"
 
         entries = []
         for index, track in enumerate(ctx.player.queue.queue):
-            entries.append(f"**{index + 1}.** [{str(track.title)}]({track.uri}) | " 
-                           f"`{utils.format_time(round(track.length) / 1000)}` | " 
+            entries.append(f"**{index + 1}.** [{str(track.title)}]({track.uri}) | "
+                           f"`{utils.format_time(round(track.length) / 1000)}` | "
                            f"`Requested by:` {track.requester.mention}\n")
 
         time = sum(track.length for track in ctx.player.queue.queue)
@@ -436,4 +436,3 @@ class Music(commands.Cog):
 def setup(bot):
     bot.add_cog(Music(bot))
     bot.loop.create_task(Music(bot).initiate_nodes())
-
