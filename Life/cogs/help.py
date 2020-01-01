@@ -67,7 +67,10 @@ class HelpCommand(commands.HelpCommand):
             description=f"Use `{ctx.bot.config.DISCORD_PREFIX}help [Command/Category]` for more info on a command or category.\n"
         )
 
-        for cog in ctx.bot.cogs.values():
+        def key(e):
+            return len(e.get_commands())
+
+        for cog in sorted(ctx.bot.cogs.values(), key=key, reverse=True):
 
             if ctx.author.id in ctx.bot.owner_ids:
                 cog_commands = [command for command in cog.get_commands()]

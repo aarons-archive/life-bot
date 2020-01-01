@@ -69,6 +69,8 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is currently disabled."
         if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
+        if isinstance(error, commands.CheckFailure):
+            message = f"{error}"
 
         if isinstance(error, commands.NoPrivateMessage):
             try:
