@@ -72,7 +72,7 @@ class Kross(commands.Cog):
                   f"Sylph      |{sylphs}\n" \
                   f"Banshees   |{banshees}\n" \
                   f"Lost Souls |{lost_souls}\n" \
-                  f"Bots:      |{bots}\n" \
+                  f"Bots       |{bots}\n" \
                   f"Total      |{total}\n" \
                   f"```"
         return await ctx.send(message)
