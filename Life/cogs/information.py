@@ -64,14 +64,14 @@ class Information(commands.Cog):
                                                           f"**Usage:** {psutil.cpu_percent(interval=0.1)}%\n"
                                                           f"**Frequency:** {round(psutil.cpu_freq().current, 2)} Mhz")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="__**System Memory:**__", value=f"**Total:** {round(psutil.virtual_memory().total/1048576)} mb\n"
-                                                             f"**Used:** {round(psutil.virtual_memory().used/1048576)} mb\n"
-                                                             f"**Available:** {round(psutil.virtual_memory().available/1048576)} mb")
-        embed.add_field(name="__**System Disk:**__", value=f"**Total:** {round(psutil.disk_usage('/').total/1073741824, 2)} GB\n"
-                                                           f"**Used:** {round(psutil.disk_usage('/').used/1073741824, 2)} GB\n"
-                                                           f"**Free:** {round(psutil.disk_usage('/').free/1073741824, 2)} GB")
+        embed.add_field(name="__**System Memory:**__", value=f"**Total:** {round(psutil.virtual_memory().total / 1048576)} mb\n"
+                                                             f"**Used:** {round(psutil.virtual_memory().used / 1048576)} mb\n"
+                                                             f"**Available:** {round(psutil.virtual_memory().available / 1048576)} mb")
+        embed.add_field(name="__**System Disk:**__", value=f"**Total:** {round(psutil.disk_usage('/').total / 1073741824, 2)} GB\n"
+                                                           f"**Used:** {round(psutil.disk_usage('/').used / 1073741824, 2)} GB\n"
+                                                           f"**Free:** {round(psutil.disk_usage('/').free / 1073741824, 2)} GB")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="__**Process information:**__", value=f"**Memory usage:** {round(self.bot.process.memory_full_info().rss/1048576, 2)} mb\n"
+        embed.add_field(name="__**Process information:**__", value=f"**Memory usage:** {round(self.bot.process.memory_full_info().rss / 1048576, 2)} mb\n"
                                                                    f"**CPU usage:** {self.bot.process.cpu_percent()}%\n"
                                                                    f"**Threads:** {self.bot.process.num_threads()}")
         return await ctx.send(embed=embed)
@@ -167,7 +167,7 @@ class Information(commands.Cog):
         embed.add_field(name="__**Channels:**__", value=f"**Text channels:** {len(ctx.guild.text_channels)}\n"
                                                         f"**Voice channels:** {len(ctx.guild.voice_channels)}\n"
                                                         f"**Voice region:** {utils.guild_region(ctx.guild)}\n"
-                                                        f"**AFK timeout:** {int(ctx.guild.afk_timeout/60)} minutes\n"
+                                                        f"**AFK timeout:** {int(ctx.guild.afk_timeout / 60)} minutes\n"
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
 
         roles = ' '.join([r.mention for r in ctx.guild.roles[:-11:-1] if not r.name == "@everyone"])

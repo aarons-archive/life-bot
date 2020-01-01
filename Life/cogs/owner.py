@@ -145,7 +145,6 @@ class Owner(commands.Cog):
         entries = []
 
         for guild in sorted(self.bot.guilds, key=key, reverse=True):
-
             total = guild.member_count
             bots = sum(1 for m in guild.members if m.bot)
             humans = sum(1 for m in guild.members if not m.bot)
@@ -170,7 +169,7 @@ class Owner(commands.Cog):
         message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
 
         return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total/uptime)}/second\n\n"
+                              f"{total} socket events observed at a rate of {round(total / uptime)}/second\n\n"
                               f"{message}\n"
                               f"```")
 
@@ -208,7 +207,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @blacklist_user.command(name="add")
-    async def blacklist_user_add(self, ctx, user: int = None, *, reason: str =None):
+    async def blacklist_user_add(self, ctx, user: int = None, *, reason: str = None):
         """
         Add a user to the blacklist.
 
@@ -279,7 +278,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @blacklist_guild.command(name="add")
-    async def blacklist_guild_add(self, ctx, guild: int = None, *, reason: str =None):
+    async def blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = None):
         """
         Add a guild to the blacklist.
 

@@ -14,7 +14,7 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="colour")
+    @commands.command(name="colour", aliases=["color"])
     async def colour(self, ctx, *, image: typing.Union[discord.Member, str] = None):
         """
         Sends a randomly coloured image of the users choice.
@@ -45,7 +45,6 @@ class Fun(commands.Cog):
 
             if not url.endswith((".jpg", ".jpeg", ".png", ".gif", ".wepb")):
                 return await ctx.send("That was not a valid url. It must be a PNG, JPEG or WEBP image.")
-
 
         image_bytes = await imaging.get_image(self.bot, url)
 

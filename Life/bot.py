@@ -40,12 +40,12 @@ class Life(commands.Bot):
         self.session = aiohttp.ClientSession()
         self.process = psutil.Process()
 
-        self.socket_stats = collections.Counter()
         self.start_time = time.time()
         self.config = config
 
         self.db = None
 
+        self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
         self.user_blacklist = []
         self.guild_blacklist = []

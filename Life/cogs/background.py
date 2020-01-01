@@ -39,7 +39,6 @@ class Background(commands.Cog):
     async def before_change_prescence(self):
         await self.bot.wait_until_ready()
 
-
     @tasks.loop(hours=1.0)
     async def store_bot_growth(self):
         try:
@@ -50,7 +49,6 @@ class Background(commands.Cog):
     @store_bot_growth.before_loop
     async def before_store_bot_growth(self):
         await self.bot.wait_until_ready()
-
 
     @tasks.loop(minutes=30.0)
     async def store_usage(self):

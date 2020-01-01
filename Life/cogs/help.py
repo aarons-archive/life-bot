@@ -34,7 +34,7 @@ class HelpCommand(commands.HelpCommand):
             yield f"{indent}{arrow}**{command_name}** - {command_help}"
 
             if isinstance(command, commands.Group):
-                yield from self.formatter(command.commands, aliases=False, short_name=True, level=level+1)
+                yield from self.formatter(command.commands, aliases=False, short_name=True, level=level + 1)
 
     def get_command(self, command, aliases, short_name):
 
