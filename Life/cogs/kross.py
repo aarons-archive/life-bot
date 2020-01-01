@@ -64,7 +64,7 @@ class Kross(commands.Cog):
         total = phoenixs + leviathans + kodamas + sylphs + banshees + lost_souls
 
         message = f"```py\n" \
-                  f"Role       |Count" \
+                  f"Role       |Count\n" \
                   f"Heathens   |{heathens}\n" \
                   f"Phoenix    |{phoenixs}\n" \
                   f"Leviathan  |{leviathans}\n" \
