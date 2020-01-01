@@ -64,15 +64,16 @@ class Kross(commands.Cog):
         total = phoenixs + leviathans + kodamas + sylphs + banshees + lost_souls
 
         message = f"```py\n" \
-                  f"Heathens:   {heathens}\n" \
-                  f"Phoenix:    {phoenixs}\n" \
-                  f"Leviathan:  {leviathans}\n" \
-                  f"Kodama:     {kodamas}\n" \
-                  f"Sylph:      {sylphs}\n" \
-                  f"Banshees:   {banshees}\n" \
-                  f"Lost Souls: {lost_souls}\n" \
-                  f"Bots:       {bots}\n" \
-                  f"Total:      {total}\n" \
+                  f"Role       |Count" \
+                  f"Heathens   |{heathens}\n" \
+                  f"Phoenix    |{phoenixs}\n" \
+                  f"Leviathan  |{leviathans}\n" \
+                  f"Kodama     |{kodamas}\n" \
+                  f"Sylph      |{sylphs}\n" \
+                  f"Banshees   |{banshees}\n" \
+                  f"Lost Souls |{lost_souls}\n" \
+                  f"Bots:      |{bots}\n" \
+                  f"Total      |{total}\n" \
                   f"```"
         return await ctx.send(message)
 
