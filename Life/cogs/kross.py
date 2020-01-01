@@ -258,7 +258,6 @@ class Kross(commands.Cog):
             await kodama_message.edit(content=f"Kodama has {kodama['points']} points.")
             await leviathan_message.edit(content=f"Leviathan has {leviathan['points']} points.")
             await sylph_message.edit(content=f"Sylph has {sylph['points']} points.")
-            return await ctx.send(f"Refreshed the points leaderboard in {channel.mention}")
 
         except discord.Forbidden:
             return await ctx.send("Could not update points, you used the wrong the bot prefix.")
