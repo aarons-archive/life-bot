@@ -36,19 +36,20 @@ class Life(commands.Bot):
             command_prefix=commands.when_mentioned_or(config.DISCORD_PREFIX),
             reconnect=True,
         )
-        self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession()
+        self.loop = asyncio.get_event_loop()
         self.process = psutil.Process()
-
         self.start_time = time.time()
         self.config = config
 
         self.db = None
+        self.account_manager = None
+        self.granitepy = None
 
         self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
-        self.user_blacklist = []
         self.guild_blacklist = []
+        self.user_blacklist = []
         self.usage = {}
 
         for extension in EXTENSIONS:
@@ -65,6 +66,7 @@ class Life(commands.Bot):
             self.loop.run_until_complete(self.bot_close())
 
     async def db_connect(self):
+
         try:
             self.db = await asyncpg.create_pool(**config.DB_CONN_INFO)
             print(f"\n[DB] Connected to database.")

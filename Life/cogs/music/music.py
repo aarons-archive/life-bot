@@ -22,12 +22,12 @@ class Music(commands.Cog):
                     rest_uri=n["rest_uri"],
                     identifier=n["identifier"]
                 )
-                print(f"[ANDESITE] Node {n['identifier']} connected.")
+                print(f"[GRANITEPY] Node {n['identifier']} connected.")
             except granitepy.NodeInvalidCredentials:
-                print(f"[ANDESITE] Invalid credentials for node {n['identifier']}.")
+                print(f"[GRANITEPY] Invalid credentials for node {n['identifier']}.")
                 continue
             except granitepy.NodeConnectionFailure:
-                print(f"Failed to connect to node {n['identifier']}")
+                print(f"[GRANITEPY] Failed to connect to node {n['identifier']}")
                 continue
 
     @commands.command(name="join", aliases=["connect"])
