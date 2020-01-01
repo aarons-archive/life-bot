@@ -63,13 +63,18 @@ class Events(commands.Cog):
             message = f"You passed a bad arguement to the command `{ctx.command}`."
         if isinstance(error, commands.PrivateMessageOnly):
             message = f"The command `{ctx.command}` can only be used in DM's."
+        if isinstance(error, commands.NotOwner):
+            message = f"The command `{ctx.command}` is owner only."
+        if isinstance(error, commands.DisabledCommand):
+            message = f"The command `{ctx.command}` is currently disabled."
+        if isinstance(error, granitepy.NodesUnavailable):
+            message = "There are no nodes available."
+
         if isinstance(error, commands.NoPrivateMessage):
             try:
                 message = f"The command `{ctx.command}` can not be used in DM's."
             except discord.Forbidden:
                 return
-        if isinstance(error, commands.NotOwner):
-            message = f"The command `{ctx.command}` is owner only."
         if isinstance(error, commands.MissingPermissions):
             missing_perms = ">>> \n"
             for perm in error.missing_perms:
@@ -80,8 +85,6 @@ class Events(commands.Cog):
             for perm in error.missing_perms:
                 missing_perms += f"{perm}\n"
             message = f"I am missing the following permissions to run the command `{ctx.command}`.\n{missing_perms}"
-        if isinstance(error, commands.DisabledCommand):
-            message = f"The command `{ctx.command}` is currently disabled."
         if isinstance(error, commands.CommandOnCooldown):
             if error.cooldown.type == commands.BucketType.user:
                 message = f"The command `{ctx.command}` is on cooldown for you, retry in `{utils.format_time(error.retry_after)}`."
@@ -89,10 +92,6 @@ class Events(commands.Cog):
                 message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
                 message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{utils.format_time(error.retry_after)}`."
-        if isinstance(error, commands.CheckFailure):
-            message = f"{error}"
-        if isinstance(error, granitepy.NodesUnavailable):
-            message = "There are no nodes available."
 
         # If an error was found, send it.
         if message:
