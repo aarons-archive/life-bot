@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 
 from utilities import imaging
-from utilities import utils
 
 
 class Owner(commands.Cog):
@@ -20,11 +19,11 @@ class Owner(commands.Cog):
         """
         Show total command usage per guild.
 
-        `display`: Can be "pie/piechart" or "bar/barchart", produces an image of their repective charts.
+        `display`: Can be "pie/piechart" or "bar/barchart", produces an image of the repective chart.
         """
 
         if not self.bot.usage:
-            return await ctx.send("No usage of commands yet.")
+            return await ctx.send("No command usage yet.")
 
         total_usage = {}
         for guild_usage in self.bot.usage.values():
@@ -33,21 +32,22 @@ class Owner(commands.Cog):
                     total_usage[command] = usage
                 else:
                     total_usage[command] += usage
-        total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
+
+        ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
 
         if display is None:
-
             embeds = []
 
             embed = discord.Embed(
                 colour=discord.Color.gold(),
-                title=f"Total usage",
-                description=f"```py\n"
+                title=f"Total usage"
             )
+            embed.set_footer(text=f"{self.bot.user.id}")
             embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
-            for command, usage in total_usage.items():
-                embed.description += f"{command} : {usage}\n"
-            embed.description += "```"
+            embed.description = f"```\n"
+            embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_total_usage.items()])
+            embed.description += "\n```"
+
             embeds.append(embed)
 
             for guild_id, guild_usage in self.bot.usage.items():
@@ -56,33 +56,33 @@ class Owner(commands.Cog):
                 if guild is None:
                     continue
 
-                usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
+                ordered_guild_usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
 
                 embed = discord.Embed(
                     colour=discord.Color.gold(),
-                    title=f"{guild.name}",
-                    description=f"```py\n"
+                    title=f"{guild.name}"
                 )
                 embed.set_footer(text=f"{guild.id}")
                 embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-                for command, command_usage in usage.items():
-                    embed.description += f"{command} : {command_usage}\n"
-                embed.description += "```"
+                embed.description = f"```\n"
+                embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_guild_usage.items()])
+                embed.description += "\n```"
+
                 embeds.append(embed)
 
             return await ctx.paginate_embeds(entries=embeds)
 
         if display in ["pie", "piechart"]:
             start = time.perf_counter()
-            pie_chart = imaging.do_pie_chart([v for v in total_usage.values()], [k for k in total_usage.keys()])
-            await ctx.send(file=discord.File(filename=f"StatsPie.png", fp=pie_chart))
+            pie_chart = imaging.do_pie_chart([v for v in ordered_total_usage.values()], [k for k in ordered_total_usage.keys()])
+            await ctx.send(file=discord.File(filename=f"UsagePie.png", fp=pie_chart))
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
         if display in ["bar", "barchart"]:
             start = time.perf_counter()
-            bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in total_usage.values()], [k for k in total_usage.keys()])
-            await ctx.send(file=discord.File(filename=f"StatsBar.png", fp=bar_chart))
+            bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in ordered_total_usage.values()], [k for k in ordered_total_usage.keys()])
+            await ctx.send(file=discord.File(filename=f"UsageBar.png", fp=bar_chart))
             end = time.perf_counter()
             return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
@@ -92,7 +92,7 @@ class Owner(commands.Cog):
         """
         Show user count over the past 24 (by default) hours.
 
-        `history`: The amount of hours to get the history of.
+        `history`: The amount of hours to get the user count of.
         """
 
         user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
@@ -112,7 +112,7 @@ class Owner(commands.Cog):
         """
         Show guild count over the past 24 (by default) hours.
 
-        `history`: The amount of hours to get the history of.
+        `history`: The amount of hours to get the guild count of.
         """
 
         guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
@@ -128,7 +128,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="farms", hidden=True)
-    async def farms(self, ctx, guilds_per_page = 20):
+    async def farms(self, ctx, guilds_per_page: int = 20):
         """
         Display how many bots/humans there are in each of the bots guilds.
 
@@ -140,58 +140,21 @@ class Owner(commands.Cog):
             guild_total = e.member_count
             return round((guild_bots / guild_total) * 100, 2)
 
-        entries = []
-
         title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
+
+        entries = []
 
         for guild in sorted(self.bot.guilds, key=key, reverse=True):
 
+            total = guild.member_count
             bots = sum(1 for m in guild.members if m.bot)
             humans = sum(1 for m in guild.members if not m.bot)
-            total = guild.member_count
-            percent = f"{round((bots / total) * 100, 2)}%"
+            bot_percent = f"{round((bots / total) * 100, 2)}%"
 
-            message = f"{guild.id} |{total}{' ' * int(9 - len(str(total)))}|{humans}{' ' * int(9 - len(str(humans)))}|{bots}{' ' * int(9 - len(str(bots)))}|{percent}{' ' * int(9 - len(str(percent)))}|{guild.name}"
+            message = f"{guild.id} |{total:<9}|{humans:<9}|{bots:<9}|{bot_percent:9}|{guild.name}"
             entries.append(message)
 
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
-
-    @commands.is_owner()
-    @commands.command(name="guilds", hidden=True)
-    async def guilds(self, ctx):
-        """
-        Display information about each guild the bot is in.
-        """
-
-        embeds = []
-
-        for guild in self.bot.guilds:
-            online, idle, dnd, offline = utils.guild_user_status(guild)
-            embed = discord.Embed(
-                colour=discord.Color.gold(),
-                title=f"{guild.name}'s Stats and Information."
-            )
-            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-            embed.set_footer(text=f"ID: {guild.id}")
-            embed.add_field(name="__**General information:**__", value=f"**Owner:** {guild.owner}\n"
-                                                                       f"**Server created at:** {guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
-                                                                       f"**Members:** {guild.member_count} |"
-                                                                       f"<:online:627627415224713226>{online} |"
-                                                                       f"<:away:627627415119724554>{idle} |"
-                                                                       f"<:dnd:627627404784828416>{dnd} |"
-                                                                       f"<:offline:627627415144890389>{offline}\n"
-                                                                       f"**Verification level:** {utils.guild_verification_level(guild)}\n"
-                                                                       f"**Content filter level:** {utils.guild_content_filter_level(guild)}\n"
-                                                                       f"**2FA:** {utils.guild_mfa_level(guild)}\n"
-                                                                       f"**Role Count:** {len(guild.roles)}\n", inline=False)
-            embed.add_field(name="__**Channels:**__", value=f"**Text channels:** {len(guild.text_channels)}\n"
-                                                            f"**Voice channels:** {len(guild.voice_channels)}\n"
-                                                            f"**Voice region:** {utils.guild_region(guild)}\n"
-                                                            f"**AFK timeout:** {int(guild.afk_timeout / 60)} minutes\n"
-                                                            f"**AFK channel:** {guild.afk_channel}\n", inline=False)
-            embeds.append(embed)
-
-        return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
     @commands.command(name="socketstats", aliases=["ss"], hidden=True)
@@ -218,7 +181,7 @@ class Owner(commands.Cog):
         Base command for blacklisting.
         """
 
-        return await ctx.send("Please choose a valid subcommand. See `l-help blacklist` for more information.")
+        return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}-help blacklist` for more information.")
 
     @commands.is_owner()
     @blacklist.group(name="user", invoke_without_command=True)
@@ -245,7 +208,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @blacklist_user.command(name="add")
-    async def blacklist_user_add(self, ctx, user: int = None, *, reason=None):
+    async def blacklist_user_add(self, ctx, user: int = None, *, reason: str =None):
         """
         Add a user to the blacklist.
 
@@ -316,7 +279,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @blacklist_guild.command(name="add")
-    async def blacklist_guild_add(self, ctx, guild: int = None, *, reason=None):
+    async def blacklist_guild_add(self, ctx, guild: int = None, *, reason: str =None):
         """
         Add a guild to the blacklist.
 
