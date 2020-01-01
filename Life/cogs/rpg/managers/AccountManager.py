@@ -11,14 +11,14 @@ class AccountManager:
     async def cache_accounts(self):
 
         self.bot.accounts.clear()
-        accounts = await self.bot.db.fetch("SELECT * FROM accounts")
 
+        accounts = await self.bot.db.fetch("SELECT * FROM accounts")
         for entry in accounts:
             items = await self.bot.db.fetch("SELECT * FROM inventory WHERE owner = $1", entry["id"])
 
             self.bot.accounts[entry["id"]] = Account(dict(entry), items)
 
-        print(f"\n[RPG] Successfully cached {len(accounts)} accounts.")
+        print(f"\n[RPG] Cached {len(self.bot.accounts)} out of {len(accounts)} accounts.")
 
     async def cache_account(self, account_id: int):
 
@@ -50,8 +50,13 @@ class AccountManager:
         try:
             await self.bot.db.execute(f"INSERT INTO accounts VALUES ($1, 'bg_default', 1000, 1000)", user_id)
 
-            await self.cache_account(user_id)
+            query = 'INSERT INTO inventory (id, owner, count, name, power, slot) VALUES ($1, $2, $3, $4, $5, $6)'
+            values =  [(1, user_id, 1, f"{ctx.author.name}'s Starter boots", 6, "boots"),
+                       (101, user_id, 1, f"{ctx.author.name}'s Starter chestplate", 6, "chestplate"),
+                       (201, user_id, 1, f"{ctx.author.name}'s Starter helmet", 6, "helmet")]
+            await self.bot.db.executemany(query, values)
 
+            await self.cache_account(user_id)
             return await ctx.send(f"Account created with ID `{user_id}`")
 
         except asyncpg.UniqueViolationError:
