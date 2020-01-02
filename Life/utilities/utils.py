@@ -84,15 +84,17 @@ def format_time(second):
     return formatted
 
 def member_activity(user):
-    message = "\n"
 
     if not user.activity or not user.activities:
-        message = "N/A"
+        return "N/A"
+
+    message = "\n"
 
     for activity in user.activities:
 
         # Type 4 is custom status, ignore
         if activity.type == 4:
+            message += "• Custom status\n"
             continue
 
         if activity.type == discord.ActivityType.playing:
@@ -124,6 +126,7 @@ def member_activity(user):
                 message += f"• Listening to **{activity.name}**\n"
 
     return message
+
 
 def member_colour(user):
     colours = {
