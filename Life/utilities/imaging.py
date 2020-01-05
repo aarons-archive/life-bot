@@ -116,9 +116,9 @@ def do_plot(title, x_label, y_label, values, names):
     return plot
 
 
-def do_ping_graph(bot):
-    times = [time for time, ping in list(bot.pings)[-60:]]
-    pings = [ping for time, ping in list(bot.pings)[-60:]]
+def do_ping_graph(bot, history: int):
+    times = [time for time, ping in list(bot.pings)[-history:]]
+    pings = [ping for time, ping in list(bot.pings)[-history:]]
     average_ping = round(sum([ping for time, ping in bot.pings]) / len(bot.pings), 2)
     lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
     highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]

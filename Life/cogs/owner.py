@@ -128,13 +128,13 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="ping_graph", hidden=True)
-    async def ping1(self, ctx, ):
+    async def ping_graph(self, ctx, history: int = 60):
 
         if not self.bot.pings:
             return await ctx.send("No ping data.")
 
         start = time.perf_counter()
-        plot = imaging.do_ping_graph(self.bot)
+        plot = imaging.do_ping_graph(self.bot, history=history)
         await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
