@@ -119,12 +119,12 @@ def do_plot(title, x_label, y_label, values, names):
 def do_ping_graph(bot, history: int):
     times = [time for time, ping in list(bot.pings)[-history:]]
     pings = [ping for time, ping in list(bot.pings)[-history:]]
-    average_ping = round(sum([ping for time, ping in bot.pings]) / len(bot.pings), 2)
+    average_ping = round(sum([ping for time, ping in list(bot.pings)]) / len(bot.pings), 2)
     lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
     highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
 
     plt.clf()
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 5))
 
     plt.plot(times, pings, linewidth=0.5, c="blue")
     plt.plot(times, pings, markevery=lowest_pings, c="lime", linewidth=0.0, marker="o", markersize=5, zorder=3)
