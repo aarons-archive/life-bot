@@ -26,8 +26,9 @@ EXTENSIONS = [
     "cogs.events",
     "cogs.kross",
     "cogs.music.music",
-    #"cogs.rpg.accounts",
+    # "cogs.rpg.accounts",
 ]
+
 
 class Life(commands.Bot):
 
@@ -47,6 +48,7 @@ class Life(commands.Bot):
         self.granitepy = None
 
         self.socket_stats = collections.Counter()
+        self.pings = collections.deque(maxlen=60)
         self.owner_ids = {238356301439041536}
         self.guild_blacklist = []
         self.user_blacklist = []
@@ -136,22 +138,18 @@ class MyContext(commands.Context):
         return self.bot.account_manager.get_account(self.author.id)
 
     async def paginate(self, **kwargs):
-
         paginator = paginators.Paginator(ctx=self, **kwargs)
         return await paginator.paginate()
 
     async def paginate_embed(self, **kwargs):
-
         paginator = paginators.EmbedPaginator(ctx=self, **kwargs)
         return await paginator.paginate()
 
     async def paginate_codeblock(self, **kwargs):
-
         paginator = paginators.CodeBlockPaginator(ctx=self, **kwargs)
         await paginator.paginate()
 
     async def paginate_embeds(self, **kwargs):
-
         paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
         return await paginator.paginate()
 

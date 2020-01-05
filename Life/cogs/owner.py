@@ -127,6 +127,19 @@ class Owner(commands.Cog):
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
+    @commands.command(name="ping_graph", hidden=True)
+    async def ping1(self, ctx, ):
+
+        if not self.bot.pings:
+            return await ctx.send("No ping data.")
+
+        start = time.perf_counter()
+        plot = imaging.do_ping_graph(self.bot)
+        await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
     @commands.command(name="farms", hidden=True)
     async def farms(self, ctx, guilds_per_page: int = 20):
         """

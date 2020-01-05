@@ -9,8 +9,8 @@ async def get_image(bot, url):
         image_bytes = await response.read()
     return image_bytes
 
-def colour(image_bytes, image_colour):
 
+def colour(image_bytes, image_colour):
     image = Image.open(BytesIO(image_bytes)).convert("RGBA")
     mask = image.convert("L")
 
@@ -33,8 +33,8 @@ def colour(image_bytes, image_colour):
     colour_image.seek(0)
     return colour_image
 
-def do_pie_chart(values, names):
 
+def do_pie_chart(values, names):
     plt.clf()
 
     labels = []
@@ -49,7 +49,7 @@ def do_pie_chart(values, names):
     for name, percentage in zip(names, percentages):
         labels.append(f'{name}: {percentage}%')
 
-    figure = plt.figure(1, figsize=(4,3))
+    figure = plt.figure(1, figsize=(4, 3))
 
     axes = figure.add_subplot(111)
     axes.axis('equal')
@@ -69,8 +69,8 @@ def do_pie_chart(values, names):
     pie_chart.seek(0)
     return pie_chart
 
-def do_bar_chart(title, x_label, y_label, values, names):
 
+def do_bar_chart(title, x_label, y_label, values, names):
     plt.clf()
 
     plt.bar(names, values, width=0.5, zorder=3)
@@ -92,8 +92,8 @@ def do_bar_chart(title, x_label, y_label, values, names):
     bar_chart.seek(0)
     return bar_chart
 
-def do_plot(title, x_label, y_label, values, names):
 
+def do_plot(title, x_label, y_label, values, names):
     plt.clf()
 
     plt.plot(names, values, "-r", zorder=3)
@@ -116,3 +116,33 @@ def do_plot(title, x_label, y_label, values, names):
     return plot
 
 
+def do_ping_graph(bot):
+    times = [time for time, ping in bot.pings]
+    pings = [ping for time, ping in bot.pings]
+    average_ping = round(sum([ping for time, ping in bot.pings]) / len(bot.pings), 2)
+    lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
+    highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
+
+    plt.clf()
+    plt.figure(figsize=(10, 5))
+
+    plt.plot(times, pings, linewidth=0.5, c="blue")
+    plt.plot(times, pings, markevery=lowest_pings, c="lime", linewidth=0.0, marker="o", markersize=5, zorder=3)
+    plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="o", markersize=5, zorder=3)
+    plt.fill_between(range(len(pings)), pings, [min(pings) - 10] * len(pings), facecolor="blue", zorder=2, alpha=0.5)
+
+    plt.text(0.5, min(pings) - 9, f"Current ping: {round(bot.latency * 1000, 2)} ms\nAverage Ping: {average_ping} ms")
+
+    plt.xlabel("Time (HH:MM)")
+    plt.xticks(rotation=-90)
+    plt.ylabel("Ping (Ms)")
+    plt.grid(axis="y", which="both", zorder=1)
+
+    plt.minorticks_on()
+    plt.tight_layout()
+
+    ping_graph = BytesIO()
+    plt.savefig(ping_graph)
+    plt.close()
+    ping_graph.seek(0)
+    return ping_graph

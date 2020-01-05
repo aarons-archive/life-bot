@@ -127,7 +127,6 @@ def member_activity(user):
 
     return message
 
-
 def member_colour(user):
     colours = {
         discord.Status.online: 0x008000,
@@ -200,5 +199,3 @@ def guild_user_status(guild):
     dnd = sum(1 for member in guild.members if member.status == discord.Status.do_not_disturb)
     offline = sum(1 for member in guild.members if member.status == discord.Status.offline)
     return online, idle, dnd, offline
-
-

@@ -16,12 +16,13 @@ class Background(commands.Cog):
 
         self.change_prescence.start()
         self.store_bot_growth.start()
-        self.store_usage.start()
+        self.log_usage.start()
+        self.log_ping.start()
 
     def cog_unload(self):
         self.change_prescence.stop()
         self.store_bot_growth.stop()
-        self.store_usage.stop()
+        self.log_usage.stop()
 
     @tasks.loop(hours=1.0)
     async def change_prescence(self):
@@ -48,7 +49,7 @@ class Background(commands.Cog):
         await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=30.0)
-    async def store_usage(self):
+    async def log_usage(self):
 
         for guild_id, guild_usage in self.bot.usage.items():
 
@@ -64,8 +65,16 @@ class Background(commands.Cog):
 
                 await self.bot.db.execute("UPDATE bot_usage SET usage = $1 where id = $2", json.dumps(db_usage), guild_id)
 
-    @store_usage.before_loop
-    async def before_store_usage(self):
+    @log_usage.before_loop
+    async def before_log_usage(self):
+        await self.bot.wait_until_ready()
+
+    @tasks.loop(seconds=1)
+    async def log_ping(self):
+        self.bot.pings.append((datetime.today().strftime('%H:%M'), round(self.bot.latency * 1000)))
+
+    @log_ping.before_loop
+    async def before_log_ping(self):
         await self.bot.wait_until_ready()
 
 
