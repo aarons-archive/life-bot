@@ -71,7 +71,7 @@ class Background(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def log_ping(self):
-        self.bot.pings.append((datetime.utcnow().strftime('%d-%m: %H:%M'), round(self.bot.latency * 1000)))
+        self.bot.pings.append((datetime.utcnow().strftime('%d: %H:%M'), round(self.bot.latency * 1000)))
 
     @log_ping.before_loop
     async def before_log_ping(self):
