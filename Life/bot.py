@@ -48,7 +48,7 @@ class Life(commands.Bot):
         self.granitepy = None
 
         self.socket_stats = collections.Counter()
-        self.pings = collections.deque(maxlen=60)
+        self.pings = collections.deque(maxlen=14400)
         self.owner_ids = {238356301439041536}
         self.guild_blacklist = []
         self.user_blacklist = []
@@ -79,10 +79,10 @@ class Life(commands.Bot):
 
             blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
             blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
-            for user in range(len(blacklisted_users)):
-                self.user_blacklist.append(int(blacklisted_users[user]["id"]))
-            for user in range(len(blacklisted_guilds)):
-                self.guild_blacklist.append(int(blacklisted_guilds[user]["id"]))
+            for user in blacklisted_users:
+                self.user_blacklist.append(int(user["id"]))
+            for guild in blacklisted_guilds:
+                self.guild_blacklist.append(int(guild["id"]))
 
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to database was denied.")
@@ -109,7 +109,7 @@ class Life(commands.Bot):
         ctx = await self.get_context(message)
         if ctx.command:
             if message.author.id in self.user_blacklist:
-                return await message.channel.send(f"Sorry, you are blacklisted.")
+                return await message.channel.send(f"Sorry, you are blacklisted from using this bot.")
             else:
                 await self.process_commands(message)
 
@@ -119,7 +119,7 @@ class Life(commands.Bot):
             ctx = await self.get_context(after)
             if ctx.command:
                 if after.author.id in self.user_blacklist:
-                    return await after.channel.send(f"Sorry, you are blacklisted.")
+                    return await after.channel.send(f"Sorry, you are blacklisted from using this bot.")
                 else:
                     await self.process_commands(after)
 

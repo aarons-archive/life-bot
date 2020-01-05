@@ -55,6 +55,8 @@ class Events(commands.Cog):
         message = ""
         if isinstance(error, commands.CommandNotFound):
             return
+        if isinstance(error, commands.CheckFailure):
+            message = f"{error}"
         if isinstance(error, commands.MissingRequiredArgument):
             message = f"You missed the `{error.param}` parameter. You can use `{ctx.prefix}help {ctx.command}` for more information on what parameters to pass."
         if isinstance(error, commands.TooManyArguments):
@@ -69,8 +71,6 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is currently disabled."
         if isinstance(error, granitepy.NodesUnavailable):
             message = "There are no nodes available."
-        if isinstance(error, commands.CheckFailure):
-            message = f"{error}"
 
         if isinstance(error, commands.NoPrivateMessage):
             try:
