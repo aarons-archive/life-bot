@@ -124,7 +124,7 @@ def do_ping_graph(bot):
     highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
 
     plt.clf()
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 6))
 
     plt.plot(times, pings, linewidth=0.5, c="blue")
     plt.plot(times, pings, markevery=lowest_pings, c="lime", linewidth=0.0, marker="o", markersize=5, zorder=3)
