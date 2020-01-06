@@ -130,7 +130,6 @@ def do_ping_graph(bot, history: int):
     plt.plot(times, pings, markevery=lowest_pings, c="lime", linewidth=0.0, marker="o", markersize=5, zorder=3)
     plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="o", markersize=5, zorder=3)
     plt.fill_between(range(len(pings)), pings, [min(pings) - 10] * len(pings), facecolor="blue", zorder=2, alpha=0.5)
-
     plt.text(0.5, min(pings) - 9, f"Current ping: {round(bot.latency * 1000, 2)} ms\nAverage Ping: {average_ping} ms")
 
     plt.xlabel("Time (HH:MM)")
@@ -139,6 +138,8 @@ def do_ping_graph(bot, history: int):
     plt.grid(axis="y", which="both", zorder=1)
 
     plt.minorticks_on()
+    plt.tick_params(axis="x", which="minor", bottom=False)
+
     plt.tight_layout()
 
     ping_graph = BytesIO()
