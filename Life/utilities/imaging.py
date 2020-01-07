@@ -138,7 +138,7 @@ def do_ping_graph(bot, history: int):
     plt.grid(axis="y", which="both", zorder=1)
 
     plt.minorticks_on()
-    plt.tick_params(axis="x", which="minor", bottom=False)
+    plt.tick_params(axis="x", which="minor", bottom=False, labelbottom=False if history <= 60 else True)
 
     plt.tight_layout()
 
