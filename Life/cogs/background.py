@@ -69,7 +69,7 @@ class Background(commands.Cog):
     async def before_log_usage(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=1.0)
     async def log_ping(self):
         self.bot.pings.append((datetime.utcnow().strftime('%H:%M'), round(self.bot.latency * 1000)))
 
