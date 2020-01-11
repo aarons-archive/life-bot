@@ -125,21 +125,25 @@ def do_ping_graph(bot, history: int):
     average_ping = round(sum([ping for time, ping in list(bot.pings)]) / len(bot.pings), 2)
 
     plt.clf()
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 6))
 
     plt.plot(times, pings, linewidth=1, c="darkorange")
     plt.plot(times, pings, markevery=lowest_pings, c="green", linewidth=0.0, marker="s", markersize=5, zorder=3)
     plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="s", markersize=5, zorder=3)
-    plt.fill_between(range(len(pings)), pings, [min(pings) - 10] * len(pings), facecolor="darkorange", alpha=0.5)
-    plt.text(0.1, min(pings) - 9.9, f"Average Ping: {average_ping}ms \nCurrent ping: {round(bot.latency * 1000)}ms \nLowest ping: {min(pings)}ms \nHighest ping: {max(pings)}ms")
+    plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor="darkorange", alpha=0.5)
+    plt.text(0, min(pings) - 6, f"Average Ping: {average_ping}ms \nCurrent ping: {round(bot.latency * 1000)}ms \nLowest ping: {min(pings)}ms \nHighest ping: {max(pings)}ms")
 
     plt.xlabel("Time (HH:MM)")
     plt.ylabel("Ping (MS)")
     plt.xticks(rotation=-90)
     plt.grid(axis="y", which="both", zorder=1)
 
-    plt.tick_params(axis="x", which="both", bottom=True if history <= 60 else False, labelbottom=True if history <= 60 else False)
-    plt.minorticks_on()
+    plt.tick_params(axis="x", which="major", bottom=True if history <= 60 else False, labelbottom=True if history <= 60 else False)
+    plt.tick_params(axis="x", which="minor", bottom=False)
+    plt.tick_params(axis="y", which="both", left=True)
+
+    if history <= 180:
+        plt.minorticks_on()
 
     plt.tight_layout()
 
