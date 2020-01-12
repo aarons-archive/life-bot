@@ -15,11 +15,9 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="usage", hidden=True)
-    async def usage(self, ctx, display: str = None):
+    async def usage(self, ctx):
         """
         Show total command usage per guild.
-
-        `display`: Can be "pie/piechart" or "bar/barchart", produces an image of the repective chart.
         """
 
         if not self.bot.usage:
@@ -35,56 +33,38 @@ class Owner(commands.Cog):
 
         ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
 
-        if display is None:
-            embeds = []
+        embeds = []
 
-            embed = discord.Embed(
-                colour=discord.Color.gold(),
-                title=f"Total usage"
-            )
-            embed.set_footer(text=f"{self.bot.user.id}")
-            embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
+        embed = discord.Embed(
+            colour=discord.Color.gold(),
+            title=f"Total usage"
+        )
+        embed.set_footer(text=f"{self.bot.user.id}")
+        embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
+        embed.description = f"```\n"
+        embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_total_usage.items()])
+        embed.description += "\n```"
+
+        embeds.append(embed)
+
+        for guild_id, guild_usage in self.bot.usage.items():
+
+            guild = self.bot.get_guild(guild_id)
+            if guild is None:
+                continue
+
+            ordered_guild_usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
+
+            embed.title = f"{guild.name}"
+            embed.set_footer(text=f"{guild.id}")
+            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
             embed.description = f"```\n"
-            embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_total_usage.items()])
+            embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_guild_usage.items()])
             embed.description += "\n```"
 
             embeds.append(embed)
 
-            for guild_id, guild_usage in self.bot.usage.items():
-
-                guild = self.bot.get_guild(guild_id)
-                if guild is None:
-                    continue
-
-                ordered_guild_usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
-
-                embed = discord.Embed(
-                    colour=discord.Color.gold(),
-                    title=f"{guild.name}"
-                )
-                embed.set_footer(text=f"{guild.id}")
-                embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-                embed.description = f"```\n"
-                embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_guild_usage.items()])
-                embed.description += "\n```"
-
-                embeds.append(embed)
-
-            return await ctx.paginate_embeds(entries=embeds)
-
-        if display in ["pie", "piechart"]:
-            start = time.perf_counter()
-            pie_chart = imaging.do_pie_chart([v for v in ordered_total_usage.values()], [k for k in ordered_total_usage.keys()])
-            await ctx.send(file=discord.File(filename=f"UsagePie.png", fp=pie_chart))
-            end = time.perf_counter()
-            return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-        if display in ["bar", "barchart"]:
-            start = time.perf_counter()
-            bar_chart = imaging.do_bar_chart("Command usage", "Command", "Usage", [v for v in ordered_total_usage.values()], [k for k in ordered_total_usage.keys()])
-            await ctx.send(file=discord.File(filename=f"UsageBar.png", fp=bar_chart))
-            end = time.perf_counter()
-            return await ctx.send(f"That took {end - start:.3f}sec to complete")
+        return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
@@ -101,7 +81,7 @@ class Owner(commands.Cog):
             return await ctx.send("No growth data.")
 
         start = time.perf_counter()
-        plot = imaging.do_plot("User growth", "Datetime", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
+        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
         await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
@@ -115,13 +95,13 @@ class Owner(commands.Cog):
         `history`: The amount of hours to get the guild count of.
         """
 
-        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
+        guild_growth = await self.bot.db.fetch("SELECT * from bot_growth ORDER BY date DESC LIMIT $1", history)
 
         if not guild_growth:
             return await ctx.send("No growth data.")
 
         start = time.perf_counter()
-        plot = imaging.do_plot("Guild growth", "Datetime", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
+        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
         await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
@@ -134,7 +114,7 @@ class Owner(commands.Cog):
             return await ctx.send("No ping data.")
 
         start = time.perf_counter()
-        plot = imaging.do_ping_graph(self.bot, history=history)
+        plot = imaging.do_ping_plot(self.bot, history=history)
         await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
