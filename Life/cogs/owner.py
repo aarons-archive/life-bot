@@ -95,7 +95,7 @@ class Owner(commands.Cog):
         `history`: The amount of hours to get the guild count of.
         """
 
-        guild_growth = await self.bot.db.fetch("SELECT * from bot_growth ORDER BY date DESC LIMIT $1", history)
+        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
 
         if not guild_growth:
             return await ctx.send("No growth data.")
