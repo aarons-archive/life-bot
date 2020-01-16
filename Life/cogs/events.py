@@ -27,7 +27,15 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_disconnect(self):
-        print(f"\n[BOT] Disconnected.")
+        print(f"[BOT] Disconnected from discord")
+
+    @commands.Cog.listener()
+    async def on_connect(self):
+        print(f"[BOT] Connected to discord.")
+
+    @commands.Cog.listener()
+    async def on_resume(self):
+        print(f"[BOT] Resumed a session.")
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
