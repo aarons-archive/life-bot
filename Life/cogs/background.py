@@ -15,14 +15,13 @@ class Background(commands.Cog):
         self.bot.prescences = []
 
         self.change_prescence.start()
-        self.store_bot_growth.start()
-        self.log_usage.start()
+        self.log_bot_stats.start()
         self.log_ping.start()
 
     def cog_unload(self):
         self.change_prescence.stop()
-        self.store_bot_growth.stop()
-        self.log_usage.stop()
+        self.log_bot_stats.stop()
+        self.log_ping.stop()
 
     @tasks.loop(hours=1.0)
     async def change_prescence(self):
@@ -38,21 +37,13 @@ class Background(commands.Cog):
         await self.bot.wait_until_ready()
 
     @tasks.loop(hours=1.0)
-    async def store_bot_growth(self):
+    async def log_bot_stats(self):
         try:
             await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.utcnow().strftime('%d-%m: %H:00'), len(self.bot.users), len(self.bot.guilds))
         except asyncpg.UniqueViolationError:
             pass
 
-    @store_bot_growth.before_loop
-    async def before_store_bot_growth(self):
-        await self.bot.wait_until_ready()
-
-    @tasks.loop(minutes=30.0)
-    async def log_usage(self):
-
         for guild_id, guild_usage in self.bot.usage.items():
-
             try:
                 await self.bot.db.execute("INSERT INTO bot_usage VALUES ($1, $2)", guild_id, json.dumps(guild_usage))
 
@@ -65,11 +56,11 @@ class Background(commands.Cog):
 
                 await self.bot.db.execute("UPDATE bot_usage SET usage = $1 where id = $2", json.dumps(db_usage), guild_id)
 
-    @log_usage.before_loop
-    async def before_log_usage(self):
+    @log_bot_stats.before_loop
+    async def before_store_bot_growth(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(minutes=5.0)
     async def log_ping(self):
         self.bot.pings.append((datetime.utcnow().strftime('%H:%M'), round(self.bot.latency * 1000)))
 
