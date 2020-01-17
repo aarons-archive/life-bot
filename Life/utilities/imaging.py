@@ -74,7 +74,6 @@ def do_ping_plot(bot, history: int):
     plt.clf()
     plt.figure(figsize=(10, 6))
 
-
     plt.plot(times, pings, linewidth=1, c="navy", zorder=3)
     plt.plot(times, pings, markevery=lowest_pings, c="green", linewidth=0.0, marker="s", markersize=5, zorder=3)
     plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="s", markersize=5, zorder=3)
