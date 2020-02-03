@@ -36,8 +36,10 @@ async def ping(bot, ctx):
 
     return typingms, latencyms, discordms, averagems
 
+
 def random_colour():
     return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
 
 def linecount():
     file_amount = 0
@@ -61,6 +63,7 @@ def linecount():
                         lines += 1
     return file_amount, functions, comments, lines
 
+
 def format_time(second):
     minute, second = divmod(second, 60)
     hour, minute = divmod(minute, 60)
@@ -80,6 +83,7 @@ def format_time(second):
         formatted = f"%02d:%02d:%02d:%02d" % (days, hours, minutes, seconds)
 
     return formatted
+
 
 def member_activity(user):
 
@@ -125,6 +129,7 @@ def member_activity(user):
 
     return message
 
+
 def member_colour(user):
     colours = {
         discord.Status.online: 0x008000,
@@ -134,6 +139,7 @@ def member_colour(user):
     }
     return colours[user.status]
 
+
 def member_status(user):
     status = {
         discord.Status.online: "Online",
@@ -142,6 +148,7 @@ def member_status(user):
         discord.Status.offline: "Offline"
     }
     return status[user.status]
+
 
 def guild_region(guild):
     regions = {
@@ -166,12 +173,14 @@ def guild_region(guild):
     }
     return regions[guild.region]
 
+
 def guild_mfa_level(guild):
     mfa_levels = {
         0: "Not required",
         1: "Required"
     }
     return mfa_levels[guild.mfa_level]
+
 
 def guild_verification_level(guild):
     verification_levels = {
@@ -183,6 +192,7 @@ def guild_verification_level(guild):
     }
     return verification_levels[guild.verification_level]
 
+
 def guild_content_filter_level(guild):
     explicit_content_filters = {
         discord.ContentFilter.disabled: "None - Content filter disabled.",
@@ -190,6 +200,7 @@ def guild_content_filter_level(guild):
         discord.ContentFilter.all_members: "All members - Content filter enabled for all users.",
     }
     return explicit_content_filters[guild.explicit_content_filter]
+
 
 def guild_user_status(guild):
     online = sum(1 for member in guild.members if member.status == discord.Status.online)
