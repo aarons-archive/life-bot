@@ -54,11 +54,9 @@ def linecount():
                         continue
                     elif line.strip().startswith("#"):
                         comments += 1
-                        continue
-                    elif line.strip().startswith(("async", "async def")):
+                    elif line.strip().startswith(("def", "async def")):
                         functions += 1
                         lines += 1
-                        continue
                     else:
                         lines += 1
     return file_amount, functions, comments, lines

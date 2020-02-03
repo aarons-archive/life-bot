@@ -13,39 +13,37 @@ class Music(commands.Cog):
 
     async def initiate_nodes(self):
 
+        await self.bot.wait_until_ready()
+
         for n in self.bot.config.NODES.values():
             try:
                 await self.bot.granitepy.create_node(
-                    host=n["ip"],
+                    host=n["host"],
                     port=n["port"],
                     password=n["password"],
-                    rest_uri=n["rest_uri"],
                     identifier=n["identifier"]
                 )
                 print(f"[GRANITEPY] Node {n['identifier']} connected.")
-            except granitepy.NodeInvalidCredentials:
-                print(f"[GRANITEPY] Invalid credentials for node {n['identifier']}.")
-                continue
-            except granitepy.NodeConnectionFailure:
-                print(f"[GRANITEPY] Failed to connect to node {n['identifier']}")
+            except granitepy.NodeConnectionFailure as e:
+                print(f"[GRANITEPY] {e}")
                 continue
 
     @commands.command(name="join", aliases=["connect"])
     async def join(self, ctx):
         """Join or move to the users voice channel."""
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
         channel = ctx.author.voice.channel
 
-        if not ctx.player.is_connected or not ctx.guild.me.voice.channel:
-            await ctx.player.connect(channel.id)
-            ctx.player.channel = ctx.channel
+        if not ctx.player.is_connected:
+            await ctx.player.connect(channel)
+            ctx.player.text_channel = ctx.channel
             return await ctx.send(f"Joined the voice channel `{channel}`.")
 
         if ctx.guild.me.voice.channel.id != channel.id:
-            await ctx.player.connect(channel.id)
-            ctx.player.channel = ctx.channel
+            await ctx.player.connect(channel)
+            ctx.player.text_channel = ctx.channel
             return await ctx.send(f"Moved to the voice channel `{channel}`.")
 
         return await ctx.send("I am already in this voice channel.")
@@ -57,37 +55,15 @@ class Music(commands.Cog):
         if not ctx.player.is_connected:
             return await ctx.send(f"I am not connected to any voice channels.")
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         ctx.player.queue.clear()
         await ctx.player.destroy()
         return await ctx.send(f"Left the voice channel `{ctx.guild.me.voice.channel}`.")
-
-    @commands.command(name="search")
-    async def search(self, ctx, *, search: str):
-        """Search for all tracks with a given search query.
-
-        `search`: The name of the track you want to search for.
-        """
-
-        await ctx.trigger_typing()
-
-        tracks = await ctx.player.get_tracks(f"{search}")
-        if not tracks:
-            return await ctx.send(f"No results were found for the search term `{search}`.")
-
-        results = []
-        for index, track in enumerate(tracks):
-            message = f"**{index + 1}.** [{track.title}]({track.uri})"
-            results.append(message)
-
-        title = f"Showing all results for the search term `{search}`\n\n"
-
-        return await ctx.paginate_embed(entries=results, entries_per_page=10, title=title)
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
@@ -96,28 +72,27 @@ class Music(commands.Cog):
         `search`: The name/link of the track you want to play.
         """
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
         channel = ctx.author.voice.channel
 
         if not ctx.player.is_connected:
-            await ctx.player.connect(channel.id)
+            ctx.player.text_channel = ctx.channel
+            await ctx.player.connect(channel)
 
         await ctx.trigger_typing()
 
-        tracks = await ctx.player.get_tracks(f"{search}")
-        if not tracks:
+        result = await ctx.player.get_tracks(f"{search}")
+        if not result:
             return await ctx.send(f"No results were found for the search term `{search}`.")
 
-        ctx.player.channel = ctx.channel
-
-        if isinstance(tracks, granitepy.Playlist):
-            for track in tracks.tracks:
+        if isinstance(result, granitepy.Playlist):
+            for track in result.tracks:
                 await ctx.player.queue.put(Track(track.track, track.data, ctx=ctx))
-            return await ctx.send(f"Added the playlist **{tracks.title}** to the queue with a total of **{len(tracks.tracks)}** entries.")
+            return await ctx.send(f"Added the playlist **{result.name}** to the queue with a total of **{len(result.tracks)}** entries.")
 
-        await ctx.player.queue.put(Track(track=tracks[0].track, data=tracks[0].data, ctx=ctx))
-        return await ctx.send(f"Added the track **{tracks[0].title}** to the queue.")
+        await ctx.player.queue.put(Track(track_id=result[0].track_id, info=result[0].info, ctx=ctx))
+        return await ctx.send(f"Added the track **{result[0].title}** to the queue.")
 
     @commands.command(name="pause")
     async def pause(self, ctx):
@@ -126,16 +101,16 @@ class Music(commands.Cog):
         if not ctx.player.is_connected:
             return await ctx.send(f"I am not connected to any voice channels.")
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
-        if not ctx.player.current:
+        if not ctx.player.is_playing:
             return await ctx.send("No tracks are currently playing.")
 
-        if ctx.player.paused is True:
+        if ctx.player.is_paused:
             return await ctx.send("The player is already paused.")
 
         await ctx.player.set_pause(True)
@@ -148,17 +123,17 @@ class Music(commands.Cog):
         if not ctx.player.is_connected:
             return await ctx.send(f"I am not connected to any voice channels.")
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
-        if not ctx.player.current:
+        if not ctx.player.is_playing:
             return await ctx.send("No tracks are currently playing.")
 
-        if ctx.player.paused is False:
-            return await ctx.send("The player is not paused.")
+        if not ctx.player.is_paused:
+            return await ctx.send("The player is already playing.")
 
         await ctx.player.set_pause(False)
         return await ctx.send(f"Resumed the player.")
@@ -175,13 +150,13 @@ class Music(commands.Cog):
         if not ctx.player.is_connected:
             return await ctx.send(f"I am not connected to any voice channels.")
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
+        if not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
-        if not ctx.player.current:
+        if not ctx.player.is_playing:
             return await ctx.send("No tracks are currently playing.")
 
         if ctx.player.current.requester.id != ctx.author.id:
@@ -228,7 +203,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if not volume and not volume == 0:
@@ -253,7 +228,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.voice_channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if not ctx.player.current:
@@ -309,7 +284,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue.empty():
@@ -328,7 +303,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue.empty():
@@ -347,7 +322,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue.empty():
@@ -366,7 +341,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue_loop is True:
@@ -389,7 +364,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue.empty():
@@ -415,7 +390,7 @@ class Music(commands.Cog):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send(f"You must be in a voice channel to use this command.")
 
-        if ctx.player.channel_id != ctx.author.voice.channel.id:
+        if ctx.player.channel.id != ctx.author.voice.channel.id:
             return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue.empty():

@@ -15,11 +15,6 @@ class Accounts(commands.Cog):
         self.bot.account_manager = AccountManager(self.bot)
         self.bot.accounts = {}
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-
-        await self.bot.account_manager.cache_accounts()
-
     @commands.command(name="create")
     async def create(self, ctx):
         """

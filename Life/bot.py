@@ -30,6 +30,29 @@ EXTENSIONS = [
 ]
 
 
+class MyContext(commands.Context):
+
+    @property
+    def player(self):
+        return self.bot.granitepy.get_player(self.guild, cls=player.Player)
+
+    @property
+    def account(self):
+        return self.bot.account_manager.get_account(self.author.id)
+
+    async def paginate(self, **kwargs):
+        return await paginators.Paginator(ctx=self, **kwargs).paginate()
+
+    async def paginate_embed(self, **kwargs):
+        return await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
+
+    async def paginate_codeblock(self, **kwargs):
+        return await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
+
+    async def paginate_embeds(self, **kwargs):
+        return await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
+
+
 class Life(commands.Bot):
 
     def __init__(self):
@@ -37,19 +60,19 @@ class Life(commands.Bot):
             command_prefix=commands.when_mentioned_or(config.DISCORD_PREFIX),
             reconnect=True,
         )
-        self.session = aiohttp.ClientSession()
         self.loop = asyncio.get_event_loop()
         self.process = psutil.Process()
-        self.start_time = time.time()
+        self.boot_time = time.time()
         self.config = config
 
-        self.db = None
-        self.account_manager = None
         self.granitepy = None
+        self.session = None
+        self.rpg = None
+        self.db = None
 
         self.socket_stats = collections.Counter()
         self.pings = collections.deque(maxlen=14400)
-        self.owner_ids = {238356301439041536}
+        self.owner_ids = [238356301439041536]
         self.guild_blacklist = []
         self.user_blacklist = []
         self.usage = {}
@@ -62,27 +85,27 @@ class Life(commands.Bot):
                 print(f"[EXT] Failed - {extension}")
 
     def run(self):
-        try:
-            self.loop.run_until_complete(self.bot_start())
-        except KeyboardInterrupt:
-            self.loop.run_until_complete(self.bot_close())
+        self.loop.run_until_complete(self.bot_start())
 
-    async def db_connect(self):
+    async def initiate_database(self):
 
         try:
-            self.db = await asyncpg.create_pool(**config.DB_CONN_INFO)
+            self.db = await asyncpg.create_pool(**self.config.DB_CONN_INFO)
             print(f"\n[DB] Connected to database.")
 
-            usage = await self.db.fetch("SELECT * FROM bot_usage")
-            for guild in usage:
-                self.usage[guild["id"]] = json.loads(guild["usage"])
-
+            usages = await self.db.fetch("SELECT * FROM bot_usage")
             blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
             blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
+
+            for guild in usages:
+                self.usage[guild["id"]] = json.loads(guild["usage"])
+            print(f"[DB] Loaded bot usages.")
             for user in blacklisted_users:
-                self.user_blacklist.append(int(user["id"]))
+                self.user_blacklist.append(user["id"])
+            print(f"[DB] Loaded user blacklist.")
             for guild in blacklisted_guilds:
-                self.guild_blacklist.append(int(guild["id"]))
+                self.guild_blacklist.append(guild["id"])
+            print(f"[DB] Loaded guild blacklist.")
 
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to database was denied.")
@@ -90,13 +113,10 @@ class Life(commands.Bot):
             print(f"\n[DB] An error occured: {e}")
 
     async def bot_start(self):
-        await self.db_connect()
+        self.session = aiohttp.ClientSession()
+        await self.initiate_database()
         await self.login(config.DISCORD_TOKEN)
         await self.connect()
-
-    async def bot_close(self):
-        await super().logout()
-        await self.session.close()
 
     async def is_owner(self, user):
         return user.id in self.owner_ids
@@ -115,43 +135,18 @@ class Life(commands.Bot):
 
     async def on_message_edit(self, before, after):
 
-        if not after.embeds and not after.pinned and not before.pinned and not before.embeds:
-            ctx = await self.get_context(after)
-            if ctx.command:
-                if after.author.id in self.user_blacklist:
-                    return await after.channel.send(f"Sorry, you are blacklisted from using this bot.")
-                else:
-                    await self.process_commands(after)
+        if before.author.bot or after.author.bot:
+            return
 
-    async def get_context(self, message, *, cls=None):
-        return await super().get_context(message, cls=MyContext)
+        ctx = await self.get_context(after)
+        if ctx.command:
+            if before.author.id or after.author.id in self.user_blacklist:
+                return await after.channel.send(f"Sorry, you are blacklisted from using this bot.")
+            else:
+                await self.process_commands(after)
 
-
-class MyContext(commands.Context):
-
-    @property
-    def player(self):
-        return self.bot.granitepy.get_player(self.guild.id, cls=player.Player)
-
-    @property
-    def account(self):
-        return self.bot.account_manager.get_account(self.author.id)
-
-    async def paginate(self, **kwargs):
-        paginator = paginators.Paginator(ctx=self, **kwargs)
-        return await paginator.paginate()
-
-    async def paginate_embed(self, **kwargs):
-        paginator = paginators.EmbedPaginator(ctx=self, **kwargs)
-        return await paginator.paginate()
-
-    async def paginate_codeblock(self, **kwargs):
-        paginator = paginators.CodeBlockPaginator(ctx=self, **kwargs)
-        await paginator.paginate()
-
-    async def paginate_embeds(self, **kwargs):
-        paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
-        return await paginator.paginate()
+    async def get_context(self, message, *, cls=MyContext):
+        return await super().get_context(message, cls=cls)
 
 
 if __name__ == "__main__":

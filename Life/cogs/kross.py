@@ -40,7 +40,7 @@ class Kross(commands.Cog):
                 await member.add_roles(kodama)
             elif leviathan_count < sylph_count and leviathan_count < phoenix_count and leviathan_count < kodama_count:
                 await member.add_roles(leviathan)
-            elif sylph_count < phoenix_count and sylph_count < kodama and sylph_count < leviathan_count:
+            elif sylph_count < phoenix_count and sylph_count < kodama_count and sylph_count < leviathan_count:
                 await member.add_roles(sylph)
             else:
                 await member.add_roles(phoenix)

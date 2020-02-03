@@ -30,14 +30,13 @@ class Owner(commands.Cog):
                     total_usage[command] = usage
                 else:
                     total_usage[command] += usage
-
         ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
 
         embeds = []
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
-            title=f"Total usage"
+            title=f"Total usage:"
         )
         embed.set_footer(text=f"{self.bot.user.id}")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
@@ -55,7 +54,10 @@ class Owner(commands.Cog):
 
             ordered_guild_usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
 
-            embed.title = f"{guild.name}"
+            embed = discord.Embed(
+                colour=discord.Color.gold(),
+                title=f"{guild.name}'s usage:"
+            )
             embed.set_footer(text=f"{guild.id}")
             embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
             embed.description = f"```\n"
@@ -70,6 +72,7 @@ class Owner(commands.Cog):
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
     async def user_growth(self, ctx, history: int = 24):
         """
+
         Show user count over the past 24 (by default) hours.
 
         `history`: The amount of hours to get the user count of.
@@ -114,6 +117,7 @@ class Owner(commands.Cog):
             return await ctx.send("No ping data.")
 
         start = time.perf_counter()
+        await ctx.trigger_typing()
         plot = imaging.do_ping_plot(self.bot, history=history)
         await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
         end = time.perf_counter()
