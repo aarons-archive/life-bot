@@ -2,3 +2,6 @@
 *.png
 *.ini
 Life/config.py
+
+.idea/
+venv/
