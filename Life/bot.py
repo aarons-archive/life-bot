@@ -26,7 +26,7 @@ EXTENSIONS = [
     "cogs.events",
     "cogs.kross",
     "cogs.music.music",
-    #"cogs.rpg.accounts",
+    "cogs.rpg.accounts",
 ]
 
 
@@ -84,8 +84,15 @@ class Life(commands.Bot):
             except commands.ExtensionNotFound:
                 print(f"[EXT] Failed - {extension}")
 
+    @property
+    def uptime(self):
+        return round(time.time() - self.boot_time)
+
     def run(self):
-        self.loop.run_until_complete(self.bot_start())
+        try:
+            self.loop.run_until_complete(self.bot_start())
+        except KeyboardInterrupt:
+            self.loop.run_until_complete(self.bot_close())
 
     async def initiate_database(self):
 
@@ -99,16 +106,16 @@ class Life(commands.Bot):
 
             for guild in usages:
                 self.usage[guild["id"]] = json.loads(guild["usage"])
-            print(f"[DB] Loaded bot usages.")
+            print(f"[DB] Loaded bot usages. ({len(usages)})")
             for user in blacklisted_users:
                 self.user_blacklist.append(user["id"])
-            print(f"[DB] Loaded user blacklist.")
+            print(f"[DB] Loaded user blacklist. ({len(blacklisted_users)})")
             for guild in blacklisted_guilds:
                 self.guild_blacklist.append(guild["id"])
-            print(f"[DB] Loaded guild blacklist.")
+            print(f"[DB] Loaded guild blacklist. ({len(blacklisted_guilds)})")
 
         except ConnectionRefusedError:
-            print(f"\n[DB] Connection to database was denied.")
+            print(f"\n[DB] Connection to the database was denied.")
         except Exception as e:
             print(f"\n[DB] An error occured: {e}")
 
@@ -117,6 +124,10 @@ class Life(commands.Bot):
         await self.initiate_database()
         await self.login(config.DISCORD_TOKEN)
         await self.connect()
+
+    async def bot_close(self):
+        await self.session.close()
+        await self.close()
 
     async def is_owner(self, user):
         return user.id in self.owner_ids
@@ -140,7 +151,7 @@ class Life(commands.Bot):
 
         ctx = await self.get_context(after)
         if ctx.command:
-            if before.author.id or after.author.id in self.user_blacklist:
+            if before.author.id in self.user_blacklist or after.author.id in self.user_blacklist:
                 return await after.channel.send(f"Sorry, you are blacklisted from using this bot.")
             else:
                 await self.process_commands(after)

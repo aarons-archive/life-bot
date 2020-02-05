@@ -14,6 +14,79 @@ class Owner(commands.Cog):
         self.bot = bot
 
     @commands.is_owner()
+    @commands.command(name="user_growth", aliases=["ug"], hidden=True)
+    async def user_growth(self, ctx, history: int = 24):
+        """
+
+        Show user count over the past 24 (by default) hours.
+
+        `history`: The amount of hours to get the user count of.
+        """
+
+        user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
+
+        if not user_growth:
+            return await ctx.send("No growth data.")
+
+        start = time.perf_counter()
+        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
+        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
+    @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
+    async def guild_growth(self, ctx, history: int = 24):
+        """
+        Show guild count over the past 24 (by default) hours.
+
+        `history`: The amount of hours to get the guild count of.
+        """
+
+        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
+
+        if not guild_growth:
+            return await ctx.send("No growth data.")
+
+        start = time.perf_counter()
+        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
+        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
+    @commands.command(name="ping_graph", aliases=["pg"], hidden=True)
+    async def ping_graph(self, ctx, history: int = 60):
+
+        if not self.bot.pings:
+            return await ctx.send("No ping data.")
+
+        start = time.perf_counter()
+        await ctx.trigger_typing()
+        plot = imaging.do_ping_plot(self.bot, history=history)
+        await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.is_owner()
+    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
+    async def socket_stats(self, ctx):
+        """
+        Get the total amount of each socket event.
+        """
+
+        total = sum(self.bot.socket_stats.values())
+        uptime = round(time.time() - self.bot.boot_time)
+        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
+
+        message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
+
+        return await ctx.send(f"```\n"
+                              f"{total} socket events observed at a rate of {round(total / uptime)}/second\n\n"
+                              f"{message}\n"
+                              f"```")
+
+    @commands.is_owner()
     @commands.command(name="usage", hidden=True)
     async def usage(self, ctx):
         """
@@ -69,61 +142,6 @@ class Owner(commands.Cog):
         return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
-    @commands.command(name="user_growth", aliases=["ug"], hidden=True)
-    async def user_growth(self, ctx, history: int = 24):
-        """
-
-        Show user count over the past 24 (by default) hours.
-
-        `history`: The amount of hours to get the user count of.
-        """
-
-        user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
-
-        if not user_growth:
-            return await ctx.send("No growth data.")
-
-        start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
-        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-    @commands.is_owner()
-    @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
-    async def guild_growth(self, ctx, history: int = 24):
-        """
-        Show guild count over the past 24 (by default) hours.
-
-        `history`: The amount of hours to get the guild count of.
-        """
-
-        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
-
-        if not guild_growth:
-            return await ctx.send("No growth data.")
-
-        start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
-        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-    @commands.is_owner()
-    @commands.command(name="ping_graph", hidden=True)
-    async def ping_graph(self, ctx, history: int = 60):
-
-        if not self.bot.pings:
-            return await ctx.send("No ping data.")
-
-        start = time.perf_counter()
-        await ctx.trigger_typing()
-        plot = imaging.do_ping_plot(self.bot, history=history)
-        await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-    @commands.is_owner()
     @commands.command(name="farms", hidden=True)
     async def farms(self, ctx, guilds_per_page: int = 20):
         """
@@ -151,24 +169,6 @@ class Owner(commands.Cog):
             entries.append(message)
 
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
-
-    @commands.is_owner()
-    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
-    async def socket_stats(self, ctx):
-        """
-        Get the total amount of each socket event.
-        """
-
-        total = sum(self.bot.socket_stats.values())
-        uptime = round(time.time() - self.bot.start_time)
-        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
-
-        message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
-
-        return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total / uptime)}/second\n\n"
-                              f"{message}\n"
-                              f"```")
 
     @commands.is_owner()
     @commands.group(name="blacklist", hidden=True, invoke_without_command=True)

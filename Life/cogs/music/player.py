@@ -9,14 +9,14 @@ from utilities import utils
 
 class Player(granitepy.Player):
 
-    def __init__(self, bot, guild_id: int, node):
-        super(Player, self).__init__(bot, guild_id, node)
+    def __init__(self, bot, node, guild):
+        super(Player, self).__init__(bot, node, guild)
 
-        self.bot.loop.create_task(self.player_loop())
+        self.player_loop = self.bot.loop.create_task(self.player_loop())
 
         self.queue = queue.Queue(bot)
         self.queue_loop = False
-        self.channel = None
+        self.text_channel = None
 
     async def player_loop(self):
 
@@ -26,6 +26,7 @@ class Player(granitepy.Player):
 
         while True:
             try:
+
                 if self.queue.size() == 0:
                     await self.bot.wait_for("queue_add", timeout=300.0)
                 track = await self.queue.get_pos(0)
@@ -34,7 +35,7 @@ class Player(granitepy.Player):
                 await asyncio.sleep(0.5)
                 await self.invoke_controller()
 
-                await self.bot.wait_for("andesite_track_end", check=lambda p: p.player.guild_id == self.guild_id)
+                await self.bot.wait_for("andesite_track_end", check=lambda p: p.player.guild.id == self.guild.id)
 
                 if self.queue_loop is True:
                     await self.queue.put(track)
@@ -44,12 +45,15 @@ class Player(granitepy.Player):
                 continue
 
             except asyncio.TimeoutError:
-                await self.channel.send("No tracks added for 5 minutes, Leaving the voice channel.")
 
+                try:
+                    await self.text_channel.send("No tracks added for 5 minutes, Leaving the voice channel.")
+                except discord.Forbidden:
+                    pass
+
+                self.player_loop.cancel()
                 self.queue.clear()
                 await self.destroy()
-
-                break
 
     async def invoke_controller(self):
 
@@ -69,4 +73,4 @@ class Player(granitepy.Player):
         embed.add_field(name="Requester:", value=self.current.requester.mention)
         embed.add_field(name="Paused:", value=f"`{self.paused}`")
         embed.add_field(name="Volume:", value=f"`{self.volume}%`")
-        return await self.current.channel.send(embed=embed)
+        return await self.text_channel.send(embed=embed)

@@ -15,7 +15,7 @@ class Queue:
         self.finished = asyncio.locks.Event(loop=self.loop)
         self.finished.set()
 
-        self.queue = []
+        self.queue_list = []
 
     @staticmethod
     def wakeup_next(waiters):
@@ -35,31 +35,31 @@ class Queue:
 
     def empty(self):
 
-        if not self.queue:
+        if not self.queue_list:
             return True
         return False
 
     def size(self):
-        return len(self.queue)
+        return len(self.queue_list)
 
     def clear(self):
-        self.queue.clear()
+        self.queue_list.clear()
 
     def reverse(self):
-        self.queue.reverse()
+        self.queue_list.reverse()
 
     def shuffle(self):
-        random.shuffle(self.queue)
+        random.shuffle(self.queue_list)
 
     async def put(self, item):
 
         self.bot.dispatch("queue_add")
-        return self.queue.append(item)
+        return self.queue_list.append(item)
 
     async def put_pos(self, item, pos):
 
         self.bot.dispatch("queue_add")
-        return self.queue.insert(pos, item)
+        return self.queue_list.insert(pos, item)
 
     async def get(self):
 
@@ -79,7 +79,7 @@ class Queue:
                 raise
         self.wakeup_next(self.putters)
 
-        item = self.queue.pop(0)
+        item = self.queue_list.pop(0)
         return item
 
     async def get_pos(self, pos):
@@ -100,5 +100,5 @@ class Queue:
                 raise
         self.wakeup_next(self.putters)
 
-        item = self.queue.pop(pos)
+        item = self.queue_list.pop(pos)
         return item

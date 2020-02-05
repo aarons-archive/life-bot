@@ -52,7 +52,7 @@ def linecount():
             file_amount += 1
             with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as f:
                 for index, line in enumerate(f):
-                    if len(line.strip()) == 0:
+                    if len(line) == 0:
                         continue
                     elif line.strip().startswith("#"):
                         comments += 1
@@ -94,12 +94,15 @@ def member_activity(user):
 
     for activity in user.activities:
 
-        # Type 4 is custom status, ignore
-        if activity.type == 4:
-            message += "• Custom status\n"
-            continue
+        if activity.type == discord.ActivityType.custom:
+            message += f"• "
+            if activity.emoji:
+                message += f"{activity.emoji} "
+            if activity.name:
+                message += f"{activity.name}"
+            message += "\n"
 
-        if activity.type == discord.ActivityType.playing:
+        elif activity.type == discord.ActivityType.playing:
 
             message += f"• Playing **{activity.name}** "
             if not isinstance(activity, discord.Game):
@@ -107,7 +110,6 @@ def member_activity(user):
                     message += f"**| {activity.details}** "
                 if activity.state:
                     message += f"**| {activity.state}** "
-
                 message += "\n"
 
         elif activity.type == discord.ActivityType.streaming:

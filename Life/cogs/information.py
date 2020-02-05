@@ -20,19 +20,17 @@ class Information(commands.Cog):
         Get information about the bot.
         """
 
-        # Get bot information.
         typingms, latencyms, discordms, average = await utils.ping(self.bot, ctx)
         files, functions, comments, lines = utils.linecount()
-        uptime = time.time() - self.bot.start_time
 
-        # Create embed
         embed = discord.Embed(
             colour=discord.Color.gold(),
         )
         embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s Info")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
         embed.set_footer(text=f"ID: {self.bot.user.id}")
-        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {utils.format_time(uptime)}\n"
+        embed.description = "Life is a discord bot coded by <@238356301439041536>"
+        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {utils.format_time(self.bot.uptime)}\n"
                                                         f"**Total users:** {len(self.bot.users)}\n"
                                                         f"**Guilds:** {len(self.bot.guilds)}")
         embed.add_field(name="\u200B", value="\u200B")
@@ -44,9 +42,9 @@ class Information(commands.Cog):
         embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
                                                     f"**Discord:** {discordms}ms\n**Average:** {average}ms")
-        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot)** | "
+        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=103926848)** | "
                                                      f"**[Support server](https://discord.gg/xP8xsHr)** | "
-                                                     f"**[Source code](https://github.com/MyNameBeMrRandom/Life)**", inline=False)
+                                                     f"**[Source code](https://github.com/iDevision/Life)**", inline=False)
         return await ctx.send(embed=embed)
 
     @commands.command(name="system", aliases=["sys"])
@@ -100,7 +98,7 @@ class Information(commands.Cog):
         """
 
         if command is None:
-            return await ctx.send(f"<https://github.com/MyNameBeMrRandom/Life>")
+            return await ctx.send(f"<https://github.com/iDevision/Life>")
         obj = self.bot.get_command(command.replace(".", " "))
         if obj is None:
             return await ctx.send("I could not find that command.")
@@ -109,7 +107,7 @@ class Information(commands.Cog):
         location = ""
         if not obj.callback.__module__.startswith("discord"):
             location = os.path.relpath(src.co_filename).replace("\\", "/")
-        return await ctx.send(f"<https://github.com/MyNameBeMrRandom/Life/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>")
+        return await ctx.send(f"<https://github.com/iDevision/Life/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>")
 
     @commands.command(name="avatar")
     async def avatar(self, ctx, *, member: discord.Member = None):
