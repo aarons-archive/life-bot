@@ -1,9 +1,9 @@
 import traceback
 
 import discord
-import granitepy
 from discord.ext import commands
 
+import granitepy
 from utilities import utils
 
 
@@ -39,6 +39,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
+
+        if not ctx.guild:
+            return
 
         parent = ctx.command.full_parent_name
         if parent:
