@@ -60,6 +60,7 @@ class Life(commands.Bot):
             command_prefix=commands.when_mentioned_or(config.DISCORD_PREFIX),
             reconnect=True,
         )
+        self.bot = self
         self.loop = asyncio.get_event_loop()
         self.process = psutil.Process()
         self.boot_time = time.time()
@@ -77,6 +78,8 @@ class Life(commands.Bot):
         self.user_blacklist = []
         self.usage = {}
 
+        self.bot.add_check(self.blacklist_check)
+
         for extension in EXTENSIONS:
             try:
                 self.load_extension(extension)
@@ -87,6 +90,11 @@ class Life(commands.Bot):
     @property
     def uptime(self):
         return round(time.time() - self.boot_time)
+
+    async def blacklist_check(self, ctx):
+        if ctx.author.id in self.user_blacklist:
+            raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
+        return True
 
     def run(self):
         try:
@@ -137,12 +145,7 @@ class Life(commands.Bot):
         if message.author.bot:
             return
 
-        ctx = await self.get_context(message)
-        if ctx.command:
-            if message.author.id in self.user_blacklist:
-                return await message.channel.send(f"Sorry, you are blacklisted from using this bot.")
-            else:
-                await self.process_commands(message)
+        await self.process_commands(message)
 
     async def on_message_edit(self, before, after):
 
@@ -151,10 +154,7 @@ class Life(commands.Bot):
 
         ctx = await self.get_context(after)
         if ctx.command:
-            if before.author.id in self.user_blacklist or after.author.id in self.user_blacklist:
-                return await after.channel.send(f"Sorry, you are blacklisted from using this bot.")
-            else:
-                await self.process_commands(after)
+            await self.process_commands(after)
 
     async def get_context(self, message, *, cls=MyContext):
         return await super().get_context(message, cls=cls)
