@@ -1,6 +1,5 @@
 import inspect
 import os
-import time
 
 import discord
 import psutil
