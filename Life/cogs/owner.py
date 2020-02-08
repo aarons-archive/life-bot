@@ -76,13 +76,12 @@ class Owner(commands.Cog):
         """
 
         total = sum(self.bot.socket_stats.values())
-        uptime = round(time.time() - self.bot.boot_time)
         socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
 
         message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
 
         return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total / uptime)}/second\n\n"
+                              f"{total} socket events observed at a rate of {round(total / self.bot.uptime)}/second\n\n"
                               f"{message}\n"
                               f"```")
 
@@ -194,7 +193,7 @@ class Owner(commands.Cog):
             return await ctx.send("No blacklisted users.")
 
         for entry in blacklist:
-            user = self.bot.get_user(entry['id'])
+            user = self.bot.get_user(entry["id"])
             if not user:
                 blacklisted.append(f"User not found - {entry['id']} - Reason: {entry['reason']}")
             else:
