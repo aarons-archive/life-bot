@@ -51,9 +51,9 @@ class AccountManager:
             await self.bot.db.execute(f"INSERT INTO accounts VALUES ($1, 'bg_default', 1000, 1000)", user_id)
 
             query = 'INSERT INTO inventory (id, owner, count, name, power, slot) VALUES ($1, $2, $3, $4, $5, $6)'
-            values =  [(1, user_id, 1, f"{ctx.author.name}'s Starter boots", 6, "boots"),
-                       (101, user_id, 1, f"{ctx.author.name}'s Starter chestplate", 6, "chestplate"),
-                       (201, user_id, 1, f"{ctx.author.name}'s Starter helmet", 6, "helmet")]
+            values = [(1, user_id, 1, f"{ctx.author.name}'s Starter boots", 6, "boots"),
+                      (101, user_id, 1, f"{ctx.author.name}'s Starter chestplate", 6, "chestplate"),
+                      (201, user_id, 1, f"{ctx.author.name}'s Starter helmet", 6, "helmet")]
             await self.bot.db.executemany(query, values)
 
             await self.cache_account(user_id)
