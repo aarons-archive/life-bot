@@ -10,26 +10,22 @@ from utilities import utils
 class Player(granitepy.Player):
 
     def __init__(self, bot, node, guild):
-        super(Player, self).__init__(bot, node, guild)
+        super().__init__(bot, node, guild)
 
         self.player_loop = self.bot.loop.create_task(self.player_loop())
-
         self.queue = queue.Queue(bot)
         self.queue_loop = False
-        self.text_channel = None
 
     async def player_loop(self):
 
         await self.bot.wait_until_ready()
 
-        await self.set_volume(50)
-
         while True:
             try:
 
-                if self.queue.size() == 0:
+                if self.queue.size == 0:
                     await self.bot.wait_for("queue_add", timeout=300.0)
-                track = await self.queue.get_pos(0)
+                track = await self.queue.get()
 
                 await self.play(track)
                 await asyncio.sleep(0.5)
@@ -38,11 +34,9 @@ class Player(granitepy.Player):
                 await self.bot.wait_for("andesite_track_end", check=lambda p: p.player.guild.id == self.guild.id)
 
                 if self.queue_loop is True:
-                    await self.queue.put(track)
+                    await self.queue.put(self.current)
 
                 self.current = None
-
-                continue
 
             except asyncio.TimeoutError:
 
@@ -51,11 +45,14 @@ class Player(granitepy.Player):
                 except discord.Forbidden:
                     pass
 
-                self.player_loop.cancel()
-                self.queue.clear()
                 await self.destroy()
+                self.queue.clear()
+                self.player_loop.cancel()
 
     async def invoke_controller(self):
+
+        if self.current is None:
+            return
 
         embed = discord.Embed(
             title="Music controller:",
@@ -67,10 +64,14 @@ class Player(granitepy.Player):
             embed.add_field(name="Time:", value="`Live stream`")
         else:
             embed.add_field(name="Time:", value=f"`{utils.format_time(round(self.position) / 1000)}` / "
-                                                f"`{utils.format_time(self.current.length / 1000)}`")
+                                                f"`{utils.format_time(round(self.current.length) / 1000)}`")
         embed.add_field(name="Queue looped:", value=f"`{self.queue_loop}`")
-        embed.add_field(name="Queue Length:", value=f"`{str(self.queue.size())}`")
+        embed.add_field(name="Queue Length:", value=f"`{str(self.queue.size)}`")
         embed.add_field(name="Requester:", value=self.current.requester.mention)
         embed.add_field(name="Paused:", value=f"`{self.paused}`")
         embed.add_field(name="Volume:", value=f"`{self.volume}%`")
-        return await self.text_channel.send(embed=embed)
+
+        if self.text_channel:
+            return await self.text_channel.send(embed=embed)
+        else:
+            return await self.current.channel.send(embed=embed)

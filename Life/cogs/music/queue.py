@@ -33,14 +33,15 @@ class Queue:
         if self.unfinished_tasks == 0:
             self.finished.set()
 
-    def empty(self):
+    @property
+    def size(self):
+        return len(self.queue_list)
 
+    @property
+    def is_empty(self):
         if not self.queue_list:
             return True
         return False
-
-    def size(self):
-        return len(self.queue_list)
 
     def clear(self):
         self.queue_list.clear()
@@ -53,17 +54,17 @@ class Queue:
 
     async def put(self, item):
 
+        self.queue_list.append(item)
         self.bot.dispatch("queue_add")
-        return self.queue_list.append(item)
 
-    async def put_pos(self, item, pos):
+    async def put_pos(self, item, position: int = 0):
 
+        self.queue_list.insert(position, item)
         self.bot.dispatch("queue_add")
-        return self.queue_list.insert(pos, item)
 
     async def get(self):
 
-        while self.empty():
+        while self.is_empty:
             getter = self.loop.create_future()
             self.getters.append(getter)
             try:
@@ -74,17 +75,16 @@ class Queue:
                     self.getters.remove(getter)
                 except ValueError:
                     pass
-                if not self.empty() and not getter.cancelled():
+                if not self.is_empty and not getter.cancelled():
                     self.wakeup_next(self.getters)
                 raise
         self.wakeup_next(self.putters)
 
-        item = self.queue_list.pop(0)
-        return item
+        return self.queue_list.pop(0)
 
-    async def get_pos(self, pos):
+    async def get_pos(self, position: int = 0):
 
-        while self.empty():
+        while self.is_empty:
             getter = self.loop.create_future()
             self.getters.append(getter)
             try:
@@ -95,10 +95,9 @@ class Queue:
                     self.getters.remove(getter)
                 except ValueError:
                     pass
-                if not self.empty() and not getter.cancelled():
+                if not self.is_empty and not getter.cancelled():
                     self.wakeup_next(self.getters)
                 raise
         self.wakeup_next(self.putters)
 
-        item = self.queue_list.pop(pos)
-        return item
+        return self.queue_list.pop(position)

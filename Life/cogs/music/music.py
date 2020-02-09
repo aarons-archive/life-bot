@@ -1,8 +1,40 @@
 import granitepy
 from discord.ext import commands
 
-from cogs.music.track import Track
+from cogs.music import objects
 from utilities import utils
+
+
+def is_player_connected():
+    async def predicate(ctx):
+        if not ctx.player.is_connected:
+            raise commands.CheckFailure(f"I am not connected to any voice channels.")
+        return True
+    return commands.check(predicate)
+
+
+def is_player_playing():
+    async def predicate(ctx):
+        if not ctx.player.is_playing:
+            raise commands.CheckFailure(f"I am not currently playing anything.")
+        return True
+    return commands.check(predicate)
+
+
+def is_member_connected():
+    async def predicate(ctx):
+        if not ctx.author.voice:
+            raise commands.CheckFailure(f"You are not connected to any voice channels.")
+        return True
+    return commands.check(predicate)
+
+
+def is_member_in_channel():
+    async def predicate(ctx):
+        if not ctx.player.voice_channel.id == ctx.author.voice.channel.id:
+            raise commands.CheckFailure(f"You are not connected to the same voice channel as me.")
+        return True
+    return commands.check(predicate)
 
 
 class Music(commands.Cog):
@@ -29,86 +61,100 @@ class Music(commands.Cog):
                 continue
 
     @commands.command(name="join", aliases=["connect"])
+    @is_member_connected()
     async def join(self, ctx):
         """Join or move to the users voice channel."""
 
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
         channel = ctx.author.voice.channel
-
         if not ctx.player.is_connected:
-            await ctx.player.connect(channel)
             ctx.player.text_channel = ctx.channel
+            await ctx.player.connect(channel)
             return await ctx.send(f"Joined the voice channel `{channel}`.")
 
-        if ctx.guild.me.voice.channel.id != channel.id:
-            await ctx.player.connect(channel)
+        if ctx.player.voice_channel.id != channel.id:
             ctx.player.text_channel = ctx.channel
+            await ctx.player.connect(channel)
             return await ctx.send(f"Moved to the voice channel `{channel}`.")
 
         return await ctx.send("I am already in this voice channel.")
 
-    @commands.command(name="leave", aliases=["disconnect", "stop"])
-    async def leave(self, ctx):
-        """Leave the current voice channel."""
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        ctx.player.queue.clear()
-        await ctx.player.destroy()
-        return await ctx.send(f"Left the voice channel `{ctx.guild.me.voice.channel}`.")
-
     @commands.command(name="play")
+    @is_member_connected()
     async def play(self, ctx, *, search: str):
         """Play a track using a link or search query.
 
         `search`: The name/link of the track you want to play.
         """
 
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-        channel = ctx.author.voice.channel
-
         if not ctx.player.is_connected:
             ctx.player.text_channel = ctx.channel
-            await ctx.player.connect(channel)
+            await ctx.player.connect(ctx.author.voice.channel)
 
         await ctx.trigger_typing()
 
-        result = await ctx.player.get_tracks(f"{search}")
+        result = await ctx.player.get_tracks(search)
         if not result:
-            return await ctx.send(f"No results were found for the search term `{search}`.")
+            return await ctx.send(f"No results found for the search term `{search}`.")
 
         if isinstance(result, granitepy.Playlist):
-            for track in result.tracks:
-                await ctx.player.queue.put(Track(track.track, track.data, ctx=ctx))
-            return await ctx.send(f"Added the playlist **{result.name}** to the queue with a total of **{len(result.tracks)}** entries.")
+            playlist = objects.Playlist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
+            for track in playlist.tracks:
+                await ctx.player.queue.put(track)
+            return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
+        elif isinstance(result, granitepy.Track):
+            track = objects.Track(track_id=result.track_id, info=result.info, ctx=ctx)
+            await ctx.player.queue.put(track)
+            return await ctx.send(f"Added the track **{track.title}** to the queue.")
+        else:
+            track = objects.Track(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
+            await ctx.player.queue.put(track)
+            return await ctx.send(f"Added the track **{track.title}** to the queue.")
 
-        await ctx.player.queue.put(Track(track_id=result[0].track_id, info=result[0].info, ctx=ctx))
-        return await ctx.send(f"Added the track **{result[0].title}** to the queue.")
+    @commands.command(name="leave", aliases=["disconnect", "stop"])
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
+    async def leave(self, ctx):
+        """Leave the current voice channel."""
+
+        del ctx.player.queue
+        await ctx.player.destroy()
+        return await ctx.send(f"Left the voice channel `{ctx.guild.me.voice.channel}`.")
+
+    @commands.command(name="skip")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
+    @is_player_playing()
+    async def skip(self, ctx, amount: int = 1):
+        """Skip to the next track in the queue.
+
+        This will auto-skip if you are the requester of the current track, otherwise a vote will start.
+
+        `amount`: An optional number for skipping multiple tracks at once. (You must be the requester of all the the tracks)
+        """
+
+        if ctx.player.current.requester.id != ctx.author.id:
+            return await ctx.send("Do vote skipping u sad fuck.")
+
+        if amount <= 0 or amount > ctx.player.queue.size + 1:
+            return await ctx.send(f"That is not a valid amount of tracks to skip. Please choose a value between `1` and `{ctx.player.queue.size + 1}` inclusive")
+
+        for track in ctx.player.queue.queue_list[:amount - 1]:
+            if not track.requester.id == ctx.author.id:
+                return await ctx.send(f"You are not the requester of all `{amount}` of the next tracks in the queue.")
+            await ctx.player.queue.get_pos(0)
+
+        await ctx.player.stop()
+        return await ctx.send(f"The current tracks requester has skipped `{amount}` track(s).")
 
     @commands.command(name="pause")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
+    @is_player_playing()
     async def pause(self, ctx):
         """Pause the player."""
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if not ctx.player.is_playing:
-            return await ctx.send("No tracks are currently playing.")
 
         if ctx.player.is_paused:
             return await ctx.send("The player is already paused.")
@@ -117,94 +163,28 @@ class Music(commands.Cog):
         return await ctx.send(f"Paused the player.")
 
     @commands.command(name="resume")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
+    @is_player_playing()
     async def resume(self, ctx):
-        """Resume the current track."""
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if not ctx.player.is_playing:
-            return await ctx.send("No tracks are currently playing.")
+        """Resume the player."""
 
         if not ctx.player.is_paused:
-            return await ctx.send("The player is already playing.")
+            return await ctx.send("The player is not paused.")
 
         await ctx.player.set_pause(False)
         return await ctx.send(f"Resumed the player.")
 
-    @commands.command(name="skip")
-    async def skip(self, ctx, amount: int = 0):
-        """Skip to the next track in the queue.
-
-        This will auto-skip if you are the requester of the current track, otherwise a vote will start.
-
-        `amount`: An optional number for skipping multiple tracks at once. (You must be the requester of all the the tracks)
-        """
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if not ctx.player.is_playing:
-            return await ctx.send("No tracks are currently playing.")
-
-        if ctx.player.current.requester.id != ctx.author.id:
-            return await ctx.send("Vote skipping coming soon.")
-
-        if not amount:
-            await ctx.player.stop()
-            return await ctx.send(f"The tracks requester has skipped.")
-
-        if amount <= 0 or amount > ctx.player.queue.size():
-            return await ctx.send(f"That is not a valid amount of tracks to skip. Please choose a value between `1` and `{ctx.player.queue.size()}`")
-
-        for track in ctx.player.queue.queue[:amount - 1]:
-            if not ctx.author.id == track.requester.id:
-                return await ctx.send(f"You are not the requester of all `{amount}` of the next tracks in the queue.")
-            await ctx.player.queue.get_pos(0)
-
-        await ctx.player.stop()
-        return await ctx.send(f"The current tracks requester has skipped `{amount}` tracks.")
-
-    @commands.command(name="now_playing", aliases=["np"])
-    async def now_playing(self, ctx):
-        """Display information about the current track.
-        """
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.player.current:
-            return await ctx.send("No tracks currently playing.")
-
-        return await ctx.player.invoke_controller()
-
     @commands.command(name="volume", aliases=["vol"])
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def volume(self, ctx, volume: int = None):
         """Change the volume of the player.
 
-        `volume`: The percentage to change the volume to, can be between 0 and 100.
+        `volume`: The percentage to change the volume too, can be between 0 and 100.
         """
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if not volume and not volume == 0:
             return await ctx.send(f"The current volume is `{ctx.player.volume}%`.")
@@ -216,23 +196,15 @@ class Music(commands.Cog):
         return await ctx.send(f"Changed the players volume to `{ctx.player.volume}%`.")
 
     @commands.command(name="seek")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
+    @is_player_playing()
     async def seek(self, ctx, seconds: int = None):
         """Change the postion of the player.
 
         `position`: The position of the track to skip to in seconds.
         """
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.voice_channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if not ctx.player.current:
-            return await ctx.send("No tracks are currently playing.")
 
         if not ctx.player.current.is_seekable:
             return await ctx.send("This track is not seekable.")
@@ -247,102 +219,84 @@ class Music(commands.Cog):
         await ctx.player.seek(milliseconds)
         return await ctx.send(f"Changed the players position to `{utils.format_time(milliseconds / 1000)}`.")
 
+    @commands.command(name="now_playing", aliases=["np"])
+    @is_player_connected()
+    @is_player_playing()
+    async def now_playing(self, ctx):
+        """Display information about the current track."""
+
+        return await ctx.player.invoke_controller()
+
     @commands.command(name="queue")
+    @is_player_connected()
     async def queue(self, ctx):
         """Display the queue."""
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
         title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
                 f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
                 f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
-                f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size()])}` out of `{ctx.player.queue.size()}` entries in the queue.\n"
+                f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size])}` out of `{ctx.player.queue.size}` entries in the queue.\n"
 
         entries = []
-        for index, track in enumerate(ctx.player.queue.queue):
+        for index, track in enumerate(ctx.player.queue.queue_list):
             entries.append(f"**{index + 1}.** [{str(track.title)}]({track.uri}) | "
                            f"`{utils.format_time(round(track.length) / 1000)}` | "
                            f"`Requested by:` {track.requester.mention}\n")
 
-        time = sum(track.length for track in ctx.player.queue.queue)
+        time = sum(track.length for track in ctx.player.queue.queue_list)
 
-        footer = f"\nThere are `{ctx.player.queue.size()}` tracks in the queue with a total time of `{utils.format_time(round(time) / 1000)}`"
+        footer = f"\nThere are `{ctx.player.queue.size}` tracks in the queue with a total time of `{utils.format_time(round(time) / 1000)}`"
 
         return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
 
     @commands.command(name="shuffle")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def shuffle(self, ctx):
         """Shuffle the queue."""
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
         ctx.player.queue.shuffle()
         return await ctx.send(f"The queue has been shuffled.")
 
     @commands.command(name="clear")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def clear(self, ctx):
         """Clear the queue."""
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
         ctx.player.queue.clear()
         return await ctx.send(f"Cleared the queue.")
 
     @commands.command(name="reverse")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def reverse(self, ctx):
         """Reverse the queue."""
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
         ctx.player.queue.reverse()
         return await ctx.send(f"Reversed the queue.")
 
     @commands.command(name="loop")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def loop(self, ctx):
         """Loop the queue."""
-
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
 
         if ctx.player.queue_loop is True:
             ctx.player.queue_loop = False
@@ -352,31 +306,28 @@ class Music(commands.Cog):
         return await ctx.send(f"The queue will now loop.")
 
     @commands.command(name="remove")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def remove(self, ctx, entry: int = 0):
         """Remove an entry from the queue.
 
         `entry`: The position of the entry you want to remove.
         """
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
-        if entry <= 0 or entry > ctx.player.queue.size():
+        if entry <= 0 or entry > ctx.player.queue.size:
             return await ctx.send(f"That was not a valid track entry number.")
 
         item = await ctx.player.queue.get_pos(entry - 1)
         return await ctx.send(f"Removed `{item.title}` from the queue.")
 
     @commands.command(name="move")
+    @is_player_connected()
+    @is_member_connected()
+    @is_member_in_channel()
     async def move(self, ctx, entry_1: int = 0, entry_2: int = 0):
         """Move an entry from one position to another in the queue.
 
@@ -384,22 +335,13 @@ class Music(commands.Cog):
         `entry_2`: The position of the entry you want to move too.
         """
 
-        if not ctx.player.is_connected:
-            return await ctx.send(f"I am not connected to any voice channels.")
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send(f"You must be in a voice channel to use this command.")
-
-        if ctx.player.channel.id != ctx.author.voice.channel.id:
-            return await ctx.send(f"You must be in the same voice channel as me to use this command.")
-
-        if ctx.player.queue.empty():
+        if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
-        if entry_1 <= 0 or entry_1 > ctx.player.queue.size():
+        if entry_1 <= 0 or entry_1 > ctx.player.queue.size:
             return await ctx.send(f"That was not a valid track to move from.")
 
-        if entry_2 <= 0 or entry_2 > ctx.player.queue.size():
+        if entry_2 <= 0 or entry_2 > ctx.player.queue.size:
             return await ctx.send(f"That was not a valid track to move too.")
 
         item = await ctx.player.queue.get_pos(entry_1 - 1)
