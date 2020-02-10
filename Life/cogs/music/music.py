@@ -101,12 +101,10 @@ class Music(commands.Cog):
             for track in playlist.tracks:
                 await ctx.player.queue.put(track)
             return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
-        elif isinstance(result, granitepy.Track):
-            track = objects.Track(track_id=result.track_id, info=result.info, ctx=ctx)
-            await ctx.player.queue.put(track)
-            return await ctx.send(f"Added the track **{track.title}** to the queue.")
         else:
             track = objects.Track(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
+            if track.is_stream:
+                return await ctx.send("I am unable to play live streams.")
             await ctx.player.queue.put(track)
             return await ctx.send(f"Added the track **{track.title}** to the queue.")
 
