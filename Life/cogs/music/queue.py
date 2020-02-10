@@ -5,9 +5,11 @@ import random
 
 class Queue:
 
-    def __init__(self, bot):
+    def __init__(self, bot, guild):
 
         self.bot = bot
+        self.guild = guild
+
         self.loop = asyncio.get_event_loop()
         self.getters = collections.deque()
         self.putters = collections.deque()
@@ -17,8 +19,7 @@ class Queue:
 
         self.queue_list = []
 
-    @staticmethod
-    def wakeup_next(waiters):
+    def wakeup_next(self, waiters):
         while waiters:
             waiter = waiters.popleft()
             if not waiter.done():
@@ -55,12 +56,12 @@ class Queue:
     async def put(self, item):
 
         self.queue_list.append(item)
-        self.bot.dispatch("queue_add")
+        self.bot.dispatch(f"{self.guild.id}_queue_add")
 
     async def put_pos(self, item, position: int = 0):
 
         self.queue_list.insert(position, item)
-        self.bot.dispatch("queue_add")
+        self.bot.dispatch(f"{self.guild.id}_queue_add")
 
     async def get(self):
 
