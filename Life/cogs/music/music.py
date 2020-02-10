@@ -92,7 +92,7 @@ class Music(commands.Cog):
 
         await ctx.trigger_typing()
 
-        result = await ctx.player.get_tracks(search)
+        result = await ctx.player.node.get_tracks(search)
         if not result:
             return await ctx.send(f"No results found for the search term `{search}`.")
 
