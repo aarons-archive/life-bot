@@ -159,5 +159,6 @@ class Life(commands.Bot):
     def uptime(self):
         return round(time.time() - self.boot_time)
 
+
 if __name__ == "__main__":
     Life().run()

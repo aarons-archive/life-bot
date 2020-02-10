@@ -75,7 +75,7 @@ class HelpCommand(commands.HelpCommand):
             if ctx.author.id in ctx.bot.owner_ids:
                 cog_commands = [command for command in cog.get_commands()]
             else:
-                cog_commands = [command for command in cog.get_commands() if command.hidden == False]
+                cog_commands = [command for command in cog.get_commands() if command.hidden is False]
 
             if len(cog_commands) == 0:
                 continue
@@ -93,7 +93,7 @@ class HelpCommand(commands.HelpCommand):
         if ctx.author.id in ctx.bot.owner_ids:
             cog_commands = [command for command in cog.get_commands()]
         else:
-            cog_commands = [command for command in cog.get_commands() if command.hidden == False]
+            cog_commands = [command for command in cog.get_commands() if command.hidden is False]
 
         if len(cog_commands) == 0:
             return await ctx.send("This cog has no commands. This could be because they are hidden, or there are just no commands.")

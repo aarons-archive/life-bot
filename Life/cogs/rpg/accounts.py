@@ -106,5 +106,6 @@ class Accounts(commands.Cog):
 
         return await ctx.paginate_embed(entries=entries, entries_per_page=3)
 
+
 def setup(bot):
     bot.add_cog(Accounts(bot))

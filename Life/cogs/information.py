@@ -122,8 +122,8 @@ class Information(commands.Cog):
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"{member.name}'s Avatar",
-            description=f"[PNG]({member.avatar_url_as(size=1024, format='png')}) | " \
-                        f"[JPEG]({member.avatar_url_as(size=1024, format='jpeg')}) | " \
+            description=f"[PNG]({member.avatar_url_as(size=1024, format='png')}) | " 
+                        f"[JPEG]({member.avatar_url_as(size=1024, format='jpeg')}) | "
                         f"[WEBP]({member.avatar_url_as(size=1024, format='webp')})"
         )
         embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)

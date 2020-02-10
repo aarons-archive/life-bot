@@ -19,7 +19,8 @@ class Queue:
 
         self.queue_list = []
 
-    def wakeup_next(self, waiters):
+    @staticmethod
+    def wakeup_next(waiters):
         while waiters:
             waiter = waiters.popleft()
             if not waiter.done():
