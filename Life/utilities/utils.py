@@ -9,32 +9,28 @@ import discord
 
 async def ping(bot, ctx):
 
-    pings = []
-    total_ping = 0
+    latency_ms = f"{round(bot.latency * 1000, 2)}ms"
+
+    if bot.pings:
+        pings = [latency for datetime, latency in list(bot.pings)]
+        average_latency_ms = f"{round((sum(pings) / len(pings)), 2)}ms"
+    else:
+        average_latency_ms = "Failed"
 
     typing_start = time.monotonic()
     await ctx.trigger_typing()
     typing_end = time.monotonic()
-    typingms = round((typing_end - typing_start) * 1000, 2)
-    pings.append(typingms)
-
-    latencyms = round(bot.latency * 1000, 2)
-    pings.append(latencyms)
+    typing_ms = f"{round((typing_end - typing_start) * 1000, 2)}ms"
 
     discord_start = time.monotonic()
     async with bot.session.get("https://discordapp.com/") as resp:
         if resp.status == 200:
             discord_end = time.monotonic()
-            discordms = round((discord_end - discord_start) * 1000, 2)
-            pings.append(discordms)
+            discord_ms = f"{round((discord_end - discord_start) * 1000, 2)}ms"
         else:
-            discordms = "Failed"
+            discord_ms = "Failed"
 
-    for ping_ms in pings:
-        total_ping += ping_ms
-    averagems = round(total_ping / len(pings), 2)
-
-    return typingms, latencyms, discordms, averagems
+    return latency_ms, average_latency_ms, typing_ms, discord_ms
 
 
 def random_colour():
@@ -85,14 +81,14 @@ def format_time(second):
     return formatted
 
 
-def member_activity(user):
+def member_activity(member):
 
-    if not user.activity or not user.activities:
+    if not member.activity or not member.activities:
         return "N/A"
 
     message = "\n"
 
-    for activity in user.activities:
+    for activity in member.activities:
 
         if activity.type == discord.ActivityType.custom:
             message += f"• "
@@ -132,24 +128,24 @@ def member_activity(user):
     return message
 
 
-def member_colour(user):
-    colours = {
-        discord.Status.online: 0x008000,
-        discord.Status.idle: 0xFF8000,
-        discord.Status.dnd: 0xFF0000,
-        discord.Status.offline: 0x808080
-    }
-    return colours[user.status]
-
-
-def member_status(user):
+def member_status(member):
     status = {
         discord.Status.online: "Online",
         discord.Status.idle: "Idle",
         discord.Status.dnd: "Do not disturb",
         discord.Status.offline: "Offline"
     }
-    return status[user.status]
+    return status[member.status]
+
+
+def member_colour(member):
+    colours = {
+        discord.Status.online: 0x008000,
+        discord.Status.idle: 0xFF8000,
+        discord.Status.dnd: 0xFF0000,
+        discord.Status.offline: 0x808080
+    }
+    return colours[member.status]
 
 
 def guild_region(guild):

@@ -19,7 +19,7 @@ class Information(commands.Cog):
         Get information about the bot.
         """
 
-        typingms, latencyms, discordms, average = await utils.ping(self.bot, ctx)
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await utils.ping(self.bot, ctx)
         files, functions, comments, lines = utils.linecount()
 
         embed = discord.Embed(
@@ -39,8 +39,8 @@ class Information(commands.Cog):
         embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n**Functions:** {functions}\n"
                                                     f"**Lines:** {lines}\n**Files:** {files}")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="__**Ping:**__", value=f"**Typing:** {typingms}ms\n**Latency:** {latencyms}ms\n"
-                                                    f"**Discord:** {discordms}ms\n**Average:** {average}ms")
+        embed.add_field(name="__**Ping:**__", value=f"**Average Lat:** {average_latency_ms}\n**Latency:** {latency_ms}\n"
+                                                    f"**Typing:** {typing_ms}\n**Discord:** {discord_ms}")
         embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=103926848)** | "
                                                      f"**[Support server](https://discord.gg/xP8xsHr)** | "
                                                      f"**[Source code](https://github.com/iDevision/Life)**", inline=False)
@@ -79,13 +79,13 @@ class Information(commands.Cog):
         Gets the bots ping.
         """
 
-        typingms, latencyms, discordms, averagems = await utils.ping(self.bot, ctx)
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await utils.ping(self.bot, ctx)
         return await ctx.send(f"```py\n"
-                              f"Type    |Ping\n"
-                              f"Typing  |{typingms}ms\n"
-                              f"Latency |{latencyms}ms\n"
-                              f"Discord |{discordms}ms\n"
-                              f"Average |{averagems}ms\n"
+                              f"Type         |Ping\n"
+                              f"Average Lat. |{average_latency_ms}\n"
+                              f"Latency      |{latency_ms}\n"
+                              f"Typing       |{typing_ms}\n"
+                              f"Discord      |{discord_ms}\n"
                               f"```")
 
     @commands.command(name="source")
@@ -187,7 +187,7 @@ class Information(commands.Cog):
             member = ctx.author
 
         embed = discord.Embed(
-            colour=utils.member_colour(member),
+            colour=utils.member_colour(ctx.author),
             title=f"{member.name}'s Stats and Information."
         )
         embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
