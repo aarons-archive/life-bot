@@ -91,10 +91,8 @@ class Life(commands.Bot):
     def uptime(self):
         return round(time.time() - self.boot_time)
 
-    async def blacklist_check(self, ctx):
-        if ctx.author.id in self.user_blacklist:
-            raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
-        return True
+    async def get_context(self, message, *, cls=MyContext):
+        return await super().get_context(message, cls=cls)
 
     async def is_owner(self, user):
         return user.id in self.owner_ids
@@ -115,8 +113,10 @@ class Life(commands.Bot):
         if ctx.command:
             await self.process_commands(after)
 
-    async def get_context(self, message, *, cls=MyContext):
-        return await super().get_context(message, cls=cls)
+    async def blacklist_check(self, ctx):
+        if ctx.author.id in self.user_blacklist:
+            raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
+        return True
 
     async def initiate_database(self):
 
