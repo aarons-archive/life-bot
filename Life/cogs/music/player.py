@@ -22,7 +22,6 @@ class Player(granitepy.Player):
 
         while True:
             try:
-
                 if self.queue.size == 0:
                     await self.bot.wait_for("queue_add", timeout=300.0)
                 track = await self.queue.get()
@@ -45,9 +44,9 @@ class Player(granitepy.Player):
                 except discord.Forbidden:
                     pass
 
-                await self.destroy()
                 self.queue.clear()
                 self.player_loop.cancel()
+                await self.destroy()
 
     async def invoke_controller(self):
 
