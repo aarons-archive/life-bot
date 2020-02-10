@@ -128,19 +128,8 @@ class Life(commands.Bot):
         except KeyboardInterrupt:
             self.loop.run_until_complete(self.bot_close())
 
-    @property
-    def uptime(self):
-        return round(time.time() - self.boot_time)
-
-    async def is_owner(self, user):
-        return user.id in self.owner_ids
-
-    async def on_message(self, message):
-
-        if message.author.bot:
-            return
-
-        await self.process_commands(message)
+    async def get_context(self, message, *, cls=MyContext):
+        return await super().get_context(message, cls=cls)
 
     async def on_message_edit(self, before, after):
 
@@ -151,14 +140,24 @@ class Life(commands.Bot):
         if ctx.command:
             await self.process_commands(after)
 
-    async def get_context(self, message, *, cls=MyContext):
-        return await super().get_context(message, cls=cls)
+    async def on_message(self, message):
+
+        if message.author.bot:
+            return
+
+        await self.process_commands(message)
+
+    async def is_owner(self, user):
+        return user.id in self.owner_ids
 
     async def blacklist_check(self, ctx):
         if ctx.author.id in self.bot.user_blacklist:
             raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
         return True
 
+    @property
+    def uptime(self):
+        return round(time.time() - self.boot_time)
 
 if __name__ == "__main__":
     Life().run()
