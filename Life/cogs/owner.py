@@ -4,6 +4,7 @@ import time
 import asyncpg
 import discord
 from discord.ext import commands
+from datetime import datetime
 
 from utilities import imaging
 
@@ -29,7 +30,7 @@ class Owner(commands.Cog):
             return await ctx.send("No growth data.")
 
         start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
+        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (YYYY-MM-DD: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
         await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
@@ -49,7 +50,7 @@ class Owner(commands.Cog):
             return await ctx.send("No growth data.")
 
         start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (DD:MM: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
+        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (YYYY-MM-DD: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
         await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
         end = time.perf_counter()
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
