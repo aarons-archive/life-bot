@@ -4,7 +4,6 @@ import time
 import asyncpg
 import discord
 from discord.ext import commands
-from datetime import datetime
 
 from utilities import imaging
 
@@ -18,8 +17,7 @@ class Owner(commands.Cog):
     @commands.command(name="user_growth", aliases=["ug"], hidden=True)
     async def user_growth(self, ctx, history: int = 24):
         """
-
-        Show user count over the past 24 (by default) hours.
+        Show the bot's user count over the past 24 (by default) hours.
 
         `history`: The amount of hours to get the user count of.
         """
@@ -39,7 +37,7 @@ class Owner(commands.Cog):
     @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
     async def guild_growth(self, ctx, history: int = 24):
         """
-        Show guild count over the past 24 (by default) hours.
+        Show the bot's guild count over the past 24 (by default) hours.
 
         `history`: The amount of hours to get the guild count of.
         """
@@ -58,6 +56,11 @@ class Owner(commands.Cog):
     @commands.is_owner()
     @commands.command(name="ping_graph", aliases=["pg"], hidden=True)
     async def ping_graph(self, ctx, history: int = 60):
+        """
+        Show the bot's latency over the last 60 (by default) minutes.
+
+        `history`: The amount of minutes to get the latency of.
+        """
 
         if not self.bot.pings:
             return await ctx.send("No ping data.")
@@ -73,49 +76,45 @@ class Owner(commands.Cog):
     @commands.command(name="socketstats", aliases=["ss"], hidden=True)
     async def socket_stats(self, ctx):
         """
-        Get the total amount of each socket event.
+        Display a list of all socket events since startup.
         """
 
-        total = sum(self.bot.socket_stats.values())
         socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
+        total_events = sum(socket_stats.values())
 
-        message = "\n".join([f"{event}:{' ' * int(28 - len(str(event)))}{count}" for event, count in socket_stats.items()])
+        message = f"```py\n{total_events} socket events observed at a rate of {round(total_events / self.bot.uptime)} per second\n\n"
+        for event, count in socket_stats.items():
+            message += f"{event:28} | {count}\n"
+        message += "```"
 
-        return await ctx.send(f"```\n"
-                              f"{total} socket events observed at a rate of {round(total / self.bot.uptime)}/second\n\n"
-                              f"{message}\n"
-                              f"```")
+        return await ctx.send(message)
 
     @commands.is_owner()
     @commands.command(name="usage", hidden=True)
     async def usage(self, ctx):
         """
-        Show total command usage per guild.
+        Display command usage for the bot and all of its guilds.
         """
 
-        if not self.bot.usage:
-            return await ctx.send("No command usage yet.")
-
-        total_usage = {}
-        for guild_usage in self.bot.usage.values():
-            for command, usage in guild_usage.items():
-                if command not in total_usage:
-                    total_usage[command] = usage
-                else:
-                    total_usage[command] += usage
-        ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
-
         embeds = []
+
+        total_usage = collections.Counter()
+        for guild_usage in self.bot.usage.values():
+            for command, count in guild_usage.items():
+                total_usage[command] += count
+        ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"Total usage:"
         )
-        embed.set_footer(text=f"{self.bot.user.id}")
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
-        embed.description = f"```\n"
-        embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_total_usage.items()])
-        embed.description += "\n```"
+        embed.set_footer(text=f"{self.bot.user.id}")
+
+        embed.description = f"```py\n"
+        for command, count in ordered_total_usage.items():
+            embed.description += f"{command:25} | {count:<5}\n"
+        embed.description += "```"
 
         embeds.append(embed)
 
@@ -131,43 +130,45 @@ class Owner(commands.Cog):
                 colour=discord.Color.gold(),
                 title=f"{guild.name}'s usage:"
             )
-            embed.set_footer(text=f"{guild.id}")
             embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-            embed.description = f"```\n"
-            embed.description += "\n".join([f"{command}: {usage}" for command, usage in ordered_guild_usage.items()])
-            embed.description += "\n```"
+            embed.set_footer(text=f"{guild.id}")
+
+            embed.description = f"```py\n"
+            for command, count in ordered_guild_usage.items():
+                embed.description += f"{command:25} | {count:<5}\n"
+            embed.description += "```"
 
             embeds.append(embed)
 
         return await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
-    @commands.command(name="farms", hidden=True)
-    async def farms(self, ctx, guilds_per_page: int = 20):
+    @commands.command(name="guilds", hidden=True)
+    async def guilds(self, ctx, guilds_per_page: int = 20):
         """
-        Display how many bots/humans there are in each of the bots guilds.
+        Display a list of guilds with the amount of bots and normal accounts in them.
 
         `guilds_per_page`: How many guilds to show per page.
         """
 
-        def key(e):
-            guild_bots = sum(1 for m in e.members if m.bot)
-            guild_total = e.member_count
-            return round((guild_bots / guild_total) * 100, 2)
-
-        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
+        def key(guild_check):
+            guild_bots = sum(1 for m in guild_check.members if m.bot)
+            guild_members = len(guild_check.members)
+            return round((guild_bots / guild_members) * 100, 2)
 
         entries = []
 
         for guild in sorted(self.bot.guilds, key=key, reverse=True):
-            total = guild.member_count
+
+            total = len(guild.members)
             bots = sum(1 for m in guild.members if m.bot)
-            humans = sum(1 for m in guild.members if not m.bot)
+            members = sum(1 for m in guild.members if not m.bot)
             bot_percent = f"{round((bots / total) * 100, 2)}%"
 
-            message = f"{guild.id} |{total:<9}|{humans:<9}|{bots:<9}|{bot_percent:9}|{guild.name}"
+            message = f"{guild.id} |{total:<9}|{members:<9}|{bots:<9}|{bot_percent:9}|{guild.name}"
             entries.append(message)
 
+        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
 
     @commands.is_owner()
@@ -177,7 +178,7 @@ class Owner(commands.Cog):
         Base command for blacklisting.
         """
 
-        return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}-help blacklist` for more information.")
+        return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}help blacklist` for more information.")
 
     @commands.is_owner()
     @blacklist.group(name="user", invoke_without_command=True)

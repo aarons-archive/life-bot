@@ -123,7 +123,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
-        self.bot.socket_stats[msg.get('t')] += 1
+        event = msg.get("t", "None")
+        if event is not None:
+            self.bot.socket_stats[event] += 1
 
 
 def setup(bot):
