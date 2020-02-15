@@ -39,25 +39,43 @@ def random_colour():
 
 # noinspection PyArgumentEqualDefault
 def linecount():
-    file_amount = 0
-    functions = 0
-    comments = 0
-    lines = 0
-    for dirpath, dirname, filename in os.walk("."):
-        python_files = [name for name in filename if name.endswith(".py")]
-        for name in python_files:
+
+    docstring = False
+    file_amount, functions, comments, lines = 0, 0, 0, 0
+
+    for dirpath, dirname, filenames in os.walk("."):
+        for name in filenames:
+
+            if not name.endswith(".py"):
+                continue
             file_amount += 1
-            with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as f:
-                for index, line in enumerate(f):
+
+            with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as files_lines:
+                for line in files_lines:
+                    line = line.strip()
+
                     if len(line) == 0:
                         continue
-                    elif line.strip().startswith("#"):
-                        comments += 1
-                    elif line.strip().startswith(("def", "async def")):
+
+                    elif line.startswith('"""'):
+                        if docstring is False:
+                            docstring = True
+                        else:
+                            docstring = False
+
+                    elif docstring is True:
+                        continue
+
+                    elif line.startswith(("def", "async def")):
                         functions += 1
                         lines += 1
+
+                    elif line.startswith("#"):
+                        comments += 1
+
                     else:
                         lines += 1
+
     return file_amount, functions, comments, lines
 
 
