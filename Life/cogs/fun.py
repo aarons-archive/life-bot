@@ -17,7 +17,7 @@ class Fun(commands.Cog):
     @commands.command(name="colour", aliases=["color"])
     async def colour(self, ctx, *, image: typing.Union[discord.Member, str] = None):
         """
-        Sends a randomly coloured image of the users choice.
+        Get a randomly coloured image of the users choice.
 
         `image`: A discord member (mention, id, name), URL or attachment.
         """
