@@ -90,9 +90,9 @@ def format_time(second):
     formatted = f"{minutes:02d}:{seconds:02d}"
 
     if hours is not 0:
-        formatted += f"{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
+        formatted = f"{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
     if days is not 0:
-        formatted += f"{days:<02d}:{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
+        formatted = f"{days:<02d}:{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
 
     return formatted
 
