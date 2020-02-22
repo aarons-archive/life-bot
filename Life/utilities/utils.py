@@ -7,6 +7,10 @@ import time
 import discord
 
 
+def random_colour():
+    return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+
 async def ping(bot, ctx):
 
     latency_ms = f"{round(bot.latency * 1000, 2)}ms"
@@ -33,11 +37,6 @@ async def ping(bot, ctx):
     return latency_ms, average_latency_ms, typing_ms, discord_ms
 
 
-def random_colour():
-    return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-
-# noinspection PyArgumentEqualDefault
 def linecount():
 
     docstring = False
@@ -88,14 +87,12 @@ def format_time(second):
     hours = round(hour)
     days = round(day)
 
-    if minutes == 0 and hours == 0 and days == 0:
-        formatted = f"{seconds}s"
-    elif hours == 0 and days == 0:
-        formatted = f"%02d:%02d" % (minutes, seconds)
-    elif days == 0:
-        formatted = f"%02d:%02d:%02d" % (hours, minutes, seconds)
-    else:
-        formatted = f"%02d:%02d:%02d:%02d" % (days, hours, minutes, seconds)
+    formatted = f"{minutes:02d}:{seconds:02d}"
+
+    if hours is not 0:
+        formatted += f"{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
+    if days is not 0:
+        formatted += f"{days:<02d}:{hours:<02d}:{minutes:<02d}:{seconds:<02d}"
 
     return formatted
 
