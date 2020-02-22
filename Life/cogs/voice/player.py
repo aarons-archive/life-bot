@@ -3,7 +3,7 @@ import asyncio
 import discord
 import granitepy
 
-from cogs.music import queue
+from utilities.queue import Queue
 from utilities import utils
 
 
@@ -13,7 +13,7 @@ class Player(granitepy.Player):
         super().__init__(bot, node, guild)
 
         self.player_loop = self.bot.loop.create_task(self.player_loop())
-        self.queue = queue.Queue(bot, guild)
+        self.queue = Queue(bot, guild)
         self.queue_loop = False
 
     async def player_loop(self):
@@ -61,7 +61,7 @@ class Player(granitepy.Player):
             title="Music controller:",
             colour=discord.Color.gold()
         )
-        embed.set_image(url=f"https://img.youtube.com/vi/{self.current.yt_id}/hqdefault.jpg")
+        embed.set_thumbnail(url=f"https://img.youtube.com/vi/{self.current.yt_id}/hqdefault.jpg")
         embed.add_field(name=f"Now playing:", value=f"**[{self.current.title}]({self.current.uri})**", inline=False)
         embed.add_field(name="Time:", value=f"`{utils.format_time(round(self.position) / 1000)}` / "
                                             f"`{utils.format_time(round(self.current.length) / 1000)}`")

@@ -10,7 +10,7 @@ import psutil
 from discord.ext import commands
 
 import config
-from cogs.music import player
+from cogs.voice.player import Player
 from utilities import paginators
 
 os.environ["JISHAKU_HIDE"] = "True"
@@ -25,7 +25,8 @@ EXTENSIONS = [
     "cogs.background",
     "cogs.events",
     "cogs.kross",
-    "cogs.music.music",
+    "cogs.voice.music",
+    "cogs.voice.playlist",
     # "cogs.rpg.accounts",
 ]
 
@@ -34,7 +35,7 @@ class MyContext(commands.Context):
 
     @property
     def player(self):
-        return self.bot.granitepy.get_player(self.guild, cls=player.Player)
+        return self.bot.granitepy.get_player(self.guild, cls=Player)
 
     @property
     def account(self):
@@ -99,13 +100,13 @@ class Life(commands.Bot):
 
             for guild in usages:
                 self.usage[guild["id"]] = json.loads(guild["usage"])
-            print(f"[DB] Loaded bot usages. ({len(usages)})")
+            print(f"[DB] Loaded bot usages. ({len(usages)} guilds)")
             for user in blacklisted_users:
                 self.user_blacklist.append(user["id"])
-            print(f"[DB] Loaded user blacklist. ({len(blacklisted_users)})")
+            print(f"[DB] Loaded user blacklist. ({len(blacklisted_users)} users)")
             for guild in blacklisted_guilds:
                 self.guild_blacklist.append(guild["id"])
-            print(f"[DB] Loaded guild blacklist. ({len(blacklisted_guilds)})")
+            print(f"[DB] Loaded guild blacklist. ({len(blacklisted_guilds)} guilds)")
 
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to the database was denied.")

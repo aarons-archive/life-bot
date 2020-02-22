@@ -1,9 +1,9 @@
-import granitepy
 from discord.ext import commands
 
-from cogs.music import objects
-from utilities import utils
+import granitepy
 from utilities import checks
+from utilities import utils
+from cogs.voice import objects
 
 
 class Music(commands.Cog):
@@ -32,7 +32,9 @@ class Music(commands.Cog):
     @commands.command(name="join", aliases=["connect"])
     @checks.is_member_connected()
     async def join(self, ctx):
-        """Join or move to the users voice channel."""
+        """
+        Join or move to the users voice channel.
+        """
 
         channel = ctx.author.voice.channel
         if not ctx.player.is_connected:
@@ -50,7 +52,8 @@ class Music(commands.Cog):
     @commands.command(name="play")
     @checks.is_member_connected()
     async def play(self, ctx, *, search: str):
-        """Play a track using a link or search query.
+        """
+        Play a track using a link or search query.
 
         `search`: The name/link of the track you want to play.
         """
@@ -66,12 +69,12 @@ class Music(commands.Cog):
             return await ctx.send(f"No results found for the search term `{search}`.")
 
         if isinstance(result, granitepy.Playlist):
-            playlist = objects.Playlist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
+            playlist = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
             for track in playlist.tracks:
                 await ctx.player.queue.put(track)
             return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
         else:
-            track = objects.Track(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
+            track = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
             if track.is_stream:
                 return await ctx.send("I am unable to play live streams.")
             await ctx.player.queue.put(track)
@@ -82,7 +85,9 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def leave(self, ctx):
-        """Leave the current voice channel."""
+        """
+        Leave the current voice channel.
+        """
 
         ctx.player.queue.clear()
         ctx.player.player_loop.cancel()
@@ -96,7 +101,8 @@ class Music(commands.Cog):
     @checks.is_member_in_channel()
     @checks.is_player_playing()
     async def skip(self, ctx, amount: int = 1):
-        """Skip to the next track in the queue.
+        """
+        Skip to the next track in the queue.
 
         This will auto-skip if you are the requester of the current track, otherwise a vote will start.
 
@@ -123,7 +129,9 @@ class Music(commands.Cog):
     @checks.is_member_in_channel()
     @checks.is_player_playing()
     async def pause(self, ctx):
-        """Pause the player."""
+        """
+        Pause the player.
+        """
 
         if ctx.player.is_paused:
             return await ctx.send("The player is already paused.")
@@ -137,7 +145,9 @@ class Music(commands.Cog):
     @checks.is_member_in_channel()
     @checks.is_player_playing()
     async def resume(self, ctx):
-        """Resume the player."""
+        """
+        Resume the player.
+        """
 
         if not ctx.player.is_paused:
             return await ctx.send("The player is not paused.")
@@ -150,7 +160,8 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def volume(self, ctx, volume: int = None):
-        """Change the volume of the player.
+        """
+        Change the volume of the player.
 
         `volume`: The percentage to change the volume too, can be between 0 and 100.
         """
@@ -170,7 +181,8 @@ class Music(commands.Cog):
     @checks.is_member_in_channel()
     @checks.is_player_playing()
     async def seek(self, ctx, seconds: int = None):
-        """Change the postion of the player.
+        """
+        Change the postion of the player.
 
         `position`: The position of the track to skip to in seconds.
         """
@@ -192,14 +204,18 @@ class Music(commands.Cog):
     @checks.is_player_connected()
     @checks.is_player_playing()
     async def now_playing(self, ctx):
-        """Display information about the current track."""
+        """
+        Display information about the current track.
+        """
 
         return await ctx.player.invoke_controller()
 
     @commands.command(name="queue")
     @checks.is_player_connected()
     async def queue(self, ctx):
-        """Display the queue."""
+        """
+        Display the queue.
+        """
 
         if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
@@ -229,7 +245,9 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def shuffle(self, ctx):
-        """Shuffle the queue."""
+        """
+        Shuffle the queue.
+        """
 
         if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
@@ -242,7 +260,9 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def clear(self, ctx):
-        """Clear the queue."""
+        """
+        Clear the queue.
+        """
 
         if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
@@ -255,7 +275,9 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def reverse(self, ctx):
-        """Reverse the queue."""
+        """
+        Reverse the queue.
+        """
 
         if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
@@ -268,7 +290,9 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def loop(self, ctx):
-        """Loop the queue."""
+        """
+        Loop the queue.
+        """
 
         if ctx.player.queue_loop is True:
             ctx.player.queue_loop = False
@@ -282,7 +306,8 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def remove(self, ctx, entry: int = 0):
-        """Remove an entry from the queue.
+        """
+        Remove an entry from the queue.
 
         `entry`: The position of the entry you want to remove.
         """
@@ -301,7 +326,8 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     @checks.is_member_in_channel()
     async def move(self, ctx, entry_1: int = 0, entry_2: int = 0):
-        """Move an entry from one position to another in the queue.
+        """
+        Move an entry from one position to another in the queue.
 
         `entry_1`: The position of the entry you want to move from.
         `entry_2`: The position of the entry you want to move too.
@@ -323,5 +349,13 @@ class Music(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Music(bot))
-    bot.loop.create_task(Music(bot).initiate_nodes())
+    music = Music(bot)
+
+    bot.add_cog(music)
+    bot.loop.create_task(music.initiate_nodes())
+
+
+def teardown(bot):
+
+    for node in bot.granitepy.nodes.values():
+        bot.loop.create_task(node.disconnect())
