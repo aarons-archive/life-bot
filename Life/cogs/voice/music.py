@@ -81,9 +81,9 @@ class Music(commands.Cog):
             return await ctx.send(f"Added the track **{track.title}** to the queue.")
 
     @commands.command(name="leave", aliases=["disconnect", "stop"])
-    @checks.is_player_connected()
     @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_player_connected()
     async def leave(self, ctx):
         """
         Leave the current voice channel.
@@ -96,10 +96,10 @@ class Music(commands.Cog):
         return await ctx.send(f"Left the voice channel `{ctx.guild.me.voice.channel}`.")
 
     @commands.command(name="skip")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
-    @checks.is_member_in_channel()
     @checks.is_player_playing()
+    @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def skip(self, ctx, amount: int = 1):
         """
         Skip to the next track in the queue.
@@ -124,10 +124,10 @@ class Music(commands.Cog):
         return await ctx.send(f"The current tracks requester has skipped `{amount}` track(s).")
 
     @commands.command(name="pause")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
-    @checks.is_member_in_channel()
     @checks.is_player_playing()
+    @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def pause(self, ctx):
         """
         Pause the player.
@@ -140,10 +140,10 @@ class Music(commands.Cog):
         return await ctx.send(f"Paused the player.")
 
     @commands.command(name="resume")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
-    @checks.is_member_in_channel()
     @checks.is_player_playing()
+    @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def resume(self, ctx):
         """
         Resume the player.
@@ -156,9 +156,9 @@ class Music(commands.Cog):
         return await ctx.send(f"Resumed the player.")
 
     @commands.command(name="volume", aliases=["vol"])
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def volume(self, ctx, volume: int = None):
         """
         Change the volume of the player.
@@ -176,10 +176,10 @@ class Music(commands.Cog):
         return await ctx.send(f"Changed the players volume to `{ctx.player.volume}%`.")
 
     @commands.command(name="seek")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
-    @checks.is_member_in_channel()
     @checks.is_player_playing()
+    @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def seek(self, ctx, seconds: int = None):
         """
         Change the postion of the player.
@@ -201,8 +201,8 @@ class Music(commands.Cog):
         return await ctx.send(f"Changed the players position to `{utils.format_time(milliseconds / 1000)}`.")
 
     @commands.command(name="now_playing", aliases=["np"])
-    @checks.is_player_connected()
     @checks.is_player_playing()
+    @checks.is_player_connected()
     async def now_playing(self, ctx):
         """
         Display information about the current track.
@@ -241,9 +241,9 @@ class Music(commands.Cog):
         return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
 
     @commands.command(name="shuffle")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def shuffle(self, ctx):
         """
         Shuffle the queue.
@@ -256,9 +256,9 @@ class Music(commands.Cog):
         return await ctx.send(f"The queue has been shuffled.")
 
     @commands.command(name="clear")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def clear(self, ctx):
         """
         Clear the queue.
@@ -271,9 +271,9 @@ class Music(commands.Cog):
         return await ctx.send(f"Cleared the queue.")
 
     @commands.command(name="reverse")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def reverse(self, ctx):
         """
         Reverse the queue.
@@ -286,9 +286,9 @@ class Music(commands.Cog):
         return await ctx.send(f"Reversed the queue.")
 
     @commands.command(name="loop")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def loop(self, ctx):
         """
         Loop the queue.
@@ -302,9 +302,9 @@ class Music(commands.Cog):
         return await ctx.send(f"The queue will now loop.")
 
     @commands.command(name="remove")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def remove(self, ctx, entry: int = 0):
         """
         Remove an entry from the queue.
@@ -322,9 +322,9 @@ class Music(commands.Cog):
         return await ctx.send(f"Removed `{item.title}` from the queue.")
 
     @commands.command(name="move")
-    @checks.is_player_connected()
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
     async def move(self, ctx, entry_1: int = 0, entry_2: int = 0):
         """
         Move an entry from one position to another in the queue.

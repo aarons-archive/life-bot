@@ -26,7 +26,7 @@ EXTENSIONS = [
     "cogs.events",
     "cogs.kross",
     "cogs.voice.music",
-    "cogs.voice.playlist",
+    "cogs.voice.playlists",
     # "cogs.rpg.accounts",
 ]
 

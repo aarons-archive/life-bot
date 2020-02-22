@@ -2,7 +2,6 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
-from utilities import checks
 
 from cogs.voice import objects
 
@@ -18,10 +17,13 @@ class Playlists(commands.Cog):
         playlists = await self.bot.db.fetch("SELECT * FROM playlists WHERE owner_id = $1", ctx.author.id)
         playlists = [objects.Playlist(dict(playlist)) for playlist in playlists]
 
+        if not playlists:
+            return await ctx.send("You have no playlists.")
+
         if search:
             playlists = [playlist for playlist in playlists if playlist.id == search or playlist.name == search]
             if not playlists:
-                return await ctx.send(f"You have no playlists with the name or id: `{search}`.")
+                return await ctx.send(f"You have no playlists with the name or id: `{search}`")
 
         embeds = []
 
@@ -54,7 +56,7 @@ class Playlists(commands.Cog):
         if not name:
             return await ctx.send("You must choose a name for you playlist.")
 
-        await self.bot.db.execute("INSERT INTO playlists (name, owner_id, private, creation_date )values ($1, $2, $3, $4)", name, ctx.author.id, True, datetime.utcnow())
+        await self.bot.db.execute("INSERT INTO playlists (name, owner_id, private, creation_date )values ($1, $2, $3, $4)", name, ctx.author.id, True, datetime.utcnow().strftime('%d-%m-%Y: %H:%M'))
         return await ctx.send(f"A playlist was created with the name `{name}`. Do `{ctx.prefix}playlist {name}` to view it.")
 
     @playlist.command(name="add")
