@@ -27,7 +27,7 @@ def is_member_connected():
 
 def is_member_in_channel():
     async def predicate(ctx):
-        if not ctx.player.voice_channel.id == ctx.author.voice.channel.id:
+        if not ctx.player.voice_channel == ctx.author.voice.channel:
             raise commands.CheckFailure(f"You are not connected to the same voice channel as me.")
         return True
     return commands.check(predicate)
