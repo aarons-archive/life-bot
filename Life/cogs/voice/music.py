@@ -354,8 +354,3 @@ def setup(bot):
     bot.add_cog(music)
     bot.loop.create_task(music.initiate_nodes())
 
-
-def teardown(bot):
-
-    for node in bot.granitepy.nodes.values():
-        bot.loop.create_task(node.disconnect())
