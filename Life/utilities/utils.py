@@ -61,13 +61,13 @@ def linecount():
                             docstring = False
                     elif docstring is True:
                         continue
+                    if line.startswith("#"):
+                        comments += 1
+                        continue
                     if line.startswith(("def", "async def")):
                         functions += 1
                     if line.startswith("class"):
                         classes += 1
-                    if line.startswith("#"):
-                        comments += 1
-                        continue
                     lines += 1
 
     return file_amount, functions, comments, lines, classes
