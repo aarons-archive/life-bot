@@ -20,7 +20,7 @@ class Information(commands.Cog):
         """
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await utils.ping(self.bot, ctx)
-        files, functions, comments, lines = utils.linecount()
+        files, functions, comments, lines, classes = utils.linecount()
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
@@ -37,7 +37,7 @@ class Information(commands.Cog):
                                                      f"**Commands:** {len(self.bot.commands)}\n"
                                                      f"**Cogs:** {len(self.bot.cogs)}")
         embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n**Functions:** {functions}\n"
-                                                    f"**Lines:** {lines}\n**Files:** {files}")
+                                                    f"**Classes:** {classes}\n**Lines:** {lines}\n**Files:** {files}\n")
         embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="__**Ping:**__", value=f"**Average Lat:** {average_latency_ms}\n**Latency:** {latency_ms}\n"
                                                     f"**Typing:** {typing_ms}\n**Discord:** {discord_ms}")

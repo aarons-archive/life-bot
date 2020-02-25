@@ -40,7 +40,7 @@ async def ping(bot, ctx):
 def linecount():
 
     docstring = False
-    file_amount, functions, comments, lines = 0, 0, 0, 0
+    file_amount, functions, comments, lines, classes = 0, 0, 0, 0, 0
 
     for dirpath, dirname, filenames in os.walk("."):
         for name in filenames:
@@ -52,30 +52,25 @@ def linecount():
             with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as files_lines:
                 for line in files_lines:
                     line = line.strip()
-
                     if len(line) == 0:
                         continue
-
                     elif line.startswith('"""'):
                         if docstring is False:
                             docstring = True
                         else:
                             docstring = False
-
                     elif docstring is True:
                         continue
-
-                    elif line.startswith(("def", "async def")):
+                    if line.startswith(("def", "async def")):
                         functions += 1
-                        lines += 1
-
-                    elif line.startswith("#"):
+                    if line.startswith("class"):
+                        classes += 1
+                    if line.startswith("#"):
                         comments += 1
+                        continue
+                    lines += 1
 
-                    else:
-                        lines += 1
-
-    return file_amount, functions, comments, lines
+    return file_amount, functions, comments, lines, classes
 
 
 def format_time(second):
