@@ -74,7 +74,6 @@ class Life(commands.Bot):
 
         self.socket_stats = collections.Counter()
         self.pings = collections.deque(maxlen=14400)
-        self.owner_ids = [238356301439041536]
         self.guild_blacklist = []
         self.user_blacklist = []
         self.usage = {}
@@ -147,9 +146,6 @@ class Life(commands.Bot):
             return
 
         await self.process_commands(message)
-
-    async def is_owner(self, user):
-        return user.id in self.owner_ids
 
     async def blacklist_check(self, ctx):
         if ctx.author.id in self.bot.user_blacklist:
