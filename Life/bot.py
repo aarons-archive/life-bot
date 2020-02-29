@@ -133,12 +133,10 @@ class Life(commands.Bot):
 
     async def on_message_edit(self, before, after):
 
-        if before.author.bot or after.author.bot:
+        if before.content == after.contect:
             return
 
-        ctx = await self.get_context(after)
-        if ctx.command:
-            await self.process_commands(after)
+        await self.process_commands(after)
 
     async def on_message(self, message):
 
