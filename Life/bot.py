@@ -133,7 +133,7 @@ class Life(commands.Bot):
 
     async def on_message_edit(self, before, after):
 
-        if not before.cotent or before.content == after.contect:
+        if before.content == after.content:
             return
 
         await self.process_commands(after)
