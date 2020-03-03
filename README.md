@@ -14,7 +14,7 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 * A running andesite node
 
 ### Setup
-1. Install dependancies
+1. Install dependencies
 ```
 pip install -U -r requirements.txt
 ```

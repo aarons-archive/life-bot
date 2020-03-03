@@ -7,10 +7,10 @@ class HelpCommand(commands.HelpCommand):
     def __init__(self):
         super().__init__(command_attrs={
             "help": "Shows help about the Bot, an Extension or a Command.\n\n"
-                    "**<arguement>** means the arguement is **required**.\n"
-                    "**[arguement]** means the arguement is **optional**.\n"
+                    "**<argument>** means the argument is **required**.\n"
+                    "**[argument]** means the argument is **optional**.\n"
                     "**[a|b]** means it can be **'A' or 'B'**.\n"
-                    "**[arguement...]** means you can have **multiple arguements**."
+                    "**[argument...]** means you can have **multiple arguments**."
         })
 
     def formatter(self, command_list, aliases=True, short_name=False, level=0):

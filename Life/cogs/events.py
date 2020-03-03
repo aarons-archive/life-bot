@@ -73,7 +73,7 @@ class Events(commands.Cog):
         if isinstance(error, commands.TooManyArguments):
             message = f"You passed too many arguments to the command `{ctx.command}`. You can use `{ctx.prefix}help {ctx.command}` for more information on what arguments to pass."
         if isinstance(error, commands.BadArgument):
-            message = f"You passed a bad arguement to the command `{ctx.command}`."
+            message = f"You passed a bad argument to the command `{ctx.command}`."
         if isinstance(error, commands.PrivateMessageOnly):
             message = f"The command `{ctx.command}` can only be used in DM's."
         if isinstance(error, commands.NotOwner):

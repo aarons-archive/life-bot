@@ -71,7 +71,7 @@ class Queue:
             self.getters.append(getter)
             try:
                 await getter
-            except:
+            except Exception:
                 getter.cancel()
                 try:
                     self.getters.remove(getter)
@@ -91,7 +91,7 @@ class Queue:
             self.getters.append(getter)
             try:
                 await getter
-            except:
+            except Exception:
                 getter.cancel()
                 try:
                     self.getters.remove(getter)

@@ -11,29 +11,29 @@ class Background(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.current_prescence = 0
-        self.bot.prescences = []
+        self.current_presence = 0
+        self.bot.presences = []
 
-        self.change_prescence.start()
+        self.change_presence.start()
         self.log_bot_stats.start()
         self.log_ping.start()
 
     def cog_unload(self):
-        self.change_prescence.stop()
+        self.change_presence.stop()
         self.log_bot_stats.stop()
         self.log_ping.stop()
 
     @tasks.loop(hours=1.0)
-    async def change_prescence(self):
-        prescences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
-                      discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
-                      discord.Activity(type=discord.ActivityType.playing,  name=f"{self.bot.config.DISCORD_PREFIX}help")]
+    async def change_presence(self):
+        presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
+                     discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
+                     discord.Activity(type=discord.ActivityType.playing,  name=f"{self.bot.config.DISCORD_PREFIX}help")]
 
-        await self.bot.change_presence(activity=prescences[self.current_prescence])
-        self.current_prescence = (self.current_prescence + 1) % len(prescences)
+        await self.bot.change_presence(activity=presences[self.current_presence])
+        self.current_presence = (self.current_presence + 1) % len(presences)
 
-    @change_prescence.before_loop
-    async def before_change_prescence(self):
+    @change_presence.before_loop
+    async def before_change_presence(self):
         await self.bot.wait_until_ready()
 
     @tasks.loop(hours=1.0)

@@ -247,7 +247,7 @@ class Owner(commands.Cog):
             user = await self.bot.fetch_user(user)
             self.bot.user_blacklist.remove(user.id)
             await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", user.id)
-            return await ctx.send(f"User: `{user.name} - {user.id}` has been unblacklisted.")
+            return await ctx.send(f"User: `{user.name} - {user.id}` has been un-blacklisted.")
         except ValueError:
             return await ctx.send(f"User: `{user.name} - {user.id}` is not blacklisted.")
 
@@ -324,7 +324,7 @@ class Owner(commands.Cog):
         try:
             self.bot.guild_blacklist.remove(guild)
             await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", guild)
-            return await ctx.send(f"Guild: `{guild}` has been unblacklisted.")
+            return await ctx.send(f"Guild: `{guild}` has been un-blacklisted.")
         except ValueError:
             return await ctx.send(f"Guild: `{guild}` is not blacklisted.")
 

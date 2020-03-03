@@ -37,6 +37,7 @@ async def ping(bot, ctx):
     return latency_ms, average_latency_ms, typing_ms, discord_ms
 
 
+# noinspection PyArgumentEqualDefault
 def linecount():
 
     docstring = False
@@ -170,7 +171,7 @@ def guild_region(guild):
         discord.VoiceRegion.hongkong: "Hong kong",
         discord.VoiceRegion.india: "India",
         discord.VoiceRegion.japan: "Japan",
-        discord.VoiceRegion.london: "Londom",
+        discord.VoiceRegion.london: "London",
         discord.VoiceRegion.russia: "Russia",
         discord.VoiceRegion.singapore: "Singapore",
         discord.VoiceRegion.southafrica: "South Africa",
