@@ -50,6 +50,7 @@ class Music(commands.Cog):
         return await ctx.send("I am already in this voice channel.")
 
     @commands.command(name="play")
+    @checks.is_member_in_channel()
     @checks.is_member_connected()
     async def play(self, ctx, *, search: str):
         """
@@ -66,23 +67,23 @@ class Music(commands.Cog):
 
         result = await ctx.player.node.get_tracks(search)
         if not result:
-            return await ctx.send(f"No results found for the search term `{search}`.")
+            return await ctx.send(f"There were no tracks found for the search `{search}`.")
 
         if isinstance(result, granitepy.Playlist):
             playlist = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
             for track in playlist.tracks:
                 await ctx.player.queue.put(track)
             return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
-        else:
-            track = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
-            if track.is_stream:
-                return await ctx.send("I am unable to play live streams.")
-            await ctx.player.queue.put(track)
-            return await ctx.send(f"Added the track **{track.title}** to the queue.")
+
+        track = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
+        if track.is_stream:
+            return await ctx.send("The requested track is a live stream.")
+        await ctx.player.queue.put(track)
+        return await ctx.send(f"Added the track **{track.title}** to the queue.")
 
     @commands.command(name="leave", aliases=["disconnect", "stop"])
-    @checks.is_member_connected()
     @checks.is_member_in_channel()
+    @checks.is_member_connected()
     @checks.is_player_connected()
     async def leave(self, ctx):
         """
@@ -182,7 +183,7 @@ class Music(commands.Cog):
     @checks.is_player_connected()
     async def seek(self, ctx, seconds: int = None):
         """
-        Change the postion of the player.
+        Change the position of the player.
 
         `position`: The position of the track to skip to in seconds.
         """
@@ -354,3 +355,6 @@ def setup(bot):
     bot.add_cog(music)
     bot.loop.create_task(music.initiate_nodes())
 
+
+def teardown(bot):
+    bot.granitepy = None
