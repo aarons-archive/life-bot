@@ -110,7 +110,7 @@ class Life(commands.Bot):
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to the database was denied.")
         except Exception as e:
-            print(f"\n[DB] An error occurred: {e}")
+            print(f"\n[DB] An error occured: {e}")
 
     async def bot_start(self):
         self.session = aiohttp.ClientSession()
