@@ -23,8 +23,16 @@ class Playlist:
     def __init__(self, data: dict):
         self.data = data
 
-        self.id = data.get("id", "N/A")
-        self.name = data.get("name", "N/A")
-        self.owner_id = data.get("owner_id", "N/A")
-        self.private = data.get("private", "N/A")
-        self.creation_date = data.get("creation_date", "N/A")
+        self.id = data.get("id")
+        self.name = data.get("name")
+        self.owner_id = data.get("owner_id")
+        self.private = data.get("private")
+        self.creation_date = data.get("creation_date")
+
+        self.tracks = []
+
+    @property
+    def track_ids(self):
+        return [track.track_id for track in self.tracks]
+
+
