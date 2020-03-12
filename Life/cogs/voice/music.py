@@ -50,7 +50,6 @@ class Music(commands.Cog):
         return await ctx.send("I am already in this voice channel.")
 
     @commands.command(name="play")
-    @checks.is_member_in_channel()
     @checks.is_member_connected()
     async def play(self, ctx, *, search: str):
         """
