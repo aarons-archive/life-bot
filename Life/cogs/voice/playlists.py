@@ -3,6 +3,7 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
+import typing
 
 import granitepy
 from cogs.voice import objects
@@ -14,9 +15,9 @@ class Playlists(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def fetch_playlists(self, ctx: commands.Context, search: str = None):
+    async def fetch_playlists(self, ctx: commands.Context, owner: discord.Member = None, search: typing.Union[int, str] = None):
 
-        raw_playlists = await self.bot.db.fetch("SELECT * FROM playlist WHERE owner_id = $1", ctx.author.id)
+        raw_playlists = await self.bot.db.fetch("SELECT * FROM playlist")
         playlists = []
 
         for raw_playlist in raw_playlists:
@@ -26,8 +27,11 @@ class Playlists(commands.Cog):
             playlist.tracks = [objects.GraniteTrack(track["track_id"], json.loads(track["track_data"]), ctx) for track in tracks]
             playlists.append(playlist)
 
+        if owner:
+            playlists = [playlist for playlist in playlists if playlist.owner_id == ctx.author.id]
+
         if search:
-            playlists = [playlist for playlist in playlists if str(playlist.id) == search or str(playlist.name) == search]
+            playlists = [playlist for playlist in playlists if playlist.id == search or playlist.name == search]
 
         return playlists
 
@@ -40,10 +44,11 @@ class Playlists(commands.Cog):
     async def remove_from_playlist(self, playlist: objects.Playlist, tracks: list):
         entries = [(playlist.id, track.track_id) for track in tracks]
         async with self.bot.db.acquire() as db:
-            return await db.executemany("DELETE FROM playlist_tracks WHERE playlist_id = $1 and track_id = $2", entries)
+            await db.executemany("DELETE FROM playlist_tracks WHERE playlist_id = $1 and track_id = $2", entries)
+        return len(entries)
 
     @commands.group(name="playlist", aliases=["playlists"], invoke_without_command=True)
-    async def playlist(self, ctx, *, search: str = None):
+    async def playlist(self, ctx, *, search: typing.Union[int, str] = None):
 
         playlists = await self.fetch_playlists(ctx=ctx, search=search)
         if not playlists:
@@ -77,20 +82,23 @@ class Playlists(commands.Cog):
         return await ctx.paginate_embeds(entries=embeds)
 
     @playlist.command(name="create")
-    async def playlist_create(self, ctx, *, name: str = None):
+    async def playlist_create(self, ctx, *, name: typing.Union[int, str] = None):
 
         if not name:
             return await ctx.send("You need to choose a name for your playlist.")
+
+        if isinstance(name, int):
+            return await ctx.send("You can not use a number as a name for your playlist.")
 
         query = "INSERT INTO playlist (name, owner_id, private, creation_date) VALUES ($1, $2, $3, $4)"
         await self.bot.db.execute(query, name, ctx.author.id, True, datetime.utcnow().strftime("%d-%m-%Y: %H:%M"))
         return await ctx.send(f"A playlist was created with the name `{name}`.")
 
     @playlist.command(name="delete")
-    async def playlist_delete(self, ctx, *, name: str = None):
+    async def playlist_delete(self, ctx, *, name: typing.Union[int, str] = None):
 
         if not name:
-            return await ctx.send("You need to choose the name or id of the playlist you want to delete.")
+            return await ctx.send("You need to specify the name or id of the playlist you want to delete.")
 
         playlists = await self.fetch_playlists(ctx=ctx, search=name)
         if not playlists:
@@ -104,11 +112,11 @@ class Playlists(commands.Cog):
         return await ctx.send(f"Your playlist with the name `{playlist.name}` was deleted.")
 
     @playlist.command(name="add")
-    async def playlist_add(self, ctx, playlist: str, *, track: str):
+    async def playlist_add(self, ctx, playlist: typing.Union[int, str], *, track: str):
 
         playlists = await self.fetch_playlists(ctx=ctx, search=playlist)
         if not playlists:
-            return await ctx.send(f"You don't have any playlists with the name or id `{playlist}`")
+            return await ctx.send(f"You don't have any playlists with the name or id: `{playlist}`")
         if len(playlists) > 1:
             return await ctx.send(f"Your search returned more than one playlist, try using the ID instead.")
         playlist = playlists[0]
@@ -129,11 +137,11 @@ class Playlists(commands.Cog):
         return await ctx.send(f"Added the track **{yt_track.title}** to your playlist **{playlist.name}**.")
 
     @playlist.command(name="remove")
-    async def playlist_remove(self, ctx, playlist: str, *, track: str):
+    async def playlist_remove(self, ctx, playlist: typing.Union[int, str], *, track: str):
 
         playlists = await self.fetch_playlists(ctx=ctx, search=playlist)
         if not playlists:
-            return await ctx.send(f"You don't have any playlists with the name or id `{playlist}`")
+            return await ctx.send(f"You don't have any playlists with the name or id: `{playlist}`")
         if len(playlists) > 1:
             return await ctx.send(f"Your search returned more than one playlist, try using the ID instead.")
         playlist = playlists[0]
@@ -159,13 +167,12 @@ class Playlists(commands.Cog):
         return await ctx.send(f"Removed the track **{yt_track.title}** from your playlist **{playlist.name}**.")
 
     @playlist.command(name="queue")
-    @checks.is_member_in_channel()
     @checks.is_member_connected()
-    async def playlist_queue(self, ctx, *, playlist: str):
+    async def playlist_queue(self, ctx, *, playlist: typing.Union[int, str]):
 
         playlists = await self.fetch_playlists(ctx=ctx, search=playlist)
         if not playlists:
-            return await ctx.send(f"You don't have any playlists with the name or id `{playlist}`")
+            return await ctx.send(f"You don't have any playlists with the name or id: `{playlist}`")
         if len(playlists) > 1:
             return await ctx.send(f"Your search returned more than one playlist, try using the ID instead.")
         playlist = playlists[0]
