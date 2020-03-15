@@ -8,7 +8,7 @@ import discord
 
 
 def random_colour():
-    return "%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 
 async def ping(bot, ctx):
