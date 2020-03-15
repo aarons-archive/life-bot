@@ -6,7 +6,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from utilities import imaging
+from cogs.utilities import imaging
 
 
 class Fun(commands.Cog):

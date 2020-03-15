@@ -5,7 +5,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from utilities import utils
+from cogs.utilities import utils
 
 
 class Information(commands.Cog):
@@ -175,7 +175,7 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name="userinfo")
+    @commands.command(name="userinfo", aliases=["user"])
     async def userinfo(self, ctx, *, member: discord.Member = None):
         """
         Get information about you, or a specified user.
@@ -198,8 +198,8 @@ class Information(commands.Cog):
                                                                    f"**Status:** {utils.member_status(member)}\n"
                                                                    f"**Activity:** {utils.member_activity(member)}", inline=False)
 
-        roles = ' '.join([r.mention for r in ctx.author.roles[:-11:-1] if not r.name == "@everyone"])
-        role_count = len(ctx.author.roles) - 1
+        roles = ' '.join([r.mention for r in member.roles[:-11:-1] if not r.name == "@everyone"])
+        role_count = len(member.roles) - 1
         if role_count > 10:
             roles += f" ... and {role_count - 10} others"
 

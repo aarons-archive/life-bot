@@ -5,7 +5,7 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from utilities import imaging
+from cogs.utilities import imaging
 
 
 class Owner(commands.Cog):

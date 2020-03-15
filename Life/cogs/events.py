@@ -1,10 +1,10 @@
 import traceback
 
 import discord
+import granitepy
 from discord.ext import commands
 
-import granitepy
-from utilities import utils
+from cogs.utilities import utils
 
 
 class Events(commands.Cog):

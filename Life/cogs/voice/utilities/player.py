@@ -3,8 +3,8 @@ import asyncio
 import discord
 import granitepy
 
-from utilities.queue import Queue
-from utilities import utils
+from cogs.utilities import utils
+from cogs.voice.utilities.queue import Queue
 
 
 class Player(granitepy.Player):

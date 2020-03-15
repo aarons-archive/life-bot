@@ -10,8 +10,8 @@ import psutil
 from discord.ext import commands
 
 import config
-from cogs.voice.player import Player
-from utilities import paginators
+from cogs.voice.utilities.player import Player
+from cogs.utilities import paginators
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -110,7 +110,7 @@ class Life(commands.Bot):
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to the database was denied.")
         except Exception as e:
-            print(f"\n[DB] An error occured: {e}")
+            print(f"\n[DB] An error occurred: {e}")
 
     async def bot_start(self):
         self.session = aiohttp.ClientSession()

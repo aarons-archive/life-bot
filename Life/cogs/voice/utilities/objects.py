@@ -1,5 +1,5 @@
-from granitepy import objects
 from discord.ext import commands
+from granitepy import objects
 
 
 class GraniteTrack(objects.Track):

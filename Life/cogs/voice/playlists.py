@@ -1,13 +1,13 @@
 import json
+import typing
 from datetime import datetime
 
 import discord
-from discord.ext import commands
-import typing
-
 import granitepy
-from cogs.voice import objects
-from utilities import checks
+from discord.ext import commands
+
+from cogs.utilities import checks
+from cogs.voice.utilities import objects
 
 
 class Playlists(commands.Cog):

@@ -16,7 +16,8 @@ class Inventory:
         self.raw_items = raw_inventory
         self.items = self.get_inventory_objects(self.raw_items)
 
-    def get_inventory_objects(self, items: list):
+    @staticmethod
+    def get_inventory_objects(items: list):
 
         inventory = []
 
@@ -28,7 +29,8 @@ class Inventory:
 
         return inventory
 
-    def get_item_id(self, item_list: list, item_id: int):
+    @staticmethod
+    def get_item_id(item_list: list, item_id: int):
 
         items_of_id = [item for item in item_list if item.id == item_id]
 
@@ -37,7 +39,8 @@ class Inventory:
 
         return items_of_id
 
-    def get_item_slot(self, item_list: list, item_slot: str):
+    @staticmethod
+    def get_item_slot(item_list: list, item_slot: str):
 
         items_of_slot = [item for item in item_list if item.slot == item_slot]
 
@@ -46,7 +49,8 @@ class Inventory:
 
         return items_of_slot
 
-    def get_item_base_name(self, item_list: list, item_base_name: str):
+    @staticmethod
+    def get_item_base_name(item_list: list, item_base_name: str):
 
         items_of_base_name = [item for item in item_list if item.base_name == item_base_name]
 
@@ -55,7 +59,8 @@ class Inventory:
 
         return items_of_base_name
 
-    def get_item_name(self, item_list: list, item_name: str):
+    @staticmethod
+    def get_item_name(item_list: list, item_name: str):
 
         items_of_name = [item for item in item_list if item.name == item_name]
 
@@ -64,7 +69,8 @@ class Inventory:
 
         return items_of_name
 
-    def get_item_base_type(self, item_list: list, item_base_type: str):
+    @staticmethod
+    def get_item_base_type(item_list: list, item_base_type: str):
 
         items_of_base_type = [item for item in item_list if item.base_type == item_base_type]
 
@@ -73,7 +79,8 @@ class Inventory:
 
         return items_of_base_type
 
-    def get_item_type(self, item_list: list, item_type: str):
+    @staticmethod
+    def get_item_type(item_list: list, item_type: str):
 
         items_of_type = [item for item in item_list if item.type == item_type]
 

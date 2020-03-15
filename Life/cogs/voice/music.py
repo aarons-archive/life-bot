@@ -1,9 +1,8 @@
+import granitepy
 from discord.ext import commands
 
-import granitepy
-from utilities import checks
-from utilities import utils
-from cogs.voice import objects
+from cogs.utilities import checks, utils
+from cogs.voice.utilities import objects
 
 
 class Music(commands.Cog):
@@ -356,4 +355,4 @@ def setup(bot):
 
 
 def teardown(bot):
-    bot.granitepy = None
+    del bot.granitepy
