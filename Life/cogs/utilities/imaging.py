@@ -1,37 +1,17 @@
+import re
 from io import BytesIO
 
 import matplotlib.pyplot as plt
-from PIL import Image
+from wand.color import Color
+from wand.image import Image
+
+from cogs.utilities import exceptions
 
 
 async def get_image(bot, url):
     async with bot.session.get(url) as response:
         image_bytes = await response.read()
     return image_bytes
-
-
-def colour(image_bytes, image_colour):
-    image = Image.open(BytesIO(image_bytes)).convert("RGBA")
-    mask = image.convert("L")
-
-    lx, ly = image.size
-    pixel = image.load()
-    for y in range(ly):
-        for x in range(lx):
-            if pixel[x, y] == (0, 0, 0, 0):
-                continue
-            pixel[x, y] = image_colour
-
-    image.putalpha(mask)
-
-    colour_image = BytesIO()
-    image.save(colour_image, "png")
-
-    image.close()
-    mask.close()
-
-    colour_image.seek(0)
-    return colour_image
 
 
 def do_growth_plot(title, x_label, y_label, values, names):
@@ -100,3 +80,52 @@ def do_ping_plot(bot, history: int):
     plt.close()
     ping_graph.seek(0)
     return ping_graph
+
+
+def colour(image_bytes, image_colour: str):
+
+    original_image = BytesIO(image_bytes)
+    new_image = BytesIO()
+
+    hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(image_colour)
+    if hex_check is None:
+        raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
+
+    with Color("rgb(50%, 50%, 50%)") as alpha:
+        with Color(image_colour) as color:
+            with Image(file=original_image) as image:
+                image.colorize(color=color, alpha=alpha)
+                image.save(file=new_image)
+
+    new_image.seek(0)
+    return new_image
+
+
+def charcoal(image_bytes, radius: float, sigma: float):
+
+    original_image = BytesIO(image_bytes)
+    new_image = BytesIO()
+
+    with Image(file=original_image) as image:
+        image.charcoal(radius=radius, sigma=sigma)
+        image.save(file=new_image)
+
+    new_image.seek(0)
+    return new_image
+
+
+def implode(image_bytes, amount: float):
+
+    original_image = BytesIO(image_bytes)
+    new_image = BytesIO()
+
+    with Image(file=original_image) as image:
+        image.implode(amount=amount)
+        image.save(file=new_image)
+
+    new_image.seek(0)
+    return new_image
+
+
+
+
