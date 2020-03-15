@@ -4,7 +4,7 @@ import discord
 import granitepy
 from discord.ext import commands
 
-from cogs.utilities import utils
+from cogs.utilities import utils, exceptions
 
 
 class Events(commands.Cog):
@@ -64,12 +64,12 @@ class Events(commands.Cog):
 
         # Check for errors.
         message = ""
-        if isinstance(error, commands.CommandNotFound):
-            return
+        if isinstance(error, exceptions.ArgumentError):
+            message = f"{error}"
         if isinstance(error, commands.CheckFailure):
             message = f"{error}"
         if isinstance(error, commands.MissingRequiredArgument):
-            message = f"You missed the `{error.param}` parameter. You can use `{ctx.prefix}help {ctx.command}` for more information on what parameters to pass."
+            message = f"You missed the `{error.param}` parameter. You can use `{self.bot.config.DISCORD_PREFIX}help {ctx.command}` for more information on what parameters to pass."
         if isinstance(error, commands.TooManyArguments):
             message = f"You passed too many arguments to the command `{ctx.command}`. You can use `{ctx.prefix}help {ctx.command}` for more information on what arguments to pass."
         if isinstance(error, commands.BadArgument):
@@ -105,6 +105,8 @@ class Events(commands.Cog):
                 message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
                 message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{utils.format_time(error.retry_after)}`."
+        if isinstance(error, commands.CommandNotFound):
+            return
 
         # If an error was found, send it.
         if message:
