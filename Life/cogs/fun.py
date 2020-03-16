@@ -32,8 +32,12 @@ class Fun(commands.Cog):
 
         return argument
 
+    async def create_embed(self, ctx, image_format: str):
+
+
+
     @commands.command(name="colour", aliases=["color"])
-    async def colour(self, ctx, url: typing.Optional[str] = None, colour: str = None):
+    async def colour(self, ctx, url: str = None, colour: str = None):
 
         start = time.perf_counter()
         await ctx.trigger_typing()
@@ -57,7 +61,7 @@ class Fun(commands.Cog):
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.command(name="charcoal")
-    async def charcoal(self, ctx, url: typing.Optional[str] = None, radius: float = 1.5, sigma: float = 0.5):
+    async def charcoal(self, ctx, url: str = None, radius: float = 1.5, sigma: float = 0.5):
 
         start = time.perf_counter()
         await ctx.trigger_typing()
@@ -79,7 +83,7 @@ class Fun(commands.Cog):
         return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.command(name="implode")
-    async def implode(self, ctx, url: typing.Optional[str] = None, amount: float = 0.35):
+    async def implode(self, ctx, url: str = None, amount: float = 0.35):
 
         start = time.perf_counter()
         await ctx.trigger_typing()
@@ -94,6 +98,29 @@ class Fun(commands.Cog):
         )
         embed.set_image(url=f"attachment://ImplodeImage.png")
         embed.set_footer(text=f"Amount: {amount}")
+        await ctx.send(file=file, embed=embed)
+
+        end = time.perf_counter()
+        return await ctx.send(f"That took {end - start:.3f}sec to complete")
+
+    @commands.command(name="gif")
+    async def gif(self, ctx, url: str = None, colour: str = None):
+
+        start = time.perf_counter()
+        await ctx.trigger_typing()
+
+        if not colour:
+            colour = utils.random_colour()
+
+        url = await self.get_url(ctx=ctx, argument=url)
+        image_bytes = await imaging.get_image(self.bot, url)
+        image = imaging.colour_gif(image_bytes, colour)
+
+        file = discord.File(filename=f"CropImage.gif", fp=image)
+        embed = discord.Embed(
+            colour=discord.Colour.gold(),
+        )
+        embed.set_image(url=f"attachment://CropImage.gif")
         await ctx.send(file=file, embed=embed)
 
         end = time.perf_counter()
