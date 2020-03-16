@@ -82,71 +82,35 @@ def do_ping_plot(bot, history: int):
     return ping_graph
 
 
-def colour(image_bytes, image_colour: str):
+class Imaging:
 
-    original_image = BytesIO(image_bytes)
-    new_image = BytesIO()
+    def colourise(self, image_bytes, image_colour: str):
 
-    hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(image_colour)
-    if hex_check is None:
-        raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
+        original_image = BytesIO(image_bytes)
+        new_image = BytesIO()
 
-    with Color("rgb(50%, 50%, 50%)") as alpha:
-        with Color(image_colour) as color:
-            with Image(file=original_image) as image:
-                image.colorize(color=color, alpha=alpha)
-                image.save(file=new_image)
+        hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(image_colour)
+        if hex_check is None:
+            raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
 
-    new_image.seek(0)
-    return new_image
+        with Color("rgb(50%, 50%, 50%)") as alpha:
+            with Color(image_colour) as color:
+                with Image(file=original_image) as image:
+                    image_format = image.format
+                    print(image_format)
+                    if image_format == "GIF":
+                        with Image() as dest_image:
+                            for frame in image.sequence:
+                                frame.colorize(color=color, alpha=alpha)
+                                dest_image.sequence.append(frame)
+                            dest_image.save(file=new_image)
+                    else:
+                        image.colorize(color=color, alpha=alpha)
+                        image.save(file=new_image)
 
+        new_image.seek(0)
+        return new_image, image_format
 
-def charcoal(image_bytes, radius: float, sigma: float):
-
-    original_image = BytesIO(image_bytes)
-    new_image = BytesIO()
-
-    with Image(file=original_image) as image:
-        image.charcoal(radius=radius, sigma=sigma)
-        image.save(file=new_image)
-
-    new_image.seek(0)
-    return new_image
-
-
-def implode(image_bytes, amount: float):
-
-    original_image = BytesIO(image_bytes)
-    new_image = BytesIO()
-
-    with Image(file=original_image) as image:
-        image.implode(amount=amount)
-        image.save(file=new_image)
-
-    new_image.seek(0)
-    return new_image
-
-
-def colour_gif(image_bytes, image_colour: str):
-
-    original_image = BytesIO(image_bytes)
-    new_image = BytesIO()
-
-    hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(image_colour)
-    if hex_check is None:
-        raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
-
-    with Color("rgb(50%, 50%, 50%)") as alpha:
-        with Color(image_colour) as color:
-            with Image() as dest_image:
-                with Image(file=original_image) as original_image:
-                    for frame in original_image.sequence:
-                        frame.sepia_tone()
-                        dest_image.sequence.append(frame)
-                dest_image.save(file=new_image)
-
-    new_image.seek(0)
-    return new_image
 
 
 
