@@ -5,4 +5,4 @@ jishaku==1.18.2.188
 psutil==5.7.0
 granitepy==0.0.1a0
 matplotlib==3.2.0
-discord-flags==2.1.0
+discord-flags==2.1.1
