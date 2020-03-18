@@ -1,76 +1,14 @@
 import collections
-import time
 
 import asyncpg
 import discord
 from discord.ext import commands
-
-from cogs.utilities import imaging
 
 
 class Owner(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-
-    @commands.is_owner()
-    @commands.command(name="user_growth", aliases=["ug"], hidden=True)
-    async def user_growth(self, ctx, history: int = 24):
-        """
-        Show the bot's user count over the past 24 (by default) hours.
-
-        `history`: The amount of hours to get the user count of.
-        """
-
-        user_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
-
-        if not user_growth:
-            return await ctx.send("No growth data.")
-
-        start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"User growth over the last {len(user_growth)} hour(s)", "Datetime (YYYY-MM-DD: HH:MM)", "Users", [record["member_count"] for record in user_growth], [record["date"] for record in user_growth])
-        await ctx.send(file=discord.File(filename=f"UserGrowth.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-    @commands.is_owner()
-    @commands.command(name="guild_growth", aliases=["gg"], hidden=True)
-    async def guild_growth(self, ctx, history: int = 24):
-        """
-        Show the bot's guild count over the past 24 (by default) hours.
-
-        `history`: The amount of hours to get the guild count of.
-        """
-
-        guild_growth = await self.bot.db.fetch("WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date", history)
-
-        if not guild_growth:
-            return await ctx.send("No growth data.")
-
-        start = time.perf_counter()
-        plot = imaging.do_growth_plot(f"Guild growth over the last {len(guild_growth)} hour(s)", "Datetime (YYYY-MM-DD: HH:MM)", "Guilds", [record["guild_count"] for record in guild_growth], [record["date"] for record in guild_growth])
-        await ctx.send(file=discord.File(filename=f"GuildGrowth.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
-
-    @commands.is_owner()
-    @commands.command(name="ping_graph", aliases=["pg"], hidden=True)
-    async def ping_graph(self, ctx, history: int = 60):
-        """
-        Show the bot's latency over the last 60 (by default) minutes.
-
-        `history`: The amount of minutes to get the latency of.
-        """
-
-        if not self.bot.pings:
-            return await ctx.send("No ping data.")
-
-        start = time.perf_counter()
-        await ctx.trigger_typing()
-        plot = imaging.do_ping_plot(self.bot, history=history)
-        await ctx.send(file=discord.File(filename=f"PingGraph.png", fp=plot))
-        end = time.perf_counter()
-        return await ctx.send(f"That took {end - start:.3f}sec to complete")
 
     @commands.is_owner()
     @commands.command(name="socketstats", aliases=["ss"], hidden=True)
