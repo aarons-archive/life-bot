@@ -521,5 +521,3 @@ class Imaging:
 
         new_image.seek(0)
         return new_image, image_format
-
-0
