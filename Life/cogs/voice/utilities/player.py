@@ -3,7 +3,6 @@ import asyncio
 import discord
 import granitepy
 
-from cogs.utilities import utils
 from cogs.voice.utilities.queue import Queue
 
 
@@ -63,8 +62,8 @@ class Player(granitepy.Player):
         )
         embed.set_thumbnail(url=f"https://img.youtube.com/vi/{self.current.yt_id}/hqdefault.jpg")
         embed.add_field(name=f"Now playing:", value=f"**[{self.current.title}]({self.current.uri})**", inline=False)
-        embed.add_field(name="Time:", value=f"`{utils.format_time(round(self.position) / 1000)}` / "
-                                            f"`{utils.format_time(round(self.current.length) / 1000)}`")
+        embed.add_field(name="Time:", value=f"`{self.bot.utils.format_time(round(self.position) / 1000)}` / "
+                                            f"`{self.bot.utils.format_time(round(self.current.length) / 1000)}`")
         embed.add_field(name="Queue looped:", value=f"`{self.queue_loop}`")
         embed.add_field(name="Queue Length:", value=f"`{str(self.queue.size)}`")
         embed.add_field(name="Requester:", value=self.current.requester.mention)

@@ -1,7 +1,7 @@
 import granitepy
 from discord.ext import commands
 
-from cogs.utilities import checks, utils
+from cogs.utilities import checks
 from cogs.voice.utilities import objects
 
 
@@ -190,14 +190,14 @@ class Music(commands.Cog):
             return await ctx.send("This track is not seekable.")
 
         if not seconds and not seconds == 0:
-            return await ctx.send(f"The current position is {utils.format_time(ctx.player.position / 1000)}")
+            return await ctx.send(f"The current position is {self.bot.utils.format_time(ctx.player.position / 1000)}")
 
         milliseconds = seconds * 1000
         if milliseconds < 0 or milliseconds > ctx.player.current.length:
             return await ctx.send(f"Please enter a value between `1` and `{round(ctx.player.current.length / 1000)}`.")
 
         await ctx.player.seek(milliseconds)
-        return await ctx.send(f"Changed the players position to `{utils.format_time(milliseconds / 1000)}`.")
+        return await ctx.send(f"Changed the players position to `{self.bot.utils.format_time(milliseconds / 1000)}`.")
 
     @commands.command(name="now_playing", aliases=["np"])
     @checks.is_player_playing()
@@ -221,7 +221,7 @@ class Music(commands.Cog):
 
         if ctx.player.current:
             title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
-                    f"`{utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
+                    f"`{self.bot.utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
                     f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
                     f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size])}` out of `{ctx.player.queue.size}` entries in the queue.\n"
         else:
@@ -230,12 +230,12 @@ class Music(commands.Cog):
         entries = []
         for index, track in enumerate(ctx.player.queue.queue_list):
             entries.append(f"**{index + 1}.** [{str(track.title)}]({track.uri}) | "
-                           f"`{utils.format_time(round(track.length) / 1000)}` | "
+                           f"`{self.bot.utils.format_time(round(track.length) / 1000)}` | "
                            f"`Requested by:` {track.requester.mention}\n")
 
         time = sum(track.length for track in ctx.player.queue.queue_list)
 
-        footer = f"\nThere are `{ctx.player.queue.size}` tracks in the queue with a total time of `{utils.format_time(round(time) / 1000)}`"
+        footer = f"\nThere are `{ctx.player.queue.size}` tracks in the queue with a total time of `{self.bot.utils.format_time(round(time) / 1000)}`"
 
         return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
 

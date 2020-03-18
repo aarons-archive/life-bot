@@ -4,7 +4,7 @@ import discord
 import granitepy
 from discord.ext import commands
 
-from cogs.utilities import utils, exceptions
+from cogs.utilities import exceptions
 
 
 class Events(commands.Cog):
@@ -82,6 +82,8 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is currently disabled."
         if isinstance(error, granitepy.NoNodesAvailable):
             message = "There are no nodes available."
+        if isinstance(error, commands.CommandNotFound):
+            return
 
         if isinstance(error, commands.NoPrivateMessage):
             try:
@@ -100,13 +102,11 @@ class Events(commands.Cog):
             message = f"I am missing the following permissions to run the command `{ctx.command}`.\n{missing_perms}"
         if isinstance(error, commands.CommandOnCooldown):
             if error.cooldown.type == commands.BucketType.user:
-                message = f"The command `{ctx.command}` is on cooldown for you, retry in `{utils.format_time(error.retry_after)}`."
-            if error.cooldown.type == commands.BucketType.default:
-                message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{utils.format_time(error.retry_after)}`."
+                message = f"The command `{ctx.command}` is on cooldown for you, retry in `{self.bot.utils.format_time(error.retry_after)}`."
             if error.cooldown.type == commands.BucketType.guild:
-                message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{utils.format_time(error.retry_after)}`."
-        if isinstance(error, commands.CommandNotFound):
-            return
+                message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{self.bot.utils.format_time(error.retry_after)}`."
+            if error.cooldown.type == commands.BucketType.default:
+                message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{self.bot.utils.format_time(error.retry_after)}`."
 
         # If an error was found, send it.
         if message:

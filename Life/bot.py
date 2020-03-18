@@ -11,6 +11,8 @@ from discord.ext import commands
 
 import config
 from cogs.voice.utilities.player import Player
+from cogs.utilities.imaging import Imaging
+from cogs.utilities.utils import Utils
 from cogs.utilities import paginators
 
 os.environ["JISHAKU_HIDE"] = "True"
@@ -18,7 +20,7 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 
 EXTENSIONS = [
     "cogs.information",
-    "cogs.fun",
+    "cogs.images",
     "cogs.help",
     "cogs.owner",
     "jishaku",
@@ -71,11 +73,14 @@ class Life(commands.Bot):
         self.rpg = None
         self.db = None
 
+        self.pings = collections.deque(maxlen=1440)
         self.socket_stats = collections.Counter()
-        self.pings = collections.deque(maxlen=14400)
         self.guild_blacklist = []
         self.user_blacklist = []
         self.usage = {}
+
+        self.imaging = Imaging()
+        self.utils = Utils()
 
         self.bot.add_check(self.blacklist_check)
 

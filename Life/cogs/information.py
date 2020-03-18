@@ -5,8 +5,6 @@ import discord
 import psutil
 from discord.ext import commands
 
-from cogs.utilities import utils
-
 
 class Information(commands.Cog):
 
@@ -19,8 +17,8 @@ class Information(commands.Cog):
         Get information about the bot.
         """
 
-        latency_ms, average_latency_ms, typing_ms, discord_ms = await utils.ping(self.bot, ctx)
-        files, functions, comments, lines, classes = utils.linecount()
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(self.bot, ctx)
+        files, functions, comments, lines, classes = self.bot.utils.linecount()
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
@@ -29,7 +27,7 @@ class Information(commands.Cog):
         embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
         embed.set_footer(text=f"ID: {self.bot.user.id}")
         embed.description = "Life is a discord bot coded by <@238356301439041536>"
-        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {utils.format_time(self.bot.uptime)}\n"
+        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {self.bot.utils.format_time(self.bot.uptime)}\n"
                                                         f"**Total users:** {len(self.bot.users)}\n"
                                                         f"**Guilds:** {len(self.bot.guilds)}")
         embed.add_field(name="\u200B", value="\u200B")
@@ -79,7 +77,7 @@ class Information(commands.Cog):
         Gets the bots ping.
         """
 
-        latency_ms, average_latency_ms, typing_ms, discord_ms = await utils.ping(self.bot, ctx)
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(self.bot, ctx)
         return await ctx.send(f"```py\n"
                               f"Type         |Ping\n"
                               f"Average Lat. |{average_latency_ms}\n"
@@ -142,7 +140,7 @@ class Information(commands.Cog):
         Get information about the current server.
         """
 
-        online, idle, dnd, offline = utils.guild_user_status(ctx.guild)
+        online, idle, dnd, offline = self.bot.utils.guild_user_status(ctx.guild)
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
@@ -158,12 +156,12 @@ class Information(commands.Cog):
                                                                    f"<:away:627627415119724554>{idle} |"
                                                                    f"<:dnd:627627404784828416>{dnd} |"
                                                                    f"<:offline:627627415144890389>{offline}\n"
-                                                                   f"**Verification level:** {utils.guild_verification_level(ctx.guild)}\n"
-                                                                   f"**Content filter level:** {utils.guild_content_filter_level(ctx.guild)}\n"
-                                                                   f"**2FA:** {utils.guild_mfa_level(ctx.guild)}\n", inline=False)
+                                                                   f"**Verification level:** {self.bot.utils.guild_verification_level(ctx.guild)}\n"
+                                                                   f"**Content filter level:** {self.bot.utils.guild_content_filter_level(ctx.guild)}\n"
+                                                                   f"**2FA:** {self.bot.utils.guild_mfa_level(ctx.guild)}\n", inline=False)
         embed.add_field(name="__**Channels:**__", value=f"**Text channels:** {len(ctx.guild.text_channels)}\n"
                                                         f"**Voice channels:** {len(ctx.guild.voice_channels)}\n"
-                                                        f"**Voice region:** {utils.guild_region(ctx.guild)}\n"
+                                                        f"**Voice region:** {self.bot.utils.guild_region(ctx.guild)}\n"
                                                         f"**AFK timeout:** {int(ctx.guild.afk_timeout / 60)} minutes\n"
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
 
@@ -187,7 +185,7 @@ class Information(commands.Cog):
             member = ctx.author
 
         embed = discord.Embed(
-            colour=utils.member_colour(ctx.author),
+            colour=self.bot.utils.member_colour(ctx.author),
             title=f"{member.name}'s Stats and Information."
         )
         embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
@@ -195,8 +193,8 @@ class Information(commands.Cog):
         embed.set_thumbnail(url=member.avatar_url_as(format="png"))
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {member}\n"
                                                                    f"**Account created:** {member.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
-                                                                   f"**Status:** {utils.member_status(member)}\n"
-                                                                   f"**Activity:** {utils.member_activity(member)}", inline=False)
+                                                                   f"**Status:** {self.bot.utils.member_status(member)}\n"
+                                                                   f"**Activity:** {self.bot.utils.member_activity(member)}", inline=False)
 
         roles = ' '.join([r.mention for r in member.roles[:-11:-1] if not r.name == "@everyone"])
         role_count = len(member.roles) - 1
