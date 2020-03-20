@@ -2,6 +2,7 @@ import asyncio
 import collections
 import json
 import os
+import multiprocessing
 import time
 
 import aiohttp
@@ -79,7 +80,7 @@ class Life(commands.Bot):
         self.user_blacklist = []
         self.usage = {}
 
-        self.imaging = Imaging()
+        self.imaging = Imaging(self.bot)
         self.utils = Utils()
 
         self.bot.add_check(self.blacklist_check)
@@ -160,4 +161,5 @@ class Life(commands.Bot):
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn')
     Life().run()

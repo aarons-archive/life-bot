@@ -1,15 +1,257 @@
+import io
 import re
-from io import BytesIO
-from discord.ext import commands
+import typing
+import multiprocessing
+import functools
 
 import matplotlib.pyplot as plt
+from discord.ext import commands
 from wand.color import Color
 from wand.image import Image
+from wand.sequence import SingleImage
 
 from cogs.utilities import exceptions
 
 
+def floor(image: typing.Union[Image, SingleImage]):
+
+    image.resize(1000, 1000)
+    image.virtual_pixel = "tile"
+    arguments = (0, 0, 300, 500,
+                 1000, 0, 700, 500,
+                 0, 1000, 200, 1000,
+                 1000, 1000, 800, 1000)
+    image.distort('perspective', arguments)
+
+
+def colorize(image: typing.Union[Image, SingleImage], color: str):
+
+    hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(color)
+    if hex_check is None:
+        raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
+
+    with Color(color) as image_color:
+        with Color("rgb(50%, 50%, 50%)") as image_alpha:
+            image.colorize(color=image_color, alpha=image_alpha)
+
+
+def solarize(image: typing.Union[Image, SingleImage], threshold: float):
+
+    image.solarize(threshold=threshold * image.quantum_range)
+
+
+def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
+
+    image.sketch(radius=radius, sigma=sigma, angle=angle)
+
+
+def implode(image: typing.Union[Image, SingleImage], amount: float):
+
+    image.implode(amount=amount)
+
+
+def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
+
+    image.sepia_tone(threshold=threshold)
+
+
+def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
+
+    image.polaroid(angle=angle, caption=caption)
+
+
+def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
+
+    image.vignette(sigma=sigma, x=x, y=y)
+
+
+def swirl(image: typing.Union[Image, SingleImage], degree: int):
+
+    image.swirl(degree=degree)
+
+
+def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.charcoal(radius=radius, sigma=sigma)
+
+
+def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
+
+    image.noise(method, attenuate=attenuate)
+
+
+def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
+
+    image.blue_shift(factor=factor)
+
+
+def spread(image: typing.Union[Image, SingleImage], radius: float):
+
+    image.spread(radius=radius)
+
+
+def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.adaptive_sharpen(radius=radius, sigma=sigma)
+
+
+def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.kuwahara(radius=radius, sigma=sigma)
+
+
+def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.emboss(radius=radius, sigma=sigma)
+
+
+def edge(image: typing.Union[Image, SingleImage], radius: float):
+
+    image.edge(radius=radius)
+
+
+def flip(image: typing.Union[Image, SingleImage]):
+
+    image.flip()
+
+
+def flop(image: typing.Union[Image, SingleImage]):
+
+    image.flop()
+
+
+def rotate(image: typing.Union[Image, SingleImage], degree: float):
+
+    image.rotate(degree=degree)
+
+
+image_operations = {
+    "floor": floor,
+    "colorize": colorize,
+    "solarize": solarize,
+    "sketch": sketch,
+    "implode": implode,
+    "sepia_tone": sepia_tone,
+    "polaroid": polaroid,
+    "vignette": vignette,
+    "swirl": swirl,
+    "charcoal": charcoal,
+    "noise": noise,
+    "blue_shift": blue_shift,
+    "spread": spread,
+    "sharpen": sharpen,
+    "kuwahara": kuwahara,
+    "emboss": emboss,
+    "edge": edge,
+    "flip": flip,
+    "flop": flop,
+    "rotate": rotate
+}
+
+
+def do_edit_image(edit_function, image_bytes: bytes, queue: multiprocessing.Queue, **kwargs):
+    original_image = io.BytesIO(image_bytes)
+    edited_image = io.BytesIO()
+
+    with Image(file=original_image) as image:
+        image_format = image.format
+        if image_format == "GIF":
+            with Image() as new_image:
+                for frame in image.sequence:
+                    edit_function(frame, **kwargs)
+                    new_image.sequence.append(frame)
+                new_image.save(file=edited_image)
+        else:
+            edit_function(image, **kwargs)
+            image.save(file=edited_image)
+
+    edited_image.seek(0)
+    queue.put((edited_image, image_format))
+
+
 class Imaging:
+
+    def __init__(self, bot):
+        self.bot = bot
+
+        self.queue = multiprocessing.Queue()
+
+    async def get_image_url(self, ctx: commands.Context, argument: str):
+
+        if not argument:
+            argument = ctx.author.id
+
+        try:
+            member = await commands.MemberConverter().convert(ctx, str(argument))
+            argument = str(member.avatar_url_as(format="gif" if member.is_avatar_animated() is True else "png"))
+        except commands.BadArgument:
+            pass
+
+        check_if_url = re.compile("(?:[^:/?#]+):?(?://[^/?#]*)?[^?#]*\.(?:|gif|png)(?:\?[^#]*)?(?:#.*)?").match(argument)
+        if check_if_url is None:
+            raise exceptions.ArgumentError("You provided an invalid argument. Please provide an Image URL or a Members name, id or mention")
+
+        return argument
+
+    async def get_image_bytes(self, url: str):
+        async with self.bot.session.get(url) as response:
+            image_bytes = await response.read()
+        return image_bytes
+
+    async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
+        if edit_type not in image_operations.keys():
+            raise exceptions.ArgumentError(f"'{edit_type}' is not a valid image operation")
+
+        edit_function = image_operations[edit_type]
+        image_url = await self.get_image_url(ctx=ctx, argument=url)
+        image_bytes = await self.get_image_bytes(url=image_url)
+
+        process = multiprocessing.Process(target=do_edit_image, args=(edit_function, image_bytes, self.queue), kwargs=kwargs, daemon=True)
+        process.start()
+
+        function = functools.partial(self.queue.get)
+
+        edited_image, image_format = await self.bot.loop.run_in_executor(None, function)
+        return edited_image, image_format
+
+
+    def do_ping_plot(self, history: int):
+
+        times = [time for time, ping in list(self.bot.pings)[-history:]]
+        pings = [ping for time, ping in list(self.bot.pings)[-history:]]
+        lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
+        highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
+        average_ping = round(sum([ping for ping in pings]) / len(pings), 2)
+
+        plt.clf()
+        plt.figure(figsize=(10, 6))
+
+        plt.plot(times, pings, linewidth=1, c="navy", zorder=3)
+        plt.plot(times, pings, markevery=lowest_pings, c="green", linewidth=0.0, marker="s", markersize=5, zorder=3)
+        plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="s", markersize=5, zorder=3)
+        plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor="navy", alpha=0.5, zorder=3)
+        plt.text(0, min(pings) - 6, f"Average Ping: {average_ping}ms \nCurrent ping: {round(self.bot.latency * 1000)}ms \nLowest ping: {min(pings)}ms \nHighest ping: {max(pings)}ms")
+
+        plt.xlabel("Time (HH:MM)")
+        plt.ylabel("Ping (MS)")
+        plt.title(f"Ping over the last {len(pings)} minutes(s)")
+        plt.xticks(rotation=-90)
+
+        if len(pings) <= 180:
+            plt.minorticks_on()
+            plt.grid(axis="x", zorder=1)
+
+        plt.grid(axis="y", which="both", zorder=1)
+        plt.tick_params(axis="x", which="major", bottom=True if len(pings) <= 60 else False, labelbottom=True if len(pings) <= 60 else False)
+        plt.tick_params(axis="x", which="minor", bottom=False)
+        plt.tight_layout()
+
+        plot = io.BytesIO()
+        plt.savefig(plot)
+        plt.close()
+
+        plot.seek(0)
+        return plot
 
     def do_growth_plot(self, title: str, x_label: str, y_label: str, values: list, names: list):
 
@@ -30,494 +272,11 @@ class Imaging:
         plt.grid(axis="y", which="both", zorder=1)
         plt.tick_params(axis="x", which="major", bottom=True if len(values) <= 72 else False, labelbottom=True if len(values) <= 72 else False)
         plt.tick_params(axis="x", which="minor", bottom=False)
-
         plt.tight_layout()
 
-        plot = BytesIO()
+        plot = io.BytesIO()
         plt.savefig(plot)
         plt.close()
+
         plot.seek(0)
         return plot
-
-    def do_ping_plot(self, bot, history: int):
-
-        times = [time for time, ping in list(bot.pings)[-history:]]
-        pings = [ping for time, ping in list(bot.pings)[-history:]]
-        lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
-        highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
-        average_ping = round(sum([ping for ping in pings]) / len(pings), 2)
-
-        plt.clf()
-        plt.figure(figsize=(10, 6))
-
-        plt.plot(times, pings, linewidth=1, c="navy", zorder=3)
-        plt.plot(times, pings, markevery=lowest_pings, c="green", linewidth=0.0, marker="s", markersize=5, zorder=3)
-        plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="s", markersize=5, zorder=3)
-        plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor="navy", alpha=0.5, zorder=3)
-        plt.text(0, min(pings) - 6, f"Average Ping: {average_ping}ms \nCurrent ping: {round(bot.latency * 1000)}ms \nLowest ping: {min(pings)}ms \nHighest ping: {max(pings)}ms")
-
-        plt.xlabel("Time (HH:MM)")
-        plt.ylabel("Ping (MS)")
-        plt.title(f"Ping over the last {len(pings)} minutes(s)")
-        plt.xticks(rotation=-90)
-
-        if len(pings) <= 180:
-            plt.minorticks_on()
-            plt.grid(axis="x", zorder=1)
-
-        plt.grid(axis="y", which="both", zorder=1)
-        plt.tick_params(axis="x", which="major", bottom=True if len(pings) <= 60 else False, labelbottom=True if len(pings) <= 60 else False)
-        plt.tick_params(axis="x", which="minor", bottom=False)
-
-        plt.tight_layout()
-
-        ping_graph = BytesIO()
-        plt.savefig(ping_graph)
-        plt.close()
-        ping_graph.seek(0)
-        return ping_graph
-
-    async def get_image_url(self, ctx: commands.Context, argument: str):
-
-        if not argument:
-            argument = ctx.author.id
-
-        try:
-            member = await commands.MemberConverter().convert(ctx, str(argument))
-            if member.is_avatar_animated() is True:
-                argument = str(member.avatar_url_as(format="gif"))
-            else:
-                argument = str(member.avatar_url_as(format="png"))
-        except commands.BadArgument:
-            pass
-
-        check_if_url = re.compile("(?:[^:/?#]+):?(?://[^/?#]*)?[^?#]*\.(?:jpg|gif|png|webp|jpeg)(?:\?[^#]*)?(?:#.*)?").match(argument)
-        if check_if_url is None:
-            raise exceptions.ArgumentError("You provided an invalid argument. Please provide an Image URL or a Members name, id or mention")
-
-        return argument
-
-    async def get_image(self, bot, url: str):
-        async with bot.session.get(url) as response:
-            image_bytes = await response.read()
-        return image_bytes
-
-    def colourise(self, image_bytes, image_colour: str):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(image_colour)
-        if hex_check is None:
-            raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
-
-        with Color("rgb(50%, 50%, 50%)") as alpha:
-            with Color(image_colour) as color:
-                with Image(file=original_image) as image:
-                    image_format = image.format
-                    if image_format == "GIF":
-                        with Image() as dest_image:
-                            for frame in image.sequence:
-                                frame.colorize(color=color, alpha=alpha)
-                                dest_image.sequence.append(frame)
-                            dest_image.save(file=new_image)
-                    else:
-                        image.colorize(color=color, alpha=alpha)
-                        image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def implode(self, image_bytes, amount: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.implode(amount=amount)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.implode(amount=amount)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def sepia_tone(self, image_bytes, threshold: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.sepia_tone(threshold=threshold)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.sepia_tone(threshold=threshold)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def polaroid(self, image_bytes, angle: float, caption: str):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.polaroid(angle=angle, caption=caption)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.polaroid(angle=angle, caption=caption)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def vignette(self, image_bytes, sigma: float, x: int, y: int):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.vignette(sigma=sigma, x=x, y=y)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.vignette(sigma=sigma, x=x, y=y)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def swirl(self, image_bytes, degree: int):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.swirl(degree=degree)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.swirl(degree=degree)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def solarize(self, image_bytes, threshold: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.solarize(threshold=threshold * frame.quantum_range)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.solarize(threshold=threshold * image.quantum_range)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def sketch(self, image_bytes, radius: float, sigma: float, angle: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.sketch(radius=radius, sigma=sigma, angle=angle)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.sketch(radius=radius, sigma=sigma, angle=angle)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def charcoal(self, image_bytes, radius: float, sigma: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.charcoal(radius=radius, sigma=sigma)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.charcoal(radius=radius, sigma=sigma)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def noise(self, image_bytes, method: str, attenuate: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.noise(method, attenuate=attenuate)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.noise(method, attenuate=attenuate)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def blue_shift(self, image_bytes, factor: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.blue_shift(factor=factor)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.blue_shift(factor=factor)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def spread(self, image_bytes, radius: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.spread(radius=radius)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.spread(radius=radius)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def sharpen(self, image_bytes, radius: float, sigma: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.adaptive_sharpen(radius=radius, sigma=sigma)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.adaptive_sharpen(radius=radius, sigma=sigma)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def kuwahara(self, image_bytes, radius: float, sigma: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.kuwahara(radius=radius, sigma=sigma)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.kuwahara(radius=radius, sigma=sigma)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def emboss(self, image_bytes, radius: float, sigma: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.emboss(radius=radius, sigma=sigma)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.emboss(radius=radius, sigma=sigma)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def edge(self, image_bytes, radius: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.edge(radius=radius)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.edge(radius=radius)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def flip(self, image_bytes):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.flip()
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.flip()
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def flop(self, image_bytes):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.flop()
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.flop()
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def rotate(self, image_bytes, degree: float):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.rotate(degree=degree)
-                        dest_image.sequence.append(frame)
-                    dest_image.save(file=new_image)
-            else:
-                image.rotate(degree=degree)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
-
-    def floor(self, image_bytes):
-
-        original_image = BytesIO(image_bytes)
-        new_image = BytesIO()
-
-        with Image(file=original_image) as image:
-            image_format = image.format
-            if image_format == "GIF":
-                with Image() as dest_image:
-                    for frame in image.sequence:
-                        frame.resize(100, 100)
-                        frame.virtual_pixel = "tile"
-                        arguments = (0, 0, 30, 50,
-                                     100, 0, 70, 50,
-                                     0, 100, 20, 100,
-                                     100, 100, 80, 100)
-                        frame.distort('perspective', arguments)
-                        frame.resize(1000,1000)
-                        dest_image.sequence.append(frame)
-
-                    dest_image.save(file=new_image)
-            else:
-                image.resize(1000, 1000)
-                image.virtual_pixel = "tile"
-                arguments = (0,    0,     300, 500,
-                             1000, 0,     700, 500,
-                             0,    1000,  200, 1000,
-                             1000, 1000,  800, 1000)
-                image.distort('perspective', arguments)
-                image.save(file=new_image)
-
-        new_image.seek(0)
-        return new_image, image_format
