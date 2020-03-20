@@ -15,12 +15,12 @@ from cogs.utilities import exceptions
 
 def floor(image: typing.Union[Image, SingleImage]):
 
-    image.resize(1000, 1000)
+    image.sample(1000, 1000)
     image.virtual_pixel = "tile"
-    arguments = (0, 0, 300, 500,
-                 1000, 0, 700, 500,
-                 0, 1000, 200, 1000,
-                 1000, 1000, 800, 1000)
+    arguments = (0,            0,           300, 500,
+                 image.height, 0,           700, 500,
+                 0,            image.width, 200, 1000,
+                 image.height, image.width, 800, 1000)
     image.distort('perspective', arguments)
 
 
@@ -199,6 +199,7 @@ class Imaging:
         return image_bytes
 
     async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
+
         if edit_type not in image_operations.keys():
             raise exceptions.ArgumentError(f"'{edit_type}' is not a valid image operation")
 
@@ -213,7 +214,6 @@ class Imaging:
 
         edited_image, image_format = await self.bot.loop.run_in_executor(None, function)
         return edited_image, image_format
-
 
     def do_ping_plot(self, history: int):
 
