@@ -3,13 +3,13 @@ Life is an RPG discord bot coded by MrRandom#9258. Click the link below to invit
 
 ## Links
 * [Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)
-* [Support Server](https://discord.gg/8a2a486)
+* [Support Server](https://discord.gg/xP8xsHr)
 
 ## Installing/Running
 While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
 
 ### Prerequisites
-* Python-3.6 or higher
+* Python3.6 or higher
 * PostgreSQL database
 * A running andesite node
 
@@ -49,5 +49,8 @@ NODES = {"node_name": {"ip": "node_ip",
 * [psutil](https://github.com/giampaolo/psutil)
 * [jishaku](https://github.com/Gorialis/jishaku)
 * [Pillow](https://github.com/python-pillow/Pillow)
+* [matplotlib](https://github.com/matplotlib/matplotlib)
 * [andesite](https://github.com/natanbc/andesite-node)
-* [granitepy](https://pypi.org/project/granitepy/)
+* [granitepy](https://github.com/iDevision/granitepy)
+* [aiOsu](https://github.com/iDevision/aiOsu)
+

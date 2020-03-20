@@ -5,16 +5,20 @@ import random
 import time
 
 import discord
+from discord.ext import commands
 
 
 class Utils:
 
-    async def ping(self, bot, ctx):
+    def __init__(self, bot):
+        self.bot = bot
 
-        latency_ms = f"{round(bot.latency * 1000, 2)}ms"
+    async def ping(self, ctx: commands.Context):
 
-        if bot.pings:
-            pings = [latency for datetime, latency in list(bot.pings)]
+        latency_ms = f"{round(self.bot.latency * 1000, 2)}ms"
+
+        if self.bot.pings:
+            pings = [latency for datetime, latency in list(self.bot.pings)]
             average_latency_ms = f"{round((sum(pings) / len(pings)), 2)}ms"
         else:
             average_latency_ms = "Failed"
@@ -25,7 +29,7 @@ class Utils:
         typing_ms = f"{round((typing_end - typing_start) * 1000, 2)}ms"
 
         discord_start = time.monotonic()
-        async with bot.session.get("https://discordapp.com/") as resp:
+        async with self.bot.session.get("https://discordapp.com/") as resp:
             if resp.status == 200:
                 discord_end = time.monotonic()
                 discord_ms = f"{round((discord_end - discord_start) * 1000, 2)}ms"
@@ -72,14 +76,11 @@ class Utils:
 
         return file_amount, functions, comments, lines, classes
 
-    def format_time(self, second: int):
-        minute, second = divmod(second, 60)
+    def format_time(self, seconds: int):
+        minute, second = divmod(seconds, 60)
         hour, minute = divmod(minute, 60)
         day, hour = divmod(hour, 24)
-        seconds = round(second)
-        minutes = round(minute)
-        hours = round(hour)
-        days = round(day)
+        seconds, minutes, hours, days = round(second), round(minute), round(hour), round(day)
 
         formatted = f"{minutes:02d}:{seconds:02d}"
 

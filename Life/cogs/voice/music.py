@@ -9,6 +9,7 @@ class Music(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
         self.bot.granitepy = granitepy.Client(self.bot)
 
     async def initiate_nodes(self):

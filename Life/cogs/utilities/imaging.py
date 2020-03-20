@@ -150,6 +150,7 @@ image_operations = {
 
 
 def do_edit_image(edit_function, image_bytes: bytes, queue: multiprocessing.Queue, **kwargs):
+
     original_image = io.BytesIO(image_bytes)
     edited_image = io.BytesIO()
 
@@ -194,6 +195,7 @@ class Imaging:
         return argument
 
     async def get_image_bytes(self, url: str):
+
         async with self.bot.session.get(url) as response:
             image_bytes = await response.read()
         return image_bytes

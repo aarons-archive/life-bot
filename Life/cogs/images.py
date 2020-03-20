@@ -1,16 +1,18 @@
-import multiprocessing
 import functools
 import io
 
 import discord
 from discord.ext import commands
 
+from cogs.utilities.imaging import Imaging
+
 
 class Images(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.queue = multiprocessing.Queue()
+
+        self.bot.imaging = Imaging(self.bot)
 
     async def create_embed(self, image: io.BytesIO, image_format: str):
         file = discord.File(filename=f"Image.{image_format.lower()}", fp=image)

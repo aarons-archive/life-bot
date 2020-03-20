@@ -2,7 +2,6 @@ import asyncio
 import collections
 import json
 import os
-import multiprocessing
 import time
 
 import aiohttp
@@ -11,10 +10,9 @@ import psutil
 from discord.ext import commands
 
 import config
-from cogs.voice.utilities.player import Player
-from cogs.utilities.imaging import Imaging
-from cogs.utilities.utils import Utils
 from cogs.utilities import paginators
+from cogs.utilities.utils import Utils
+from cogs.voice.utilities.player import Player
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -38,10 +36,6 @@ class MyContext(commands.Context):
     @property
     def player(self):
         return self.bot.granitepy.get_player(self.guild, cls=Player)
-
-    @property
-    def account(self):
-        return self.bot.account_manager.get_account(self.author.id)
 
     async def paginate(self, **kwargs):
         return await paginators.Paginator(ctx=self, **kwargs).paginate()
@@ -69,19 +63,15 @@ class Life(commands.Bot):
         self.boot_time = time.time()
         self.config = config
 
-        self.granitepy = None
-        self.session = None
-        self.rpg = None
-        self.db = None
-
         self.pings = collections.deque(maxlen=1440)
         self.socket_stats = collections.Counter()
         self.guild_blacklist = []
         self.user_blacklist = []
         self.usage = {}
 
-        self.imaging = Imaging(self.bot)
-        self.utils = Utils()
+        self.utils = Utils(self.bot)
+        self.session = None
+        self.db = None
 
         self.bot.add_check(self.blacklist_check)
 
@@ -161,5 +151,4 @@ class Life(commands.Bot):
 
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method('spawn')
     Life().run()
