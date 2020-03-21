@@ -17,7 +17,7 @@ class Information(commands.Cog):
         Get information about the bot.
         """
 
-        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(self.bot, ctx)
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         files, functions, comments, lines, classes = self.bot.utils.linecount()
 
         embed = discord.Embed(

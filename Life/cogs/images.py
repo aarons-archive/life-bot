@@ -76,7 +76,7 @@ class Images(commands.Cog):
             if not self.bot.pings:
                 return await ctx.send("No ping data.")
 
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_ping_plot, self.bot, history))
+            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_ping_plot, history))
             return await ctx.send(file=discord.File(fp=plot, filename="PingGraph.png"))
 
     @commands.command(name="floor")
