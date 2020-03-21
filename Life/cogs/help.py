@@ -98,7 +98,7 @@ class HelpCommand(commands.HelpCommand):
         if len(cog_commands) == 0:
             return await ctx.send("This cog has no commands. This could be because they are hidden, or there are just no commands.")
 
-        await ctx.paginate_embed(title=f"__**{cog.qualified_name} cog help page**__\n\n", entries=list(self.formatter(cog_commands)), entries_per_page=15)
+        await ctx.paginate_embed(title=f"__**{cog.qualified_name} cog help page:**__\n\n", entries=list(self.formatter(cog_commands)), entries_per_page=15)
 
     async def send_command_help(self, command):
 
@@ -113,9 +113,9 @@ class HelpCommand(commands.HelpCommand):
         command_name = self.get_command(command, aliases=True, short_name=False)
 
         if command.signature:
-            embed.title += f"{command_name}{command.signature}:"
+            embed.title += f"{command_name}{command.signature}"
         else:
-            embed.title += f"{command_name}:"
+            embed.title += f"{command_name}"
 
         if command.help:
             embed.description += f"{command.help}\n"
@@ -131,16 +131,16 @@ class HelpCommand(commands.HelpCommand):
         group_name = self.get_command(group, aliases=True, short_name=False)
 
         if group.signature:
-            embed_title = f"{group_name}{group.signature}:"
+            embed_title = f"{group_name}{group.signature}"
         else:
-            embed_title = f"{group_name}:"
+            embed_title = f"{group_name}"
 
         if group.help:
             embed_description = f"{group.help}"
         else:
             embed_description = f"No help provided for this command."
 
-        return await ctx.paginate_embed(title=f"__**{embed_title}**__\n{embed_description}\n\n", entries=list(self.formatter(group.commands)), entries_per_page=15)
+        return await ctx.paginate_embed(title=f"**{embed_title}**", header=f"{embed_description}\n\n", entries=list(self.formatter(group.commands)), entries_per_page=15)
 
 
 class Help(commands.Cog):
