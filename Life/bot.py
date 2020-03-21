@@ -28,6 +28,7 @@ EXTENSIONS = [
     "cogs.kross",
     "cogs.voice.music",
     "cogs.voice.playlists",
+    "cogs.osu"
 ]
 
 
@@ -82,6 +83,10 @@ class Life(commands.Bot):
             except commands.ExtensionNotFound:
                 print(f"[EXT] Failed - {extension}")
 
+    @property
+    def uptime(self):
+        return round(time.time() - self.boot_time)
+
     async def initiate_database(self):
 
         try:
@@ -107,22 +112,6 @@ class Life(commands.Bot):
         except Exception as e:
             print(f"\n[DB] An error occurred: {e}")
 
-    async def bot_start(self):
-        self.session = aiohttp.ClientSession()
-        await self.initiate_database()
-        await self.login(config.DISCORD_TOKEN)
-        await self.connect()
-
-    async def bot_close(self):
-        await self.session.close()
-        await self.close()
-
-    def run(self):
-        try:
-            self.loop.run_until_complete(self.bot_start())
-        except KeyboardInterrupt:
-            self.loop.run_until_complete(self.bot_close())
-
     async def get_context(self, message, *, cls=MyContext):
         return await super().get_context(message, cls=cls)
 
@@ -145,9 +134,21 @@ class Life(commands.Bot):
             raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
         return True
 
-    @property
-    def uptime(self):
-        return round(time.time() - self.boot_time)
+    async def bot_start(self):
+        self.session = aiohttp.ClientSession(loop=self.loop)
+        await self.initiate_database()
+        await self.login(config.DISCORD_TOKEN)
+        await self.connect()
+
+    async def bot_close(self):
+        await self.session.close()
+        await self.close()
+
+    def run(self):
+        try:
+            self.loop.run_until_complete(self.bot_start())
+        except KeyboardInterrupt:
+            self.loop.run_until_complete(self.bot_close())
 
 
 if __name__ == "__main__":
