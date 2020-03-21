@@ -22,9 +22,11 @@ pip install -U -r requirements.txt
 
 3. Fill in your discord bots token and PSQL connection info in the respective fields as seen below.
 ```python
-DISCORD_TOKEN = "token"
+DISCORD_TOKEN = "discord token"
 
 DISCORD_PREFIX = "l-"
+
+OSU_TOKEN = "osu token"
 
 DB_CONN_INFO = {
     "user": "user-name",
