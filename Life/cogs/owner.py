@@ -28,59 +28,6 @@ class Owner(commands.Cog):
         return await ctx.send(message)
 
     @commands.is_owner()
-    @commands.command(name="usage", hidden=True)
-    async def usage(self, ctx):
-        """
-        Display command usage for the bot and all of its guilds.
-        """
-
-        embeds = []
-
-        total_usage = collections.Counter()
-        for guild_usage in self.bot.usage.values():
-            for command, count in guild_usage.items():
-                total_usage[command] += count
-        ordered_total_usage = collections.OrderedDict(sorted(total_usage.items(), key=lambda kv: kv[1], reverse=True))
-
-        embed = discord.Embed(
-            colour=discord.Color.gold(),
-            title=f"Total usage:"
-        )
-        embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png", size=1024))
-        embed.set_footer(text=f"{self.bot.user.id}")
-
-        embed.description = f"```py\n"
-        for command, count in ordered_total_usage.items():
-            embed.description += f"{command:25} | {count:<5}\n"
-        embed.description += "```"
-
-        embeds.append(embed)
-
-        for guild_id, guild_usage in self.bot.usage.items():
-
-            guild = self.bot.get_guild(guild_id)
-            if guild is None:
-                continue
-
-            ordered_guild_usage = collections.OrderedDict(sorted(guild_usage.items(), key=lambda kv: kv[1], reverse=True))
-
-            embed = discord.Embed(
-                colour=discord.Color.gold(),
-                title=f"{guild.name}'s usage:"
-            )
-            embed.set_thumbnail(url=guild.icon_url_as(format="png", size=1024))
-            embed.set_footer(text=f"{guild.id}")
-
-            embed.description = f"```py\n"
-            for command, count in ordered_guild_usage.items():
-                embed.description += f"{command:25} | {count:<5}\n"
-            embed.description += "```"
-
-            embeds.append(embed)
-
-        return await ctx.paginate_embeds(entries=embeds)
-
-    @commands.is_owner()
     @commands.command(name="guilds", hidden=True)
     async def guilds(self, ctx, guilds_per_page: int = 20):
         """

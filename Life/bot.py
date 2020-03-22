@@ -1,6 +1,5 @@
 import asyncio
 import collections
-import json
 import os
 import time
 
@@ -36,18 +35,23 @@ class MyContext(commands.Context):
 
     @property
     def player(self):
+
         return self.bot.granitepy.get_player(self.guild, cls=Player)
 
     async def paginate(self, **kwargs):
+
         return await paginators.Paginator(ctx=self, **kwargs).paginate()
 
     async def paginate_embed(self, **kwargs):
+
         return await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
 
     async def paginate_codeblock(self, **kwargs):
+
         return await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
 
     async def paginate_embeds(self, **kwargs):
+
         return await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
 
 
@@ -85,6 +89,7 @@ class Life(commands.Bot):
 
     @property
     def uptime(self):
+
         return round(time.time() - self.boot_time)
 
     async def initiate_database(self):
@@ -93,13 +98,9 @@ class Life(commands.Bot):
             self.db = await asyncpg.create_pool(**self.config.DB_CONN_INFO)
             print(f"\n[DB] Connected to database.")
 
-            usages = await self.db.fetch("SELECT * FROM bot_usage")
             blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
             blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
 
-            for guild in usages:
-                self.usage[guild["id"]] = json.loads(guild["usage"])
-            print(f"[DB] Loaded bot usages. ({len(usages)} guilds)")
             for user in blacklisted_users:
                 self.user_blacklist.append(user["id"])
             print(f"[DB] Loaded user blacklist. ({len(blacklisted_users)} users)")
@@ -113,6 +114,7 @@ class Life(commands.Bot):
             print(f"\n[DB] An error occurred: {e}")
 
     async def get_context(self, message, *, cls=MyContext):
+
         return await super().get_context(message, cls=cls)
 
     async def on_message_edit(self, before, after):
@@ -130,21 +132,25 @@ class Life(commands.Bot):
         await self.process_commands(message)
 
     async def blacklist_check(self, ctx):
+
         if ctx.author.id in self.bot.user_blacklist:
             raise commands.CheckFailure(f"Sorry, you are blacklisted from using this bot.")
         return True
 
     async def bot_start(self):
+
         self.session = aiohttp.ClientSession(loop=self.loop)
         await self.initiate_database()
         await self.login(config.DISCORD_TOKEN)
         await self.connect()
 
     async def bot_close(self):
+
         await self.session.close()
         await self.close()
 
     def run(self):
+
         try:
             self.loop.run_until_complete(self.bot_start())
         except KeyboardInterrupt:
