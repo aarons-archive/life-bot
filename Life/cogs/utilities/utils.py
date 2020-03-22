@@ -76,18 +76,22 @@ class Utils:
 
         return file_amount, functions, comments, lines, classes
 
-    def format_time(self, seconds: int):
+    def format_time(self, seconds: int, friendly: bool = False):
+
         minute, second = divmod(seconds, 60)
         hour, minute = divmod(minute, 60)
         day, hour = divmod(hour, 24)
-        seconds, minutes, hours, days = round(second), round(minute), round(hour), round(day)
 
-        formatted = f"{minutes:02d}:{seconds:02d}"
+        days, hours, minutes, seconds, = round(day), round(hour), round(minute), round(second)
 
-        if hours is not 0:
-            formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        if days is not 0:
-            formatted = f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+        if friendly is True:
+            formatted = f"{days}d {hours}h {minutes}m {seconds}s"
+        else:
+            formatted = f"{minutes:02d}:{seconds:02d}"
+            if hours is not 0:
+                formatted = f"{hours:02d}:{formatted}"
+            if days is not 0:
+                formatted = f"{days:02d}:{formatted}"
 
         return formatted
 
