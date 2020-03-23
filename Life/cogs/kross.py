@@ -78,7 +78,7 @@ class Kross(commands.Cog):
 
     @checks.is_krossbot_user()
     @checks.is_kross_guild()
-    @commands.group(name="points")
+    @commands.command(name="points")
     async def points(self, ctx, house: str = None, operation: str = None, points: int = None):
         """
         Command to manage house points.
