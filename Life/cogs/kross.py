@@ -1,33 +1,34 @@
 from discord.ext import commands
 import discord
 
+from cogs.utilities import checks
+
 
 class Kross(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    async def cog_check(self, ctx):
+        self.valid_houses = ["phoenix", "leviathan", "kodama", "sylph"]
+        self.valid_operations = ["add", "subtract", "minus"]
 
-        if ctx.guild.id == 491312179476299786:
-            return True
-        else:
-            raise commands.CheckFailure("This command can only be used in a certain guild.")
+        self.house_message_ids = {
+            "kodama": 662048639149146122,
+            "phoenix": 662048640336134174,
+            "leviathan": 662048641703477248,
+            "sylph": 662048642856910848
+        }
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
 
-        guild = member.guild
-
-        if not guild.id == 491312179476299786:
-            return
-        if member.bot:
+        if member.guild.id != 491312179476299786 or member.bot is True:
             return
 
-        kodama = discord.utils.get(guild.roles, name="Kodama")
-        sylph = discord.utils.get(guild.roles, name="Sylph")
-        leviathan = discord.utils.get(guild.roles, name="Leviathan")
-        phoenix = discord.utils.get(guild.roles, name="Phoenix")
+        kodama = discord.utils.get(member.guild.roles, name="Kodama")
+        sylph = discord.utils.get(member.guild.oles, name="Sylph")
+        leviathan = discord.utils.get(member.guild.roles, name="Leviathan")
+        phoenix = discord.utils.get(member.guild.roles, name="Phoenix")
         kodama_count = len(kodama.members)
         sylph_count = len(sylph.members)
         leviathan_count = len(leviathan.members)
@@ -44,13 +45,16 @@ class Kross(commands.Cog):
                 await member.add_roles(sylph)
             else:
                 await member.add_roles(phoenix)
+
         except discord.Forbidden:
             return
 
-    @commands.command(name="roles", hidden=True)
+    @checks.is_krossbot_user()
+    @checks.is_kross_guild()
+    @commands.command(name="roles")
     async def roles(self, ctx):
         """
-        Get how many members are in each role.
+        Display how many members there are in each house.
         """
 
         bots = sum([1 for member in ctx.guild.members if member.bot])
@@ -61,204 +65,70 @@ class Kross(commands.Cog):
         sylphs = len(discord.utils.get(ctx.guild.roles, name="Sylph").members)
         banshees = len(discord.utils.get(ctx.guild.roles, name="Banshee").members)
         lost_souls = len(discord.utils.get(ctx.guild.roles, name="The Lost Souls").members)
-        total = phoenixs + leviathans + kodamas + sylphs + banshees + lost_souls
 
-        message = f"```py\n" \
-                  f"Role       |Count\n" \
-                  f"Heathens   |{heathens}\n" \
-                  f"Phoenix    |{phoenixs}\n" \
-                  f"Leviathan  |{leviathans}\n" \
-                  f"Kodama     |{kodamas}\n" \
-                  f"Sylph      |{sylphs}\n" \
-                  f"Banshees   |{banshees}\n" \
-                  f"Lost Souls |{lost_souls}\n" \
-                  f"Bots       |{bots}\n" \
-                  f"Total      |{total}\n" \
-                  f"```"
-        return await ctx.send(message)
+        role_counts = {"Bots": bots, "Heathens": heathens, "Phoenixs": phoenixs, "Leviathans": leviathans,
+                       "Kodamas": kodamas, "Sylphs": sylphs, "Banshees": banshees, "Lost souls": lost_souls}
 
-    @commands.group(name="points", hidden=True, invoke_without_command=True)
-    @commands.has_role(548604302768209920)
-    async def points(self, ctx):
-        """
-        Displays a list of how many points each house has.
-        """
-
-        def key(house):
-            return house["points"]
-
-        data = await self.bot.db.fetch("SELECT * FROM kross")
-
-        message = "```py\n" \
-                  "House     |Points\n"
-        for entry in sorted(data, key=key, reverse=True):
-            message += f"{entry['house'].title():10}|{entry['points']}\n"
+        message = f"```py\nRole       | Count\n"
+        for role, count in sorted(role_counts.items(), reverse=True, key=lambda item: item[1]):
+            message += f"{role:11}| {count}\n"
         message += "\n```"
 
         return await ctx.send(message)
 
-    @points.group(name="leviathan", invoke_without_command=True)
-    async def points_leviathan(self, ctx):
+    @checks.is_krossbot_user()
+    @checks.is_kross_guild()
+    @commands.group(name="points")
+    async def points(self, ctx, house: str = None, operation: str = None, points: int = None):
         """
-        Points commands for Leviathan.
-        """
+        Command to manage house points.
 
-        return await ctx.send("Please specify an operation, `add` or `remove`.")
+        If all 3 parameters are left black it will display how many points each house currently has.
 
-    @points_leviathan.command(name="add")
-    async def points_leviathan_add(self, ctx, points: int):
-        """
-        Add points to the Leviathan house.
+        `house`: The house to add points too, can be one of `phoenix`, `leviathan`, `kodama` or `sylph`.
+        `operation`: The point operation to perform. Can be `add`, `minus` or `subtract`.
+        `points`: The amount of points to add or subtract.
+         """
 
-        `points`: The amount of points to add.
-        """
+        if not house and not operation and not points:
 
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "leviathan")
-        total_points = data["points"] + points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "leviathan")
-        await ctx.send(f"Added `{points}` points to the Leviathan house. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
+            data = await self.bot.db.fetch("SELECT * FROM kross")
 
-    @points_leviathan.command(name="remove", aliases=["subtract", "minus"])
-    async def points_leviathan_remove(self, ctx, points: int):
-        """
-        Remove points from the Leviathan house.
+            message = "```py\nHouse     | Points\n"
+            for entry in sorted(data, key=lambda e: e["points"], reverse=True):
+                message += f"{entry['house'].title():10}| {entry['points']}\n"
+            message += "\n```"
 
-        `points`: The amount of points to remove.
-        """
+            return await ctx.send(message)
 
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "leviathan")
-        total_points = data["points"] - points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "leviathan")
-        await ctx.send(f"Removed `{points}` points from house Leviathan. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
+        if not house or not operation or not points:
+            return await ctx.send("You must provide the `house`, `operation` and `points` arguments.")
 
-    @points.group(name="phoenix", invoke_without_command=True)
-    async def points_phoenix(self, ctx):
-        """
-        Points commands for Phoenix.
-        """
+        if house.lower() not in self.valid_houses:
+            return await ctx.send(f"`{house.lower()}` is not a valid house. Please choose one of `phoenix`, `leviathan`, `kodama` or `sylph`.")
 
-        return await ctx.send("Please specify an operation, `add` or `remove`.")
+        if operation.lower() not in self.valid_operations:
+            return await ctx.send(f"`{operation.lower()}` is not a valid operation. Please choose either `add` `subtract` or `minus`.")
 
-    @points_phoenix.command(name="add")
-    async def points_phoenix_add(self, ctx, points: int):
-        """
-        Add points to the Phoenix house.
+        current_points = await self.bot.db.fetchrow("SELECT points FROM kross WHERE house = $1", house)
+        current_points = current_points["points"]
 
-        `points`: The amount of points to add.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "phoenix")
-        total_points = data["points"] + points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "phoenix")
-        await ctx.send(f"Added `{points}` points to Phoenix house. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    @points_phoenix.command(name="remove", aliases=["subtract", "minus"])
-    async def points_phoenix_remove(self, ctx, points: int):
-        """
-        Remove points from the Phoenix house.
-
-        `points`: The amount of points to remove.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "phoenix")
-        total_points = data["points"] - points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "phoenix")
-        await ctx.send(f"Removed `{points}` points from house Phoenix. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    @points.group(name="kodama", invoke_without_command=True)
-    async def points_kodama(self, ctx):
-        """
-        Points commands for Kodama.
-        """
-
-        return await ctx.send("Please specify an operation, `add` or `remove`.")
-
-    @points_kodama.command(name="add")
-    async def points_kodama_add(self, ctx, points: int):
-        """
-        Add points to the Kodama house.
-
-        `points`: The amount of points to add.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "kodama")
-        total_points = data["points"] + points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "kodama")
-        await ctx.send(f"Added `{points}` points to Kodama house. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    @points_kodama.command(name="remove", aliases=["subtract", "minus"])
-    async def points_kodama_remove(self, ctx, points: int):
-        """
-        Remove points from the Kodama house.
-
-        `points`: The amount of points to remove.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "kodama")
-        total_points = data["points"] - points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "kodama")
-        await ctx.send(f"Removed `{points}` points from house Kodama. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    @points.group(name="sylph", invoke_without_command=True)
-    async def points_sylph(self, ctx):
-        """
-        Points commands for Sylph.
-        """
-
-        return await ctx.send("Please specify an operation, `add` or `remove`.")
-
-    @points_sylph.command(name="add")
-    async def points_sylph_add(self, ctx, points: int):
-        """
-        Add points to the Sylph house.
-
-        `points`: The amount of points to add.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "sylph")
-        total_points = data["points"] + points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "sylph")
-        await ctx.send(f"Added `{points}` points to house Sylph. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    @points_sylph.command(name="remove", aliases=["subtract", "minus"])
-    async def points_sylph_remove(self, ctx, points: int):
-        """
-        Remove points from the Sylph house.
-
-        `points`: The amount of points to remove.
-        """
-
-        data = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "sylph")
-        total_points = data["points"] - points
-        await self.bot.db.execute(f"UPDATE kross SET points = $1 WHERE house = $2", total_points, "sylph")
-        await ctx.send(f"Removed `{points}` points from house Sylph. They now have `{total_points}` points.")
-        return await self.refresh_points(ctx)
-
-    async def refresh_points(self, ctx):
-
-        channel = self.bot.get_channel(547156691985104896)
+        if operation == "add":
+            new_points = current_points + points
+            await self.bot.db.fetch("UPDATE kross SET points = $1 WHERE house = $2", new_points, house)
+            await ctx.send(f"Added `{points}` to house `{house}`. They had `{current_points}` points and now they have `{new_points}`.")
+        elif operation == "minus" or operation == "subtract":
+            new_points = current_points - points
+            await self.bot.db.fetch("UPDATE kross SET points = $1 WHERE house = $2", new_points, house)
+            await ctx.send(f"Subtracted `{points}` from house `{house}`. They had `{current_points}` points and now they have `{new_points}`.")
+        else:
+            return await ctx.send("Something went wrong. Please ping my owner.")
 
         try:
-            phoenix = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "phoenix")
-            kodama = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "kodama")
-            leviathan = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "leviathan")
-            sylph = await self.bot.db.fetchrow("SELECT * FROM kross WHERE house = $1", "sylph")
-
-            kodama_message = await channel.fetch_message(662048639149146122)
-            phoenix_message = await channel.fetch_message(662048640336134174)
-            leviathan_message = await channel.fetch_message(662048641703477248)
-            sylph_message = await channel.fetch_message(662048642856910848)
-            await phoenix_message.edit(content=f"Phoenix has {phoenix['points']} points.")
-            await kodama_message.edit(content=f"Kodama has {kodama['points']} points.")
-            await leviathan_message.edit(content=f"Leviathan has {leviathan['points']} points.")
-            await sylph_message.edit(content=f"Sylph has {sylph['points']} points.")
+            channel = ctx.guild.get_channel(547156691985104896)
+            points = await self.bot.db.fetchrow("SELECT points FROM kross WHERE house = $1", house)
+            message = await channel.fetch_message(self.house_message_ids[house])
+            return await message.edit(content=f"{house.title()} has {points['points']} points.")
 
         except discord.Forbidden:
             return await ctx.send("Could not update points, you used the wrong the bot prefix.")
