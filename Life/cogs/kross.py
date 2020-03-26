@@ -26,7 +26,7 @@ class Kross(commands.Cog):
             return
 
         kodama = discord.utils.get(member.guild.roles, name="Kodama")
-        sylph = discord.utils.get(member.guild.oles, name="Sylph")
+        sylph = discord.utils.get(member.guild.roles, name="Sylph")
         leviathan = discord.utils.get(member.guild.roles, name="Leviathan")
         phoenix = discord.utils.get(member.guild.roles, name="Phoenix")
         kodama_count = len(kodama.members)
@@ -83,7 +83,7 @@ class Kross(commands.Cog):
         """
         Command to manage house points.
 
-        If all 3 parameters are left black it will display how many points each house currently has.
+        If all 3 parameters are left blank it will display how many points each house currently has.
 
         `house`: The house to add points too, can be one of `phoenix`, `leviathan`, `kodama` or `sylph`.
         `operation`: The point operation to perform. Can be `add`, `minus` or `subtract`.
@@ -104,11 +104,14 @@ class Kross(commands.Cog):
         if not house or not operation or not points:
             return await ctx.send("You must provide the `house`, `operation` and `points` arguments.")
 
-        if house.lower() not in self.valid_houses:
-            return await ctx.send(f"`{house.lower()}` is not a valid house. Please choose one of `phoenix`, `leviathan`, `kodama` or `sylph`.")
+        house = house.lower()
+        operation = operation.lower()
 
-        if operation.lower() not in self.valid_operations:
-            return await ctx.send(f"`{operation.lower()}` is not a valid operation. Please choose either `add` `subtract` or `minus`.")
+        if house not in self.valid_houses:
+            return await ctx.send(f"`{house}` is not a valid house. Please choose one of `phoenix`, `leviathan`, `kodama` or `sylph`.")
+
+        if operation not in self.valid_operations:
+            return await ctx.send(f"`{operation}` is not a valid operation. Please choose either `add` `subtract` or `minus`.")
 
         current_points = await self.bot.db.fetchrow("SELECT points FROM kross WHERE house = $1", house)
         current_points = current_points["points"]

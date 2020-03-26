@@ -77,7 +77,7 @@ class Information(commands.Cog):
         Gets the bots ping.
         """
 
-        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(self.bot, ctx)
+        latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         return await ctx.send(f"```py\n"
                               f"Type         |Ping\n"
                               f"Average Lat. |{average_latency_ms}\n"
@@ -124,7 +124,6 @@ class Information(commands.Cog):
                         f"[JPEG]({member.avatar_url_as(size=1024, format='jpeg')}) | "
                         f"[WEBP]({member.avatar_url_as(size=1024, format='webp')})"
         )
-        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
 
         if member.is_avatar_animated():
             embed.description += f" | [GIF]({member.avatar_url_as(size=1024, format='gif')})"
@@ -146,7 +145,6 @@ class Information(commands.Cog):
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
-        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
         embed.set_thumbnail(url=ctx.guild.icon_url_as(format="png", size=1024))
         embed.set_footer(text=f"ID: {ctx.guild.id}")
         embed.add_field(name="__**General information:**__", value=f"**Owner:** {ctx.guild.owner}\n"
@@ -188,7 +186,6 @@ class Information(commands.Cog):
             colour=self.bot.utils.member_colour(ctx.author),
             title=f"{member.name}'s Stats and Information."
         )
-        embed.set_author(icon_url=ctx.author.avatar_url_as(format="png"), name=ctx.author.name)
         embed.set_footer(text=f"ID: {member.id}")
         embed.set_thumbnail(url=member.avatar_url_as(format="png"))
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {member}\n"
