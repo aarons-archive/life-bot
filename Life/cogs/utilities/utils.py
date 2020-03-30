@@ -15,36 +15,34 @@ class Utils:
 
     async def ping(self, ctx: commands.Context):
 
-        latency_ms = f"{round(self.bot.latency * 1000, 2)}ms"
+        latency_ms = f"{round(self.bot.latency * 1000)}ms"
 
         if self.bot.pings:
             pings = [latency for datetime, latency in list(self.bot.pings)]
-            average_latency_ms = f"{round((sum(pings) / len(pings)), 2)}ms"
+            average_latency_ms = f"{round((sum(pings) / len(pings)))}ms"
         else:
             average_latency_ms = "Failed"
 
         typing_start = time.monotonic()
         await ctx.trigger_typing()
         typing_end = time.monotonic()
-        typing_ms = f"{round((typing_end - typing_start) * 1000, 2)}ms"
+        typing_ms = f"{round((typing_end - typing_start) * 1000)}ms"
 
         discord_start = time.monotonic()
         async with self.bot.session.get("https://discordapp.com/") as resp:
             if resp.status == 200:
                 discord_end = time.monotonic()
-                discord_ms = f"{round((discord_end - discord_start) * 1000, 2)}ms"
+                discord_ms = f"{round((discord_end - discord_start) * 1000)}ms"
             else:
                 discord_ms = "Failed"
 
         return latency_ms, average_latency_ms, typing_ms, discord_ms
 
-    def random_colour(self):
-        return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
+    # noinspection PyArgumentEqualDefault
     def linecount(self):
 
         docstring = False
-        file_amount, functions, comments, lines, classes = 0, 0, 0, 0, 0
+        file_amount, functions, lines, classes = 0, 0, 0, 0
 
         for dirpath, dirname, filenames in os.walk("."):
             for name in filenames:
@@ -66,7 +64,6 @@ class Utils:
                         elif docstring is True:
                             continue
                         if line.startswith("#"):
-                            comments += 1
                             continue
                         if line.startswith(("def", "async def")):
                             functions += 1
@@ -74,7 +71,7 @@ class Utils:
                             classes += 1
                         lines += 1
 
-        return file_amount, functions, comments, lines, classes
+        return file_amount, functions, lines, classes
 
     def format_time(self, seconds: int, friendly: bool = False):
 
@@ -94,6 +91,9 @@ class Utils:
                 formatted = f"{days:02d}:{formatted}"
 
         return formatted
+
+    def random_colour(self):
+        return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     def member_activity(self, member: discord.Member):
 
@@ -158,6 +158,14 @@ class Utils:
             discord.Status.offline: 0x808080
         }
         return colours[member.status]
+
+    def member_avatar(self, member: discord.Member):
+
+        return str(member.avatar_url_as(format="gif" if member.is_avatar_animated() is True else "png"))
+
+    def guild_icon(self, guild: discord.Guild):
+
+        return str(guild.icon_url_as(format="gif" if guild.is_icon_animated() is True else "png"))
 
     def guild_region(self, guild: discord.Guild):
         regions = {
