@@ -55,13 +55,14 @@ class MyContext(commands.Context):
         return await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
 
 
-class Life(commands.Bot):
+class Life(commands.AutoShardedBot):
 
     def __init__(self):
         super().__init__(
             command_prefix=commands.when_mentioned_or(config.DISCORD_PREFIX),
             reconnect=True,
         )
+
         self.bot = self
         self.loop = asyncio.get_event_loop()
         self.process = psutil.Process()
