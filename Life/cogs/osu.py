@@ -14,6 +14,8 @@ class Osu(commands.Cog):
 
         self.bot.osu = aiOsu.Client(token=self.bot.config.OSU_TOKEN)
 
+        self.modes = {"osu": aiOsu.OsuMode.osu, "taiko": aiOsu.OsuMode.taiko, "catchthebeat": aiOsu.OsuMode.catch_the_beat, "mania": aiOsu.OsuMode.mania}
+
     @commands.group(name="osu", invoke_without_command=True)
     async def osu(self, ctx):
         """
@@ -31,13 +33,13 @@ class Osu(commands.Cog):
         `mode`: The mode to fetch the users stats of, can be `osu`, `taiko`, `catchthebeat` or `mania`
         """
 
-        if mode.lower() not in self.bot.osu.valid_modes.keys():
-            return await ctx.send("That was not a valid mode, please choose `osu`, `taiko`, `catchthebeat` or `mania`'")
+        if mode.lower() not in self.modes.keys():
+            return await ctx.send("That was not a valid mode, please choose either `osu`, `taiko`, `catchthebeat` or `mania`")
 
-        users = await self.bot.osu.get_user(user=user, mode=mode.lower())
+        users = await self.bot.osu.get_users(user=user, mode=self.modes[mode])
 
         if not users:
-            return await ctx.send(f"I could not find a user with the name or id: `{user}`")
+            return await ctx.send(f"I could not find an osu user with the name or id: `{user}`")
 
         embeds = []
         for user in users:
@@ -50,14 +52,14 @@ class Osu(commands.Cog):
             embed.set_footer(text=f"ID: {user.id}")
             embed.add_field(name="Account stats:", value=f"**Name:** {user.name} \n**Country:** {user.country} \n"
                                                          f"**Join date:** {user.join_date.strftime('%A %d %B %Y at %H:%M')}", inline=False)
-            embed.add_field(name=f"Mode stats ({mode}): ", value=f"**Time played:** {self.bot.utils.format_time(user.total_seconds_played, friendly=True)} \n"
-                                                                 f"**Accuracy:** {round(user.accuracy, 2)}% \n**Play count:** {user.play_count:,} \n"
-                                                                 f"**Level:** {round(user.level, 2):,} \n**PP:** {round(user.pp_raw):,} \n"
-                                                                 f"**Country rank:** #{user.pp_country_rank:,} \n **Overall rank:** #{user.pp_rank:,} \n"
-                                                                 f"**Ranked score:** {user.ranked_score:,} \n**Total score:** {user.total_score:,} \n"
-                                                                 f"**Total SSH:** {user.total_ssh} \n**Total SS:** {user.total_ss} \n"
-                                                                 f"**Total SH:** {user.total_sh} \n **Total S:** {user.total_s} \n"
-                                                                 f"**Total A:** {user.total_a}")
+            embed.add_field(name=f"Mode stats ({mode.title()}): ", value=f"**Accuracy:** {round(user.accuracy, 2)}% \n**Level:** {round(user.level, 2):,} \n"
+                                                                         f"**Time played:** {self.bot.utils.format_time(user.total_seconds_played, friendly=True)} \n"
+                                                                         f"**Play count:** {user.play_count:,} \n**PP:** {round(user.pp_raw):,} \n"
+                                                                         f"**Country rank:** #{user.country_rank:,} \n **Overall rank:** #{user.rank:,} \n"
+                                                                         f"**Ranked score:** {user.ranked_score:,} \n**Total score:** {user.total_score:,} \n"
+                                                                         f"**Total SSH:** {user.total_ssh} \n**Total SS:** {user.total_ss} \n"
+                                                                         f"**Total SH:** {user.total_sh} \n **Total S:** {user.total_s} \n"
+                                                                         f"**Total A:** {user.total_a}")
             embeds.append(embed)
         return await ctx.paginate_embeds(entries=embeds)
 
