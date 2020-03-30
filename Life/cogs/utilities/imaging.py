@@ -17,8 +17,8 @@ def floor(image: typing.Union[Image, SingleImage]):
 
     image.sample(1000, 1000)
     image.virtual_pixel = "tile"
-    arguments = (0,            0,           300, 500,
-                 image.height, 0,           700, 500,
+    arguments = (0,            0,           300, 600,
+                 image.height, 0,           700, 600,
                  0,            image.width, 200, 1000,
                  image.height, image.width, 800, 1000)
     image.distort('perspective', arguments)
