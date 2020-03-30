@@ -37,7 +37,7 @@ class Player(granitepy.Player):
 
                 # If the queue is looping, add the track back to it.
                 if self.queue_loop is True:
-                    await self.queue.put(self.current)
+                    self.queue.put(self.current)
 
                 # Set the current track to None
                 self.current = None

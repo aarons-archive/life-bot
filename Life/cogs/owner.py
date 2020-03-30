@@ -53,8 +53,8 @@ class Owner(commands.Cog):
             message = f"{guild.id} |{total:<9}|{members:<9}|{bots:<9}|{bot_percent:9}|{guild.name}"
             entries.append(message)
 
-        title = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
-        return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, title=title)
+        header = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
+        return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, header=header)
 
     @commands.is_owner()
     @commands.group(name="blacklist", hidden=True, invoke_without_command=True)
@@ -66,7 +66,7 @@ class Owner(commands.Cog):
         return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}help blacklist` for more information.")
 
     @commands.is_owner()
-    @blacklist.group(name="user", invoke_without_command=True)
+    @blacklist.group(name="user", hidden=True, invoke_without_command=True)
     async def blacklist_user(self, ctx):
         """
         Display a list of all blacklisted users.
@@ -89,7 +89,7 @@ class Owner(commands.Cog):
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
 
     @commands.is_owner()
-    @blacklist_user.command(name="add")
+    @blacklist_user.command(name="add", hidden=True)
     async def blacklist_user_add(self, ctx, user: int = None, *, reason: str = None):
         """
         Add a user to the blacklist.
@@ -117,7 +117,7 @@ class Owner(commands.Cog):
             return await ctx.send("That user is already blacklisted.")
 
     @commands.is_owner()
-    @blacklist_user.command(name="remove")
+    @blacklist_user.command(name="remove", hidden=True)
     async def blacklist_user_remove(self, ctx, user: int = None):
         """
         Remove a user from the blacklist.
@@ -137,7 +137,7 @@ class Owner(commands.Cog):
             return await ctx.send(f"User: `{user.name} - {user.id}` is not blacklisted.")
 
     @commands.is_owner()
-    @blacklist.group(name="guild", invoke_without_command=True)
+    @blacklist.group(name="guild", hidden=True, invoke_without_command=True)
     async def blacklist_guild(self, ctx):
         """
         Display a list of all blacklisted guilds.
@@ -160,7 +160,7 @@ class Owner(commands.Cog):
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
 
     @commands.is_owner()
-    @blacklist_guild.command(name="add")
+    @blacklist_guild.command(name="add", hidden=True)
     async def blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = None):
         """
         Add a guild to the blacklist.
@@ -195,7 +195,7 @@ class Owner(commands.Cog):
             return await ctx.send("That guild is already blacklisted.")
 
     @commands.is_owner()
-    @blacklist_guild.command(name="remove")
+    @blacklist_guild.command(name="remove", hidden=True)
     async def blacklist_guild_remove(self, ctx, guild: int = None):
         """
         Remove a guild from the blacklist.

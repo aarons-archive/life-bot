@@ -54,12 +54,17 @@ class Queue:
     def shuffle(self):
         random.shuffle(self.queue_list)
 
-    async def put(self, item):
+    def extend(self, items: list):
+
+        self.queue_list.extend(items)
+        self.bot.dispatch(f"{self.guild.id}_queue_add")
+
+    def put(self, item):
 
         self.queue_list.append(item)
         self.bot.dispatch(f"{self.guild.id}_queue_add")
 
-    async def put_pos(self, item, position: int = 0):
+    def put_pos(self, item, position: int = 0):
 
         self.queue_list.insert(position, item)
         self.bot.dispatch(f"{self.guild.id}_queue_add")

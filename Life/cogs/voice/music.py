@@ -70,14 +70,13 @@ class Music(commands.Cog):
 
         if isinstance(result, granitepy.Playlist):
             playlist = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
-            for track in playlist.tracks:
-                await ctx.player.queue.put(track)
+            ctx.player.queue.extend(playlist.tracks)
             return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
 
         track = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
         if track.is_stream:
             return await ctx.send("The requested track is a live stream.")
-        await ctx.player.queue.put(track)
+        ctx.player.queue.put(track)
         return await ctx.send(f"Added the track **{track.title}** to the queue.")
 
     @commands.command(name="leave", aliases=["disconnect", "stop"])
@@ -220,13 +219,12 @@ class Music(commands.Cog):
         if ctx.player.queue.is_empty:
             return await ctx.send("The queue is empty.")
 
+        title = "\n"
         if ctx.player.current:
             title = f"__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | " \
                     f"`{self.bot.utils.format_time(round(ctx.player.current.length) / 1000)}` | " \
                     f"`Requested by:` {ctx.player.current.requester.mention}\n\n" \
                     f"__**Up next:**__: Showing `{min([10, ctx.player.queue.size])}` out of `{ctx.player.queue.size}` entries in the queue.\n"
-        else:
-            title = "\n"
 
         entries = []
         for index, track in enumerate(ctx.player.queue.queue_list):
@@ -236,9 +234,9 @@ class Music(commands.Cog):
 
         time = sum(track.length for track in ctx.player.queue.queue_list)
 
-        footer = f"\nThere are `{ctx.player.queue.size}` tracks in the queue with a total time of `{self.bot.utils.format_time(round(time) / 1000)}`"
+        footer = f"\nThere are `{ctx.player.queue.size}` track(s) in the queue with a total time of `{self.bot.utils.format_time(round(time) / 1000)}`"
 
-        return await ctx.paginate_embed(title=title, footer=footer, entries=entries, entries_per_page=10)
+        return await ctx.paginate_embed(header=title, footer=footer, entries=entries, entries_per_page=10)
 
     @commands.command(name="shuffle")
     @checks.is_member_in_channel()
