@@ -1,5 +1,7 @@
 import inspect
 import os
+from datetime import datetime
+from tabulate import tabulate
 
 import discord
 import psutil
@@ -13,48 +15,39 @@ class Information(commands.Cog):
 
     @commands.command(name="about", aliases=["info"])
     async def about(self, ctx):
-        """
-        Get information about the bot.
-        """
+        """Get information about the bot."""
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
-        files, functions, comments, lines, classes = self.bot.utils.linecount()
+        files, functions, lines, classes = self.bot.utils.linecount()
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
+            description=f"**Life is a discord bot coded by {self.bot.get_user(238356301439041536)}**."
         )
-        embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s Info")
-        embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
-        embed.set_footer(text=f"ID: {self.bot.user.id}")
-        embed.description = "Life is a discord bot coded by <@238356301439041536>"
-        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {self.bot.utils.format_time(self.bot.uptime)}\n"
-                                                        f"**Total users:** {len(self.bot.users)}\n"
-                                                        f"**Guilds:** {len(self.bot.guilds)}")
+
+        embed.add_field(name="__**Bot info:**__", value=f"**Uptime:** {self.bot.utils.format_time(seconds=self.bot.uptime, friendly=True)}\n"
+                                                        f"**Users:** {len(self.bot.users)}\n **Guilds:** {len(self.bot.guilds)}\n**Shards:** {len(self.bot.shards)}")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="__**Stats:**__", value=f"**Discord.py Version:** {str(discord.__version__)}\n"
-                                                     f"**Commands:** {len(self.bot.commands)}\n"
-                                                     f"**Cogs:** {len(self.bot.cogs)}")
-        embed.add_field(name="__**Code:**__", value=f"**Comments:** {comments}\n**Functions:** {functions}\n"
-                                                    f"**Classes:** {classes}\n**Lines:** {lines}\n**Files:** {files}\n")
+        embed.add_field(name="__**Stats:**__", value=f"**Discord.py Version:** {discord.__version__}\n**Commands:** {len(self.bot.commands)}\n"
+                                                     f"**Extensions:** {len(self.bot.extensions)}\n**Cogs:** {len(self.bot.cogs)}")
+
+        embed.add_field(name="__**Code:**__", value=f"**Functions:** {functions}\n**Classes:** {classes}\n"
+                                                    f"**Lines:** {lines}\n**Files:** {files}\n")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="__**Ping:**__", value=f"**Average Lat:** {average_latency_ms}\n**Latency:** {latency_ms}\n"
+        embed.add_field(name="__**Ping:**__", value=f"**Average:** {average_latency_ms}\n**Latency:** {latency_ms}\n"
                                                     f"**Typing:** {typing_ms}\n**Discord:** {discord_ms}")
-        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=103926848)** | "
-                                                     f"**[Support server](https://discord.gg/xP8xsHr)** | "
-                                                     f"**[Source code](https://github.com/iDevision/Life)**", inline=False)
+
+        embed.add_field(name="__**Links:**__", value=f"**[Bot Invite](https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=103926848) | "
+                                                     f"[Support server](https://discord.gg/xP8xsHr) | [Source code](https://github.com/iDevision/Life)**", inline=False)
+
+        embed.set_footer(text=f"ID: {self.bot.user.id} | Created on {datetime.strftime(self.bot.user.created_at, '%A %d %B %Y at %H:%M')}")
         return await ctx.send(embed=embed)
 
     @commands.command(name="system", aliases=["sys"])
     async def system(self, ctx):
-        """
-        Get information about the system the bot is running on.
-        """
+        """Display information about the system the bot is running on."""
 
-        embed = discord.Embed(
-            colour=discord.Color.gold(),
-        )
-        embed.set_author(icon_url=self.bot.user.avatar_url_as(format="png"), name=f"{self.bot.user.name}'s system stats")
-        embed.set_thumbnail(url=self.bot.user.avatar_url_as(format="png"))
+        embed = discord.Embed(colour=discord.Color.gold())
         embed.add_field(name="__**System CPU:**__", value=f"**Cores:** {psutil.cpu_count()}\n"
                                                           f"**Usage:** {psutil.cpu_percent(interval=0.1)}%\n"
                                                           f"**Frequency:** {round(psutil.cpu_freq().current, 2)} Mhz")
@@ -62,6 +55,7 @@ class Information(commands.Cog):
         embed.add_field(name="__**System Memory:**__", value=f"**Total:** {round(psutil.virtual_memory().total / 1048576)} mb\n"
                                                              f"**Used:** {round(psutil.virtual_memory().used / 1048576)} mb\n"
                                                              f"**Available:** {round(psutil.virtual_memory().available / 1048576)} mb")
+
         embed.add_field(name="__**System Disk:**__", value=f"**Total:** {round(psutil.disk_usage('/').total / 1073741824, 2)} GB\n"
                                                            f"**Used:** {round(psutil.disk_usage('/').used / 1073741824, 2)} GB\n"
                                                            f"**Free:** {round(psutil.disk_usage('/').free / 1073741824, 2)} GB")
@@ -73,45 +67,42 @@ class Information(commands.Cog):
 
     @commands.command(name="ping")
     async def ping(self, ctx):
-        """
-        Gets the bots ping.
-        """
+        """Display the bots pings."""
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
-        return await ctx.send(f"```py\n"
-                              f"Type         |Ping\n"
-                              f"Average Lat. |{average_latency_ms}\n"
-                              f"Latency      |{latency_ms}\n"
-                              f"Typing       |{typing_ms}\n"
-                              f"Discord      |{discord_ms}\n"
-                              f"```")
+        table = tabulate(tabular_data=[["Type", "Ping"], ["Average", average_latency_ms], ["Latency", latency_ms], ["Typing", typing_ms], ["Discord", discord_ms]], headers="firstrow", tablefmt="psql")
+        return await ctx.send(f"```py\n{table}\n```")
 
     @commands.command(name="source")
     async def source(self, ctx, *, command: str = None):
         """
-        Get a github link to the source of a command.
+        Get a github link to the source of the bot or a command.
 
-        `command`: The name of the command you want the source for.
+        `command`: The command to get the source of. If none the github repo link will be sent
         """
 
         if command is None:
             return await ctx.send(f"<https://github.com/iDevision/Life>")
+
         obj = self.bot.get_command(command.replace(".", " "))
         if obj is None:
             return await ctx.send("I could not find that command.")
+
         src = obj.callback.__code__
         lines, firstlineno = inspect.getsourcelines(src)
+
         location = ""
         if not obj.callback.__module__.startswith("discord"):
             location = os.path.relpath(src.co_filename).replace("\\", "/")
+
         return await ctx.send(f"<https://github.com/iDevision/Life/blob/master/Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>")
 
-    @commands.command(name="avatar")
+    @commands.command(name="avatar", alisases=["avy"])
     async def avatar(self, ctx, *, member: discord.Member = None):
         """
         Get yours or a specified members avatar.
 
-        `member`: The member who you want the avatar of. Can be a Mention, Name or ID
+        `member`: The member to get the avatar of. Can be a Mention, Name or ID. If none it will display your avatar.
         """
 
         if not member:
@@ -119,7 +110,7 @@ class Information(commands.Cog):
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
-            title=f"{member.name}'s Avatar",
+            title=f"{member.name}'s avatar",
             description=f"[PNG]({member.avatar_url_as(size=1024, format='png')}) | " 
                         f"[JPEG]({member.avatar_url_as(size=1024, format='jpeg')}) | "
                         f"[WEBP]({member.avatar_url_as(size=1024, format='webp')})"
@@ -133,11 +124,29 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name="serverinfo", aliases=["guildinfo"])
+    @commands.command(name="icon", alisases=["guild_icon"])
+    async def icon(self, ctx):
+        """Get the servers icon."""
+
+        embed = discord.Embed(
+            colour=discord.Color.gold(),
+            title=f"{ctx.guild.name}'s icon",
+            description=f"[PNG]({ctx.guild.icon_url_as(size=1024, format='png')}) | " 
+                        f"[JPEG]({ctx.guild.icon_url_as(size=1024, format='jpeg')}) | "
+                        f"[WEBP]({ctx.guild.icon_url_as(size=1024, format='webp')})"
+        )
+
+        if ctx.guild.is_icon_animated():
+            embed.description += f" | [GIF]({ctx.guild.icon_url_as(size=1024, format='gif')})"
+            embed.set_image(url=str(ctx.guild.icon_url_as(size=1024, format='gif')))
+        else:
+            embed.set_image(url=str(ctx.guild.icon_url_as(size=1024, format='png')))
+
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="guildinfo", aliases=["serverinfo", "guild", "server"])
     async def serverinfo(self, ctx):
-        """
-        Get information about the current server.
-        """
+        """Get information about the current server."""
 
         online, idle, dnd, offline = self.bot.utils.guild_user_status(ctx.guild)
 
@@ -145,10 +154,10 @@ class Information(commands.Cog):
             colour=discord.Color.gold(),
             title=f"{ctx.guild.name}'s Stats and Information."
         )
-        embed.set_thumbnail(url=ctx.guild.icon_url_as(format="png", size=1024))
+        embed.set_thumbnail(url=self.bot.utils.guild_icon(ctx.guild))
         embed.set_footer(text=f"ID: {ctx.guild.id}")
         embed.add_field(name="__**General information:**__", value=f"**Owner:** {ctx.guild.owner}\n"
-                                                                   f"**Server created at:** {ctx.guild.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
+                                                                   f"**Server created at:** {datetime.strftime(ctx.guild.created_at, '%A %d %B %Y at %H:%M')}\n"
                                                                    f"**Members:** {ctx.guild.member_count} |"
                                                                    f"<:online:627627415224713226>{online} |"
                                                                    f"<:away:627627415119724554>{idle} |"
@@ -163,8 +172,8 @@ class Information(commands.Cog):
                                                         f"**AFK timeout:** {int(ctx.guild.afk_timeout / 60)} minutes\n"
                                                         f"**AFK channel:** {ctx.guild.afk_channel}\n", inline=False)
 
-        roles = ' '.join([r.mention for r in ctx.guild.roles[:-11:-1] if not r.name == "@everyone"])
         role_count = len(ctx.guild.roles) - 1
+        roles = " ".join([r.mention for r in ctx.guild.roles[:-11:-1] if not r.name == "@everyone"])
         if role_count > 10:
             roles += f" ... and {role_count - 10} others"
         embed.add_field(name="__**Role information:**__", value=f"**Roles:** ({role_count}) {roles}\n", inline=False)
@@ -189,17 +198,17 @@ class Information(commands.Cog):
         embed.set_footer(text=f"ID: {member.id}")
         embed.set_thumbnail(url=member.avatar_url_as(format="png"))
         embed.add_field(name="__**General information:**__", value=f"**Discord Name:** {member}\n"
-                                                                   f"**Account created:** {member.created_at.__format__('%A %d %B %Y at %H:%M')}\n"
+                                                                   f"**Account created:** {datetime.strftime(member.created_at, '%A %d %B %Y at %H:%M')}\n"
                                                                    f"**Status:** {self.bot.utils.member_status(member)}\n"
                                                                    f"**Activity:** {self.bot.utils.member_activity(member)}", inline=False)
 
-        roles = ' '.join([r.mention for r in member.roles[:-11:-1] if not r.name == "@everyone"])
         role_count = len(member.roles) - 1
+        roles = " ".join([r.mention for r in member.roles[:-11:-1] if not r.name == "@everyone"])
         if role_count > 10:
             roles += f" ... and {role_count - 10} others"
 
         embed.add_field(name="__**Server-related information:**__", value=f"**Nickname:** {member.nick}\n"
-                                                                          f"**Joined server:** {member.joined_at.__format__('%A %d %B %Y at %H:%M')}\n"
+                                                                          f"**Joined server:** {datetime.strftime(member.joined_at, '%A %d %B %Y at %H:%M')}\n"
                                                                           f"**Roles:** ({role_count}) {roles}", inline=False)
         return await ctx.send(embed=embed)
 
