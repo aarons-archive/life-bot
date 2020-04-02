@@ -1,5 +1,6 @@
 from discord.ext import commands
 from granitepy import objects
+from datetime import datetime
 
 
 class GraniteTrack(objects.Track):
@@ -7,6 +8,7 @@ class GraniteTrack(objects.Track):
     def __init__(self, track_id: str, info: dict, ctx: commands.Context):
         super().__init__(track_id, info)
 
+        self.ctx = ctx
         self.requester = ctx.author
 
 
@@ -15,7 +17,19 @@ class GranitePlaylist(objects.Playlist):
     def __init__(self, playlist_info: dict, tracks: list, ctx: commands.Context):
         super().__init__(playlist_info, tracks)
 
-        self.tracks = [GraniteTrack(track_id=track["track"], info=track["info"], ctx=ctx) for track in self.tracks_raw]
+        self.ctx = ctx
+        self.tracks = [GraniteTrack(track_id=track["track"], info=track["info"], ctx=self.ctx) for track in self.tracks_raw]
+
+
+class SpotifyTrack:
+
+    def __init__(self, ctx: commands.Context, title: str, uri: str, length: int):
+
+        self.title = title
+        self.ctx = ctx
+        self.uri = uri
+        self.requester = ctx.author
+        self.length = length
 
 
 class Playlist:
@@ -27,12 +41,16 @@ class Playlist:
         self.name = data.get("name")
         self.owner_id = data.get("owner_id")
         self.private = data.get("private")
-        self.creation_date = data.get("creation_date")
+        self.creation_date = datetime.strptime(data.get("creation_date"), "%d-%m-%Y: %H:%M")
+        self.image_url = data.get("image_url")
 
         self.tracks = []
 
     @property
     def track_ids(self):
         return [track.track_id for track in self.tracks]
+
+    def __repr__(self):
+        return f"<LifePlaylist id={self.id} name={self.name} owner_id={self.owner_id}>"
 
 

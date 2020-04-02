@@ -7,6 +7,10 @@ DISCORD_PREFIX = "l-"
 # Osu Api Key
 OSU_TOKEN = ""
 
+# Spotify keys
+SPOTIFY_API_ID = ""
+SPOTIFY_API_SECRET = ""
+
 # PSQL
 DB_CONN_INFO = {
     "user": "",

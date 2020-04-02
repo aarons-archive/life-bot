@@ -1,4 +1,6 @@
 import granitepy
+import spotify
+import re
 from discord.ext import commands
 
 from cogs.utilities import checks
@@ -11,6 +13,9 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.bot.granitepy = granitepy.Client(self.bot)
+
+        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_API_ID, client_secret=self.bot.config.SPOTIFY_API_SECRET)
+        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_API_ID, client_secret=self.bot.config.SPOTIFY_API_SECRET)
 
     async def initiate_nodes(self):
 
@@ -62,22 +67,48 @@ class Music(commands.Cog):
             ctx.player.text_channel = ctx.channel
             await ctx.player.connect(ctx.author.voice.channel)
 
-        await ctx.trigger_typing()
+        async with ctx.channel.typing():
 
-        result = await ctx.player.node.get_tracks(search)
-        if not result:
-            return await ctx.send(f"There were no tracks found for the search `{search}`.")
+            spotify_regex = re.compile("https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)").match(search)
+            if spotify_regex:
 
-        if isinstance(result, granitepy.Playlist):
-            playlist = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
-            ctx.player.queue.extend(playlist.tracks)
-            return await ctx.send(f"Added the playlist **{playlist.name}** to the queue with a total of **{len(playlist.tracks)}** entries.")
+                url_type, url_id = spotify_regex.groups()
 
-        track = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
-        if track.is_stream:
-            return await ctx.send("The requested track is a live stream.")
-        ctx.player.queue.put(track)
-        return await ctx.send(f"Added the track **{track.title}** to the queue.")
+                if url_type == "track":
+                    tracks = await self.bot.spotify.get_track(url_id)
+                elif url_type == "album":
+                    result = await self.bot.spotify.get_album(url_id)
+                    tracks = await result.get_all_tracks()
+                elif url_type == "playlist":
+                    result = spotify.Playlist(self.bot.spotify, await self.bot.http_spotify.get_playlist(url_id))
+                    tracks = await result.get_all_tracks()
+                if not tracks:
+                    return await ctx.send(f"That spotify link was not recognised.")
+
+                if isinstance(tracks, spotify.Track):
+
+                    track = objects.SpotifyTrack(ctx=ctx, title=f"{tracks.name} - {tracks.artist.name}", uri=tracks.url, length=tracks.duration)
+                    print(track.uri)
+                    ctx.player.queue.put(track)
+                    return await ctx.send(f"Added the spotify track **{track.title}** to the queue.")
+                else:
+                    tracks = [objects.SpotifyTrack(ctx=ctx, title=f"{track.name} - {track.artist.name}", uri=track.url, length=track.duration) for track in tracks]
+                    ctx.player.queue.extend(tracks)
+                    return await ctx.send(f"Added the spotify album/playlist **{result.name}** to the queue with a total of **{len(tracks)}** entries.")
+            else:
+
+                result = await ctx.player.get_tracks(ctx=ctx, query=search)
+                if not result:
+                    return await ctx.send(f"There were no tracks found for the youtube search `{search}`.")
+
+                if isinstance(result, granitepy.Playlist):
+                    ctx.player.queue.extend(result)
+                    return await ctx.send(f"Added the playlist **{result.name}** to the queue with a total of **{len(result.tracks)}** entries.")
+                if isinstance(result, granitepy.Track):
+                    if result.is_stream:
+                        return await ctx.send("The requested track is a live stream.")
+                    ctx.player.queue.put(result)
+                    return await ctx.send(f"Added the track **{result.title}** to the queue.")
 
     @commands.command(name="leave", aliases=["disconnect", "stop"])
     @checks.is_member_in_channel()
@@ -342,7 +373,7 @@ class Music(commands.Cog):
 
         item = await ctx.player.queue.get_pos(entry_1 - 1)
 
-        await ctx.player.queue.put_pos(item, entry_2 - 1)
+        ctx.player.queue.put_pos(item, entry_2 - 1)
         return await ctx.send(f"Moved `{item.title}` from position `{entry_1}` to position `{entry_2}`.")
 
 

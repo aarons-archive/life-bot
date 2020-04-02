@@ -1,9 +1,11 @@
 import asyncio
 
 import discord
+from discord.ext import commands
 import granitepy
 
 from cogs.voice.utilities.queue import Queue
+from cogs.voice.utilities import objects
 
 
 class Player(granitepy.Player):
@@ -26,6 +28,11 @@ class Player(granitepy.Player):
 
                 # Get the first track in the queue.
                 track = await self.queue.get()
+
+                if isinstance(track, objects.SpotifyTrack):
+                    track = await self.get_tracks(ctx=track.ctx, query=track.title)
+                    if not track:
+                        continue
 
                 # Play the track and invoke the controller.
                 await self.play(track)
@@ -74,3 +81,16 @@ class Player(granitepy.Player):
             return await self.text_channel.send(embed=embed)
         else:
             return await self.current.channel.send(embed=embed)
+
+    async def get_tracks(self, ctx: commands.Context, query: str):
+
+        result = await self.node.get_tracks(query)
+        if not result:
+            return None
+
+        if isinstance(result, granitepy.Playlist):
+            result = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
+        else:
+            result = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
+
+        return result
