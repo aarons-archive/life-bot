@@ -27,34 +27,15 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_disconnect(self):
-        print(f"[BOT] Disconnected from discord")
+        print(f"\n[BOT] Disconnected from discord")
 
     @commands.Cog.listener()
     async def on_connect(self):
-        print(f"[BOT] Connected to discord.")
+        print(f"\n[BOT] Connected to discord.")
 
     @commands.Cog.listener()
     async def on_resume(self):
-        print(f"[BOT] Resumed a session.")
-
-    @commands.Cog.listener()
-    async def on_command(self, ctx):
-
-        if not ctx.guild:
-            return
-
-        parent = ctx.command.full_parent_name
-        if parent:
-            command = f"{parent} {ctx.command.name}"
-        else:
-            command = f"{ctx.command.name}"
-
-        if ctx.guild.id not in self.bot.usage:
-            self.bot.usage[ctx.guild.id] = {}
-        if command not in self.bot.usage[ctx.guild.id]:
-            self.bot.usage[ctx.guild.id][command] = 1
-        else:
-            self.bot.usage[ctx.guild.id][command] += 1
+        print(f"\n[BOT] Resumed session.")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -119,12 +100,15 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
 
+        print(f"Joined a guild - {guild.name}")
+
         if guild.id in self.bot.guild_blacklist:
             print(f"[BOT] Left blacklisted guild - {guild.name}")
             return await guild.leave()
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
+
         event = msg.get("t", "None")
         if event is not None:
             self.bot.socket_stats[event] += 1

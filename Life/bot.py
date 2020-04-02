@@ -74,7 +74,6 @@ class Life(commands.AutoShardedBot):
         self.owner_ids = [238356301439041536]
         self.guild_blacklist = []
         self.user_blacklist = []
-        self.usage = {}
 
         self.utils = Utils(self.bot)
         self.session = None
