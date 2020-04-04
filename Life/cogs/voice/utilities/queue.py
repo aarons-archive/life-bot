@@ -19,8 +19,12 @@ class Queue:
 
         self.queue_list = []
 
+    def __repr__(self):
+        return f"<LifeMusicQueue entries={self.size}>"
+
     @staticmethod
     def wakeup_next(waiters):
+
         while waiters:
             waiter = waiters.popleft()
             if not waiter.done():
@@ -37,21 +41,26 @@ class Queue:
 
     @property
     def size(self):
+
         return len(self.queue_list)
 
     @property
     def is_empty(self):
+
         if not self.queue_list:
             return True
         return False
 
     def clear(self):
+
         self.queue_list.clear()
 
     def reverse(self):
+
         self.queue_list.reverse()
 
     def shuffle(self):
+
         random.shuffle(self.queue_list)
 
     def extend(self, items: list):
