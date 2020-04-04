@@ -97,7 +97,7 @@ class Music(commands.Cog):
                     return await ctx.send(f"Added the spotify album/playlist **{result.name}** to the queue with a total of **{len(tracks)}** entries.")
             else:
 
-                result = await ctx.player.get_tracks(ctx=ctx, query=search)
+                result = await ctx.player.get_result(ctx=ctx, query=search)
                 if not result:
                     return await ctx.send(f"There were no tracks found for the youtube search `{search}`.")
 
