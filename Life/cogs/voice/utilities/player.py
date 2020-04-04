@@ -1,7 +1,6 @@
 import asyncio
 
 import discord
-from discord.ext import commands
 import granitepy
 
 from cogs.voice.utilities.queue import Queue
@@ -22,34 +21,27 @@ class Player(granitepy.Player):
         while True:
 
             try:
-                # If the queue is empty, wait for something to be added to it.
                 if self.queue.is_empty:
                     await self.bot.wait_for(f"{self.guild.id}_queue_add", timeout=300.0)
 
-                # Get the first track in the queue.
                 track = await self.queue.get()
 
                 if isinstance(track, objects.SpotifyTrack):
-                    track = await self.get_tracks(ctx=track.ctx, query=track.title)
+                    track = await self.get_result(ctx=track.ctx, query=track.title)
                     if not track:
                         continue
 
-                # Play the track and invoke the controller.
                 await self.play(track)
                 await asyncio.sleep(0.5)
                 await self.invoke_controller()
 
-                # Wait for the track to finish playing.
                 await self.bot.wait_for("granitepy_track_end", check=lambda p: p.player.guild.id == self.guild.id)
 
-                # If the queue is looping, add the track back to it.
                 if self.queue_loop is True:
                     self.queue.put(self.current)
 
-                # Set the current track to None
                 self.current = None
 
-            # If we are waiting for a track for more than 5 minutes, notify channel and destroy player.
             except asyncio.TimeoutError:
 
                 await self.text_channel.send("No tracks added for 5 minutes, Leaving the voice channel.")
@@ -82,7 +74,7 @@ class Player(granitepy.Player):
         else:
             return await self.current.channel.send(embed=embed)
 
-    async def get_tracks(self, ctx: commands.Context, query: str):
+    async def get_result(self, ctx, query: str):
 
         result = await self.node.get_tracks(query)
         if not result:
