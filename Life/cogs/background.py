@@ -22,7 +22,7 @@ class Background(commands.Cog):
         self.log_bot_growth.stop()
         self.log_ping.stop()
 
-    @tasks.loop(hours=1.0)
+    @tasks.loop(minutes=30.0)
     async def change_presence(self):
 
         presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
@@ -39,11 +39,9 @@ class Background(commands.Cog):
 
     @tasks.loop(hours=1.0)
     async def log_bot_growth(self):
-        print("log")
 
         if self.bot.user.id == 628284183579721747:
-            print("wtf man")
-            await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.utcnow().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
+            await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.now().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
 
     @log_bot_growth.before_loop
     async def before_log_bot_growth(self):
@@ -53,7 +51,7 @@ class Background(commands.Cog):
     @tasks.loop(minutes=1.0)
     async def log_ping(self):
 
-        self.bot.pings.append((datetime.utcnow().strftime('%H:%M'), round(self.bot.latency * 1000)))
+        self.bot.pings.append((datetime.now().strftime('%m-%d: %H:%M'), round(self.bot.latency * 1000)))
 
     @log_ping.before_loop
     async def before_log_ping(self):
