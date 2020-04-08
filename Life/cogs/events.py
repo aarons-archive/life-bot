@@ -65,7 +65,7 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is owner only."
         if isinstance(error, commands.DisabledCommand):
             message = f"The command `{ctx.command}` is currently disabled."
-        if isinstance(error, granitepy.NodesNotAvailable):
+        if isinstance(error, granitepy.NoNodesAvailable):
             message = "There are no nodes available."
         if isinstance(error, commands.CommandNotFound):
             return
