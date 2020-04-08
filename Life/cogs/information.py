@@ -15,7 +15,9 @@ class Information(commands.Cog):
 
     @commands.command(name="about", aliases=["info"])
     async def about(self, ctx):
-        """Get information about the bot."""
+        """
+        Get information about the bot.
+        """
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         files, functions, lines, classes = self.bot.utils.linecount()
@@ -45,7 +47,9 @@ class Information(commands.Cog):
 
     @commands.command(name="system", aliases=["sys"])
     async def system(self, ctx):
-        """Display information about the system the bot is running on."""
+        """
+        Display information about the system the bot is running on.
+        """
 
         embed = discord.Embed(colour=discord.Color.gold())
         embed.add_field(name="__**System CPU:**__", value=f"**Cores:** {psutil.cpu_count()}\n"
@@ -67,7 +71,9 @@ class Information(commands.Cog):
 
     @commands.command(name="ping")
     async def ping(self, ctx):
-        """Display the bots pings."""
+        """
+        Display the bots pings.
+        """
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         table = tabulate(tabular_data=[["Type", "Ping"], ["Average", average_latency_ms], ["Latency", latency_ms], ["Typing", typing_ms], ["Discord", discord_ms]], headers="firstrow", tablefmt="psql")
@@ -126,7 +132,9 @@ class Information(commands.Cog):
 
     @commands.command(name="icon", alisases=["guild_icon"])
     async def icon(self, ctx):
-        """Get the servers icon."""
+        """
+        Get the current servers icon.
+        """
 
         embed = discord.Embed(
             colour=discord.Color.gold(),
@@ -146,7 +154,9 @@ class Information(commands.Cog):
 
     @commands.command(name="guildinfo", aliases=["serverinfo", "guild", "server"])
     async def serverinfo(self, ctx):
-        """Get information about the current server."""
+        """
+        Get information about the current server.
+        """
 
         online, idle, dnd, offline = self.bot.utils.guild_user_status(ctx.guild)
 

@@ -38,7 +38,6 @@ class Utils:
 
         return latency_ms, average_latency_ms, typing_ms, discord_ms
 
-    # noinspection PyArgumentEqualDefault
     def linecount(self):
 
         docstring = False
