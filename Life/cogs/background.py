@@ -40,10 +40,8 @@ class Background(commands.Cog):
     @tasks.loop(hours=1.0)
     async def log_bot_growth(self):
 
-        if self.bot.user.id != 628284183579721747:
-            return
-
-        return await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.utcnow().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
+        if self.bot.user.id == 628284183579721747:
+            await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.utcnow().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
 
     @log_bot_growth.before_loop
     async def before_log_bot_growth(self):
