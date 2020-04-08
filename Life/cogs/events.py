@@ -1,9 +1,9 @@
 import traceback
 
 import discord
-import granitepy
 from discord.ext import commands
 
+import granitepy
 from cogs.utilities import exceptions
 
 
@@ -15,27 +15,31 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        print(f"\n[BOT] Logged in as {self.bot.user} - {self.bot.user.id}")
+        self.bot.log_channel = self.bot.get_channel(697324016658022441)
+
+        print(f"\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}")
+        await self.bot.log_channel.send(f"The bot is now ready. Logged in as: `{self.bot.user}` - `{self.bot.user.id}`")
 
         for guild in self.bot.guilds:
-
             if guild.id in self.bot.guild_blacklist:
-                print(f"[BOT] Left blacklisted guild - {guild.id}")
                 await guild.leave()
-            else:
-                continue
+            continue
 
     @commands.Cog.listener()
-    async def on_disconnect(self):
-        print(f"\n[BOT] Disconnected from discord")
+    async def on_guild_join(self, guild):
+
+        await self.bot.log_channel.send(f"Joined a guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`")
+
+        if guild.id in self.bot.guild_blacklist:
+            return await guild.leave()
 
     @commands.Cog.listener()
-    async def on_connect(self):
-        print(f"\n[BOT] Connected to discord.")
+    async def on_guild_remove(self, guild):
 
-    @commands.Cog.listener()
-    async def on_resume(self):
-        print(f"\n[BOT] Resumed session.")
+        if guild.id in self.bot.guild_blacklist:
+            return await self.bot.log_channel.send(f"Left a blacklisted guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`")
+
+        return await self.bot.log_channel.send(f"Left a guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -61,7 +65,7 @@ class Events(commands.Cog):
             message = f"The command `{ctx.command}` is owner only."
         if isinstance(error, commands.DisabledCommand):
             message = f"The command `{ctx.command}` is currently disabled."
-        if isinstance(error, granitepy.NoNodesAvailable):
+        if isinstance(error, granitepy.NodesNotAvailable):
             message = "There are no nodes available."
         if isinstance(error, commands.CommandNotFound):
             return
@@ -96,15 +100,6 @@ class Events(commands.Cog):
         # Otherwise, print the original error as a traceback.
         print(f"Ignoring exception in command {ctx.command}:")
         traceback.print_exception(type(error), error, error.__traceback__)
-
-    @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-
-        print(f"Joined a guild - {guild.name}")
-
-        if guild.id in self.bot.guild_blacklist:
-            print(f"[BOT] Left blacklisted guild - {guild.name}")
-            return await guild.leave()
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
