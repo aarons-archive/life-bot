@@ -1,8 +1,9 @@
-import granitepy
-import spotify
 import re
+
+import spotify
 from discord.ext import commands
 
+import granitepy
 from cogs.utilities import checks
 from cogs.voice.utilities import objects
 
@@ -86,9 +87,7 @@ class Music(commands.Cog):
                     return await ctx.send(f"That spotify link was not recognised.")
 
                 if isinstance(tracks, spotify.Track):
-
                     track = objects.SpotifyTrack(ctx=ctx, title=f"{tracks.name} - {tracks.artist.name}", uri=tracks.url, length=tracks.duration)
-                    print(track.uri)
                     ctx.player.queue.put(track)
                     return await ctx.send(f"Added the spotify track **{track.title}** to the queue.")
                 else:

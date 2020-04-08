@@ -4,9 +4,9 @@ import typing
 from datetime import datetime
 
 import discord
-import granitepy
 from discord.ext import commands
 
+import granitepy
 from cogs.utilities import checks
 from cogs.voice.utilities import objects
 

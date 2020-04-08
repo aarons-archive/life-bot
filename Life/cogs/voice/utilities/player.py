@@ -1,20 +1,22 @@
 import asyncio
 
 import discord
-import granitepy
+from discord.ext import commands
 
-from cogs.voice.utilities.queue import Queue
+import granitepy
 from cogs.voice.utilities import objects
+from cogs.voice.utilities.queue import Queue
 
 
 class Player(granitepy.Player):
 
-    def __init__(self, bot, node, guild):
-        super().__init__(bot, node, guild)
+    def __init__(self, node, guild):
+        super().__init__(node, guild)
 
         self.player_loop = self.bot.loop.create_task(self.player_loop())
-        self.queue = Queue(bot, guild)
+        self.queue = Queue(self.bot, self.guild)
         self.queue_loop = False
+        self.text_channel = None
 
     async def player_loop(self):
 
@@ -74,7 +76,7 @@ class Player(granitepy.Player):
         else:
             return await self.current.channel.send(embed=embed)
 
-    async def get_result(self, ctx, query: str):
+    async def get_result(self, ctx: commands.Context, query: str):
 
         result = await self.node.get_tracks(query)
         if not result:

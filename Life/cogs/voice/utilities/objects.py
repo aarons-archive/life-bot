@@ -1,6 +1,8 @@
-from discord.ext import commands
-from granitepy import objects
 from datetime import datetime
+
+from discord.ext import commands
+
+from granitepy import objects
 
 
 class GraniteTrack(objects.Track):

@@ -1,5 +1,5 @@
 asyncpg==0.20.1
-discord.py==1.3.2
+discord.py==1.3.3
 jishaku==1.18.2.188
 psutil==5.7.0
 matplotlib==3.2.1
@@ -7,3 +7,4 @@ wand==0.5.9
 aiOsu==0.1.0a0
 tabulate==0.8.7
 spotify==0.10.2
+granitepy==0.4.0
