@@ -61,7 +61,7 @@ class Player(granitepy.Player):
             title="Music controller:",
             colour=discord.Color.gold()
         )
-        embed.set_thumbnail(url=f"https://img.youtube.com/vi/{self.current.yt_id}/hqdefault.jpg")
+        embed.set_thumbnail(url=f"https://img.youtube.com/vi/{self.current.identifier}/hqdefault.jpg")
         embed.add_field(name=f"Now playing:", value=f"**[{self.current.title}]({self.current.uri})**", inline=False)
         embed.add_field(name="Time:", value=f"`{self.bot.utils.format_time(round(self.position) / 1000)}` / "
                                             f"`{self.bot.utils.format_time(round(self.current.length) / 1000)}`")
