@@ -23,7 +23,6 @@ def floor(image: typing.Union[Image, SingleImage]):
                  image.height, image.width, 800, 1000)
     image.distort('perspective', arguments)
 
-
 def colorize(image: typing.Union[Image, SingleImage], color: str):
 
     hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(color)
@@ -34,91 +33,73 @@ def colorize(image: typing.Union[Image, SingleImage], color: str):
         with Color("rgb(50%, 50%, 50%)") as image_alpha:
             image.colorize(color=image_color, alpha=image_alpha)
 
-
 def solarize(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.solarize(threshold=threshold * image.quantum_range)
-
 
 def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
 
     image.sketch(radius=radius, sigma=sigma, angle=angle)
 
-
 def implode(image: typing.Union[Image, SingleImage], amount: float):
 
     image.implode(amount=amount)
-
 
 def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.sepia_tone(threshold=threshold)
 
-
 def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
 
     image.polaroid(angle=angle, caption=caption)
-
 
 def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
 
     image.vignette(sigma=sigma, x=x, y=y)
 
-
 def swirl(image: typing.Union[Image, SingleImage], degree: int):
 
     image.swirl(degree=degree)
-
 
 def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.charcoal(radius=radius, sigma=sigma)
 
-
 def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
 
     image.noise(method, attenuate=attenuate)
-
 
 def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
 
     image.blue_shift(factor=factor)
 
-
 def spread(image: typing.Union[Image, SingleImage], radius: float):
 
     image.spread(radius=radius)
-
 
 def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
 
-
 def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.kuwahara(radius=radius, sigma=sigma)
-
 
 def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.emboss(radius=radius, sigma=sigma)
 
-
 def edge(image: typing.Union[Image, SingleImage], radius: float):
 
     image.edge(radius=radius)
-
 
 def flip(image: typing.Union[Image, SingleImage]):
 
     image.flip()
 
-
 def flop(image: typing.Union[Image, SingleImage]):
 
     image.flop()
-
 
 def rotate(image: typing.Union[Image, SingleImage], degree: float):
 
