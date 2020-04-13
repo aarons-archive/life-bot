@@ -18,7 +18,8 @@ class Events(commands.Cog):
         self.bot.log_channel = self.bot.get_channel(697324016658022441)
 
         print(f"\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}")
-        await self.bot.log_channel.send(f"The bot is now ready. Logged in as: `{self.bot.user}` - `{self.bot.user.id}`")
+        if self.bot.user.id == 628284183579721747:
+            await self.bot.log_channel.send(f"The bot is now ready. Logged in as: `{self.bot.user}` - `{self.bot.user.id}`")
 
         for guild in self.bot.guilds:
             if guild.id in self.bot.guild_blacklist:
