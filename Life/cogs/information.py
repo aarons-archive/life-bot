@@ -158,7 +158,7 @@ class Information(commands.Cog):
         Get information about the current server.
         """
 
-        online, idle, dnd, offline = self.bot.utils.guild_user_status(ctx.guild)
+        online, idle, dnd, offline, streaming = self.bot.utils.guild_user_status(ctx.guild)
 
         embed = discord.Embed(
             colour=discord.Color.gold(),

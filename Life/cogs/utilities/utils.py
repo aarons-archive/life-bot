@@ -214,9 +214,26 @@ class Utils:
         }
         return explicit_content_filters[guild.explicit_content_filter]
 
-    def guild_user_status(self, guild: discord.Guild):
-        online = sum(1 for member in guild.members if member.status == discord.Status.online)
-        idle = sum(1 for member in guild.members if member.status == discord.Status.idle)
-        dnd = sum(1 for member in guild.members if member.status == discord.Status.do_not_disturb)
-        offline = sum(1 for member in guild.members if member.status == discord.Status.offline)
-        return online, idle, dnd, offline
+    def guild_user_status(self, guild: discord.Guild, all_guilds: bool = False):
+        
+        online, idle, dnd, offline, streaming = 0, 0, 0, 0, 0
+        
+        if all_guilds is True:
+            guild_members = [guild.members for guild in self.bot.guilds]
+            members = [member for members in guild_members for member in members]
+        else:
+            members = guild.members
+        
+        for member in members:
+            if member.status == discord.Status.online:
+                online += 1
+            if member.status == discord.Status.idle:
+                idle += 1
+            if member.status == discord.Status.dnd:
+                dnd += 1
+            if member.status == discord.Status.offline:
+                offline += 1
+            activity_types = [activity.type for activity in member.activities]
+            if discord.ActivityType.streaming in activity_types:
+                streaming += 1
+        return online, idle, dnd, offline, streaming
