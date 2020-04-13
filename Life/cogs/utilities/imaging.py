@@ -285,7 +285,7 @@ class Imaging:
             plt.clf()
             figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect="equal"))
             
-            axes.pie(sizes, colors=colors, shadow=True, startangle=90)
+            axes.pie(sizes, colors=colors, startangle=90)
             axes.legend(labels, loc="center right", title="Status's")
             
             if all_guilds is True:
