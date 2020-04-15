@@ -63,6 +63,7 @@ class Owner(commands.Cog):
         Base command for blacklisting.
         """
 
+        # TODO Add exception here.
         return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}help blacklist` for more information.")
 
     @commands.is_owner()
@@ -109,7 +110,7 @@ class Owner(commands.Cog):
 
         try:
             user = await self.bot.fetch_user(user)
-            self.bot.user_blacklist.append(user.id)
+            self.bot.user_blacklist[user.id] = reason
             await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", user.id, "user", reason)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been blacklisted with reason `{reason}`")
 
@@ -130,7 +131,7 @@ class Owner(commands.Cog):
 
         try:
             user = await self.bot.fetch_user(user)
-            self.bot.user_blacklist.remove(user.id)
+            del self.bot.user_blacklist[user.id]
             await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", user.id)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been un-blacklisted.")
         except ValueError:
@@ -180,7 +181,7 @@ class Owner(commands.Cog):
 
         try:
 
-            self.bot.guild_blacklist.append(guild)
+            self.bot.user_blacklist[guild] = reason
             await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", guild, "guild", reason)
 
             try:
@@ -207,7 +208,7 @@ class Owner(commands.Cog):
             return await ctx.send("You must specify a guild's id.")
 
         try:
-            self.bot.guild_blacklist.remove(guild)
+            del self.bot.user_blacklist[guild]
             await self.bot.db.execute("DELETE FROM blacklist WHERE id = $1", guild)
             return await ctx.send(f"Guild: `{guild}` has been un-blacklisted.")
         except ValueError:
