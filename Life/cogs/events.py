@@ -48,6 +48,7 @@ class Events(commands.Cog):
         command = ctx.command
         prefix = self.bot.config.DISCORD_PREFIX
         error_messages = {
+            exceptions.BotNotReadyError: f"The bot is not ready yet.",
             exceptions.ArgumentError: f"{error}",
             exceptions.NoTracksFound: f"{error}",
             commands.CheckFailure: f"{error}",
