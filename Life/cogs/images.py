@@ -96,8 +96,8 @@ class Images(commands.Cog):
         async with ctx.channel.typing():
             
             plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_status_plot, ctx, graph_type, all_guilds))
-            return await ctx.send(file=discord.File(fp=plot, filename="PingGraph.png"))
-    
+            return await ctx.send(file=discord.File(fp=plot, filename="GuildStatus.png"))
+        
     @commands.cooldown(1, 30, commands.cooldowns.BucketType.guild)
     @commands.command(name="floor")
     async def floor(self, ctx, url: str = None):
