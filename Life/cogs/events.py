@@ -3,7 +3,6 @@ import traceback
 import discord
 from discord.ext import commands
 
-import granitepy
 from cogs.utilities import exceptions
 
 
@@ -44,62 +43,73 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-
-        # Get the original exception or if nothing is found, keep the original exception.
+        
         error = getattr(error, "original", error)
-
-        # Check for errors.
-        message = ""
-        if isinstance(error, exceptions.ArgumentError):
-            message = f"{error}"
-        if isinstance(error, commands.CheckFailure):
-            message = f"{error}"
+        command = ctx.command
+        prefix = self.bot.config.DISCORD_PREFIX
+        error_messages = {
+            exceptions.ArgumentError: f"{error}",
+            exceptions.NoTracksFound: f"{error}",
+            commands.CheckFailure: f"{error}",
+            commands.TooManyArguments: f"You used too many parameters for the command `{command}`. "
+                                       f"Use `{prefix}help {command}` for more information on what parameters to use.",
+            commands.BadArgument: f"I was unable to understand a parameter that you used for the command `{command}`. "
+                                  f"Use `{prefix}help {command}` for more information on what parameters to use.",
+            commands.BadUnionArgument: f"I was unable to understand a parameter that you used for the command `{command}`. "
+                                       f"Use `{prefix}help {command}` for more information on what parameters to use.",
+            commands.NoPrivateMessage: f"The command `{command}` can not be used in private messages.",
+            commands.NotOwner: f"The command `{command}` is owner only.",
+            commands.NSFWChannelRequired: f"The command `{command}` can only be ran in a NSFW channel.",
+            commands.DisabledCommand: f"The command `{command}` has been disabled.",
+        }
+        
+        error_message = error_messages.get(type(error))
+        
         if isinstance(error, commands.MissingRequiredArgument):
-            message = f"You missed the `{error.param}` parameter. You can use `{self.bot.config.DISCORD_PREFIX}help {ctx.command}` for more information on what parameters to pass."
-        if isinstance(error, commands.TooManyArguments):
-            message = f"You passed too many arguments to the command `{ctx.command}`. You can use `{ctx.prefix}help {ctx.command}` for more information on what arguments to pass."
-        if isinstance(error, commands.BadArgument):
-            message = f"You passed a bad argument to the command `{ctx.command}`."
-        if isinstance(error, commands.PrivateMessageOnly):
-            message = f"The command `{ctx.command}` can only be used in DM's."
-        if isinstance(error, commands.NotOwner):
-            message = f"The command `{ctx.command}` is owner only."
-        if isinstance(error, commands.DisabledCommand):
-            message = f"The command `{ctx.command}` is currently disabled."
-        if isinstance(error, granitepy.NoNodesAvailable):
-            message = "There are no nodes available."
-        if isinstance(error, commands.CommandNotFound):
-            return
+            error_message = f"You missed the `{error.param.name}` parameter for the command `{command}`. " \
+                            f"Use `{prefix}help {command}` for more information on what parameters to use."
+            
+        elif isinstance(error, commands.MissingPermissions):
+            permissions = "\n".join([f"> {permission}" for permission in error.missing_perms])
+            error_message = f"You are missing the following permissions required to run the command `{command}`.\n{permissions}"
+            
+        elif isinstance(error, commands.BotMissingPermissions):
+            permissions = "\n".join([f"> {permission}" for permission in error.missing_perms])
+            error_message = f"I am missing the following permissions required to run the command `{command}`.\n{permissions}"
+            
+        elif isinstance(error, commands.CommandOnCooldown):
+            cooldowns = {
+                commands.BucketType.default: f"The command `{command}` is on cooldown for the whole bot.",
+                commands.BucketType.user: f"The command `{command}` is on cooldown for you.",
+                commands.BucketType.guild: f"The command `{command}` is on cooldown for this server.",
+                commands.BucketType.channel: f"The command `{command}` is on cooldown for this channel.",
+                commands.BucketType.member: f"The command `{command}` is on cooldown for you.",
+                commands.BucketType.category: f"The command `{command}` is on cooldown for this channel category.",
+                commands.BucketType.role: f"The command `{command}` is on cooldown for your role."
+            }
+            error_message = f"{cooldowns[error.cooldown.type]} You can retry in `{self.bot.utils.format_time(error.retry_after, friendly=True)}`"
+            
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            cooldowns = {
+                commands.BucketType.default: f"The command `{command}` is already being ran at its maximum of {error.number} times per bot.",
+                commands.BucketType.user: f"The command `{command}` is already being ran at its maximum of {error.number} times per user.",
+                commands.BucketType.guild: f"The command `{command}` is already being ran at its maximum of {error.number} times per guild.",
+                commands.BucketType.channel: f"The command `{command}` is already being ran at its maximum of {error.number} times per channel.",
+                commands.BucketType.member: f"The command `{command}` is already being ran at its maximum of {error.number} times per member.",
+                commands.BucketType.category: f"The command `{command}` is already being ran at its maximum of {error.number} times per channel category.",
+                commands.BucketType.role: f"The command `{command}` is already being ran at its maximum of {error.number} times per role."
+            }
+            error_message = f"{cooldowns[error.per]} Retry a bit later."
 
-        if isinstance(error, commands.NoPrivateMessage):
+        if error_message:
             try:
-                message = f"The command `{ctx.command}` can not be used in DM's."
+                return await ctx.send(error_message)
             except discord.Forbidden:
-                return
-        if isinstance(error, commands.MissingPermissions):
-            missing_perms = ">>> \n"
-            for perm in error.missing_perms:
-                missing_perms += f"{perm}\n"
-            message = f"You don't have the following permissions required to run the command `{ctx.command}`.\n{missing_perms}"
-        if isinstance(error, commands.BotMissingPermissions):
-            missing_perms = ">>> \n"
-            for perm in error.missing_perms:
-                missing_perms += f"{perm}\n"
-            message = f"I am missing the following permissions to run the command `{ctx.command}`.\n{missing_perms}"
-        if isinstance(error, commands.CommandOnCooldown):
-            if error.cooldown.type == commands.BucketType.user:
-                message = f"The command `{ctx.command}` is on cooldown for you, retry in `{self.bot.utils.format_time(error.retry_after)}`."
-            if error.cooldown.type == commands.BucketType.guild:
-                message = f"The command `{ctx.command}` is on cooldown for this guild, retry in `{self.bot.utils.format_time(error.retry_after)}`."
-            if error.cooldown.type == commands.BucketType.default:
-                message = f"The command `{ctx.command}` is on cooldown for the whole bot, retry in `{self.bot.utils.format_time(error.retry_after)}`."
-
-        # If an error was found, send it.
-        if message:
-            return await ctx.send(message)
-
-        # Otherwise, print the original error as a traceback.
-        print(f"Ignoring exception in command {ctx.command}:")
+                try:
+                    return await ctx.author.send(error_message)
+                except discord.Forbidden:
+                    return
+        
         traceback.print_exception(type(error), error, error.__traceback__)
 
     @commands.Cog.listener()
