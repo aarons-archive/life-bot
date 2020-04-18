@@ -103,6 +103,9 @@ class Events(commands.Cog):
             }
             error_message = f"{cooldowns[error.per]} Retry a bit later."
 
+        elif isinstance(error, commands.CommandNotFound):
+            return
+
         if error_message:
             try:
                 return await ctx.send(error_message)
