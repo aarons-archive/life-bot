@@ -1,7 +1,7 @@
 *.pyc
 *.png
 *.ini
-Life/config.py
+Life/config/config.py
 
 .idea/
 venv/

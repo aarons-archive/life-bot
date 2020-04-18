@@ -2,6 +2,7 @@ import asyncio
 import collections
 import os
 import time
+import re
 
 import aiohttp
 import asyncpg
@@ -9,70 +10,29 @@ import discord
 import psutil
 from discord.ext import commands
 
-import config
-from cogs.utilities import exceptions, paginators
-from cogs.utilities.utils import Utils
-from cogs.voice.utilities.player import Player
+from cogs.utilities import utils
+from config import config
+from context import LifeContext
 
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 
-EXTENSIONS = [
-    "cogs.information",
-    "cogs.images",
-    "cogs.help",
-    "cogs.owner",
-    "jishaku",
-    "cogs.background",
-    "cogs.events",
-    "cogs.kross",
-    "cogs.voice.music",
-    "cogs.voice.playlists",
-    "cogs.osu"
-]
-
-
-class MyContext(commands.Context):
-
-    @property
-    def player(self):
-        
-        if not self.bot.is_ready():
-            raise exceptions.BotNotReadyError
-
-        return self.bot.granitepy.get_player(self.guild, cls=Player)
-
-    async def paginate(self, **kwargs):
-
-        return await paginators.Paginator(ctx=self, **kwargs).paginate()
-
-    async def paginate_embed(self, **kwargs):
-
-        return await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
-
-    async def paginate_codeblock(self, **kwargs):
-
-        return await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
-
-    async def paginate_embeds(self, **kwargs):
-
-        return await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
-
 
 class Life(commands.AutoShardedBot):
 
     def __init__(self):
-        super().__init__(
-            command_prefix=commands.when_mentioned_or(config.DISCORD_PREFIX),
-            reconnect=True,
-        )
+        super().__init__(command_prefix=commands.when_mentioned_or(config.PREFIX), reconnect=True)
 
         self.bot = self
         self.loop = asyncio.get_event_loop()
+        self.session = None
+
+        self.utils = utils.Utils(self.bot)
         self.process = psutil.Process()
-        self.boot_time = time.time()
+        self.start_time = time.time()
         self.config = config
+        self.db = None
 
         self.pings = collections.deque(maxlen=1440)
         self.socket_stats = collections.Counter()
@@ -80,49 +40,50 @@ class Life(commands.AutoShardedBot):
         self.guild_blacklist = {}
         self.user_blacklist = {}
 
-        self.utils = Utils(self.bot)
-        self.session = None
-        self.db = None
-
-        self.bot.add_check(self.check_can_run)
+        self.bot.add_check(self.can_run_command)
 
         self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
         self.voice_perms = discord.Permissions(permissions=self.general_perms.value, connect=True, speak=True)
+        
+        self.clean_content = commands.clean_content()
+        self.image_url_regex = re.compile("(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:jpe?g|gif|png))(?:\?([^#]*))?(?:#(.*))?")
 
-        for extension in EXTENSIONS:
+    @property
+    def uptime(self):
+
+        return round(time.time() - self.start_time)
+
+    async def load_database(self):
+        
+        try:
+            self.db = await asyncpg.create_pool(**self.config.DATABASE)
+            print(f"\n[DB] Connected to the database.")
+
+            blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
+            for user in blacklisted_users:
+                self.user_blacklist[user["id"]] = user["reason"]
+            print(f"\n[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]")
+            
+            blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
+            for guild in blacklisted_guilds:
+                self.guild_blacklist[guild["id"]] = guild["reason"]
+            print(f"[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n")
+
+        except ConnectionRefusedError:
+            print(f"\n[DB] Connection to the database was denied.")
+        except Exception as e:
+            print(f"\n[DB] An error occurred: {e}")
+            
+    async def load_extensions(self):
+        
+        for extension in self.config.EXTENSIONS:
             try:
                 self.load_extension(extension)
                 print(f"[EXT] Success - {extension}")
             except commands.ExtensionNotFound:
                 print(f"[EXT] Failed - {extension}")
 
-    @property
-    def uptime(self):
-
-        return round(time.time() - self.boot_time)
-
-    async def initiate_database(self):
-
-        try:
-            self.db = await asyncpg.create_pool(**self.config.DB_CONN_INFO)
-            print(f"\n[DB] Connected to database.")
-
-            blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
-            for user in blacklisted_users:
-                self.user_blacklist[user["id"]] = user["reason"]
-            print(f"[DB] Loaded user blacklist. ({len(blacklisted_users)} users)")
-            
-            blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
-            for guild in blacklisted_guilds:
-                self.guild_blacklist[guild["id"]] = guild["reason"]
-            print(f"[DB] Loaded guild blacklist. ({len(blacklisted_guilds)} guilds)")
-
-        except ConnectionRefusedError:
-            print(f"\n[DB] Connection to the database was denied.")
-        except Exception as e:
-            print(f"\n[DB] An error occurred: {e}")
-
-    async def get_context(self, message, *, cls=MyContext):
+    async def get_context(self, message, *, cls=LifeContext):
 
         return await super().get_context(message, cls=cls)
 
@@ -143,7 +104,7 @@ class Life(commands.AutoShardedBot):
 
         await self.process_commands(message)
         
-    async def check_can_run(self, ctx):
+    async def can_run_command(self, ctx: commands.Context):
         
         if not ctx.guild:
             raise commands.NoPrivateMessage()
@@ -162,16 +123,20 @@ class Life(commands.AutoShardedBot):
         return True
 
     async def bot_start(self):
-
+        
         self.session = aiohttp.ClientSession(loop=self.loop)
-        await self.initiate_database()
-        await self.login(config.DISCORD_TOKEN)
-        await self.connect()
+        await self.load_extensions()
+        await self.load_database()
 
+        await self.login(token=config.TOKEN)
+        await self.connect()
+        
     async def bot_close(self):
 
+        await self.logout()
+        
         await self.session.close()
-        await self.close()
+        self.loop.close()
 
     def run(self):
 
@@ -179,7 +144,7 @@ class Life(commands.AutoShardedBot):
             self.loop.run_until_complete(self.bot_start())
         except KeyboardInterrupt:
             self.loop.run_until_complete(self.bot_close())
-
+        
 
 if __name__ == "__main__":
     Life().run()
