@@ -1,8 +1,9 @@
 import asyncio
 import collections
 import os
-import time
 import re
+import time
+import signal
 
 import aiohttp
 import asyncpg
@@ -13,7 +14,6 @@ from discord.ext import commands
 from cogs.utilities import utils
 from config import config
 from context import LifeContext
-
 
 os.environ["JISHAKU_HIDE"] = "True"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
@@ -53,49 +53,9 @@ class Life(commands.AutoShardedBot):
 
         return round(time.time() - self.start_time)
 
-    async def load_database(self):
-        
-        try:
-            self.db = await asyncpg.create_pool(**self.config.DATABASE)
-            print(f"\n[DB] Connected to the database.")
-
-            blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
-            for user in blacklisted_users:
-                self.user_blacklist[user["id"]] = user["reason"]
-            print(f"\n[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]")
-            
-            blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
-            for guild in blacklisted_guilds:
-                self.guild_blacklist[guild["id"]] = guild["reason"]
-            print(f"[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n")
-
-        except ConnectionRefusedError:
-            print(f"\n[DB] Connection to the database was denied.")
-        except Exception as e:
-            print(f"\n[DB] An error occurred: {e}")
-            
-    async def load_extensions(self):
-        
-        for extension in self.config.EXTENSIONS:
-            try:
-                self.load_extension(extension)
-                print(f"[EXT] Success - {extension}")
-            except commands.ExtensionNotFound:
-                print(f"[EXT] Failed - {extension}")
-
     async def get_context(self, message, *, cls=LifeContext):
 
         return await super().get_context(message, cls=cls)
-
-    async def on_message_edit(self, before, after):
-
-        if before.content == after.content:
-            return
-
-        if before.author.bot:
-            return
-
-        await self.process_commands(after)
 
     async def on_message(self, message):
 
@@ -103,7 +63,17 @@ class Life(commands.AutoShardedBot):
             return
 
         await self.process_commands(message)
-        
+
+    async def on_message_edit(self, before, after):
+
+        if before.author.bot:
+            return
+
+        if before.content == after.content:
+            return
+
+        await self.process_commands(after)
+
     async def can_run_command(self, ctx: commands.Context):
         
         if not ctx.guild:
@@ -122,6 +92,36 @@ class Life(commands.AutoShardedBot):
         
         return True
 
+    async def load_extensions(self):
+
+        for extension in self.config.EXTENSIONS:
+            try:
+                self.load_extension(extension)
+                print(f"[EXT] Success - {extension}")
+            except commands.ExtensionNotFound:
+                print(f"[EXT] Failed - {extension}")
+
+    async def load_database(self):
+
+        try:
+            self.db = await asyncpg.create_pool(**self.config.DATABASE)
+            print(f"\n[DB] Connected to the database.")
+
+            blacklisted_users = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
+            for user in blacklisted_users:
+                self.user_blacklist[user["id"]] = user["reason"]
+            print(f"\n[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]")
+
+            blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
+            for guild in blacklisted_guilds:
+                self.guild_blacklist[guild["id"]] = guild["reason"]
+            print(f"[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n")
+
+        except ConnectionRefusedError:
+            print(f"\n[DB] Connection to the database was denied.")
+        except Exception as e:
+            print(f"\n[DB] An error occurred: {e}")
+
     async def bot_start(self):
         
         self.session = aiohttp.ClientSession(loop=self.loop)
@@ -134,17 +134,35 @@ class Life(commands.AutoShardedBot):
     async def bot_close(self):
 
         await self.logout()
-        
+
         await self.session.close()
-        self.loop.close()
 
     def run(self):
 
         try:
-            self.loop.run_until_complete(self.bot_start())
+            self.loop.add_signal_handler(signal.SIGINT, lambda: self.loop.stop())
+            self.loop.add_signal_handler(signal.SIGTERM, lambda: self.loop.stop())
+        except NotImplementedError:
+            pass
+
+        async def runner():
+            try:
+                await self.bot_start()
+            finally:
+                await self.bot_close()
+
+        def stop_loop_on_completion(f):
+            self.loop.stop()
+
+        future = asyncio.ensure_future(runner(), loop=self.loop)
+        future.add_done_callback(stop_loop_on_completion)
+        try:
+            self.loop.run_forever()
         except KeyboardInterrupt:
-            self.loop.run_until_complete(self.bot_close())
-        
+            pass
+        finally:
+            future.remove_done_callback(stop_loop_on_completion)
+
 
 if __name__ == "__main__":
     Life().run()
