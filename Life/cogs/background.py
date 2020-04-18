@@ -9,33 +9,28 @@ class Background(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.current_presence = 0
         self.bot.presences = []
+        self.current_presence = 0
 
         self.change_presence.start()
         self.log_bot_growth.start()
-        self.log_ping.start()
-
-    def cog_unload(self):
-
-        self.change_presence.stop()
-        self.log_bot_growth.stop()
-        self.log_ping.stop()
+        self.log_bot_ping.start()
 
     @tasks.loop(minutes=30.0)
     async def change_presence(self):
 
-        presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
-                     discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
-                     discord.Activity(type=discord.ActivityType.playing,  name=f"{self.bot.config.DISCORD_PREFIX}help")]
+        self.bot.presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
+                              discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
+                              discord.Activity(type=discord.ActivityType.playing,  name=f"{self.bot.config.PREFIX}help")]
 
-        await self.bot.change_presence(activity=presences[self.current_presence])
-        self.current_presence = (self.current_presence + 1) % len(presences)
+        await self.bot.change_presence(activity=self.bot.presences[self.current_presence])
+        self.current_presence = (self.current_presence + 1) % len(self.bot.presences)
 
     @change_presence.before_loop
     async def before_change_presence(self):
 
         await self.bot.wait_until_ready()
+        print("[BACKGROUND] Started change presence task.")
 
     @tasks.loop(hours=1.0)
     async def log_bot_growth(self):
@@ -47,16 +42,18 @@ class Background(commands.Cog):
     async def before_log_bot_growth(self):
 
         await self.bot.wait_until_ready()
+        print("[BACKGROUND] Started log bot growth task.")
 
     @tasks.loop(minutes=1.0)
-    async def log_ping(self):
+    async def log_bot_ping(self):
 
         self.bot.pings.append((datetime.now().strftime('%m-%d: %H:%M'), round(self.bot.latency * 1000)))
 
-    @log_ping.before_loop
-    async def before_log_ping(self):
+    @log_bot_ping.before_loop
+    async def before_log_bot_ping(self):
 
         await self.bot.wait_until_ready()
+        print("[BACKGROUND] Started log bot ping task.")
 
 
 def setup(bot):
