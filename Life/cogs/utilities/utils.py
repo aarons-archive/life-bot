@@ -50,6 +50,7 @@ class Utils:
                     continue
                 file_amount += 1
 
+                # noinspection PyArgumentEqualDefault
                 with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as files_lines:
                     for line in files_lines:
                         line = line.strip()
@@ -84,9 +85,9 @@ class Utils:
             formatted = f"{days}d {hours}h {minutes}m {seconds}s"
         else:
             formatted = f"{minutes:02d}:{seconds:02d}"
-            if hours is not 0:
+            if not hours == 0:
                 formatted = f"{hours:02d}:{formatted}"
-            if days is not 0:
+            if not days == 0:
                 formatted = f"{days:02d}:{formatted}"
 
         return formatted

@@ -325,5 +325,6 @@ class Images(commands.Cog):
             embed.set_footer(text=f"Degree: {degree}")
             return await ctx.send(file=file, embed=embed)
 
+
 def setup(bot):
     bot.add_cog(Images(bot))

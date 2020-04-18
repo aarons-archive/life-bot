@@ -72,7 +72,7 @@ class Paginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        self.message = await self.ctx.send(f"{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}")
+        self.message = await self.ctx.send(f"{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}")
         await self.react()
 
         while self.looping:
@@ -100,7 +100,7 @@ class Paginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}")
+        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}")
 
     async def page_backward(self):
 
@@ -113,7 +113,7 @@ class Paginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}")
+        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}")
 
     async def page_forward(self):
 
@@ -126,7 +126,7 @@ class Paginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}")
+        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}")
 
     async def page_last(self):
 
@@ -136,7 +136,7 @@ class Paginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}")
+        await self.message.edit(content=f"{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}")
 
 
 class CodeBlockPaginator(BasePaginator):
@@ -161,7 +161,7 @@ class CodeBlockPaginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        self.message = await self.ctx.send(f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}\n```")
+        self.message = await self.ctx.send(f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```")
 
         await self.react()
 
@@ -189,7 +189,7 @@ class CodeBlockPaginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}\n```")
+        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```")
 
     async def page_backward(self):
 
@@ -202,7 +202,7 @@ class CodeBlockPaginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}\n```")
+        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```")
 
     async def page_forward(self):
 
@@ -215,7 +215,7 @@ class CodeBlockPaginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}\n```")
+        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```")
 
     async def page_last(self):
 
@@ -225,7 +225,7 @@ class CodeBlockPaginator(BasePaginator):
         if len(self.footer) == 0:
             footer = f"\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}"
 
-        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) is 0 else self.footer}\n```")
+        await self.message.edit(content=f"```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```")
 
 
 class EmbedPaginator(BasePaginator):

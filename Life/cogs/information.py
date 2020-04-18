@@ -1,11 +1,11 @@
 import inspect
 import os
 from datetime import datetime
-from tabulate import tabulate
 
 import discord
 import psutil
 from discord.ext import commands
+from tabulate import tabulate
 
 
 class Information(commands.Cog):
@@ -152,7 +152,7 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name="guildinfo", aliases=["serverinfo", "guild", "server"])
+    @commands.command(name="serverinfo", aliases=["server", "guildinfo", "guild"])
     async def serverinfo(self, ctx):
         """
         Get information about the current server.

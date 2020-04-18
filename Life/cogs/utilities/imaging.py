@@ -23,6 +23,7 @@ def floor(image: typing.Union[Image, SingleImage]):
                  image.height, image.width, 800, 1000)
     image.distort('perspective', arguments)
 
+
 def colorize(image: typing.Union[Image, SingleImage], color: str):
 
     hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(color)
@@ -33,79 +34,97 @@ def colorize(image: typing.Union[Image, SingleImage], color: str):
         with Color("rgb(50%, 50%, 50%)") as image_alpha:
             image.colorize(color=image_color, alpha=image_alpha)
 
+
 def solarize(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.solarize(threshold=threshold * image.quantum_range)
+
 
 def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
 
     image.sketch(radius=radius, sigma=sigma, angle=angle)
 
+
 def implode(image: typing.Union[Image, SingleImage], amount: float):
 
     image.implode(amount=amount)
+
 
 def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.sepia_tone(threshold=threshold)
 
+
 def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
 
     image.polaroid(angle=angle, caption=caption)
+
 
 def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
 
     image.vignette(sigma=sigma, x=x, y=y)
 
+
 def swirl(image: typing.Union[Image, SingleImage], degree: int):
 
     image.swirl(degree=degree)
+
 
 def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.charcoal(radius=radius, sigma=sigma)
 
+
 def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
 
     image.noise(method, attenuate=attenuate)
+
 
 def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
 
     image.blue_shift(factor=factor)
 
+
 def spread(image: typing.Union[Image, SingleImage], radius: float):
 
     image.spread(radius=radius)
+
 
 def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
 
+
 def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.kuwahara(radius=radius, sigma=sigma)
+
 
 def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.emboss(radius=radius, sigma=sigma)
 
+
 def edge(image: typing.Union[Image, SingleImage], radius: float):
 
     image.edge(radius=radius)
+
 
 def flip(image: typing.Union[Image, SingleImage]):
 
     image.flip()
 
+
 def flop(image: typing.Union[Image, SingleImage]):
 
     image.flop()
 
+
 def rotate(image: typing.Union[Image, SingleImage], degree: float):
 
     image.rotate(degree=degree)
-    
-    
+
+
 image_operations = {
     "floor": floor,
     "colorize": colorize,
@@ -169,9 +188,9 @@ class Imaging:
         except commands.BadArgument:
             pass
 
-        check_if_url = re.compile("(?:[^:/?#]+):?(?://[^/?#]*)?[^?#]*\.(?:|gif|png)(?:\?[^#]*)?(?:#.*)?").match(argument)
+        check_if_url = self.bot.image_url_regex.match(argument)
         if check_if_url is None:
-            raise exceptions.ArgumentError("You provided an invalid argument. Please provide an Image URL or a Members name, id or mention")
+            raise exceptions.ArgumentError("You provided an invalid argument. Please provide Members name, id or mention or an image url.")
 
         return argument
 
@@ -265,29 +284,29 @@ class Imaging:
         return buffer
 
     def do_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
-        
+
         buffer = io.BytesIO()
         online_count, idle_count, dnd_count, offline_count, streaming_count = self.bot.utils.guild_user_status(ctx.guild, all_guilds=all_guilds)
         total = online_count + idle_count + dnd_count + offline_count
 
         if graph_type == "pie":
-        
+
             online_percent = round((online_count / total) * 100, 2)
             idle_percent = round((idle_count / total) * 100, 2)
             dnd_percent = round((dnd_count / total) * 100, 2)
             offline_percent = round((offline_count / total) * 100, 2)
             streaming_percent = round((streaming_count / total) * 100, 2)
-    
+
             labels = [f"{online_percent}%", f"{idle_percent}%", f"{dnd_percent}%", f"{offline_percent}%", f"{streaming_percent}%"]
             sizes = [online_count, idle_count, dnd_count, offline_count, streaming_count]
             colors = ["#7acba6", "#fcc15d", "#f57e7e", "#9ea4af", "#593695"]
-            
+
             plt.clf()
             figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect="equal"))
-            
+
             axes.pie(sizes, colors=colors, startangle=90)
             axes.legend(labels, loc="center right", title="Status's")
-            
+
             if all_guilds is True:
                 axes.set_title(f"Percentage of members per status across all guilds.")
             else:
@@ -295,12 +314,12 @@ class Imaging:
 
             axes.axis("equal")
             plt.tight_layout()
-            
+
             plt.savefig(buffer)
             plt.close()
-            
+
         if graph_type == "bar":
-            
+
             labels = ["Online", "Idle", "DnD", "Offline", "Streaming"]
             values = [online_count, idle_count, dnd_count, offline_count, streaming_count]
             colors = ["#7acba6", "#fcc15d", "#f57e7e", "#9ea4af", "#593695"]
@@ -319,14 +338,14 @@ class Imaging:
             for bar in bar_chart:
                 height = bar.get_height()
                 plt.annotate('{}'.format(height), xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 2), textcoords="offset points", ha='center')
-                
+
             plt.minorticks_on()
             plt.grid(which="both", axis="y", zorder=0)
-            
+
             plt.tight_layout()
-            
+
             plt.savefig(buffer)
             plt.close()
-            
+
         buffer.seek(0)
         return buffer

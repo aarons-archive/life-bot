@@ -16,7 +16,7 @@ class Events(commands.Cog):
 
         self.bot.log_channel = self.bot.get_channel(697324016658022441)
 
-        print(f"\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}")
+        print(f"\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}\n")
         if self.bot.user.id == 628284183579721747:
             await self.bot.log_channel.send(f"The bot is now ready. Logged in as: `{self.bot.user}` - `{self.bot.user.id}`")
 
@@ -46,11 +46,12 @@ class Events(commands.Cog):
         
         error = getattr(error, "original", error)
         command = ctx.command
-        prefix = self.bot.config.DISCORD_PREFIX
+        prefix = self.bot.config.PREFIX
         error_messages = {
             exceptions.BotNotReadyError: f"The bot is not ready yet.",
             exceptions.ArgumentError: f"{error}",
             exceptions.NoTracksFound: f"{error}",
+            exceptions.NoTracksToRemove: f"{error}",
             commands.CheckFailure: f"{error}",
             commands.TooManyArguments: f"You used too many parameters for the command `{command}`. "
                                        f"Use `{prefix}help {command}` for more information on what parameters to use.",

@@ -38,7 +38,7 @@ class HelpCommand(commands.HelpCommand):
 
     def get_command(self, command, aliases, short_name):
 
-        command_name = f"{self.context.bot.config.DISCORD_PREFIX}"
+        command_name = f"{self.context.bot.config.PREFIX}"
 
         command_parents = command.parents
         for command_parent in command_parents[::-1]:
@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"__{ctx.bot.user.name}'s help page__",
-            description=f"Use `{ctx.bot.config.DISCORD_PREFIX}help [Command/Category]` for more info on a command or category.\n"
+            description=f"Use `{ctx.bot.config.PREFIX}help [Command/Category]` for more info on a command or category.\n"
         )
 
         def key(e):

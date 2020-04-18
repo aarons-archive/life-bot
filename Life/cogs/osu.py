@@ -1,10 +1,9 @@
 
 import typing
 
+import aiOsu
 import discord
 from discord.ext import commands
-
-import aiOsu
 
 
 class Osu(commands.Cog):
