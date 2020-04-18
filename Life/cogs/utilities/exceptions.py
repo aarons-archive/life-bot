@@ -20,3 +20,7 @@ class NoTracksFound(LifeVoiceError):
     """Raised when a search for tracks return nothing."""
     
 
+class NoTracksToRemove(LifeVoiceError):
+    """Raised when there are no tracks in a playlist to remove based on a search."""
+    
+
