@@ -63,8 +63,26 @@ class Owner(commands.Cog):
         Base command for blacklisting.
         """
 
-        # TODO Add exception here.
-        return await ctx.send(f"Please choose a valid subcommand. See `{self.bot.config.DISCORD_PREFIX}help blacklist` for more information.")
+        return await ctx.send(f"Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help blacklist` for more information.")
+
+    @commands.is_owner()
+    @blacklist.group(name="reload", hidden=True)
+    async def blacklist_reload(self, ctx):
+        """
+        Reload the bot's blacklist.
+        """
+
+        blacklisted_users = await self.bot.db.fetch("SELECT * FROM blacklist WHERE type = $1", "user")
+        for user in blacklisted_users:
+            self.bot.user_blacklist[user["id"]] = user["reason"]
+        print(f"\n[BLACKLIST] Reloaded user blacklist. [{len(blacklisted_users)} users]")
+
+        blacklisted_guilds = await self.bot.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
+        for guild in blacklisted_guilds:
+            self.bot.guild_blacklist[guild["id"]] = guild["reason"]
+        print(f"[BLACKLIST] Reloaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n")
+
+        return await ctx.send("Reloaded the blacklists.")
 
     @commands.is_owner()
     @blacklist.group(name="user", hidden=True, invoke_without_command=True)
