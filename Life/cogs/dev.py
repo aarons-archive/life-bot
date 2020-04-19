@@ -5,7 +5,6 @@ import asyncpg
 import discord
 import humanize
 import pkg_resources
-import psutil
 import setproctitle
 from discord.ext import commands
 
@@ -25,77 +24,105 @@ class Dev(commands.Cog):
     @commands.group(name="dev", hidden=True, invoke_without_command=True)
     async def dev(self, ctx):
         """
-        Base command for Life developer commands.
+        Base command for bot developer commands.
+
+        Displays a message with stats about the bot.
         """
 
-        embed = discord.Embed(title=f"{self.bot.user.name} bot information page.", colour=0xF5F5F5)
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        discordpy_version = pkg_resources.get_distribution('discord.py').version
+        platform = sys.platform
+        process_name = setproctitle.getproctitle()
+        process_id = self.bot.process.pid
+        thread_count = self.bot.process.num_threads()
 
-        embed.description = f"I am running on the python version **{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}** " \
-                            f"on the OS **{sys.platform}** using the discord.py version **{pkg_resources.get_distribution('discord.py').version}**. " \
-                            f"The process is running as **{setproctitle.getproctitle()}** on PID **{self.bot.process.pid}** and is " \
-                            f"using **{self.bot.process.num_threads()}** threads.\n\n"
+        description = [f"I am running on the python version **{python_version}** on the OS **{platform}** "
+                       f"using the discord.py version **{discordpy_version}**. "
+                       f"The process is running as **{process_name}** on PID **{process_id}** and is using "
+                       f"**{thread_count}** threads."]
 
-        summary = f"**{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users."
         if isinstance(self.bot, commands.AutoShardedBot):
-            embed.description += f"The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see {summary}\n\n"
+            description.append(f"The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can "
+                               f"see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.")
         else:
-            embed.description += f"The bot is not sharded and can see {summary}\n\n"
+            description.append(f"The bot is not sharded and can see **{len(self.bot.guilds)}** guilds and "
+                               f"**{len(self.bot.users)}** users.")
 
         with self.bot.process.oneshot():
 
-            memory_usage = self.bot.process.memory_full_info()
+            memory_info = self.bot.process.memory_full_info()
+            physical_memory = humanize.naturalsize(memory_info.rss)
+            virtual_memory = humanize.naturalsize(memory_info.vms)
+            unique_memory = humanize.naturalsize(memory_info.uss)
             cpu_usage = self.bot.process.cpu_percent(interval=None)
 
-            embed.description += f"The process is using " \
-                                 f"**{humanize.naturalsize(memory_usage.rss)}** of physical memory, " \
-                                 f"**{humanize.naturalsize(memory_usage.vms)}** of virtual memory and " \
-                                 f"**{humanize.naturalsize(memory_usage.uss)}** of memory that is unique " \
-                                 f"to the process. It is also using **{cpu_usage}%** of CPU across " \
-                                 f"**{psutil.cpu_count(logical=False)}** cores."
+            description.append(f"The process is using **{physical_memory}** of physical memory, **{virtual_memory}** "
+                               f"of virtual memory and **{unique_memory}** of memory that is unique to the process. "
+                               f"It is also using **{cpu_usage}%** of CPU.")
+
+        embed = discord.Embed(title=f"{self.bot.user.name} bot information page.", colour=0xF5F5F5)
+        embed.description = "\n\n".join(description)
 
         return await ctx.send(embed=embed)
+
+    @dev.command(name="cleanup", hidden=True)
+    async def dev_cleanup(self, ctx, limit: int = 50):
+        """
+        Deletes the bot's messages in the current channel.
+
+        `limit`: The amount of messages to check. Defaults to 50
+        """
+
+        messages = await ctx.channel.purge(limit=limit, check=lambda m: m.author == ctx.guild.me,
+                                           bulk=ctx.channel.permissions_for(ctx.guild.me).manage_messages)
+
+        return await ctx.send(f"I found and deleted `{len(messages)}` of my "
+                              f"message(s) out of the last `{limit}` message(s).")
 
     @dev.command(name="guilds", hidden=True)
     async def dev_guilds(self, ctx, guilds_per_page: int = 20):
         """
-        Display a list of guilds with the percentage of bots to normal accounts in them.
+        Displays a list of guilds with the percentage of bots to members in them.
 
         `guilds_per_page`: The amount of guilds to show per page.
         """
 
-        def key(guild_check):
-            guild_bots = sum(1 for m in guild_check.members if m.bot)
-            guild_members = len(guild_check.members)
-            return round((guild_bots / guild_members) * 100, 2)
-
         entries = []
 
-        for guild in sorted(self.bot.guilds, key=key, reverse=True):
+        for guild in sorted(self.bot.guilds, reverse=True,
+                            key=lambda g: (sum(1 for m in g.members if m.bot) / len(g.members)) * 100):
 
             total = len(guild.members)
+            members = sum(1 for m in guild.members if not m.bot)
             bots = sum(1 for m in guild.members if m.bot)
-            humans = sum(1 for m in guild.members if not m.bot)
-            bot_percent = f"{round((bots / total) * 100, 2)}%"
+            percent_bots = f"{round((bots / total) * 100, 2)}%"
 
-            entries.append(f"{guild.id} |{total:<9}|{humans:<9}|{bots:<9}|{bot_percent:9}|{guild.name}")
+            entries.append(f"{guild.id} |{total:<9}|{members:<9}|{bots:<9}|{percent_bots:9}|{guild.name}")
 
-        header = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
+        header = "Guild id           |Total    |Members  |Bots     |Percent  |Name\n"
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, header=header)
 
     @dev.command(name="socketstats", aliases=["ss"], hidden=True)
     async def dev_socket_stats(self, ctx):
         """
-        Display a list of events and how many times they have been received since startup.
+        Displays a list of socket event counts since startup.
         """
 
+        event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(),
+                                                     key=lambda kv: kv[1], reverse=True))
+        events_total = sum(event_stats.values())
+        events_per_second = round(events_total / self.bot.uptime)
+
+        description = [f"```py\n"
+                       f"{events_total} socket events observed at a rate of {events_per_second} per second.\n"]
+
+        for event, count in event_stats.items():
+            description.append(f"{event:28} | {count}")
+
+        description.append("```")
+
         embed = discord.Embed(title=f"{self.bot.user.name} bot socket-stats.", colour=0xF5F5F5)
-
-        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
-
-        embed.description = f"```py\n{sum(socket_stats.values())} socket events observed at a rate of {round(sum(socket_stats.values()) / self.bot.uptime)} per second.\n\n"
-        for event, count in socket_stats.items():
-            embed.description += f"{event:28} | {count}\n"
-        embed.description += "```"
+        embed.description = "\n".join(description)
 
         return await ctx.send(embed=embed)
 
@@ -105,7 +132,8 @@ class Dev(commands.Cog):
         Base command for blacklisting.
         """
 
-        return await ctx.send(f"Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help dev blacklist` for more information.")
+        return await ctx.send(f"Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help dev blacklist` "
+                              f"for more information.")
 
     @dev_blacklist.command(name="reload", hidden=True)
     async def dev_blacklist_reload(self, ctx):
@@ -145,19 +173,17 @@ class Dev(commands.Cog):
             else:
                 blacklisted.append(f"{user.name} - {user.id} - Reason: {entry['reason']}")
 
-        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
+        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10,
+                                            title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
 
     @dev_blacklist_user.command(name="add", hidden=True)
-    async def dev_blacklist_user_add(self, ctx, user: int = None, *, reason: str = None):
+    async def dev_blacklist_user_add(self, ctx, user: int = None, *, reason: str = "No reason"):
         """
         Add a user to the blacklist.
 
         `user`: The users id.
         `reason`: Why the user is blacklisted.
         """
-
-        if not reason:
-            reason = "No reason"
 
         if len(reason) > 512:
             return await ctx.caution("The reason can't be more than 512 characters.")
@@ -168,7 +194,7 @@ class Dev(commands.Cog):
         try:
             user = await self.bot.fetch_user(user)
             self.bot.user_blacklist[user.id] = reason
-            await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", user.id, "user", reason)
+            await self.bot.db.execute("INSERT INTO blacklist VALUES ($1, $2, $3)", user.id, "user", reason)
             return await ctx.send(f"User: `{user.name} - {user.id}` has been blacklisted with reason `{reason}`")
 
         except asyncpg.UniqueViolationError:
@@ -213,19 +239,17 @@ class Dev(commands.Cog):
             else:
                 blacklisted.append(f"{guild.name} - {guild.id} - Reason: {entry['reason']}")
 
-        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
+        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10,
+                                            title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
 
     @dev_blacklist_guild.command(name="add", hidden=True)
-    async def dev_blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = None):
+    async def dev_blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = "No reason"):
         """
         Add a guild to the blacklist.
 
         `user`: The guilds id.
         `reason`: Why the guild is blacklisted.
         """
-
-        if not reason:
-            reason = "No reason"
 
         if len(reason) > 512:
             return await ctx.caution("The reason can't be more than 512 characters.")
@@ -236,7 +260,7 @@ class Dev(commands.Cog):
         try:
 
             self.bot.user_blacklist[guild] = reason
-            await self.bot.db.execute("INSERT INTO blacklist (id, type, reason) VALUES ($1, $2, $3)", guild, "guild", reason)
+            await self.bot.db.execute("INSERT INTO blacklist VALUES ($1, $2, $3)", guild, "guild", reason)
 
             try:
                 guild = await self.bot.fetch_guild(guild)
