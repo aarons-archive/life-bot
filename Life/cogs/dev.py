@@ -17,15 +17,23 @@ class Dev(commands.Cog):
 
         setproctitle.setproctitle("LifeBot")
 
-    @commands.is_owner()
-    @commands.group(name="dev", hidden=True)
-    async def dev(self, ctx):
+    async def cog_check(self, ctx):
+        if ctx.author.id in self.bot.owner_ids:
+            return True
+        return False
 
-        embed = discord.Embed(title=f"{self.bot.user.name} bot information page.", description="")
-        embed.description += f"I am running on the python version **{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}** " \
-                             f"on the OS **{sys.platform}** using the discord.py version **{pkg_resources.get_distribution('discord.py').version}**. " \
-                             f"The process is running as **{setproctitle.getproctitle()}** on PID **{self.bot.process.pid}** and is " \
-                             f"using **{self.bot.process.num_threads()}** threads.\n\n"
+    @commands.group(name="dev", hidden=True, invoke_without_command=True)
+    async def dev(self, ctx):
+        """
+        Base command for Life developer commands.
+        """
+
+        embed = discord.Embed(title=f"{self.bot.user.name} bot information page.", colour=0xF5F5F5)
+
+        embed.description = f"I am running on the python version **{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}** " \
+                            f"on the OS **{sys.platform}** using the discord.py version **{pkg_resources.get_distribution('discord.py').version}**. " \
+                            f"The process is running as **{setproctitle.getproctitle()}** on PID **{self.bot.process.pid}** and is " \
+                            f"using **{self.bot.process.num_threads()}** threads.\n\n"
 
         summary = f"**{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users."
         if isinstance(self.bot, commands.AutoShardedBot):
@@ -33,47 +41,26 @@ class Dev(commands.Cog):
         else:
             embed.description += f"The bot is not sharded and can see {summary}\n\n"
 
-        try:
+        with self.bot.process.oneshot():
 
-            with self.bot.process.oneshot():
-                memory_info = self.bot.process.memory_full_info()
-                cpu_usage = self.bot.process.cpu_percent(interval=None)
-                embed.description += f"The process is using " \
-                                     f"**{humanize.naturalsize(memory_info.rss)}** of physical memory, " \
-                                     f"**{humanize.naturalsize(memory_info.vms)}** of virtual memory and " \
-                                     f"**{humanize.naturalsize(memory_info.uss)}** of memory that is unique " \
-                                     f"to the process. It is also using **{cpu_usage}%** of CPU across " \
-                                     f"**{psutil.cpu_count(logical=False)}** cores."
+            memory_usage = self.bot.process.memory_full_info()
+            cpu_usage = self.bot.process.cpu_percent(interval=None)
 
-        except psutil.AccessDenied:
-            embed.description += f"I am unable to provide memory and cpu usage data as the " \
-                                 f"process is not running as administrator on windows (maybe)"
+            embed.description += f"The process is using " \
+                                 f"**{humanize.naturalsize(memory_usage.rss)}** of physical memory, " \
+                                 f"**{humanize.naturalsize(memory_usage.vms)}** of virtual memory and " \
+                                 f"**{humanize.naturalsize(memory_usage.uss)}** of memory that is unique " \
+                                 f"to the process. It is also using **{cpu_usage}%** of CPU across " \
+                                 f"**{psutil.cpu_count(logical=False)}** cores."
 
         return await ctx.send(embed=embed)
 
-    @commands.is_owner()
-    @commands.command(name="socketstats", aliases=["ss"], hidden=True)
-    async def socket_stats(self, ctx):
+    @dev.command(name="guilds", hidden=True)
+    async def dev_guilds(self, ctx, guilds_per_page: int = 20):
         """
-        Display a list of all socket events since startup.
-        """
+        Display a list of guilds with the percentage of bots to normal accounts in them.
 
-        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
-        total_events = sum(socket_stats.values())
-
-        message = f"```py\n{total_events} socket events observed at a rate of {round(total_events / self.bot.uptime)} per second\n\n"
-        for event, count in socket_stats.items():
-            message += f"{event:28} | {count}\n"
-        message += "```"
-        return await ctx.send(message)
-
-    @commands.is_owner()
-    @commands.command(name="guilds", hidden=True)
-    async def guilds(self, ctx, guilds_per_page: int = 20):
-        """
-        Display a list of guilds with the amount of bots and normal accounts in them.
-
-        `guilds_per_page`: How many guilds to show per page.
+        `guilds_per_page`: The amount of guilds to show per page.
         """
 
         def key(guild_check):
@@ -87,27 +74,41 @@ class Dev(commands.Cog):
 
             total = len(guild.members)
             bots = sum(1 for m in guild.members if m.bot)
-            members = sum(1 for m in guild.members if not m.bot)
+            humans = sum(1 for m in guild.members if not m.bot)
             bot_percent = f"{round((bots / total) * 100, 2)}%"
 
-            message = f"{guild.id} |{total:<9}|{members:<9}|{bots:<9}|{bot_percent:9}|{guild.name}"
-            entries.append(message)
+            entries.append(f"{guild.id} |{total:<9}|{humans:<9}|{bots:<9}|{bot_percent:9}|{guild.name}")
 
         header = "Guild id           |Total    |Humans   |Bots     |Percent  |Name\n"
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds_per_page, header=header)
 
-    @commands.is_owner()
-    @commands.group(name="blacklist", hidden=True, invoke_without_command=True)
-    async def blacklist(self, ctx):
+    @dev.command(name="socketstats", aliases=["ss"], hidden=True)
+    async def dev_socket_stats(self, ctx):
+        """
+        Display a list of events and how many times they have been received since startup.
+        """
+
+        embed = discord.Embed(title=f"{self.bot.user.name} bot socket-stats.", colour=0xF5F5F5)
+
+        socket_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
+
+        embed.description = f"```py\n{sum(socket_stats.values())} socket events observed at a rate of {round(sum(socket_stats.values()) / self.bot.uptime)} per second.\n\n"
+        for event, count in socket_stats.items():
+            embed.description += f"{event:28} | {count}\n"
+        embed.description += "```"
+
+        return await ctx.send(embed=embed)
+
+    @dev.group(name="blacklist", aliases=["bl"], hidden=True, invoke_without_command=True)
+    async def dev_blacklist(self, ctx):
         """
         Base command for blacklisting.
         """
 
-        return await ctx.send(f"Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help blacklist` for more information.")
+        return await ctx.send(f"Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help dev blacklist` for more information.")
 
-    @commands.is_owner()
-    @blacklist.group(name="reload", hidden=True)
-    async def blacklist_reload(self, ctx):
+    @dev_blacklist.command(name="reload", hidden=True)
+    async def dev_blacklist_reload(self, ctx):
         """
         Reload the bot's blacklist.
         """
@@ -124,9 +125,8 @@ class Dev(commands.Cog):
 
         return await ctx.send("Reloaded the blacklists.")
 
-    @commands.is_owner()
-    @blacklist.group(name="user", hidden=True, invoke_without_command=True)
-    async def blacklist_user(self, ctx):
+    @dev_blacklist.group(name="user", hidden=True, invoke_without_command=True)
+    async def dev_blacklist_user(self, ctx):
         """
         Display a list of all blacklisted users.
         """
@@ -147,9 +147,8 @@ class Dev(commands.Cog):
 
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
 
-    @commands.is_owner()
-    @blacklist_user.command(name="add", hidden=True)
-    async def blacklist_user_add(self, ctx, user: int = None, *, reason: str = None):
+    @dev_blacklist_user.command(name="add", hidden=True)
+    async def dev_blacklist_user_add(self, ctx, user: int = None, *, reason: str = None):
         """
         Add a user to the blacklist.
 
@@ -175,9 +174,8 @@ class Dev(commands.Cog):
         except asyncpg.UniqueViolationError:
             return await ctx.send("That user is already blacklisted.")
 
-    @commands.is_owner()
-    @blacklist_user.command(name="remove", hidden=True)
-    async def blacklist_user_remove(self, ctx, user: int = None):
+    @dev_blacklist_user.command(name="remove", hidden=True)
+    async def dev_blacklist_user_remove(self, ctx, user: int = None):
         """
         Remove a user from the blacklist.
 
@@ -195,9 +193,8 @@ class Dev(commands.Cog):
         except ValueError:
             return await ctx.send(f"User: `{user.name} - {user.id}` is not blacklisted.")
 
-    @commands.is_owner()
-    @blacklist.group(name="guild", hidden=True, invoke_without_command=True)
-    async def blacklist_guild(self, ctx):
+    @dev_blacklist.group(name="guild", hidden=True, invoke_without_command=True)
+    async def dev_blacklist_guild(self, ctx):
         """
         Display a list of all blacklisted guilds.
         """
@@ -218,9 +215,8 @@ class Dev(commands.Cog):
 
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
 
-    @commands.is_owner()
-    @blacklist_guild.command(name="add", hidden=True)
-    async def blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = None):
+    @dev_blacklist_guild.command(name="add", hidden=True)
+    async def dev_blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = None):
         """
         Add a guild to the blacklist.
 
@@ -253,9 +249,8 @@ class Dev(commands.Cog):
         except asyncpg.UniqueViolationError:
             return await ctx.send("That guild is already blacklisted.")
 
-    @commands.is_owner()
-    @blacklist_guild.command(name="remove", hidden=True)
-    async def blacklist_guild_remove(self, ctx, guild: int = None):
+    @dev_blacklist_guild.command(name="remove", hidden=True)
+    async def dev_blacklist_guild_remove(self, ctx, guild: int = None):
         """
         Remove a guild from the blacklist.
 

@@ -115,7 +115,7 @@ class Life(commands.AutoShardedBot):
             blacklisted_guilds = await self.db.fetch("SELECT * FROM blacklist WHERE type = $1", "guild")
             for guild in blacklisted_guilds:
                 self.guild_blacklist[guild["id"]] = guild["reason"]
-            print(f"[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n")
+            print(f"[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]")
 
         except ConnectionRefusedError:
             print(f"\n[DB] Connection to the database was denied.")
