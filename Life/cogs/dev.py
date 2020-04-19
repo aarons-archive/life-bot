@@ -1,14 +1,55 @@
 import collections
+import sys
 
 import asyncpg
 import discord
+import humanize
+import pkg_resources
+import psutil
+import setproctitle
 from discord.ext import commands
 
 
-class Owner(commands.Cog):
+class Dev(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+        setproctitle.setproctitle("LifeBot")
+
+    @commands.is_owner()
+    @commands.group(name="dev", hidden=True)
+    async def dev(self, ctx):
+
+        embed = discord.Embed(title=f"{self.bot.user.name} bot information page.", description="")
+        embed.description += f"I am running on the python version **{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}** " \
+                             f"on the OS **{sys.platform}** using the discord.py version **{pkg_resources.get_distribution('discord.py').version}**. " \
+                             f"The process is running as **{setproctitle.getproctitle()}** on PID **{self.bot.process.pid}** and is " \
+                             f"using **{self.bot.process.num_threads()}** threads.\n\n"
+
+        summary = f"**{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users."
+        if isinstance(self.bot, commands.AutoShardedBot):
+            embed.description += f"The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see {summary}\n\n"
+        else:
+            embed.description += f"The bot is not sharded and can see {summary}\n\n"
+
+        try:
+
+            with self.bot.process.oneshot():
+                memory_info = self.bot.process.memory_full_info()
+                cpu_usage = self.bot.process.cpu_percent(interval=None)
+                embed.description += f"The process is using " \
+                                     f"**{humanize.naturalsize(memory_info.rss)}** of physical memory, " \
+                                     f"**{humanize.naturalsize(memory_info.vms)}** of virtual memory and " \
+                                     f"**{humanize.naturalsize(memory_info.uss)}** of memory that is unique " \
+                                     f"to the process. It is also using **{cpu_usage}%** of CPU across " \
+                                     f"**{psutil.cpu_count(logical=False)}** cores."
+
+        except psutil.AccessDenied:
+            embed.description += f"I am unable to provide memory and cpu usage data as the " \
+                                 f"process is not running as administrator on windows (maybe)"
+
+        return await ctx.send(embed=embed)
 
     @commands.is_owner()
     @commands.command(name="socketstats", aliases=["ss"], hidden=True)
@@ -24,7 +65,6 @@ class Owner(commands.Cog):
         for event, count in socket_stats.items():
             message += f"{event:28} | {count}\n"
         message += "```"
-
         return await ctx.send(message)
 
     @commands.is_owner()
@@ -234,4 +274,4 @@ class Owner(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Owner(bot))
+    bot.add_cog(Dev(bot))

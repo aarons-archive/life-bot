@@ -8,3 +8,4 @@ aiOsu==0.1.0a0
 tabulate==0.8.7
 spotify==0.10.2
 granitepy==0.4.2
+setproctitle==1.1.10

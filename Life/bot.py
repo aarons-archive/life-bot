@@ -2,8 +2,8 @@ import asyncio
 import collections
 import os
 import re
-import time
 import signal
+import time
 
 import aiohttp
 import asyncpg
