@@ -70,7 +70,7 @@ class Dev(commands.Cog):
         """
         Deletes the bot's messages in the current channel.
 
-        `limit`: The amount of messages to check. Defaults to 50
+        `limit`: The amount of messages to check. Defaults to 50.
         """
 
         messages = await ctx.channel.purge(limit=limit, check=lambda m: m.author == ctx.guild.me,
@@ -174,7 +174,7 @@ class Dev(commands.Cog):
                 blacklisted.append(f"{user.name} - {user.id} - Reason: {entry['reason']}")
 
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10,
-                                            title=f"Showing {len(blacklisted)} blacklisted users.\n\n")
+                                            header=f"Showing {len(blacklisted)} blacklisted users.\n\n")
 
     @dev_blacklist_user.command(name="add", hidden=True)
     async def dev_blacklist_user_add(self, ctx, user: int = None, *, reason: str = "No reason"):
@@ -233,14 +233,10 @@ class Dev(commands.Cog):
             return await ctx.send("No blacklisted guilds.")
 
         for entry in blacklist:
-            guild = self.bot.get_guild(entry["id"])
-            if not guild:
-                blacklisted.append(f"Guild not found - {entry['id']} - Reason: {entry['reason']}")
-            else:
-                blacklisted.append(f"{guild.name} - {guild.id} - Reason: {entry['reason']}")
+            blacklisted.append(f"{entry['id']} - Reason: {entry['reason']}")
 
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10,
-                                            title=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
+                                            header=f"Showing {len(blacklisted)} blacklisted guilds.\n\n")
 
     @dev_blacklist_guild.command(name="add", hidden=True)
     async def dev_blacklist_guild_add(self, ctx, guild: int = None, *, reason: str = "No reason"):
