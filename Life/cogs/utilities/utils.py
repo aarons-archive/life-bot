@@ -175,7 +175,7 @@ class Utils:
             discord.VoiceRegion.eu_west: "EU-West",
             discord.VoiceRegion.europe: "Europe",
             discord.VoiceRegion.frankfurt: "Frankfurt",
-            discord.VoiceRegion.hongkong: "Hong kong",
+            discord.VoiceRegion.hongkong: "Hong-kong",
             discord.VoiceRegion.india: "India",
             discord.VoiceRegion.japan: "Japan",
             discord.VoiceRegion.london: "London",

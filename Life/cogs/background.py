@@ -21,7 +21,7 @@ class Background(commands.Cog):
 
         self.bot.presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
                               discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
-                              discord.Activity(type=discord.ActivityType.playing,  name=f"{self.bot.config.PREFIX}help")]
+                              discord.Activity(type=discord.ActivityType.playing,  name=f'{self.bot.config.PREFIX}help')]
 
         await self.bot.change_presence(activity=self.bot.presences[self.current_presence])
         self.current_presence = (self.current_presence + 1) % len(self.bot.presences)
@@ -30,19 +30,19 @@ class Background(commands.Cog):
     async def before_change_presence(self):
 
         await self.bot.wait_until_ready()
-        print("[BACKGROUND] Started change presence task.")
+        print('\n[BACKGROUND] Started change presence task.')
 
     @tasks.loop(hours=1.0)
     async def log_bot_growth(self):
 
         if self.bot.user.id == 628284183579721747:
-            await self.bot.db.execute(f"INSERT INTO bot_growth VALUES ($1, $2, $3)", datetime.now().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
+            await self.bot.db.execute(f'INSERT INTO bot_growth VALUES ($1, $2, $3)', datetime.now().strftime('%Y-%m-%d: %H:00'), len(self.bot.users), len(self.bot.guilds))
 
     @log_bot_growth.before_loop
     async def before_log_bot_growth(self):
 
         await self.bot.wait_until_ready()
-        print("[BACKGROUND] Started log bot growth task.")
+        print('[BACKGROUND] Started log bot growth task.')
 
     @tasks.loop(minutes=1.0)
     async def log_bot_ping(self):
@@ -53,7 +53,7 @@ class Background(commands.Cog):
     async def before_log_bot_ping(self):
 
         await self.bot.wait_until_ready()
-        print("[BACKGROUND] Started log bot ping task.")
+        print('[BACKGROUND] Started log bot ping task.')
 
 
 def setup(bot):

@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
         embed = discord.Embed(
             colour=discord.Color.gold(),
             title=f"__{ctx.bot.user.name}'s help page__",
-            description=f"Use `{ctx.bot.config.PREFIX}help [Command/Category]` for more info on a command or category.\n"
+            description=f"Use `{ctx.bot.config.PREFIX}help [Command/Category]` for more info on a command/category.\n"
         )
 
         def key(e):
@@ -96,9 +96,11 @@ class HelpCommand(commands.HelpCommand):
             cog_commands = [command for command in cog.get_commands() if command.hidden is False]
 
         if len(cog_commands) == 0:
-            return await ctx.send("This cog has no commands. This could be because they are hidden, or there are just no commands.")
+            message = "This cog has no commands. This could be because they are hidden, or there are just no commands."
+            return await ctx.send(message)
 
-        await ctx.paginate_embed(title=f"__**{cog.qualified_name} cog help page:**__\n\n", entries=list(self.formatter(cog_commands)), entries_per_page=15)
+        return await ctx.paginate_embed(title=f"__**{cog.qualified_name} cog help page:**__\n\n",
+                                 entries=list(self.formatter(cog_commands)), entries_per_page=15)
 
     async def send_command_help(self, command):
 
@@ -140,7 +142,8 @@ class HelpCommand(commands.HelpCommand):
         else:
             embed_description = f"No help provided for this command."
 
-        return await ctx.paginate_embed(title=f"**{embed_title}**", header=f"{embed_description}\n\n", entries=list(self.formatter(group.commands)), entries_per_page=15)
+        return await ctx.paginate_embed(title=f"**{embed_title}**", header=f"{embed_description}\n\n",
+                                        entries=list(self.formatter(group.commands)), entries_per_page=15)
 
 
 class Help(commands.Cog):
