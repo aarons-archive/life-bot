@@ -155,7 +155,7 @@ class Life(commands.AutoShardedBot):
         def stop_loop_on_completion(f):
             self.loop.stop()
 
-        future = asyncio.ensure_fgituture(runner(), loop=self.loop)
+        future = asyncio.ensure_future(runner(), loop=self.loop)
         future.add_done_callback(stop_loop_on_completion)
         try:
             self.loop.run_forever()
