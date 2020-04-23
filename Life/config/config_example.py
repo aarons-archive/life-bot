@@ -14,13 +14,13 @@ DATABASE = {
 }
 
 NODES = {
-    "ALPHA": {
+    "NODE 1": {
         "host": "",
         "port": 00000,
         "password": "",
         "identifier": ""
     },
-    "BETA": {
+    "NODE 2": {
         "host": "",
         "port": 00000,
         "password": "",

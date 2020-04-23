@@ -18,31 +18,48 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 ```
 pip install -U -r requirements.txt
 ```
-2. Rename `config_example.py` to `config.py` [here](https://github.com/MyNameBeMrRandom/Life/tree/master/Life).
+2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/tree/master/Life).
 
-3. Fill in your discord bots token and PSQL connection info in the respective fields as seen below.
+3. Fill in the config file with the correct information as seen below.
 ```python
-DISCORD_TOKEN = "discord token"
+TOKEN = "BOT_TOKEN"
+PREFIX = "BOT_PREFIX"
 
-DISCORD_PREFIX = "l-"
+OSU_TOKEN = "OSU API KEY"
 
-OSU_TOKEN = "osu token"
+SPOTIFY_ID = "SPOTIFY APP ID"
+SPOTIFY_SECRET = "SPOTIFY API SECRET"
 
-DB_CONN_INFO = {
-    "user": "user-name",
-    "password": "password",
-    "host": "ip",
-    "database": "database_name"
+DATABASE = {
+    "user": "DATABASE USER",
+    "password": "DATABASE PASSWORD",
+    "host": "DATABASE HOST IP",
+    "database": "DATABASE NAME"
 }
 
-NODES = {"node_name": {"ip": "node_ip",
-                       "port": "node_port",
-                       "rest_uri": "node_url",
-                       "password": "node_password",
-                       "identifier": "node_custom_identifier",
-                      }
-         }
+NODES = {
+    "NODE 1": {
+        "host": "ANDESITE NODE IP",
+        "port": 00000, # ANDESITE NODE PORT
+        "password": "ANDESITE NODE PASSWORD",
+        "identifier": "CUSTOM ANDESITE NODE IDENTIFIER"
+    }
+}
 
+
+EXTENSIONS = [
+    "cogs.help",
+    "cogs.events",
+    "cogs.background",
+    "jishaku",
+    "cogs.dev",
+    "cogs.information",
+    "cogs.images",
+    "cogs.todo",
+    "cogs.voice.music",
+    "cogs.voice.playlists",
+    "cogs.kross",
+]
 ```
 
 ## Built with
