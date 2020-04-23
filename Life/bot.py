@@ -42,7 +42,9 @@ class Life(commands.AutoShardedBot):
 
         self.bot.add_check(self.can_run_command)
 
-        self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
+        self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
+                                                 embed_links=True, attach_files=True, read_message_history=True,
+                                                 external_emojis=True)
         self.voice_perms = discord.Permissions(permissions=self.general_perms.value, connect=True, speak=True)
 
         self.clean_content = commands.clean_content()
@@ -80,7 +82,8 @@ class Life(commands.AutoShardedBot):
             raise commands.NoPrivateMessage()
 
         if ctx.author.id in self.bot.user_blacklist.keys():
-            raise commands.CheckFailure(f'You are blacklisted from using this bot with reason `{self.bot.user_blacklist[ctx.author.id]}`')
+            raise commands.CheckFailure(f'You are blacklisted from using this bot with reason '
+                                        f'`{self.bot.user_blacklist[ctx.author.id]}`')
 
         me = ctx.guild.me if ctx.guild else self.bot.user
         needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is not False}
