@@ -40,16 +40,16 @@ class Queue:
             self.finished.set()
 
     @property
-    def size(self):
-
-        return len(self.queue_list)
-
-    @property
     def is_empty(self):
 
         if not self.queue_list:
             return True
         return False
+
+    @property
+    def size(self):
+
+        return len(self.queue_list)
 
     def clear(self):
 

@@ -1,9 +1,12 @@
 import asyncio
+import re
 
 import discord
+import granitepy
+import spotify
 from discord.ext import commands
 
-import granitepy
+from cogs.utilities import exceptions
 from cogs.voice.utilities import objects
 from cogs.voice.utilities.queue import Queue
 
@@ -29,9 +32,10 @@ class Player(granitepy.Player):
                 track = await self.queue.get()
 
                 if isinstance(track, objects.SpotifyTrack):
-                    track = await self.get_result(ctx=track.ctx, query=track.title)
+                    track = await self.get_results(ctx=track.ctx, search=f"{track.title} - {track.author}")
                     if not track:
                         continue
+                    track = track["tracks"][0]
 
                 await self.play(track)
                 await asyncio.sleep(0.5)
@@ -76,15 +80,47 @@ class Player(granitepy.Player):
         else:
             return await self.current.channel.send(embed=embed)
 
-    async def get_result(self, ctx: commands.Context, query: str):
+    async def get_results(self, ctx: commands.Context, search: str):
 
-        result = await self.node.get_tracks(query)
-        if not result:
-            return None
-
-        if isinstance(result, granitepy.Playlist):
-            result = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
+        spotify_regex = re.compile("https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)").match(search)
+        if spotify_regex:
+            
+            spotify_type, spotify_id = spotify_regex.groups()
+            
+            try:
+                if spotify_type == "track":
+                    result = await self.bot.spotify.get_track(spotify_id)
+                    spotify_tracks = [result]
+                elif spotify_type == "album":
+                    result = await self.bot.spotify.get_album(spotify_id)
+                    spotify_tracks = await result.get_all_tracks()
+                elif spotify_type == "playlist":
+                    result = spotify.Playlist(self.bot.spotify, await self.bot.http_spotify.get_playlist(spotify_id))
+                    spotify_tracks = await result.get_all_tracks()
+                else:
+                    raise exceptions.LifeVoiceError(f"The spotify link `{search}` is not a valid spotify track/album/playlist link.")
+            except spotify.HTTPException:
+                raise exceptions.LifeVoiceError(f"The spotify link `{search}` is not a valid spotify track/album/playlist link.")
+    
+            if not spotify_tracks:
+                raise exceptions.LifeVoiceError(f"No spotify tracks were found for the search `{search}`")
+    
+            tracks = [objects.SpotifyTrack(ctx=ctx, title=f"{track.name}", author=f"{track.artist.name}", length=track.duration, uri=track.url) for track in spotify_tracks]
+            return {"type": "spotify", "tracks": tracks, "result": result}
+                    
         else:
-            result = objects.GraniteTrack(track_id=result[0].track_id, info=result[0].info, ctx=ctx)
-
-        return result
+            
+            result = await self.get_tracks(query=f"{search}")
+            if not result:
+                raise exceptions.LifeVoiceError(f"No youtube tracks were found for the search `{search}`")
+                
+            if isinstance(result, granitepy.Playlist):
+                result = objects.GranitePlaylist(playlist_info=result.playlist_info, tracks=result.tracks_raw, ctx=ctx)
+                tracks = result.tracks
+            elif isinstance(result[0], granitepy.Track):
+                result = [objects.GraniteTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
+                tracks = [result[0]]
+            else:
+                raise exceptions.LifeVoiceError(f"There was an error while searching for tracks.")
+                    
+            return {"type": "youtube", "tracks": tracks, "result": result}

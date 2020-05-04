@@ -48,7 +48,8 @@ class Life(commands.AutoShardedBot):
         self.voice_perms = discord.Permissions(permissions=self.general_perms.value, connect=True, speak=True)
 
         self.clean_content = commands.clean_content()
-        self.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:jpe?g|gif|png))(?:\?([^#]*))?(?:#(.*))?')
+        self.image_url_regex = re.compile(
+            '(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
 
     @property
     def uptime(self):

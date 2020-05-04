@@ -25,11 +25,12 @@ class GranitePlaylist(objects.Playlist):
 
 class SpotifyTrack:
 
-    def __init__(self, ctx: commands.Context, title: str, uri: str, length: int):
+    def __init__(self, ctx: commands.Context, title: str, author: str, length: int, uri: str):
 
         self.title = title
-        self.uri = uri
+        self.author = author
         self.length = length
+        self.uri = uri
 
         self.ctx = ctx
         self.requester = ctx.author
@@ -47,7 +48,7 @@ class Playlist:
         self.name = data.get("name")
         self.owner_id = data.get("owner_id")
         self.private = data.get("private")
-        self.creation_date = datetime.strptime(data.get("creation_date"), "%d-%m-%Y: %H:%M")
+        self.creation_date = data.get("creation_date").strftime("%d-%m-%Y: %H:%M")
         self.image_url = data.get("image_url")
 
         self.tracks = []
@@ -56,5 +57,9 @@ class Playlist:
         return f"<LifePlaylist id={self.id!r} name={self.name!r} owner_id={self.owner_id!r}>"
 
     @property
-    def track_ids(self):
-        return [track.track_id for track in self.tracks]
+    def uris(self):
+        return [track.uri for track in self.tracks]
+
+    @property
+    def is_private(self):
+        return "private" if self.private is True else "not private"

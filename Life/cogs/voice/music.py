@@ -1,11 +1,9 @@
-import re
 
 import spotify
 from discord.ext import commands
 
 import granitepy
 from cogs.utilities import checks
-from cogs.voice.utilities import objects
 
 
 class Music(commands.Cog):
@@ -14,11 +12,10 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.bot.granitepy = granitepy.Client(self.bot)
+        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID, client_secret=self.bot.config.SPOTIFY_SECRET)
+        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_ID, client_secret=self.bot.config.SPOTIFY_SECRET)
 
-        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_API_ID, client_secret=self.bot.config.SPOTIFY_API_SECRET)
-        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_API_ID, client_secret=self.bot.config.SPOTIFY_API_SECRET)
-
-    async def initiate_nodes(self):
+    async def load_nodes(self):
 
         await self.bot.wait_until_ready()
 
@@ -34,7 +31,7 @@ class Music(commands.Cog):
             except granitepy.NodeConnectionFailure as e:
                 print(f"[GRANITEPY] {e}")
                 continue
-
+                
     @commands.command(name="join", aliases=["connect"])
     @checks.is_member_connected()
     async def join(self, ctx):
@@ -61,54 +58,45 @@ class Music(commands.Cog):
         """
         Play a track using a link or search query.
 
-        `search`: The name/link of the track you want to play.
+        `search`: The name/link of the track you want to play. If this a spotify link, the bot will search youtube for the track/album/playlist.
         """
-
+        
         if not ctx.player.is_connected:
             ctx.player.text_channel = ctx.channel
             await ctx.player.connect(ctx.author.voice.channel)
 
         async with ctx.channel.typing():
+            
+            search_result = await ctx.player.get_results(ctx=ctx, search=search)
+            
+            search_type = search_result.get("type")
+            tracks = search_result.get("tracks")
+            result = search_result.get("result")
+            
+            if search_type == "spotify":
 
-            spotify_regex = re.compile("https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)").match(search)
-            if spotify_regex:
+                message = "You shouldn't see this."
+                if isinstance(result, spotify.Track):
+                    message = f"Added the spotify track **{result.name}** to the queue."
+                elif isinstance(result, spotify.Album):
+                    message = f"Added the spotify album **{result.name}** to the queue with a total of **{len(tracks)}** track(s)."
+                elif isinstance(result, spotify.Playlist):
+                    message = f"Added the spotify playlist **{result.name}** to the queue with a total of **{len(tracks)}** track(s)."
+                ctx.player.queue.extend(tracks)
+                return await ctx.send(message)
 
-                url_type, url_id = spotify_regex.groups()
-
-                if url_type == "track":
-                    tracks = await self.bot.spotify.get_track(url_id)
-                elif url_type == "album":
-                    result = await self.bot.spotify.get_album(url_id)
-                    tracks = await result.get_all_tracks()
-                elif url_type == "playlist":
-                    result = spotify.Playlist(self.bot.spotify, await self.bot.http_spotify.get_playlist(url_id))
-                    tracks = await result.get_all_tracks()
-                if not tracks:
-                    return await ctx.send(f"That spotify link was not recognised.")
-
-                if isinstance(tracks, spotify.Track):
-                    track = objects.SpotifyTrack(ctx=ctx, title=f"{tracks.name} - {tracks.artist.name}", uri=tracks.url, length=tracks.duration)
-                    ctx.player.queue.put(track)
-                    return await ctx.send(f"Added the spotify track **{track.title}** to the queue.")
-                else:
-                    tracks = [objects.SpotifyTrack(ctx=ctx, title=f"{track.name} - {track.artist.name}", uri=track.url, length=track.duration) for track in tracks]
-                    ctx.player.queue.extend(tracks)
-                    return await ctx.send(f"Added the spotify album/playlist **{result.name}** to the queue with a total of **{len(tracks)}** entries.")
-            else:
-
-                result = await ctx.player.get_result(ctx=ctx, query=search)
-                if not result:
-                    return await ctx.send(f"There were no tracks found for the youtube search `{search}`.")
-
+            elif search_type == "youtube":
+                
+                message = "You shouldn't see this."
                 if isinstance(result, granitepy.Playlist):
-                    ctx.player.queue.extend(result)
-                    return await ctx.send(f"Added the playlist **{result.name}** to the queue with a total of **{len(result.tracks)}** entries.")
-                if isinstance(result, granitepy.Track):
-                    if result.is_stream:
-                        return await ctx.send("The requested track is a live stream.")
-                    ctx.player.queue.put(result)
-                    return await ctx.send(f"Added the track **{result.title}** to the queue.")
-
+                    message = f"Added the youtube playlist **{result.name}** to the queue with a total of **{len(tracks)}** track(s)"
+                elif isinstance(result[0], granitepy.Track):
+                    message = f"Added the youtube track **{result[0].title}** to the queue."
+                    if result[0].is_stream:
+                        return await ctx.send("I am unable to play youtube livestreams.")
+                ctx.player.queue.extend(tracks)
+                return await ctx.send(message)
+     
     @commands.command(name="leave", aliases=["disconnect", "stop"])
     @checks.is_member_in_channel()
     @checks.is_member_connected()
@@ -184,26 +172,6 @@ class Music(commands.Cog):
         await ctx.player.set_pause(False)
         return await ctx.send(f"Resumed the player.")
 
-    @commands.command(name="volume", aliases=["vol"])
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
-    async def volume(self, ctx, volume: int = None):
-        """
-        Change the volume of the player.
-
-        `volume`: The percentage to change the volume too, can be between 0 and 100.
-        """
-
-        if not volume and not volume == 0:
-            return await ctx.send(f"The current volume is `{ctx.player.volume}%`.")
-
-        if volume < 0 or volume > 100:
-            return await ctx.send(f"Please enter a value between `1` and and `100`.")
-
-        await ctx.player.set_volume(volume)
-        return await ctx.send(f"Changed the players volume to `{ctx.player.volume}%`.")
-
     @commands.command(name="seek")
     @checks.is_player_playing()
     @checks.is_member_in_channel()
@@ -228,6 +196,26 @@ class Music(commands.Cog):
 
         await ctx.player.seek(milliseconds)
         return await ctx.send(f"Changed the players position to `{self.bot.utils.format_time(milliseconds / 1000)}`.")
+    
+    @commands.command(name="volume", aliases=["vol"])
+    @checks.is_member_in_channel()
+    @checks.is_member_connected()
+    @checks.is_player_connected()
+    async def volume(self, ctx, volume: int = None):
+        """
+        Change the volume of the player.
+
+        `volume`: The percentage to change the volume too, can be between 0 and 100.
+        """
+
+        if not volume and not volume == 0:
+            return await ctx.send(f"The current volume is `{ctx.player.volume}%`.")
+
+        if volume < 0 or volume > 100:
+            return await ctx.send(f"Please enter a value between `1` and and `100`.")
+
+        await ctx.player.set_volume(volume)
+        return await ctx.send(f"Changed the players volume to `{ctx.player.volume}%`.")
 
     @commands.command(name="now_playing", aliases=["np"])
     @checks.is_player_playing()
@@ -313,7 +301,7 @@ class Music(commands.Cog):
         ctx.player.queue.reverse()
         return await ctx.send(f"Reversed the queue.")
 
-    @commands.command(name="loop")
+    @commands.command(name="loop", aliases=["repeat"])
     @checks.is_member_in_channel()
     @checks.is_member_connected()
     @checks.is_player_connected()
@@ -380,7 +368,7 @@ def setup(bot):
     music = Music(bot)
 
     bot.add_cog(music)
-    bot.loop.create_task(music.initiate_nodes())
+    bot.loop.create_task(music.load_nodes())
 
 
 def teardown(bot):
