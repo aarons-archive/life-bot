@@ -1,7 +1,9 @@
+import asyncio
+
+import granitepy
 import spotify
 from discord.ext import commands
 
-import granitepy
 from cogs.utilities import checks
 
 
@@ -11,8 +13,12 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.bot.granitepy = granitepy.Client(self.bot)
-        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID, client_secret=self.bot.config.SPOTIFY_SECRET)
-        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_ID, client_secret=self.bot.config.SPOTIFY_SECRET)
+        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID,
+                                                   client_secret=self.bot.config.SPOTIFY_SECRET)
+        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_ID,
+                                          client_secret=self.bot.config.SPOTIFY_SECRET)
+
+        asyncio.create_task(self.load_nodes())
 
     async def load_nodes(self):
 
@@ -27,6 +33,7 @@ class Music(commands.Cog):
             except granitepy.NodeConnectionFailure as e:
                 print(f'[GRANITEPY] {e}')
                 continue
+        print("")
 
     @commands.command(name='join', aliases=['connect'])
     @checks.is_member_connected()
@@ -386,11 +393,12 @@ class Music(commands.Cog):
 
 
 def setup(bot):
-    music = Music(bot)
-
-    bot.add_cog(music)
-    bot.loop.create_task(music.load_nodes())
+    bot.add_cog(Music(bot))
 
 
 def teardown(bot):
-    del bot.granitepy
+
+    asyncio.gather(bot.http_spotify.close(), bot.spotify.close(), bot.granitepy.session.close())
+
+    for node in bot.granitepy.nodes.values():
+        bot.create_task(node.disconnect())
