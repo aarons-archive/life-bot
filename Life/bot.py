@@ -2,7 +2,6 @@ import asyncio
 import collections
 import os
 import re
-import signal
 import time
 
 import aiohttp
@@ -17,6 +16,7 @@ from context import LifeContext
 
 os.environ['JISHAKU_HIDE'] = 'True'
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Life(commands.AutoShardedBot):
@@ -61,23 +61,6 @@ class Life(commands.AutoShardedBot):
 
         return await super().get_context(message, cls=cls)
 
-    async def on_message(self, message):
-
-        if message.author.bot:
-            return
-
-        await self.process_commands(message)
-
-    async def on_message_edit(self, before, after):
-
-        if before.author.bot:
-            return
-
-        if before.content == after.content:
-            return
-
-        await self.process_commands(after)
-
     async def can_run_command(self, ctx: commands.Context):
 
         if not ctx.guild:
@@ -97,78 +80,72 @@ class Life(commands.AutoShardedBot):
 
         return True
 
-    async def load_extensions(self):
+    async def on_message(self, message):
 
-        for extension in self.config.EXTENSIONS:
-            try:
-                self.load_extension(extension)
-                print(f'[EXT] Success - {extension}')
-            except commands.ExtensionNotFound:
-                print(f'[EXT] Failed - {extension}')
+        if message.author.bot:
+            return
 
-    async def load_database(self):
+        await self.process_commands(message)
+
+    async def on_message_edit(self, before, after):
+
+        if before.author.bot:
+            return
+
+        if before.content == after.content:
+            return
+
+        await self.process_commands(after)
+
+    async def start(self, *args):
+
+        self.session = aiohttp.ClientSession(loop=self.loop)
 
         try:
             self.db = await asyncpg.create_pool(**self.config.DATABASE)
-            print(f'\n[DB] Connected to the database.')
+            print(f'\n[DB] Connected to the database.\n')
 
             blacklisted_users = await self.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
             for user in blacklisted_users:
                 self.user_blacklist[user['id']] = user['reason']
-            print(f'\n[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]')
+            print(f'[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]')
 
             blacklisted_guilds = await self.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
             for guild in blacklisted_guilds:
                 self.guild_blacklist[guild['id']] = guild['reason']
-            print(f'[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]')
+            print(f'[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n')
 
-        except ConnectionRefusedError:
-            print(f'\n[DB] Connection to the database was denied.')
         except Exception as e:
-            print(f'\n[DB] An error occurred: {e}')
+            print(f'\n[DB] An error occurred: {e}\n')
 
-    async def bot_start(self):
+        for extension in self.config.EXTENSIONS:
+            try:
+                self.load_extension(extension)
+                print(f'[EXT] Loaded - {extension}')
+            except commands.ExtensionNotFound:
+                print(f'[EXT] Failed - {extension}')
 
-        self.session = aiohttp.ClientSession(loop=self.loop)
-        await self.load_extensions()
-        await self.load_database()
+        return await super().start(*args)
 
-        await self.login(token=config.TOKEN)
-        await self.connect()
+    async def close(self):
 
-    async def bot_close(self):
+        print("[EXT] Unloading all extensions.")
+        for extension in self.config.EXTENSIONS:
+            try:
+                self.unload_extension(extension)
+            except commands.ExtensionNotFound:
+                pass
 
-        await self.logout()
+        print("[DB] Closing database connection.")
+        await self.db.close()
 
+        print("[CS] Closing aiohttp client session.")
         await self.session.close()
 
+        print("[BOT] Shutting bot down.")
+        await super().close()
+
+        print("Bye bye!")
+
     def run(self):
-
-        try:
-            self.loop.add_signal_handler(signal.SIGINT, lambda: self.loop.stop())
-            self.loop.add_signal_handler(signal.SIGTERM, lambda: self.loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner():
-            try:
-                await self.bot_start()
-            finally:
-                await self.bot_close()
-
-        # noinspection PyUnusedLocal
-        def stop_loop_on_completion(f):
-            self.loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=self.loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            self.loop.run_forever()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            future.remove_done_callback(stop_loop_on_completion)
-
-
-if __name__ == '__main__':
-    Life().run()
+        super().run(self.config.TOKEN)
