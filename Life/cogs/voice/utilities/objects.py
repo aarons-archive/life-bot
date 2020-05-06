@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from discord.ext import commands
 
@@ -12,6 +11,7 @@ class GraniteTrack(objects.Track):
 
         self.ctx = ctx
         self.requester = ctx.author
+        self.channel = ctx.channel
 
 
 class GranitePlaylist(objects.Playlist):
