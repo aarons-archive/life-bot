@@ -1,26 +1,27 @@
-
+import discord
 from discord.ext import commands
 
-from granitepy import objects
+from diorite import objects
 
 
-class GraniteTrack(objects.Track):
+class LifeTrack(objects.Track):
 
     def __init__(self, track_id: str, info: dict, ctx: commands.Context):
         super().__init__(track_id, info)
 
         self.ctx = ctx
-        self.requester = ctx.author
-        self.channel = ctx.channel
+        self.requester: discord.Member = ctx.author
+        self.channel: discord.TextChannel = ctx.channel
 
 
-class GranitePlaylist(objects.Playlist):
+class LifePlaylist(objects.Playlist):
 
     def __init__(self, playlist_info: dict, tracks: list, ctx: commands.Context):
         super().__init__(playlist_info, tracks)
 
         self.ctx = ctx
-        self.tracks = [GraniteTrack(track_id=track["track"], info=track["info"], ctx=self.ctx) for track in self.tracks_raw]
+        self.tracks = [LifeTrack(track_id=track["track"], info=track["info"],
+                                 ctx=self.ctx) for track in self.raw_tracks]
 
 
 class SpotifyTrack:

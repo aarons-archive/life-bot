@@ -3,10 +3,10 @@ import typing
 from datetime import datetime
 
 import discord
-import granitepy
 import spotify
 from discord.ext import commands
 
+import diorite
 from cogs.utilities import exceptions, checks
 from cogs.voice.utilities import objects
 
@@ -25,7 +25,7 @@ class Playlists(commands.Cog):
         for raw_track in raw_tracks:
 
             if raw_track.get("source") == "youtube":
-                track = objects.GraniteTrack(track_id=raw_track.get("track_id"), info=raw_track, ctx=ctx)
+                track = objects.LifeTrack(track_id=raw_track.get("track_id"), info=raw_track, ctx=ctx)
             elif raw_track.get("source") == "spotify":
                 track = objects.SpotifyTrack(ctx=ctx, title=raw_track.get("title"), author=raw_track.get("author"),
                                              length=raw_track.get("length"), uri=raw_track.get("uri"))
@@ -220,43 +220,53 @@ class Playlists(commands.Cog):
 
         async with ctx.channel.typing():
 
-            search_result = await ctx.player.get_results(ctx=ctx, search=search)
+            search_result = await ctx.player.search(ctx=ctx, search=search)
+
             search_type = search_result.get('type')
-            tracks = search_result.get('tracks')
+            result_type = search_result.get('return_type')
             result = search_result.get('result')
+            tracks = search_result.get('tracks')
 
             if search_type == 'spotify':
 
-                if isinstance(result, spotify.Track):
+                if result_type == 'track':
                     message = f'Added the spotify track **{result.name}** to your playlist **{playlist.name}**.'
-                elif isinstance(result, spotify.Album):
+                elif result_type == 'album':
                     message = f'Added the spotify album **{result.name}** to your playlist **{playlist.name}** ' \
                               f'with a total of **{len(tracks)}** track(s).'
-                elif isinstance(result, spotify.Playlist):
+                elif result_type == 'playlist':
                     message = f'Added the spotify playlist **{result.name}** to your playlist **{playlist.name}** ' \
                               f'with a total of **{len(tracks)}** track(s).'
 
-                entries = [(playlist.id, None, track.title, track.author, track.length, None, track.uri, False,
-                            False, None, 'spotify') for track in tracks]
+                entries = [(playlist.id, None, track.title, track.author, track.length, None, track.uri, False, False,
+                            None, 'spotify') for track in tracks]
+
+                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
+                await self.bot.db.executemany(query, entries)
+
+                return await ctx.send(message)
 
             elif search_type == 'youtube':
 
-                if isinstance(result, granitepy.Playlist):
+                if result_type == 'playlist':
                     message = f'Added the youtube playlist **{result.name}** to your playlist **{playlist.name}** ' \
-                              f'with a total of **{len(tracks)}** track(s).'
-                elif isinstance(result[0], granitepy.Track):
+                              f'with a total of **{len(result.tracks)}** track(s).'
+                    tracks = result.tracks
+
+                elif result_type == 'track':
                     message = f'Added the youtube track **{result[0].title}** to your playlist **{playlist.name}**.'
                     if result[0].is_stream:
                         return await ctx.send('I am unable to add youtube livestreams to playlists.')
+                    tracks = [result[0]]
 
-                entries = [(playlist.id, track.track_id, track.title, track.author,
-                            track.length, track.identifier, track.uri, track.is_stream,
-                            track.is_seekable, track.position, 'youtube') for track in tracks]
+                entries = [(playlist.id, track.track_id, track.title, track.author, track.length, track.identifier,
+                            track.uri, track.is_stream, track.is_seekable, track.position, 'youtube')
+                           for track in tracks]
 
-            query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
-            await self.bot.db.executemany(query, entries)
+                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
+                await self.bot.db.executemany(query, entries)
 
-            return await ctx.send(message)
+                return await ctx.send(message)
 
     @playlist.command(name='remove')
     async def playlist_remove(self, ctx, playlist: commands.clean_content, *, search: str):
@@ -269,24 +279,26 @@ class Playlists(commands.Cog):
 
         async with ctx.channel.typing():
 
-            search_result = await ctx.player.get_results(ctx=ctx, search=search)
+            search_result = await ctx.player.search(ctx=ctx, search=search)
+
             search_type = search_result.get('type')
-            tracks = search_result.get('tracks')
+            result_type = search_result.get('return_type')
             result = search_result.get('result')
+            tracks = search_result.get('tracks')
 
             if search_type == 'spotify':
 
                 tracks_to_remove = [track for track in tracks if track.uri in playlist.uris]
                 if not tracks_to_remove:
-                    raise exceptions.LifePlaylistError(f'Your spotify search returned no tracks which '
-                                                       f'could be removed from your playlist.')
+                    raise exceptions.LifePlaylistError(f'Your spotify search returned no tracks which could be removed '
+                                                       f'from your playlist.')
 
-                if isinstance(result, spotify.Track):
+                if result_type == 'track':
                     message = f'Removed the spotify track **{result.name}** from your playlist **{playlist.name}**.'
-                elif isinstance(result, spotify.Album):
+                elif result_type == 'album':
                     message = f'Removed all the tracks from the spotify album **{result.name}** from your playlist ' \
                               f'**{playlist.name}** with a total of **{len(tracks_to_remove)}** track(s) removed.'
-                elif isinstance(result, spotify.Playlist):
+                elif result_type == 'playlist':
                     message = f'Removed all the tracks from the spotify playlist **{result.name}** from your playlist '\
                               f'**{playlist.name}** with a total of **{len(tracks_to_remove)}** track(s) removed.'
 
@@ -297,17 +309,16 @@ class Playlists(commands.Cog):
                     raise exceptions.LifePlaylistError(f'Your youtube search returned no tracks which '
                                                        f'could be removed from your playlist.')
 
-                if isinstance(result, granitepy.Playlist):
+                if result_type == 'playlist':
                     message = f'Removed all the tracks from the youtube playlist ' \
                               f'**{result.name}** from your playlist **{playlist.name}**' \
                               f' with a total of **{len(tracks_to_remove)}** track(s) removed.'
-                elif isinstance(result[0], granitepy.Track):
+                elif result_type == 'track':
                     message = f'Removed the youtube track **{result[0].title}** ' \
                               f'from your playlist **{playlist.name}**.'
 
-            query = 'DELETE FROM playlist_tracks WHERE playlist_id = $1 and uri = $2'
             entries = [(playlist.id, track.uri) for track in tracks_to_remove]
-            await self.bot.db.executemany(query, entries)
+            await self.bot.db.executemany('DELETE FROM playlist_tracks WHERE playlist_id = $1 and uri = $2', entries)
 
             return await ctx.send(message)
 
@@ -326,7 +337,7 @@ class Playlists(commands.Cog):
             playlists.extend(other_playlists)
 
         if not playlists:
-            raise exceptions.LifePlaylistError(f'There no public playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError(f'There are no public playlists with the name or id: `{playlist}`')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
@@ -337,11 +348,12 @@ class Playlists(commands.Cog):
             ctx.player.text_channel = ctx.channel
             await ctx.player.connect(ctx.author.voice.channel)
 
-        await ctx.trigger_typing()
+        if ctx.author.voice.channel != ctx.player.voice_channel:
+            raise commands.CheckFailure(f'You are not connected to the same voice channel as me.')
 
         ctx.player.queue.extend(playlist.tracks)
-        return await ctx.send(f'Added the playlist **{playlist.name}** to the queue '
-                              f'with a total of **{len(playlist.tracks)}** entries.')
+        return await ctx.send(f'Added the playlist **{playlist.name}** to the queue with a total of '
+                              f'**{len(playlist.tracks)}** entries.')
 
 
 def setup(bot):

@@ -1,29 +1,27 @@
 import asyncio
 import collections
 import random
+import typing
 
 
-class Queue:
+class LifeQueue:
 
-    def __init__(self, bot, guild):
+    def __init__(self, player):
 
-        self.bot = bot
-        self.guild = guild
+        self.player = player
 
-        self.loop = asyncio.get_event_loop()
         self.getters = collections.deque()
         self.putters = collections.deque()
         self.unfinished_tasks = 0
-        self.finished = asyncio.locks.Event(loop=self.loop)
+        self.finished = asyncio.locks.Event(loop=self.player.bot.loop)
         self.finished.set()
 
         self.queue_list = []
 
     def __repr__(self):
-        return f"<LifeMusicQueue entries={self.size}>"
+        return f"<LifeQueue entries={self.size}>"
 
-    @staticmethod
-    def wakeup_next(waiters):
+    def wakeup_next(self, waiters):
 
         while waiters:
             waiter = waiters.popleft()
@@ -40,48 +38,68 @@ class Queue:
             self.finished.set()
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
 
-        if not self.queue_list:
+        if len(self.queue_list) == 0:
             return True
+
         return False
 
     @property
-    def size(self):
+    def size(self) -> int:
 
         return len(self.queue_list)
 
-    def clear(self):
+    def clear(self) -> None:
 
         self.queue_list.clear()
 
-    def reverse(self):
+    def reverse(self) -> None:
 
         self.queue_list.reverse()
 
-    def shuffle(self):
+    def shuffle(self) -> None:
 
         random.shuffle(self.queue_list)
 
-    def extend(self, items: list):
+    def extend(self, items: typing.List[typing.Any]) -> None:
 
         self.queue_list.extend(items)
-        self.bot.dispatch(f"{self.guild.id}_queue_add")
+        self.player.bot.dispatch(f"life_queue_add", self.player.guild.id)
 
-    def put(self, item):
+    def put_pos(self, item: typing.Any, position: int = 0) -> None:
+        self.queue_list.insert(position, item)
+        self.player.bot.dispatch(f"life_queue_add", self.player.guild)
+
+    def put(self, item: typing.Any) -> None:
 
         self.queue_list.append(item)
-        self.bot.dispatch(f"{self.guild.id}_queue_add")
+        self.player.bot.dispatch(f"life_queue_add", self.player.guild)
 
-    def put_pos(self, item, position: int = 0):
-
-        self.queue_list.insert(position, item)
-        self.bot.dispatch(f"{self.guild.id}_queue_add")
-
-    async def get(self):
+    async def get_pos(self, position: int = 0) -> typing.Any:
 
         while self.is_empty:
-            getter = self.loop.create_future()
+            getter = self.player.bot.loop.create_future()
+            self.getters.append(getter)
+            try:
+                await getter
+            except Exception:
+                getter.cancel()
+                try:
+                    self.getters.remove(getter)
+                except ValueError:
+                    pass
+                if not self.is_empty and not getter.cancelled():
+                    self.wakeup_next(self.getters)
+                raise
+        self.wakeup_next(self.putters)
+
+        return self.queue_list.pop(position)
+
+    async def get(self) -> typing.Any:
+
+        while self.is_empty:
+            getter = self.player.bot.loop.create_future()
             self.getters.append(getter)
             try:
                 await getter
@@ -98,22 +116,3 @@ class Queue:
 
         return self.queue_list.pop(0)
 
-    async def get_pos(self, position: int = 0):
-
-        while self.is_empty:
-            getter = self.loop.create_future()
-            self.getters.append(getter)
-            try:
-                await getter
-            except Exception:
-                getter.cancel()
-                try:
-                    self.getters.remove(getter)
-                except ValueError:
-                    pass
-                if not self.is_empty and not getter.cancelled():
-                    self.wakeup_next(self.getters)
-                raise
-        self.wakeup_next(self.putters)
-
-        return self.queue_list.pop(position)

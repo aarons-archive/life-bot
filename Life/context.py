@@ -12,7 +12,7 @@ class LifeContext(commands.Context):
         if not self.bot.is_ready():
             raise exceptions.BotNotReadyError
 
-        player = self.bot.granitepy.get_player(self.guild, cls=Player)
+        player = self.bot.diorite.get_player(self.guild, cls=Player)
         return player
     
     async def paginate(self, **kwargs):

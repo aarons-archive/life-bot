@@ -6,6 +6,6 @@ matplotlib==3.2.1
 wand==0.6.0
 tabulate==0.8.7
 spotify==0.10.2
-granitepy==0.4.2
+diorite==0.1.0
 setproctitle==1.1.10
 humanize==2.4.0
