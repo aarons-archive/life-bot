@@ -4,8 +4,7 @@ import io
 import discord
 from discord.ext import commands
 
-from cogs.utilities import exceptions
-from cogs.utilities.imaging import Imaging
+from cogs.utilities import exceptions, imaging
 
 
 class Images(commands.Cog):
@@ -13,7 +12,7 @@ class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-        self.bot.imaging = Imaging(self.bot)
+        self.bot.imaging = imaging.Imaging(self.bot)
     
     async def create_embed(self, image: io.BytesIO, image_format: str):
         file = discord.File(filename=f'Image.{image_format.lower()}', fp=image)
