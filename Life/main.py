@@ -1,20 +1,34 @@
+import logging
+import os
+from contextlib import contextmanager
+from logging.handlers import RotatingFileHandler
+
 from bot import Life
 
-import logging
-from logging import handlers
 
-logger = logging.getLogger('diorite')
-logger.setLevel(logging.DEBUG)
+@contextmanager
+def logger():
 
-handler = logging.handlers.RotatingFileHandler(filename='logs/diorite.log', mode='w', backupCount=10)
-handler.doRollover()
+    log = logging.getLogger('diorite')
+    log.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s', datefmt=f'%d/%m/%Y %I:%M:%S %p')
-handler.setFormatter(formatter)
+    handler = logging.handlers.RotatingFileHandler(filename='logs/diorite.log', mode='w',
+                                                   backupCount=10, maxBytes=2**20)
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+                                           datefmt=f'%d/%m/%Y %I:%M:%S %p'))
 
-logger.addHandler(handler)
+    if os.path.isfile('logs/diorite.log'):
+        handler.doRollover()
+
+    log.addHandler(handler)
+
+    try:
+        yield
+    finally:
+        handler.close()
 
 
 if __name__ == '__main__':
-    bot = Life()
-    bot.run(bot.config.TOKEN)
+    with logger():
+        bot = Life()
+        bot.run(bot.config.TOKEN)
