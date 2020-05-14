@@ -16,7 +16,6 @@ from context import LifeContext
 
 os.environ['JISHAKU_HIDE'] = 'True'
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
-asyncio.set_event_loop(asyncio.SelectorEventLoop())
 
 
 class Life(commands.AutoShardedBot):
@@ -97,7 +96,7 @@ class Life(commands.AutoShardedBot):
 
         await self.process_commands(after)
 
-    async def start(self, *args):
+    async def start(self, *args, **kwargs):
 
         self.session = aiohttp.ClientSession(loop=self.loop)
 
@@ -125,9 +124,11 @@ class Life(commands.AutoShardedBot):
             except commands.ExtensionNotFound:
                 print(f'[EXT] Failed - {extension}')
 
-        return await super().start(*args)
+        await super().start(*args)
 
     async def close(self):
+
+        print("\n[BOT] Closing bot down.")
 
         print("[EXT] Unloading all extensions.")
         for extension in self.config.EXTENSIONS:
@@ -142,10 +143,4 @@ class Life(commands.AutoShardedBot):
         print("[CS] Closing aiohttp client session.")
         await self.session.close()
 
-        print("[BOT] Shutting bot down.")
-        await super().close()
-
         print("Bye bye!")
-
-    def run(self):
-        super().run(self.config.TOKEN)
