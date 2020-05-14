@@ -1,5 +1,6 @@
 import functools
 import io
+import re
 
 import discord
 from discord.ext import commands
@@ -11,7 +12,9 @@ class Images(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-        
+
+        self.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:'
+                                          'jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
         self.bot.imaging = imaging.Imaging(self.bot)
     
     async def create_embed(self, image: io.BytesIO, image_format: str):

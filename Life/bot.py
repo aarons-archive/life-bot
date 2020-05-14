@@ -1,7 +1,6 @@
 import asyncio
 import collections
 import os
-import re
 import time
 
 import aiohttp
@@ -47,9 +46,6 @@ class Life(commands.AutoShardedBot):
         self.voice_perms = discord.Permissions(permissions=self.general_perms.value, connect=True, speak=True)
 
         self.clean_content = commands.clean_content()
-        self.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:'
-                                          'jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
-        self.spotify_url_regex = re.compile("https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)")
 
     @property
     def uptime(self):
