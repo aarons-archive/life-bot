@@ -1,18 +1,19 @@
 from discord.ext import commands
-from cogs.utilities import exceptions
-from cogs.voice.utilities import player
-from cogs.utilities import paginators
+
+from cogs.utilities import paginators, exceptions
+from cogs.voice.utilities.player import Player
 
 
 class LifeContext(commands.Context):
-    
+
     @property
     def player(self):
-        
+
         if not self.bot.is_ready():
             raise exceptions.BotNotReadyError
-        
-        return self.bot.granitepy.get_player(self.guild, cls=player.Player)
+
+        player = self.bot.granitepy.get_player(self.guild, cls=Player)
+        return player
     
     async def paginate(self, **kwargs):
         
