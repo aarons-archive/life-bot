@@ -53,8 +53,8 @@ class Events(commands.Cog):
             exceptions.BotNotReadyError: f'The bot is not ready yet.',
             exceptions.ArgumentError: f'{error}',
             commands.CheckFailure: f'{error}',
-            exceptions.LifePlaylistError: f"{error}",
-            exceptions.LifeVoiceError: f"{error}",
+            exceptions.LifePlaylistError: f'{error}',
+            exceptions.LifeVoiceError: f'{error}',
             commands.TooManyArguments: f'You used too many parameters for the command `{command}`. '
                                        f'Use `{prefix}help {command}` for more information on what parameters to use.',
             commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{command}`. '
