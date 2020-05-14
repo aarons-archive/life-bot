@@ -19,13 +19,7 @@ NODES = {
         "port": 00000,
         "password": "",
         "identifier": ""
-    },
-    "NODE 2": {
-        "host": "",
-        "port": 00000,
-        "password": "",
-        "identifier": ""
-    },
+    }
 }
 
 
