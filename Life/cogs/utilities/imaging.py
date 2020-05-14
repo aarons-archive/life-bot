@@ -3,7 +3,6 @@ import io
 import multiprocessing
 import re
 import typing
-import random
 
 import matplotlib.pyplot as plt
 from discord.ext import commands
