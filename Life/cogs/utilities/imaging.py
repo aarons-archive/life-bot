@@ -3,6 +3,7 @@ import io
 import multiprocessing
 import re
 import typing
+import random
 
 import matplotlib.pyplot as plt
 from discord.ext import commands
@@ -16,136 +17,162 @@ from cogs.utilities import exceptions
 def floor(image: typing.Union[Image, SingleImage]):
 
     image.sample(1000, 1000)
-    image.virtual_pixel = "tile"
+    image.virtual_pixel = 'tile'
     arguments = (0,            0,           300, 600,
                  image.height, 0,           700, 600,
                  0,            image.width, 200, 1000,
                  image.height, image.width, 800, 1000)
     image.distort('perspective', arguments)
+    return image
 
 
 def colorize(image: typing.Union[Image, SingleImage], color: str):
 
-    hex_check = re.compile("^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$").match(color)
+    hex_check = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$').match(color)
     if hex_check is None:
-        raise exceptions.ArgumentError("You provided an invalid colour format. Please use the format `#FFFFFF`.")
+        raise exceptions.ArgumentError('You provided an invalid colour format. Please use the format `#FFFFFF`.')
 
     with Color(color) as image_color:
-        with Color("rgb(50%, 50%, 50%)") as image_alpha:
+        with Color('rgb(50%, 50%, 50%)') as image_alpha:
             image.colorize(color=image_color, alpha=image_alpha)
+    return image
 
 
 def solarize(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.solarize(threshold=threshold * image.quantum_range)
+    return image
 
 
 def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
 
     image.sketch(radius=radius, sigma=sigma, angle=angle)
+    return image
 
 
 def implode(image: typing.Union[Image, SingleImage], amount: float):
 
     image.implode(amount=amount)
+    return image
 
 
 def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.sepia_tone(threshold=threshold)
+    return image
 
 
 def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
 
     image.polaroid(angle=angle, caption=caption)
+    return image
 
 
 def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
 
     image.vignette(sigma=sigma, x=x, y=y)
+    return image
 
 
 def swirl(image: typing.Union[Image, SingleImage], degree: int):
 
     image.swirl(degree=degree)
+    return image
 
 
 def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.charcoal(radius=radius, sigma=sigma)
+    return image
 
 
 def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
 
     image.noise(method, attenuate=attenuate)
+    return image
 
 
 def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
 
     image.blue_shift(factor=factor)
+    return image
 
 
 def spread(image: typing.Union[Image, SingleImage], radius: float):
 
     image.spread(radius=radius)
+    return image
 
 
 def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
+    return image
 
 
 def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.kuwahara(radius=radius, sigma=sigma)
+    return image
 
 
 def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.emboss(radius=radius, sigma=sigma)
+    return image
 
 
 def edge(image: typing.Union[Image, SingleImage], radius: float):
 
     image.edge(radius=radius)
+    return image
 
 
 def flip(image: typing.Union[Image, SingleImage]):
 
     image.flip()
+    return image
 
 
 def flop(image: typing.Union[Image, SingleImage]):
 
     image.flop()
+    return image
 
 
 def rotate(image: typing.Union[Image, SingleImage], degree: float):
 
     image.rotate(degree=degree)
+    return image
+
+
+def test(image: typing.Union[Image, SingleImage]):
+
+    return image
 
 
 image_operations = {
-    "floor": floor,
-    "colorize": colorize,
-    "solarize": solarize,
-    "sketch": sketch,
-    "implode": implode,
-    "sepia_tone": sepia_tone,
-    "polaroid": polaroid,
-    "vignette": vignette,
-    "swirl": swirl,
-    "charcoal": charcoal,
-    "noise": noise,
-    "blue_shift": blue_shift,
-    "spread": spread,
-    "sharpen": sharpen,
-    "kuwahara": kuwahara,
-    "emboss": emboss,
-    "edge": edge,
-    "flip": flip,
-    "flop": flop,
-    "rotate": rotate,
+    'floor': floor,
+    'colorize': colorize,
+    'solarize': solarize,
+    'sketch': sketch,
+    'implode': implode,
+    'sepia_tone': sepia_tone,
+    'polaroid': polaroid,
+    'vignette': vignette,
+    'swirl': swirl,
+    'charcoal': charcoal,
+    'noise': noise,
+    'blue_shift': blue_shift,
+    'spread': spread,
+    'sharpen': sharpen,
+    'kuwahara': kuwahara,
+    'emboss': emboss,
+    'edge': edge,
+    'flip': flip,
+    'flop': flop,
+    'rotate': rotate,
+    'test': test
 }
 
 
@@ -154,17 +181,20 @@ def do_edit_image(edit_function, image_bytes: bytes, queue: multiprocessing.Queu
     original_image = io.BytesIO(image_bytes)
     edited_image = io.BytesIO()
 
-    with Image(file=original_image) as image:
-        image_format = image.format
-        if image_format == "GIF":
-            with Image() as new_image:
-                for frame in image.sequence:
-                    edit_function(frame, **kwargs)
-                    new_image.sequence.append(frame)
-                new_image.save(file=edited_image)
-        else:
-            edit_function(image, **kwargs)
-            image.save(file=edited_image)
+    old_image = Image(file=original_image)
+    image_format = old_image.format
+    if image_format == 'GIF':
+        new_image = Image()
+        for frame in old_image.sequence:
+            frame = edit_function(frame, **kwargs)
+            new_image.sequence.append(frame)
+        new_image.save(file=edited_image)
+    else:
+        new_image = edit_function(old_image, **kwargs)
+        new_image.save(file=edited_image)
+
+    old_image.close()
+    new_image.close()
 
     edited_image.seek(0)
     queue.put((edited_image, image_format))
@@ -184,13 +214,14 @@ class Imaging:
 
         try:
             member = await commands.MemberConverter().convert(ctx, str(argument))
-            argument = str(member.avatar_url_as(format="gif" if member.is_avatar_animated() is True else "png"))
+            argument = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
         except commands.BadArgument:
             pass
 
         check_if_url = self.bot.image_url_regex.match(argument)
         if check_if_url is None:
-            raise exceptions.ArgumentError("You provided an invalid argument. Please provide Members name, id or mention or an image url.")
+            raise exceptions.ArgumentError('You provided an invalid argument. '
+                                           'Please provide a members name, id or mention or an image url.')
 
         return argument
 
@@ -209,7 +240,8 @@ class Imaging:
         image_url = await self.get_image_url(ctx=ctx, argument=url)
         image_bytes = await self.get_image_bytes(url=image_url)
 
-        process = multiprocessing.Process(target=do_edit_image, args=(edit_function, image_bytes, self.queue), kwargs=kwargs, daemon=True)
+        process = multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
+                                          args=(edit_function, image_bytes, self.queue))
         process.start()
 
         function = functools.partial(self.queue.get)
@@ -228,24 +260,28 @@ class Imaging:
         plt.clf()
         plt.figure(figsize=(10, 6))
 
-        plt.plot(times, pings, linewidth=1, c="navy", zorder=3)
-        plt.plot(times, pings, markevery=lowest_pings, c="green", linewidth=0.0, marker="s", markersize=5, zorder=3)
-        plt.plot(times, pings, markevery=highest_pings, c="red", linewidth=0.0, marker="s", markersize=5, zorder=3)
-        plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor="navy", alpha=0.5, zorder=3)
-        plt.text(0, min(pings) - 6, f"Average Ping: {average_ping}ms \nCurrent ping: {round(self.bot.latency * 1000)}ms \nLowest ping: {min(pings)}ms \nHighest ping: {max(pings)}ms")
+        plt.plot(times, pings, linewidth=1, c='navy', zorder=3)
+        plt.plot(times, pings, markevery=lowest_pings, c='green', linewidth=0.0, marker='s', markersize=5, zorder=3)
+        plt.plot(times, pings, markevery=highest_pings, c='red', linewidth=0.0, marker='s', markersize=5, zorder=3)
+        plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor='navy', alpha=0.5, zorder=3)
+        plt.text(0, min(pings) - 6, f'Average Ping: {average_ping}ms \n'
+                                    f'Current ping: {round(self.bot.latency * 1000)}ms \n'
+                                    f'Lowest ping: {min(pings)}ms \n'
+                                    f'Highest ping: {max(pings)}ms')
 
-        plt.xlabel("Time (HH:MM)")
-        plt.ylabel("Ping (MS)")
-        plt.title(f"Ping over the last {len(pings)} minutes(s)")
+        plt.xlabel('Time (HH:MM)')
+        plt.ylabel('Ping (MS)')
+        plt.title(f'Ping over the last {len(pings)} minutes(s)')
         plt.xticks(rotation=-90)
 
         if len(pings) <= 180:
             plt.minorticks_on()
-            plt.grid(axis="x", zorder=1)
+            plt.grid(axis='x', zorder=1)
 
-        plt.grid(axis="y", which="both", zorder=1)
-        plt.tick_params(axis="x", which="major", bottom=True if len(pings) <= 60 else False, labelbottom=True if len(pings) <= 60 else False)
-        plt.tick_params(axis="x", which="minor", bottom=False)
+        plt.grid(axis='y', which='both', zorder=1)
+        plt.tick_params(axis='x', which='major', bottom=True if len(pings) <= 60 else False,
+                        labelbottom=True if len(pings) <= 60 else False)
+        plt.tick_params(axis='x', which='minor', bottom=False)
         plt.tight_layout()
 
         buffer = io.BytesIO()
@@ -260,7 +296,7 @@ class Imaging:
         plt.clf()
         plt.figure(figsize=(10, 6))
 
-        plt.plot(names, values, color="navy", zorder=3)
+        plt.plot(names, values, color='navy', zorder=3)
 
         plt.ylabel(y_label)
         plt.xlabel(x_label)
@@ -269,11 +305,12 @@ class Imaging:
 
         if len(values) <= 168:
             plt.minorticks_on()
-            plt.grid(axis="x", zorder=1)
+            plt.grid(axis='x', zorder=1)
 
-        plt.grid(axis="y", which="both", zorder=1)
-        plt.tick_params(axis="x", which="major", bottom=True if len(values) <= 72 else False, labelbottom=True if len(values) <= 72 else False)
-        plt.tick_params(axis="x", which="minor", bottom=False)
+        plt.grid(axis='y', which='both', zorder=1)
+        plt.tick_params(axis='x', which='major', bottom=True if len(values) <= 72 else False,
+                        labelbottom=True if len(values) <= 72 else False)
+        plt.tick_params(axis='x', which='minor', bottom=False)
         plt.tight_layout()
 
         buffer = io.BytesIO()
@@ -286,10 +323,11 @@ class Imaging:
     def do_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
 
         buffer = io.BytesIO()
-        online_count, idle_count, dnd_count, offline_count, streaming_count = self.bot.utils.guild_user_status(ctx.guild, all_guilds=all_guilds)
+        online_count, idle_count, dnd_count, offline_count, streaming_count = \
+            self.bot.utils.guild_user_status(ctx.guild, all_guilds=all_guilds)
         total = online_count + idle_count + dnd_count + offline_count
 
-        if graph_type == "pie":
+        if graph_type == 'pie':
 
             online_percent = round((online_count / total) * 100, 2)
             idle_percent = round((idle_count / total) * 100, 2)
@@ -297,50 +335,52 @@ class Imaging:
             offline_percent = round((offline_count / total) * 100, 2)
             streaming_percent = round((streaming_count / total) * 100, 2)
 
-            labels = [f"{online_percent}%", f"{idle_percent}%", f"{dnd_percent}%", f"{offline_percent}%", f"{streaming_percent}%"]
+            labels = [f'{online_percent}%', f'{idle_percent}%', f'{dnd_percent}%',
+                      f'{offline_percent}%', f'{streaming_percent}%']
             sizes = [online_count, idle_count, dnd_count, offline_count, streaming_count]
-            colors = ["#7acba6", "#fcc15d", "#f57e7e", "#9ea4af", "#593695"]
+            colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
 
             plt.clf()
-            figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect="equal"))
+            figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect='equal'))
 
             axes.pie(sizes, colors=colors, startangle=90)
-            axes.legend(labels, loc="center right", title="Status's")
+            axes.legend(labels, loc='center right', title="Status's")
 
             if all_guilds is True:
-                axes.set_title(f"Percentage of members per status across all guilds.")
+                axes.set_title(f'Percentage of members per status across all guilds.')
             else:
-                axes.set_title(f"Percentage of members per status in {ctx.guild.name}")
+                axes.set_title(f'Percentage of members per status in {ctx.guild.name}')
 
-            axes.axis("equal")
+            axes.axis('equal')
             plt.tight_layout()
 
             plt.savefig(buffer)
             plt.close()
 
-        if graph_type == "bar":
+        if graph_type == 'bar':
 
-            labels = ["Online", "Idle", "DnD", "Offline", "Streaming"]
+            labels = ['Online', 'Idle', 'DnD', 'Offline', 'Streaming']
             values = [online_count, idle_count, dnd_count, offline_count, streaming_count]
-            colors = ["#7acba6", "#fcc15d", "#f57e7e", "#9ea4af", "#593695"]
+            colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
 
             plt.clf()
             plt.figure(figsize=(6, 4))
 
             bar_chart = plt.bar(labels, values, color=colors, zorder=3)
             if all_guilds is True:
-                plt.title(f"Member count per status across all guilds.")
+                plt.title(f'Member count per status across all guilds.')
             else:
-                plt.title(f"Members count per status in {ctx.guild.name}")
-            plt.ylabel("Member count")
-            plt.xlabel("Status")
+                plt.title(f'Members count per status in {ctx.guild.name}')
+            plt.ylabel('Member count')
+            plt.xlabel('Status')
 
             for bar in bar_chart:
                 height = bar.get_height()
-                plt.annotate('{}'.format(height), xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 2), textcoords="offset points", ha='center')
+                plt.annotate('{}'.format(height), xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 2),
+                             textcoords='offset points', ha='center')
 
             plt.minorticks_on()
-            plt.grid(which="both", axis="y", zorder=0)
+            plt.grid(which='both', axis='y', zorder=0)
 
             plt.tight_layout()
 
