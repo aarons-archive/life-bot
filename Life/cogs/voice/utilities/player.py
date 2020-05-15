@@ -79,56 +79,56 @@ class Player(diorite.Player):
     async def search(self, ctx: commands.Context, search: str):
 
         spotify_url = self.bot.spotify_url_regex.match(search)
-        if spotify_url is not None:
+        if spotify_url:  # If the search is a spotify URL.
 
             spotify_type, spotify_id = spotify_url.groups()
             try:
-                if spotify_type == 'track':
+                if spotify_type == 'track':  # If the link was for a track.
                     result = await self.bot.spotify.get_track(spotify_id)
                     spotify_tracks = [result]
-                elif spotify_type == 'album':
+                elif spotify_type == 'album':  # If the link was for an album.
                     result = await self.bot.spotify.get_album(spotify_id)
                     spotify_tracks = await result.get_all_tracks()
-                elif spotify_type == 'playlist':
+                else:  # Else, the link will be for a playlist.
                     result = spotify.Playlist(self.bot.spotify, await self.bot.http_spotify.get_playlist(spotify_id))
                     spotify_tracks = await result.get_all_tracks()
-                else:
-                    raise exceptions.LifeVoiceError(f'The spotify link `{search}` is not a valid spotify track, album '
-                                                    f'or playlist link.')
-            except spotify.HTTPException:
-                raise exceptions.LifeVoiceError(f'The link `{search}` is a spotify link however no tracks, albums or '
-                                                f'playlists that match it could be found.')
+
+            except spotify.NotFound:
+                raise exceptions.LifeVoiceError(f'The search `{search}` is not a valid spotify URL.')
             if not spotify_tracks:
-                raise exceptions.LifeVoiceError(f'The link `{search}` is a spotify link however no tracks, albums or '
-                                                f'playlists that match it could be found.')
+                raise exceptions.LifeVoiceError(f'The search `{search}` is a valid spotify URL but no tracks could be '
+                                                f'found for it')
 
             tracks = [objects.SpotifyTrack(ctx=ctx, title=f'{track.name}', author=f'{track.artist.name}',
                                            length=track.duration, uri=track.url) for track in spotify_tracks]
+
             return {'type': 'spotify', 'return_type': spotify_type, 'result': result, 'tracks': tracks}
 
-        else:
+        else:  # If the search wasn't a spotify URL then just search youtube.
 
-            youtube_url = self.bot.youtube_url_regex.match(search)
-            if youtube_url is None:
-                search = f"ytsearch:{search}"
+            if self.bot.youtube_url_regex.match(search) is None:
+                yt_search = f"ytsearch: {search}"
+            else:
+                yt_search = search
 
             try:
+                result = await self.node.get_tracks(query=yt_search)
+                if not result:
+                    raise exceptions.LifeVoiceError(f'The search `{search}` found nothing.')
 
-                result = await self.node.get_tracks(query=f'{search}')
-
-                if isinstance(result, diorite.Playlist):
-                    return_type = "playlist"
+                if isinstance(result, diorite.Playlist):  # If the result was a playlist.
+                    youtube_type = "playlist"
                     result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
-                elif isinstance(result, list) and isinstance(result[0], diorite.Track):
-                    return_type = "track"
+                    tracks = result.tracks
+                else:  # Else, the link will be a list of tracks.
+                    youtube_type = "track"
                     result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
-                else:
-                    raise exceptions.LifeVoiceError(f'The youtube search `{search}` returned nothing.')
+                    tracks = result
 
             except diorite.TrackLoadError as e:
-                raise exceptions.LifeVoiceError(f"There was a problem while loading your search: `{e.error_message}`")
+                raise exceptions.LifeVoiceError(f"There was a problem with your search: `{e.error_message}`")
 
-            return {'type': 'youtube', 'return_type': return_type, 'result': result}
+            return {'type': 'youtube', 'return_type': youtube_type, 'result': result, 'tracks': tracks}
 
     async def invoke_controller(self, track: objects.LifeTrack):
 

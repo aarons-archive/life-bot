@@ -20,8 +20,8 @@ class Music(commands.Cog):
                                           client_secret=self.bot.config.SPOTIFY_SECRET)
 
         self.bot.spotify_url_regex = re.compile(r'https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)')
-        self.bot.youtube_url_regex = re.compile(r'https?://(?:www\.)?.+')
-
+        self.bot.youtube_url_regex = re.compile(r'^(http(s)??://)?(www\.)?((youtube\.com/watch\?v=)|(youtu.be/))'
+                                                r'([a-zA-Z0-9\-_])+')
         asyncio.create_task(self.load_nodes())
 
     async def load_nodes(self):
@@ -101,13 +101,11 @@ class Music(commands.Cog):
 
                 if result_type == 'playlist':
                     message = f'Added the youtube playlist **{result.name}** to the queue ' \
-                              f'with a total of **{len(result.tracks)}** track(s)'
-                    tracks = result.tracks
+                              f'with a total of **{len(tracks)}** track(s)'
                 elif result_type == 'track':
                     message = f'Added the youtube track **{result[0].title}** to the queue.'
-                    tracks = [result[0]]
 
-                ctx.player.queue.extend(tracks)
+                ctx.player.queue.extend([tracks[0]])
                 return await ctx.send(message)
 
     @commands.command(name='leave', aliases=['disconnect'])
@@ -123,7 +121,7 @@ class Music(commands.Cog):
         ctx.player.task.cancel()
         await ctx.player.destroy()
 
-        return await ctx.send(f'Left the voice channel `{ctx.player.voice.channel}`.')
+        return await ctx.send(f'Left the voice channel `{ctx.guild.me.voice.channel}`.')
 
     @commands.command(name='skip')
     @checks.is_player_playing()
