@@ -15,12 +15,11 @@ from cogs.utilities import exceptions
 
 def floor(image: typing.Union[Image, SingleImage]):
 
-    image.sample(1000, 1000)
     image.virtual_pixel = 'tile'
-    arguments = (0,            0,           300, 600,
-                 image.height, 0,           700, 600,
-                 0,            image.width, 200, 1000,
-                 image.height, image.width, 800, 1000)
+    arguments = (0,            0,            image.width * 0.2, image.height * 0.4,
+                 image.width,  0,            image.width * 0.8, image.height * 0.4,
+                 0,            image.height, image.width * 0.1, image.height,
+                 image.width,  image.height, image.width * 0.9, image.height)
     image.distort('perspective', arguments)
     return image
 
@@ -180,20 +179,18 @@ def do_edit_image(edit_function, image_bytes: bytes, queue: multiprocessing.Queu
     original_image = io.BytesIO(image_bytes)
     edited_image = io.BytesIO()
 
-    old_image = Image(file=original_image)
-    image_format = old_image.format
-    if image_format == 'GIF':
-        new_image = Image()
-        for frame in old_image.sequence:
-            frame = edit_function(frame, **kwargs)
-            new_image.sequence.append(frame)
-        new_image.save(file=edited_image)
-    else:
-        new_image = edit_function(old_image, **kwargs)
-        new_image.save(file=edited_image)
-
-    old_image.close()
-    new_image.close()
+    with Image(file=original_image) as old_image:
+        image_format = old_image.format
+        with Image() as new_image:
+            if image_format == 'GIF':
+                old_image.coalesce()
+                for frame in old_image.sequence:
+                    frame = edit_function(frame, **kwargs)
+                    new_image.sequence.append(frame)
+                new_image.save(file=edited_image)
+            else:
+                new_image = edit_function(old_image, **kwargs)
+                new_image.save(file=edited_image)
 
     edited_image.seek(0)
     queue.put((edited_image, image_format))
