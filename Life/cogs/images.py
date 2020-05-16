@@ -24,6 +24,7 @@ class Images(commands.Cog):
         return file, embed
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='user_graph', aliases=['ug'])
     async def user_graph(self, ctx, history: int = 24):
         """
@@ -50,6 +51,7 @@ class Images(commands.Cog):
             return await ctx.send(file=discord.File(fp=plot, filename='UserGraph.png'))
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='guild_graph', aliases=['gg'])
     async def guild_graph(self, ctx, history: int = 24):
         """
@@ -76,6 +78,7 @@ class Images(commands.Cog):
             return await ctx.send(file=discord.File(fp=plot, filename='GuildGraph.png'))
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='ping_graph', aliases=['pg'])
     async def ping_graph(self, ctx, history: int = 60):
         """
@@ -93,6 +96,7 @@ class Images(commands.Cog):
             return await ctx.send(file=discord.File(fp=plot, filename='PingGraph.png'))
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='guildstatus', aliases=['serverstatus', 'gs'])
     async def guildstatus(self, ctx, graph_type: str = 'pie', all_guilds=False):
         """
@@ -112,6 +116,7 @@ class Images(commands.Cog):
             return await ctx.send(file=discord.File(fp=plot, filename='GuildStatus.png'))
 
     @commands.cooldown(1, 30, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='floor')
     async def floor(self, ctx, url: str = None):
 
@@ -122,6 +127,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='colorize', aliases=['colorise'])
     async def colorize(self, ctx, url: str = None, colour: str = None):
 
@@ -138,6 +144,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='solarize', aliases=['solarise'])
     async def solarize(self, ctx, url: str = None, threshold: float = 0.5):
 
@@ -150,6 +157,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sketch')
     async def sketch(self, ctx, url: str = None, radius: float = 0.5, sigma: float = 0.0, angle: float = 98.0):
 
@@ -162,6 +170,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='implode')
     async def implode(self, ctx, url: str = None, amount: float = 0.35):
 
@@ -174,6 +183,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sepiatone', aliases=['sepia_tone'])
     async def sepia_tone(self, ctx, url: str = None, threshold: float = 0.8):
 
@@ -186,6 +196,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='polaroid')
     async def polaroid(self, ctx, url: str = None, angle: float = 0.0, *, caption: str = None):
 
@@ -198,6 +209,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='vignette')
     async def vignette(self, ctx, url: str = None, sigma: float = 3, x: int = 10, y: int = 10):
 
@@ -210,6 +222,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='swirl')
     async def swirl(self, ctx, url: str = None, degree: int = 90):
 
@@ -222,6 +235,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='charcoal')
     async def charcoal(self, ctx, url: str = None, radius: float = 1.5, sigma: float = 0.5):
 
@@ -234,6 +248,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='noise')
     async def noise(self, ctx, url: str = None, method: str = 'gaussian', attenuate: float = 0.5):
 
@@ -252,6 +267,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blueshift', aliases=['blue_shift'])
     async def blue_shift(self, ctx, url: str = None, factor: float = 1.25):
 
@@ -264,6 +280,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='spread')
     async def spread(self, ctx, url: str = None, radius: float = 5.0):
 
@@ -276,6 +293,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sharpen')
     async def sharpen(self, ctx, url: str = None, radius: float = 8, sigma: float = 4):
 
@@ -288,6 +306,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='kuwahara')
     async def kuwahara(self, ctx, url: str = None, radius: float = 2, sigma: float = 1.5):
 
@@ -300,6 +319,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='emboss')
     async def emboss(self, ctx, url: str = None, radius: float = 3, sigma: float = 1.75):
 
@@ -312,6 +332,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='edge')
     async def edge(self, ctx, url: str = None, radius: float = 1):
 
@@ -324,6 +345,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flip')
     async def flip(self, ctx, url: str = None):
 
@@ -334,6 +356,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flop')
     async def flop(self, ctx, url: str = None):
 
@@ -344,6 +367,7 @@ class Images(commands.Cog):
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='rotate')
     async def rotate(self, ctx, url: str = None, degree: int = 90):
 
