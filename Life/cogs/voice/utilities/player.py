@@ -68,11 +68,12 @@ class Player(diorite.Player):
             # If we are now playing the track, lets invoke the controller.
             await self.invoke_controller(self.current)
 
-            # Wait for our end event to be dispatched by custom listeners, then continue the loop.
-            await self.bot.wait_for("life_track_end", check=self.check)
-
+            # If the queue is looping add the track back to the queue.
             if self.is_looping:
                 self.queue.put(self.current)
+
+            # Wait for our end event to be dispatched by custom listeners, then continue the loop.
+            await self.bot.wait_for("life_track_end", check=self.check)
 
             self.current = None
 
