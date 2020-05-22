@@ -1,24 +1,24 @@
-TOKEN = ""
-PREFIX = ""
+TOKEN = ''
+PREFIX = ''
 
-OSU_TOKEN = ""
+OSU_TOKEN = ''
 
-SPOTIFY_ID = ""
-SPOTIFY_SECRET = ""
+SPOTIFY_ID = ''
+SPOTIFY_SECRET = ''
 
 DATABASE = {
-    "user": "",
-    "password": "",
-    "host": "",
-    "database": ""
+    'user': '',
+    'password': '',
+    'host': '',
+    'database': ''
 }
 
 NODES = {
-    "NODE 1": {
-        "host": "",
-        "port": 00000,
-        "password": "",
-        "identifier": ""
+    'NODE 1': {
+        'host': '',
+        'port': 00000,
+        'password': '',
+        'identifier': ''
     }
 }
 
