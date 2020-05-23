@@ -2,16 +2,16 @@
 Life is an RPG discord bot coded by MrRandom#9258. Click the link below to invite it to your discord server and do `l-help` for more information.
 
 ## Links
-* [Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot)
+* [Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848)
 * [Support Server](https://discord.gg/xP8xsHr)
-
+l
 ## Installing/Running
 While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
 
 ### Prerequisites
-* Python3.6 or higher
+* Python3.7 or higher
 * PostgreSQL database
-* A running andesite node
+* A running lavalink node
 
 ### Setup
 1. Install dependencies
@@ -25,51 +25,38 @@ pip install -U -r requirements.txt
 TOKEN = "BOT_TOKEN"
 PREFIX = "BOT_PREFIX"
 
-OSU_TOKEN = "OSU API KEY"
-
 SPOTIFY_ID = "SPOTIFY APP ID"
 SPOTIFY_SECRET = "SPOTIFY API SECRET"
 
 DATABASE = {
+    "host": "DATABASE IP",
     "user": "DATABASE USER",
     "password": "DATABASE PASSWORD",
-    "host": "DATABASE HOST IP",
     "database": "DATABASE NAME"
 }
 
 NODES = {
     "NODE 1": {
-        "host": "ANDESITE NODE IP",
-        "port": 00000, # ANDESITE NODE PORT
-        "password": "ANDESITE NODE PASSWORD",
-        "identifier": "CUSTOM ANDESITE NODE IDENTIFIER"
+        "host": "LAVALINK NODE IP",
+        "port": 00000, # LAVALINK NODE PORT
+        "password": "LAVALINK NODE PASSWORD",
+        "identifier": "LAVALINK NODE IDENTIFIER"
     }
 }
 
-
-EXTENSIONS = [
-    "cogs.help",
-    "cogs.events",
-    "cogs.background",
-    "jishaku",
-    "cogs.dev",
-    "cogs.information",
-    "cogs.images",
-    "cogs.todo",
-    "cogs.voice.music",
-    "cogs.voice.playlists",
-    "cogs.kross",
-]
+EXTENSIONS = ['cogs.information', ...]
 ```
 
 ## Built with
-* [discord.py](https://github.com/Rapptz/discord.py)
 * [asyncpg](https://github.com/MagicStack/asyncpg)
-* [psutil](https://github.com/giampaolo/psutil)
+* [discord.py](https://github.com/Rapptz/discord.py)
 * [jishaku](https://github.com/Gorialis/jishaku)
-* [Pillow](https://github.com/python-pillow/Pillow)
+* [psutil](https://github.com/giampaolo/psutil)
 * [matplotlib](https://github.com/matplotlib/matplotlib)
-* [andesite](https://github.com/natanbc/andesite-node)
-* [granitepy](https://github.com/iDevision/granitepy)
-* [aiOsu](https://github.com/iDevision/aiOsu)
+* [wand](https://github.com/emcconville/wand)
+* [tabulate](https://github.com/astanin/python-tabulate)
+* [spotify](https://github.com/mental32/spotify.py)
+* [diorite](https://github.com/iDevision/diorite)
+* [setproctitle](https://github.com/dvarrazzo/py-setproctitle)
+* [lavalink](https://github.com/Frederikam/Lavalink)
 

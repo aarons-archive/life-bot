@@ -1,15 +1,13 @@
 TOKEN = ''
 PREFIX = ''
 
-OSU_TOKEN = ''
-
 SPOTIFY_ID = ''
 SPOTIFY_SECRET = ''
 
 DATABASE = {
+    'host': '',
     'user': '',
     'password': '',
-    'host': '',
     'database': ''
 }
 
