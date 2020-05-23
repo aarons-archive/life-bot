@@ -1,12 +1,12 @@
+import contextlib
 import logging
 import os
-from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 
 from bot import Life
 
 
-@contextmanager
+@contextlib.contextmanager
 def logger():
 
     log = logging.getLogger('diorite')
