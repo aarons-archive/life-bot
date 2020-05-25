@@ -15,6 +15,7 @@ class Events(commands.Cog):
     async def on_ready(self):
 
         self.bot.log_channel = self.bot.get_channel(697324016658022441)
+        self.bot.dm_channel = self.bot.get_channel(714307639609131018)
 
         print(f'\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}\n')
         if self.bot.user.id == 628284183579721747:
@@ -31,7 +32,11 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
 
-        await self.bot.log_channel.send(f'Joined a guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`')
+        embed = discord.Embed(colour=discord.Colour.gold())
+        embed.title = f'Joined a guild.'
+        embed.description = f"**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}"
+        embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+        await self.bot.log_channel.send(embed=embed)
 
         if guild.id in self.bot.guild_blacklist:
             return await guild.leave()
@@ -39,11 +44,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
 
-        if guild.id in self.bot.guild_blacklist:
-            message = f'Left a blacklisted guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`'
-            return await self.bot.log_channel.send(message)
+        embed = discord.Embed(colour=discord.Colour.gold())
+        embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+        embed.description = f"**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}"
 
-        return await self.bot.log_channel.send(f'Left a guild: `{guild.name}` - `{guild.id}` - `{guild.owner}`')
+        if guild.id in self.bot.guild_blacklist.keys():
+            embed.title = f'Left a blacklisted guild.'
+            return await self.bot.log_channel.send(embed=embed)
+
+        embed.title = f'Left a guild.'
+        return await self.bot.log_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -51,6 +61,7 @@ class Events(commands.Cog):
         error = getattr(error, 'original', error)
         command = ctx.command
         prefix = self.bot.config.PREFIX
+
         error_messages = {
             exceptions.BotNotReadyError: f'The bot is not ready yet.',
             exceptions.ArgumentError: f'{error}',
@@ -101,22 +112,16 @@ class Events(commands.Cog):
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             cooldowns = {
-                commands.BucketType.default: f'The command `{command}` is already being ran at its maximum '
-                                             f'of {error.number} times per bot.',
-                commands.BucketType.user: f'The command `{command}` is already being ran at its maximum '
-                                          f'of {error.number} times per user.',
-                commands.BucketType.guild: f'The command `{command}` is already being ran at its maximum '
-                                           f'of {error.number} times per guild.',
-                commands.BucketType.channel: f'The command `{command}` is already being ran at its maximum '
-                                             f'of {error.number} times per channel.',
-                commands.BucketType.member: f'The command `{command}` is already being ran at its maximum '
-                                            f'of {error.number} times per member.',
-                commands.BucketType.category: f'The command `{command}` is already being ran at its maximum '
-                                              f'of {error.number} times per channel category.',
-                commands.BucketType.role: f'The command `{command}` is already being ran at its maximum '
-                                          f'of {error.number} times per role.'
+                commands.BucketType.default: f'.',
+                commands.BucketType.user: f' per user.',
+                commands.BucketType.guild: f' per guild.',
+                commands.BucketType.channel: f' per channel.',
+                commands.BucketType.member: f' per member.',
+                commands.BucketType.category: f' per channel category.',
+                commands.BucketType.role: f' per role.'
             }
-            error_message = f'{cooldowns[error.per]} Retry a bit later.'
+            error_message = f'The command `{command}` is already being ran at its maximum of ' \
+                            f'{error.number} time(s){cooldowns[error.per]} Retry a bit later.'
 
         elif isinstance(error, commands.CommandNotFound):
             return
@@ -131,6 +136,24 @@ class Events(commands.Cog):
                     return
 
         traceback.print_exception(type(error), error, error.__traceback__)
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx):
+        if ctx.author.id in self.bot.owner_ids:
+            ctx.command.reset_cooldown(ctx)
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.guild is not None:
+            return
+        if message.author.bot:
+            return
+        embed = discord.Embed(colour=discord.Colour.gold())
+        embed.set_author(name=message.author, icon_url=self.bot.utils.member_avatar(message.author))
+        embed.description = f"**DM From {message.author.mention}**.\n\nContent:\n{message.content}"
+
+        await self.bot.dm_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
