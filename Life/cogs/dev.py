@@ -149,7 +149,7 @@ class Dev(commands.Cog):
         blacklisted_guilds = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
         for guild in blacklisted_guilds:
             self.bot.guild_blacklist[guild['id']] = guild['reason']
-        print(f'[BLACKLIST] Reloaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n')
+        print(f'[BLACKLIST] Reloaded guild blacklist. [{len(blacklisted_guilds)} guilds]')
 
         return await ctx.send('Reloaded the blacklists.')
 
@@ -243,7 +243,7 @@ class Dev(commands.Cog):
         """
         Add a guild to the blacklist.
 
-        `user`: The guilds id.
+        `guild`: The guilds id.
         `reason`: Why the guild is blacklisted.
         """
 
@@ -274,7 +274,7 @@ class Dev(commands.Cog):
         """
         Remove a guild from the blacklist.
 
-        `user`: The guilds id.
+        `guild`: The guilds id.
         """
 
         if not guild:
