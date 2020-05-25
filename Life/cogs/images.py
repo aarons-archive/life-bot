@@ -1,5 +1,4 @@
 import functools
-import io
 import re
 
 import discord
@@ -16,12 +15,6 @@ class Images(commands.Cog):
         self.bot.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:'
                                               'jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
         self.bot.imaging = imaging.Imaging(self.bot)
-    
-    async def create_embed(self, image: io.BytesIO, image_format: str):
-        file = discord.File(filename=f'Image.{image_format.lower()}', fp=image)
-        embed = discord.Embed(colour=discord.Colour.gold())
-        embed.set_image(url=f'attachment://Image.{image_format.lower()}')
-        return file, embed
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
@@ -121,9 +114,7 @@ class Images(commands.Cog):
     async def floor(self, ctx, url: str = None):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='floor')
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='floor')
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -136,11 +127,7 @@ class Images(commands.Cog):
             if not colour:
                 colour = self.bot.utils.random_colour()
 
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='colorize',
-                                                                    color=colour)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Colour: {colour}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='colorize', color=colour)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -149,11 +136,7 @@ class Images(commands.Cog):
     async def solarize(self, ctx, url: str = None, threshold: float = 0.5):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='solarize',
-                                                                    threshold=threshold)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Threshold: {threshold}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='solarize', threshold=threshold)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -162,11 +145,8 @@ class Images(commands.Cog):
     async def sketch(self, ctx, url: str = None, radius: float = 0.5, sigma: float = 0.0, angle: float = 98.0):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sketch',
-                                                                    radius=radius, sigma=sigma, angle=angle)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius} | Sigma: {sigma} | Angle: {angle}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sketch', radius=radius,
+                                                            sigma=sigma, angle=angle)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -175,11 +155,7 @@ class Images(commands.Cog):
     async def implode(self, ctx, url: str = None, amount: float = 0.35):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='implode',
-                                                                    amount=amount)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Amount: {amount}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='implode', amount=amount)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -188,11 +164,8 @@ class Images(commands.Cog):
     async def sepia_tone(self, ctx, url: str = None, threshold: float = 0.8):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sepia_tone',
-                                                                    threshold=threshold)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Threshold: {threshold}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sepia_tone',
+                                                            threshold=threshold)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -201,11 +174,8 @@ class Images(commands.Cog):
     async def polaroid(self, ctx, url: str = None, angle: float = 0.0, *, caption: str = None):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='polaroid',
-                                                                    angle=angle, caption=caption)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Angle: {angle} | Caption: {caption}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='polaroid', angle=angle,
+                                                            caption=caption)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -214,11 +184,8 @@ class Images(commands.Cog):
     async def vignette(self, ctx, url: str = None, sigma: float = 3, x: int = 10, y: int = 10):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='vignette',
-                                                                    sigma=sigma, x=x, y=y)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Sigma: {sigma} | X: {x} | Y: {y}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='vignette', sigma=sigma,
+                                                            x=x, y=y)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -227,11 +194,7 @@ class Images(commands.Cog):
     async def swirl(self, ctx, url: str = None, degree: int = 90):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='swirl',
-                                                                    degree=degree)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Degree: {degree}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='swirl', degree=degree)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -240,11 +203,8 @@ class Images(commands.Cog):
     async def charcoal(self, ctx, url: str = None, radius: float = 1.5, sigma: float = 0.5):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='charcoal',
-                                                                    radius=radius, sigma=sigma)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius} | Sigma: {sigma}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='charcoal', radius=radius,
+                                                            sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -256,14 +216,11 @@ class Images(commands.Cog):
 
             methods = ['gaussian', 'impulse', 'laplacian', 'multiplicative_gaussian', 'poisson', 'random', 'uniform']
             if method not in methods:
-                return await ctx.send(f'That was not a valid method. Please use one of `gaussian`, `impulse`, `'
-                                      f'laplacian`, `multiplicative_gaussian`, `poisson`, `random`, `uniform`')
+                return await ctx.send(f'That was not a valid method. Please use one of `gaussian`, `impulse`, '
+                                      f'`laplacian`, `multiplicative_gaussian`, `poisson`, `random`, `uniform`')
 
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='noise',
-                                                                    method=method, attenuate=attenuate)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Method: {method} | Attenuate: {attenuate}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='noise', method=method,
+                                                            attenuate=attenuate)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -272,11 +229,7 @@ class Images(commands.Cog):
     async def blue_shift(self, ctx, url: str = None, factor: float = 1.25):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='blue_shift',
-                                                                    factor=factor)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Factor: {factor}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='blue_shift', factor=factor)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -285,11 +238,7 @@ class Images(commands.Cog):
     async def spread(self, ctx, url: str = None, radius: float = 5.0):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='spread',
-                                                                    radius=radius)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='spread', radius=radius)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -298,11 +247,8 @@ class Images(commands.Cog):
     async def sharpen(self, ctx, url: str = None, radius: float = 8, sigma: float = 4):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sharpen',
-                                                                    radius=radius, sigma=sigma)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius} | Sigma: {sigma}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='sharpen', radius=radius,
+                                                            sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -311,11 +257,8 @@ class Images(commands.Cog):
     async def kuwahara(self, ctx, url: str = None, radius: float = 2, sigma: float = 1.5):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='kuwahara',
-                                                                    radius=radius, sigma=sigma)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius} | Sigma: {sigma}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='kuwahara', radius=radius,
+                                                            sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -324,11 +267,8 @@ class Images(commands.Cog):
     async def emboss(self, ctx, url: str = None, radius: float = 3, sigma: float = 1.75):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='emboss',
-                                                                    radius=radius, sigma=sigma)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius} | Sigma: {sigma}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='emboss', radius=radius,
+                                                            sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -337,11 +277,7 @@ class Images(commands.Cog):
     async def edge(self, ctx, url: str = None, radius: float = 1):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='edge',
-                                                                    radius=radius)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Radius: {radius}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='edge', radius=radius)
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -350,9 +286,7 @@ class Images(commands.Cog):
     async def flip(self, ctx, url: str = None):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='flip')
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='flip')
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -361,9 +295,7 @@ class Images(commands.Cog):
     async def flop(self, ctx, url: str = None):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='flop')
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='flop')
             return await ctx.send(file=file, embed=embed)
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
@@ -372,11 +304,7 @@ class Images(commands.Cog):
     async def rotate(self, ctx, url: str = None, degree: int = 90):
 
         async with ctx.channel.typing():
-            image, image_format = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='rotate',
-                                                                    degree=degree)
-
-            file, embed = await self.create_embed(image=image, image_format=image_format)
-            embed.set_footer(text=f'Degree: {degree}')
+            file, embed = await self.bot.imaging.edit_image(ctx=ctx, url=url, edit_type='rotate', degree=degree)
             return await ctx.send(file=file, embed=embed)
 
 

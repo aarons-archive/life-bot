@@ -4,6 +4,7 @@ import multiprocessing
 import re
 import typing
 
+import discord
 import matplotlib.pyplot as plt
 from discord.ext import commands
 from wand.color import Color
@@ -21,132 +22,129 @@ def floor(image: typing.Union[Image, SingleImage]):
                  0,            image.height, image.width * 0.1, image.height,
                  image.width,  image.height, image.width * 0.9, image.height)
     image.distort('perspective', arguments)
-    return image
+
+    return image, ''
 
 
-def colorize(image: typing.Union[Image, SingleImage], color: str):
+def colorize(image: typing.Union[Image, SingleImage], colour: str):
 
-    hex_check = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$').match(color)
+    hex_check = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$').match(colour)
     if hex_check is None:
         raise exceptions.ArgumentError('You provided an invalid colour format. Please use the format `#FFFFFF`.')
 
-    with Color(color) as image_color:
+    with Color(colour) as image_color:
         with Color('rgb(50%, 50%, 50%)') as image_alpha:
             image.colorize(color=image_color, alpha=image_alpha)
-    return image
+
+    return image, f'Colour: {colour}'
 
 
 def solarize(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.solarize(threshold=threshold * image.quantum_range)
-    return image
+    return image, f'Threshold: {threshold}'
 
 
 def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
 
     image.sketch(radius=radius, sigma=sigma, angle=angle)
-    return image
+    return image, f'Radius: {radius} | Sigma: {sigma} | Angle: {angle}'
 
 
 def implode(image: typing.Union[Image, SingleImage], amount: float):
 
     image.implode(amount=amount)
-    return image
+    return image, f'Amount: {amount}'
 
 
 def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
 
     image.sepia_tone(threshold=threshold)
-    return image
+    return image, f'Threshold: {threshold}'
 
 
 def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
 
     image.polaroid(angle=angle, caption=caption)
-    return image
+    return image, f'Angle: {angle} | Caption: {caption}'
 
 
 def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
 
     image.vignette(sigma=sigma, x=x, y=y)
-    return image
+    return image, f'Sigma: {sigma} | X: {x} | Y: {y}'
 
 
 def swirl(image: typing.Union[Image, SingleImage], degree: int):
 
     image.swirl(degree=degree)
-    return image
+    return image, f'Degree: {degree}'
 
 
 def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.charcoal(radius=radius, sigma=sigma)
-    return image
+    return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
 def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
 
     image.noise(method, attenuate=attenuate)
-    return image
+    return image, f'Method: {method} | Attenuate: {attenuate}'
 
 
 def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
 
     image.blue_shift(factor=factor)
-    return image
+    return image, f'Factor: {factor}'
 
 
 def spread(image: typing.Union[Image, SingleImage], radius: float):
 
     image.spread(radius=radius)
-    return image
+    return image, f'Radius: {radius}'
 
 
 def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
-    return image
+    return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
 def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.kuwahara(radius=radius, sigma=sigma)
-    return image
+    return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
 def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
     image.emboss(radius=radius, sigma=sigma)
-    return image
+    return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
 def edge(image: typing.Union[Image, SingleImage], radius: float):
 
     image.edge(radius=radius)
-    return image
+    return image, f'Radius: {radius}'
 
 
 def flip(image: typing.Union[Image, SingleImage]):
 
     image.flip()
-    return image
+    return image, ''
 
 
 def flop(image: typing.Union[Image, SingleImage]):
 
     image.flop()
-    return image
+    return image, ''
 
 
 def rotate(image: typing.Union[Image, SingleImage], degree: float):
 
     image.rotate(degree=degree)
-    return image
-
-
-def test(image: typing.Union[Image, SingleImage]):
-
-    return image
+    return image, f'Degree: {degree}'
 
 
 image_operations = {
@@ -170,30 +168,30 @@ image_operations = {
     'flip': flip,
     'flop': flop,
     'rotate': rotate,
-    'test': test
 }
 
 
-def do_edit_image(edit_function, image_bytes: bytes, queue: multiprocessing.Queue, **kwargs):
+def do_edit_image(edit_function: typing.Any, image_bytes: bytes, queue: multiprocessing.Queue, **kwargs):
 
-    original_image = io.BytesIO(image_bytes)
-    edited_image = io.BytesIO()
+    image_original = io.BytesIO(image_bytes)
+    image_edited = io.BytesIO()
 
-    with Image(file=original_image) as old_image:
-        image_format = old_image.format
+    with Image(file=image_original) as old_image:
         with Image() as new_image:
+            image_format = old_image.format
+
             if image_format == 'GIF':
                 old_image.coalesce()
-                for frame in old_image.sequence:
-                    frame = edit_function(frame, **kwargs)
-                    new_image.sequence.append(frame)
-                new_image.save(file=edited_image)
+                for old_frame in old_image.sequence:
+                    new_frame, image_text = edit_function(old_frame, **kwargs)
+                    new_image.sequence.append(new_frame)
+                new_image.save(file=image_edited)
             else:
-                new_image = edit_function(old_image, **kwargs)
-                new_image.save(file=edited_image)
+                new_image, image_text = edit_function(old_image, **kwargs)
+                new_image.save(file=image_edited)
 
-    edited_image.seek(0)
-    queue.put((edited_image, image_format))
+    image_edited.seek(0)
+    queue.put((image_edited, image_format, image_text))
 
 
 class Imaging:
@@ -216,8 +214,8 @@ class Imaging:
 
         check_if_url = self.bot.image_url_regex.match(argument)
         if check_if_url is None:
-            raise exceptions.ArgumentError('You provided an invalid argument. '
-                                           'Please provide a members name, id or mention or an image url.')
+            raise exceptions.ArgumentError('You provided an invalid argument. Please provide a members name, id or '
+                                           'mention or an image url.')
 
         return argument
 
@@ -225,6 +223,7 @@ class Imaging:
 
         async with self.bot.session.get(url) as response:
             image_bytes = await response.read()
+
         return image_bytes
 
     async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
@@ -232,20 +231,25 @@ class Imaging:
         if edit_type not in image_operations.keys():
             raise exceptions.ArgumentError(f"'{edit_type}' is not a valid image operation")
 
-        edit_function = image_operations[edit_type]
         image_url = await self.get_image_url(ctx=ctx, argument=url)
         image_bytes = await self.get_image_bytes(url=image_url)
 
-        process = multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
-                                          args=(edit_function, image_bytes, self.queue))
-        process.start()
+        multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
+                                args=(image_operations[edit_type], image_bytes, self.queue)).start()
 
-        function = functools.partial(self.queue.get)
+        partial = functools.partial(self.queue.get)
+        image_edited, image_format, image_text = await self.bot.loop.run_in_executor(None, partial)
 
-        edited_image, image_format = await self.bot.loop.run_in_executor(None, function)
-        return edited_image, image_format
+        file = discord.File(filename=f'{edit_type}_image.{image_format.lower()}', fp=image_edited)
+        embed = discord.Embed(colour=discord.Colour.gold())
+        embed.set_footer(text=image_text)
+        embed.set_image(url=f'attachment://{edit_type}_image.{image_format.lower()}')
+
+        return file, embed
 
     def do_ping_plot(self, history: int):
+
+        buffer = io.BytesIO()
 
         times = [time for time, ping in list(self.bot.pings)[-history:]]
         pings = [ping for time, ping in list(self.bot.pings)[-history:]]
@@ -280,7 +284,6 @@ class Imaging:
         plt.tick_params(axis='x', which='minor', bottom=False)
         plt.tight_layout()
 
-        buffer = io.BytesIO()
         plt.savefig(buffer)
         plt.close()
 
@@ -288,6 +291,8 @@ class Imaging:
         return buffer
 
     def do_growth_plot(self, title: str, x_label: str, y_label: str, values: list, names: list):
+
+        buffer = io.BytesIO()
 
         plt.clf()
         plt.figure(figsize=(10, 6))
@@ -309,7 +314,6 @@ class Imaging:
         plt.tick_params(axis='x', which='minor', bottom=False)
         plt.tight_layout()
 
-        buffer = io.BytesIO()
         plt.savefig(buffer)
         plt.close()
 
@@ -319,6 +323,7 @@ class Imaging:
     def do_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
 
         buffer = io.BytesIO()
+
         online_count, idle_count, dnd_count, offline_count, streaming_count = \
             self.bot.utils.guild_user_status(ctx.guild, all_guilds=all_guilds)
         total = online_count + idle_count + dnd_count + offline_count
