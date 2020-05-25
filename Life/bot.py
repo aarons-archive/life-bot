@@ -40,6 +40,7 @@ class Life(commands.AutoShardedBot):
 
         self.bot.add_check(self.can_run_command)
 
+        self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.bot.config.PREFIX}help')
         self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
                                                  embed_links=True, attach_files=True, read_message_history=True,
                                                  external_emojis=True)

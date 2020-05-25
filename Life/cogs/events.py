@@ -26,6 +26,8 @@ class Events(commands.Cog):
                 await guild.leave()
             continue
 
+        await self.bot.change_presence(activity=self.bot.activity)
+
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
 
