@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import asyncpg
-import discord
 from discord.ext import tasks, commands
 
 
@@ -10,28 +9,8 @@ class Background(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.presences = []
-        self.current_presence = 0
-
-        self.change_presence.start()
         self.log_bot_growth.start()
         self.log_bot_ping.start()
-
-    @tasks.loop(minutes=30.0)
-    async def change_presence(self):
-
-        self.bot.presences = [discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.guilds)} Guilds'),
-                              discord.Activity(type=discord.ActivityType.watching, name=f'{len(self.bot.users)} Users'),
-                              discord.Activity(type=discord.ActivityType.playing,  name=f'{self.bot.config.PREFIX}help')]
-
-        await self.bot.change_presence(activity=self.bot.presences[self.current_presence])
-        self.current_presence = (self.current_presence + 1) % len(self.bot.presences)
-
-    @change_presence.before_loop
-    async def before_change_presence(self):
-
-        await self.bot.wait_until_ready()
-        print('\n[BACKGROUND] Started change presence task.')
 
     @tasks.loop(hours=1.0)
     async def log_bot_growth(self):
@@ -48,7 +27,7 @@ class Background(commands.Cog):
     async def before_log_bot_growth(self):
 
         await self.bot.wait_until_ready()
-        print('[BACKGROUND] Started log bot growth task.')
+        print('\n[BACKGROUND] Started log bot growth task.')
 
     @tasks.loop(minutes=1.0)
     async def log_bot_ping(self):
