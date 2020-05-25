@@ -123,7 +123,7 @@ class Music(commands.Cog):
 
         return await ctx.send(f'Left the voice channel `{ctx.guild.me.voice.channel}`.')
 
-    @commands.command(name='skip')
+    @commands.command(name='skip', aliases=['stop'])
     @checks.is_player_playing()
     @checks.is_member_in_channel()
     @checks.is_member_connected()

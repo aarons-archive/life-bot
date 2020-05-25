@@ -281,7 +281,7 @@ class Dev(commands.Cog):
             return await ctx.send('You must specify a guilds id.')
 
         try:
-            del self.bot.user_blacklist[guild]
+            del self.bot.guild_blacklist[guild]
             await self.bot.db.execute('DELETE FROM blacklist WHERE id = $1', guild)
             return await ctx.send(f'Guild: `{guild}` has been un-blacklisted.')
         except ValueError:
