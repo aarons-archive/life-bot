@@ -3,10 +3,8 @@ import typing
 from datetime import datetime
 
 import discord
-import spotify
 from discord.ext import commands
 
-import diorite
 from cogs.utilities import exceptions, checks
 from cogs.voice.utilities import objects
 
