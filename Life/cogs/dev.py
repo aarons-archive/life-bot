@@ -255,7 +255,7 @@ class Dev(commands.Cog):
 
         try:
 
-            self.bot.user_blacklist[guild] = reason
+            self.bot.guild_blacklist[guild] = reason
             await self.bot.db.execute('INSERT INTO blacklist VALUES ($1, $2, $3)', guild, 'guild', reason)
 
             try:
