@@ -108,10 +108,12 @@ class Kross(commands.Cog):
         operation = operation.lower()
 
         if house not in self.valid_houses:
-            return await ctx.send(f'`{house}` is not a valid house. Please choose one of `phoenix`, `leviathan`, `kodama` or `sylph`.')
+            return await ctx.send(f'`{house}` is not a valid house. Please choose one of `phoenix`, `leviathan`, '
+                                  f'`kodama` or `sylph`.')
 
         if operation not in self.valid_operations:
-            return await ctx.send(f'`{operation}` is not a valid operation. Please choose either `add` `subtract` or `minus`.')
+            return await ctx.send(f'`{operation}` is not a valid operation. Please choose either `add` '
+                                  f'`subtract` or `minus`.')
 
         current_points = await self.bot.db.fetchrow('SELECT points FROM kross WHERE house = $1', house)
         current_points = current_points['points']
@@ -119,11 +121,13 @@ class Kross(commands.Cog):
         if operation == 'add':
             new_points = current_points + points
             await self.bot.db.fetch('UPDATE kross SET points = $1 WHERE house = $2', new_points, house)
-            await ctx.send(f'Added `{points}` to house `{house}`. They had `{current_points}` points and now they have `{new_points}`.')
+            await ctx.send(f'Added `{points}` to house `{house}`. They had `{current_points}` points and now they '
+                           f'have `{new_points}`.')
         elif operation == 'minus' or operation == 'subtract':
             new_points = current_points - points
             await self.bot.db.fetch('UPDATE kross SET points = $1 WHERE house = $2', new_points, house)
-            await ctx.send(f'Subtracted `{points}` from house `{house}`. They had `{current_points}` points and now they have `{new_points}`.')
+            await ctx.send(f'Subtracted `{points}` from house `{house}`. They had `{current_points}` points and now '
+                           f'they have `{new_points}`.')
         else:
             return await ctx.send('Something went wrong. Please ping my owner.')
 

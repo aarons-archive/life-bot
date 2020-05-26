@@ -201,9 +201,13 @@ class Utils:
         verification_levels = {
             discord.VerificationLevel.none: 'None - No criteria set.',
             discord.VerificationLevel.low: 'Low - Must have a verified email.',
-            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
-            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 minutes and a have a verified phone number.'
+            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for '
+                                              'more than 5 minutes.',
+            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more '
+                                            'than 5 minutes and be a member of the guild for more then 10 minutes.',
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for '
+                                               'more than 5 minutes, be a member of the guild for more then 10 minutes '
+                                               'and a have a verified phone number.'
         }
         return verification_levels[guild.verification_level]
 
