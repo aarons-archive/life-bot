@@ -16,11 +16,10 @@ class Events(commands.Cog):
 
         self.bot.log_channel = self.bot.get_channel(697324016658022441)
         self.bot.dm_channel = self.bot.get_channel(714307639609131018)
+        self.bot.mention_channel = self.bot.get_channel(714601090771058719)
 
-        print(f'\n[BOT] The bot is now ready. Logged in as: {self.bot.user} - {self.bot.user.id}\n')
-        if self.bot.user.id == 628284183579721747:
-            message = f'The bot is now ready. Logged in as: `{self.bot.user}` - `{self.bot.user.id}`'
-            await self.bot.log_channel.send(message)
+        print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
+        self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
         for guild in self.bot.guilds:
             if guild.id in self.bot.guild_blacklist:
@@ -33,12 +32,14 @@ class Events(commands.Cog):
     async def on_guild_join(self, guild):
 
         embed = discord.Embed(colour=discord.Colour.gold())
-        embed.title = f'Joined a guild.'
-        embed.description = f"**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}"
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+        embed.title = f'Joined a guild'
+        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}'
+
+        self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         await self.bot.log_channel.send(embed=embed)
 
-        if guild.id in self.bot.guild_blacklist:
+        if guild.id in self.bot.guild_blacklist.keys():
             return await guild.leave()
 
     @commands.Cog.listener()
@@ -46,14 +47,41 @@ class Events(commands.Cog):
 
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
-        embed.description = f"**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}"
+        embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
+        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}'
 
-        if guild.id in self.bot.guild_blacklist.keys():
-            embed.title = f'Left a blacklisted guild.'
-            return await self.bot.log_channel.send(embed=embed)
-
-        embed.title = f'Left a guild.'
+        self.bot.log.info(f'{embed.title}. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         return await self.bot.log_channel.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.author.bot:
+            return
+
+        ctx = await self.bot.get_context(message)
+
+        if self.bot.user in message.mentions:
+
+            guild = f'**Guild:** {ctx.guild}\n' if ctx.guild else ''
+            guild_id = f'**Guild ID:** {ctx.guild.id}\n' if ctx.guild else ''
+            channel = f'#{ctx.channel}' if isinstance(ctx.channel, discord.TextChannel) else ctx.channel
+            info = f'{guild}{guild_id}**Channel:** {channel}\n**Channel ID:** {ctx.channel.id}'
+
+            embed = discord.Embed(colour=discord.Colour.gold())
+            embed.set_author(name=f'Mentioned by {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
+            embed.description = f'{message.content}'
+            embed.add_field(name='**Info:**', value=info)
+            await self.bot.mention_channel.send(embed=embed)
+
+        if message.guild is None:
+
+            embed = discord.Embed(colour=discord.Colour.gold())
+            embed.set_author(name=f'DM from {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
+
+            embed.description = f'{message.content}'
+            embed.add_field(name='**Info:**', value=f'**Channel:** {ctx.channel}\n**Channel ID:** {ctx.channel.id}')
+            await self.bot.dm_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -139,21 +167,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
+
+        self.bot.log.info(f'Command used. Command: {ctx.command.qualified_name} | '
+                          f'Guild: {ctx.guild} | Channel: {ctx.channel} | Author:  {ctx.author}')
+
         if ctx.author.id in self.bot.owner_ids:
             ctx.command.reset_cooldown(ctx)
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-
-        if message.guild is not None:
-            return
-        if message.author.bot:
-            return
-        embed = discord.Embed(colour=discord.Colour.gold())
-        embed.set_author(name=message.author, icon_url=self.bot.utils.member_avatar(message.author))
-        embed.description = f"**DM From {message.author.mention}**.\n\nContent:\n{message.content}"
-
-        await self.bot.dm_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):
