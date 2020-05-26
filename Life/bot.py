@@ -2,6 +2,7 @@ import asyncio
 import collections
 import os
 import time
+import logging
 
 import aiohttp
 import asyncpg
@@ -25,6 +26,7 @@ class Life(commands.AutoShardedBot):
         self.bot = self
         self.loop = asyncio.get_event_loop()
         self.session = None
+        self.log = logging.getLogger("Life")
 
         self.utils = utils.Utils(self.bot)
         self.process = psutil.Process()
@@ -59,7 +61,7 @@ class Life(commands.AutoShardedBot):
 
     async def can_run_command(self, ctx: commands.Context):
 
-        if not ctx.guild:
+        if not ctx.guild and not ctx.command.name == 'help':
             raise commands.NoPrivateMessage()
 
         if ctx.author.id in self.bot.user_blacklist.keys():
