@@ -320,32 +320,36 @@ class Imaging:
         buffer.seek(0)
         return buffer
 
-    def do_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
+    def do_guild_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
 
         buffer = io.BytesIO()
 
-        online_count, idle_count, dnd_count, offline_count, streaming_count = \
-            self.bot.utils.guild_user_status(ctx.guild, all_guilds=all_guilds)
-        total = online_count + idle_count + dnd_count + offline_count
+        statuses = self.bot.utils.guild_member_status(guild=ctx.guild, all_guilds=all_guilds)
+        total = sum(statuses.values())
+        online = statuses['online']
+        idle = statuses['idle']
+        dnd = statuses['dnd']
+        offline = statuses['offline']
+        streaming = statuses['streaming']
 
         if graph_type == 'pie':
 
-            online_percent = round((online_count / total) * 100, 2)
-            idle_percent = round((idle_count / total) * 100, 2)
-            dnd_percent = round((dnd_count / total) * 100, 2)
-            offline_percent = round((offline_count / total) * 100, 2)
-            streaming_percent = round((streaming_count / total) * 100, 2)
+            online_percent = round((online / total) * 100, 2)
+            idle_percent = round((idle / total) * 100, 2)
+            dnd_percent = round((dnd / total) * 100, 2)
+            offline_percent = round((offline / total) * 100, 2)
+            streaming_percent = round((streaming / total) * 100, 2)
 
-            labels = [f'{online_percent}%', f'{idle_percent}%', f'{dnd_percent}%',
-                      f'{offline_percent}%', f'{streaming_percent}%']
-            sizes = [online_count, idle_count, dnd_count, offline_count, streaming_count]
+            labels = [f'{online_percent}%', f'{idle_percent}%', f'{dnd_percent}%', f'{offline_percent}%',
+                      f'{streaming_percent}%']
+            sizes = [online, idle, dnd, offline, streaming]
             colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
 
             plt.clf()
             figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect='equal'))
 
             axes.pie(sizes, colors=colors, startangle=90)
-            axes.legend(labels, loc='center right', title="Status's")
+            axes.legend(labels, loc='center right', title="Status's", frameon=False)
 
             if all_guilds is True:
                 axes.set_title(f'Percentage of members per status across all guilds.')
@@ -361,7 +365,7 @@ class Imaging:
         if graph_type == 'bar':
 
             labels = ['Online', 'Idle', 'DnD', 'Offline', 'Streaming']
-            values = [online_count, idle_count, dnd_count, offline_count, streaming_count]
+            values = [online, idle, dnd, offline, streaming]
             colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
 
             plt.clf()
