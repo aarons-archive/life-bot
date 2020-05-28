@@ -1,8 +1,8 @@
 import asyncio
 import collections
+import logging
 import os
 import time
-import logging
 
 import aiohttp
 import asyncpg
@@ -12,7 +12,7 @@ from discord.ext import commands
 
 from cogs.utilities import utils
 from config import config
-from context import LifeContext
+from utilities import context, help
 
 os.environ['JISHAKU_HIDE'] = 'True'
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
@@ -21,12 +21,13 @@ os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
 class Life(commands.AutoShardedBot):
 
     def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or(config.PREFIX), reconnect=True)
+        super().__init__(command_prefix=commands.when_mentioned_or(config.PREFIX),
+                         reconnect=True, help_command=help.HelpCommand())
 
         self.bot = self
         self.log = logging.getLogger("Life")
         self.loop = asyncio.get_event_loop()
-        self.session = None
+        self.session = aiohttp.ClientSession(loop=self.loop)
 
         self.utils = utils.Utils(self.bot)
         self.process = psutil.Process()
@@ -40,8 +41,6 @@ class Life(commands.AutoShardedBot):
         self.guild_blacklist = {}
         self.user_blacklist = {}
 
-        self.bot.add_check(self.can_run_command)
-
         self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.bot.config.PREFIX}help')
         self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
                                                  embed_links=True, attach_files=True, read_message_history=True,
@@ -51,13 +50,14 @@ class Life(commands.AutoShardedBot):
                                                external_emojis=True, connect=True, speak=True)
         self.clean_content = commands.clean_content()
 
+        self.bot.add_check(self.can_run_command)
+
     @property
     def uptime(self):
 
         return round(time.time() - self.start_time)
 
-    async def get_context(self, message: discord.Message, *, cls=LifeContext):
-
+    async def get_context(self, message: discord.Message, *, cls=context.LifeContext):
         return await super().get_context(message, cls=cls)
 
     async def can_run_command(self, ctx: commands.Context):
@@ -79,26 +79,7 @@ class Life(commands.AutoShardedBot):
 
         return True
 
-    async def on_message_edit(self, before: discord.Message, after: discord.Message):
-
-        if before.author.bot:
-            return
-
-        if before.content == after.content:
-            return
-
-        await self.process_commands(after)
-
-    async def on_message(self, message: discord.Message):
-
-        if message.author.bot:
-            return
-
-        await self.process_commands(message)
-
     async def start(self, *args, **kwargs):
-
-        self.session = aiohttp.ClientSession(loop=self.loop)
 
         try:
             self.db = await asyncpg.create_pool(**self.config.DATABASE)
