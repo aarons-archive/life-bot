@@ -13,7 +13,7 @@ class HelpCommand(commands.HelpCommand):
                     '**[argument...]** means you can have **multiple arguments**.'
         })
 
-    def formatter(self, command_list: list, aliases: bool = True, short_name: bool = False, level: int = 0):
+    def formatter(self, command_list, aliases=True, short_name=False, level=0):
 
         for command in command_list:
 
@@ -36,7 +36,7 @@ class HelpCommand(commands.HelpCommand):
             if isinstance(command, commands.Group):
                 yield from self.formatter(command.commands, aliases=False, short_name=True, level=level + 1)
 
-    def get_command(self, command: commands.Command, aliases: bool, short_name: bool):
+    def get_command(self, command, aliases, short_name):
 
         command_name = f'{self.context.bot.config.PREFIX}'
 
@@ -56,17 +56,6 @@ class HelpCommand(commands.HelpCommand):
             command_name += f'{command_aliases} '
 
         return command_name
-
-    def command_not_found(self, search: str):
-        return f'There are no commands or categories with the name `{search}`. Be sure to capitalize the first ' \
-               f'letter if you are looking for the help of a category.'
-
-    def subcommand_not_found(self, command, search: str):
-
-        if isinstance(command, commands.Group):
-            return f'The command `{command.qualified_name}` has no sub-commands called `{search}`.'
-
-        return f'The command `{command.qualified_name}` has no sub-commands.'
 
     async def send_bot_help(self, mapping):
 
