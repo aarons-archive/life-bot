@@ -144,15 +144,3 @@ class HelpCommand(commands.HelpCommand):
 
         return await ctx.paginate_embed(title=f'**{embed_title}**', header=f'{embed_description}\n\n',
                                         entries=list(self.formatter(group.commands)), entries_per_page=15)
-
-
-class Help(commands.Cog):
-
-    def __init__(self, bot):
-        self.bot = bot
-        bot.help_command = HelpCommand()
-        bot.help_command.cog = self
-
-
-def setup(bot):
-    bot.add_cog(Help(bot))
