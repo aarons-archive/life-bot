@@ -178,7 +178,7 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name='servericon', alisases=['icon'])
+    @commands.command(name='servericon', aliases=['icon'])
     async def servericon(self, ctx):
         """
         Display the servers icon.
