@@ -2,6 +2,7 @@ import codecs
 import os
 import pathlib
 import random
+import collections
 import time
 
 import discord
@@ -12,6 +13,37 @@ class Utils:
 
     def __init__(self, bot):
         self.bot = bot
+
+        self.colours = {
+            discord.Status.online: 0x008000,
+            discord.Status.idle: 0xFF8000,
+            discord.Status.dnd: 0xFF0000,
+            discord.Status.offline: 0x808080,
+            discord.Status.invisible: 0x808080,
+        }
+
+        self.mfa_levels = {
+            0: 'Not required',
+            1: 'Required'
+        }
+
+        self.verification_levels = {
+            discord.VerificationLevel.none: 'None - No criteria set.',
+            discord.VerificationLevel.low: 'Low - Must have a verified email.',
+            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for '
+                                              'more than 5 minutes.',
+            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more '
+                                            'than 5 minutes and be a member of the guild for more then 10 minutes.',
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for '
+                                               'more than 5 minutes, be a member of the guild for more then 10 minutes '
+                                               'and a have a verified phone number.'
+        }
+
+        self.content_filter_levels = {
+            discord.ContentFilter.disabled: 'None',
+            discord.ContentFilter.no_role: 'No roles',
+            discord.ContentFilter.all_members: 'All members',
+        }
 
     async def ping(self, ctx: commands.Context):
 
@@ -142,103 +174,52 @@ class Utils:
         return message
 
     def member_status(self, member: discord.Member):
-        status = {
-            discord.Status.online: 'Online',
-            discord.Status.idle: 'Idle',
-            discord.Status.dnd: 'Do not disturb',
-            discord.Status.offline: 'Offline'
-        }
-        return status[member.status]
+        return member.status.name.replace('dnd', 'Do Not Disturb').title()
 
     def member_colour(self, member: discord.Member):
-        colours = {
-            discord.Status.online: 0x008000,
-            discord.Status.idle: 0xFF8000,
-            discord.Status.dnd: 0xFF0000,
-            discord.Status.offline: 0x808080
-        }
-        return colours[member.status]
+        return self.colours[member.status]
 
     def member_avatar(self, member: discord.Member):
-
         return str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
     def guild_icon(self, guild: discord.Guild):
-
         return str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png'))
 
+    def guild_banner(self, guild: discord.Guild):
+        return str(guild.banner_url_as(format='png'))
+
     def guild_region(self, guild: discord.Guild):
-        regions = {
-            discord.VoiceRegion.amsterdam: 'Amsterdam',
-            discord.VoiceRegion.brazil: 'Brazil',
-            discord.VoiceRegion.eu_central: 'EU-Central',
-            discord.VoiceRegion.eu_west: 'EU-West',
-            discord.VoiceRegion.europe: 'Europe',
-            discord.VoiceRegion.frankfurt: 'Frankfurt',
-            discord.VoiceRegion.hongkong: 'Hong-kong',
-            discord.VoiceRegion.india: 'India',
-            discord.VoiceRegion.japan: 'Japan',
-            discord.VoiceRegion.london: 'London',
-            discord.VoiceRegion.russia: 'Russia',
-            discord.VoiceRegion.singapore: 'Singapore',
-            discord.VoiceRegion.southafrica: 'South Africa',
-            discord.VoiceRegion.sydney: 'Sydney',
-            discord.VoiceRegion.us_central: 'US-Central',
-            discord.VoiceRegion.us_east: 'US-East',
-            discord.VoiceRegion.us_south: 'US-South',
-            discord.VoiceRegion.us_west: 'US-West'
-        }
-        return regions[guild.region]
 
-    def guild_mfa_level(self, guild: discord.Guild):
-        mfa_levels = {
-            0: 'Not required',
-            1: 'Required'
-        }
-        return mfa_levels[guild.mfa_level]
+        if guild.region == discord.VoiceRegion.hongkong:
+            return 'Hong-Kong'
+        if guild.region == discord.VoiceRegion.southafrica:
+            return 'South Africa'
 
-    def guild_verification_level(self, guild: discord.Guild):
-        verification_levels = {
-            discord.VerificationLevel.none: 'None - No criteria set.',
-            discord.VerificationLevel.low: 'Low - Must have a verified email.',
-            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for '
-                                              'more than 5 minutes.',
-            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more '
-                                            'than 5 minutes and be a member of the guild for more then 10 minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for '
-                                               'more than 5 minutes, be a member of the guild for more then 10 minutes '
-                                               'and a have a verified phone number.'
-        }
-        return verification_levels[guild.verification_level]
+        return guild.region.name.title().replace('Vip', 'VIP').replace('_', '-')
 
-    def guild_content_filter_level(self, guild: discord.Guild):
-        explicit_content_filters = {
-            discord.ContentFilter.disabled: 'None - Content filter disabled.',
-            discord.ContentFilter.no_role: 'No role - Content filter enabled only for users with no roles.',
-            discord.ContentFilter.all_members: 'All members - Content filter enabled for all users.',
-        }
-        return explicit_content_filters[guild.explicit_content_filter]
+    def content_filter_level(self, guild: discord.Guild):
+        return self.content_filter_levels[guild.explicit_content_filter]
 
-    def guild_user_status(self, guild: discord.Guild, all_guilds: bool = False):
-        
-        online, idle, dnd, offline, streaming = 0, 0, 0, 0, 0
-        
+    def verification_level(self, guild: discord.Guild):
+        return self.verification_levels[guild.verification_level]
+
+    def mfa_level(self, guild: discord.Guild):
+        return self.mfa_levels[guild.mfa_level]
+
+    def guild_member_status(self, guild: discord.Guild, all_guilds: bool = False):
+
         if all_guilds is True:
-            guild_members = [guild.members for guild in self.bot.guilds]
-            members = [member for members in guild_members for member in members]
+            members = [member for members in [guild.members for guild in self.bot.guilds] for member in members]
         else:
             members = guild.members
+
+        statuses = collections.Counter()
         
         for member in members:
-            if member.status == discord.Status.online:
-                online += 1
-            if member.status == discord.Status.idle:
-                idle += 1
-            if member.status == discord.Status.dnd:
-                dnd += 1
-            if member.status == discord.Status.offline:
-                offline += 1
-            activity_types = [activity.type for activity in member.activities]
-            if discord.ActivityType.streaming in activity_types:
-                streaming += 1
-        return online, idle, dnd, offline, streaming
+            statuses[member.status.name] += 1
+
+            activities = [activity for activity in member.activities if activity.type == discord.ActivityType.streaming]
+            if activities:
+                statuses[activities[0].type.name] += 1
+
+        return statuses
