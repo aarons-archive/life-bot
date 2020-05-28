@@ -229,7 +229,7 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name='avatar', alisases=['avy'])
+    @commands.command(name='avatar', aliases=['avy'])
     async def avatar(self, ctx, *, member: discord.Member = None):
         """
         Display yours, or a specified members avatar.
