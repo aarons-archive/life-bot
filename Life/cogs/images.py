@@ -98,13 +98,13 @@ class Images(commands.Cog):
 
     @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='guildstatus', aliases=['serverstatus', 'gs'])
-    async def guildstatus(self, ctx, graph_type: str = 'pie', all_guilds=False):
+    @commands.command(name='serverstatus', aliases=['ss'])
+    async def serverstatus(self, ctx, graph_type: str = 'pie', all_servers=False):
         """
-        Display how many members are in status for this server.
+        Display member count per status in this server.
 
-        `graph_type`: The graph type to produce. Can be either `pie` or `bar`.
-        `all_guilds`: Whether the graph should be for this guild, or all guilds, Can be `True` or `False`.
+        `graph_type`: The graph type. Can be either `pie` or `bar`.
+        `all_servers`: Whether the graph should be all server or just this one.
         """
 
         if graph_type not in ('bar', 'pie'):
@@ -112,7 +112,7 @@ class Images(commands.Cog):
 
         async with ctx.channel.typing():
             plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_guild_status_plot,
-                                                                               ctx, graph_type, all_guilds))
+                                                                               ctx, graph_type, all_servers))
             return await ctx.send(file=discord.File(fp=plot, filename='GuildStatus.png'))
 
     @commands.cooldown(1, 30, commands.cooldowns.BucketType.guild)
