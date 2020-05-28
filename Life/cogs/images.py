@@ -21,10 +21,13 @@ class Images(commands.Cog):
     @commands.command(name='user_graph', aliases=['ug'])
     async def user_graph(self, ctx, history: int = 24):
         """
-        Show the bot's user count over the past 24 (by default) hours.
+        Display the bots user count over the past 24 hours.
 
-        `history`: The amount of hours to get the user count of.
+        `history`: The amount of hours to display in the graph.
         """
+
+        if history <= 0:
+            raise exceptions.ArgumentError('Can not get information for history that is 0 or smaller.')
 
         async with ctx.channel.typing():
 
@@ -32,7 +35,7 @@ class Images(commands.Cog):
             user_growth = await self.bot.db.fetch(query, history)
 
             if not user_growth:
-                return await ctx.send('No growth data.')
+                return await ctx.send('No user growth data.')
 
             title = f'User growth over the last {len(user_growth)} hour(s)'
             y_axis = [record['member_count'] for record in user_growth]
@@ -48,10 +51,13 @@ class Images(commands.Cog):
     @commands.command(name='guild_graph', aliases=['gg'])
     async def guild_graph(self, ctx, history: int = 24):
         """
-        Show the bot's guild count over the past 24 (by default) hours.
+        Display the bots guild count over the past 24 hours.
 
-        `history`: The amount of hours to get the guild count of.
+        `history`: The amount of hours to display in the graph.
         """
+
+        if history <= 0:
+            raise exceptions.ArgumentError('Can not get information for history that is 0 or smaller.')
 
         async with ctx.channel.typing():
 
@@ -59,7 +65,7 @@ class Images(commands.Cog):
             guild_growth = await self.bot.db.fetch(query, history)
 
             if not guild_growth:
-                return await ctx.send('No growth data.')
+                return await ctx.send('No guild growth data.')
 
             title = f'Guild growth over the last {len(guild_growth)} hour(s)'
             y_axis = [record['guild_count'] for record in guild_growth]
@@ -75,16 +81,18 @@ class Images(commands.Cog):
     @commands.command(name='ping_graph', aliases=['pg'])
     async def ping_graph(self, ctx, history: int = 60):
         """
-        Show the bot's latency over the last 60 (by default) minutes.
+        Display the bot's latency over the last 60 minutes.
 
-        `history`: The amount of minutes to get the latency of.
+        `history`: The amount of minutes to display the graph.
         """
 
+        if history <= 0:
+            raise exceptions.ArgumentError('Can not get information for history that is 0 or smaller.')
+
+        if not self.bot.pings:
+            return await ctx.send('No ping data.')
+
         async with ctx.channel.typing():
-
-            if not self.bot.pings:
-                return await ctx.send('No ping data.')
-
             plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_ping_plot, history))
             return await ctx.send(file=discord.File(fp=plot, filename='PingGraph.png'))
 
@@ -93,7 +101,7 @@ class Images(commands.Cog):
     @commands.command(name='guildstatus', aliases=['serverstatus', 'gs'])
     async def guildstatus(self, ctx, graph_type: str = 'pie', all_guilds=False):
         """
-        Display a graph showing how many members are in each status.
+        Display how many members are in status for this server.
 
         `graph_type`: The graph type to produce. Can be either `pie` or `bar`.
         `all_guilds`: Whether the graph should be for this guild, or all guilds, Can be `True` or `False`.
@@ -103,8 +111,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('That was not a valid graph type. Please choose either `pie` or `bar`.')
 
         async with ctx.channel.typing():
-
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_status_plot,
+            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_guild_status_plot,
                                                                                ctx, graph_type, all_guilds))
             return await ctx.send(file=discord.File(fp=plot, filename='GuildStatus.png'))
 
