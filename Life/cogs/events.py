@@ -29,7 +29,7 @@ class Events(commands.Cog):
         await self.bot.change_presence(activity=self.bot.activity)
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild):
 
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
@@ -43,7 +43,7 @@ class Events(commands.Cog):
             return await guild.leave()
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild):
 
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
@@ -54,7 +54,7 @@ class Events(commands.Cog):
         return await self.bot.log_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
 
         if message.author.bot:
             return
@@ -82,6 +82,17 @@ class Events(commands.Cog):
             embed.description = f'{message.content}'
             embed.add_field(name='**Info:**', value=f'**Channel:** {ctx.channel}\n**Channel ID:** {ctx.channel.id}')
             await self.bot.dm_channel.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+
+        if before.author.bot:
+            return
+
+        if before.content == after.content:
+            return
+
+        await self.bot.process_commands(after)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
