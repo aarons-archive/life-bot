@@ -16,17 +16,17 @@ class Playlists(commands.Cog):
 
     async def get_playlist_tracks(self, ctx: commands.Context, playlist: objects.Playlist):
 
-        raw_tracks = await self.bot.db.fetch("SELECT * FROM playlist_tracks WHERE playlist_id = $1", playlist.id)
+        raw_tracks = await self.bot.db.fetch('SELECT * FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
         if not raw_tracks:
             return
 
         for raw_track in raw_tracks:
 
-            if raw_track.get("source") == "youtube":
-                track = objects.LifeTrack(track_id=raw_track.get("track_id"), info=raw_track, ctx=ctx)
-            elif raw_track.get("source") == "spotify":
-                track = objects.SpotifyTrack(ctx=ctx, title=raw_track.get("title"), author=raw_track.get("author"),
-                                             length=raw_track.get("length"), uri=raw_track.get("uri"))
+            if raw_track.get('source') == 'youtube':
+                track = objects.LifeTrack(track_id=raw_track.get('track_id'), info=raw_track, ctx=ctx)
+            elif raw_track.get('source') == 'spotify':
+                track = objects.SpotifyTrack(ctx=ctx, title=raw_track.get('title'), author=raw_track.get('author'),
+                                             length=raw_track.get('length'), uri=raw_track.get('uri'))
             else:
                 continue
 
@@ -58,7 +58,7 @@ class Playlists(commands.Cog):
             query.append(f'{"AND" if search else "WHERE"} owner_id != {"$2" if search else "$1"} AND private = $3')
             query_data.extend([owner.id, False])
 
-        raw_playlists = await self.bot.db.fetch("".join(query), *query_data)
+        raw_playlists = await self.bot.db.fetch(''.join(query), *query_data)
         if not raw_playlists:
             return None
 

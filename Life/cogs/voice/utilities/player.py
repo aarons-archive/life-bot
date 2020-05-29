@@ -37,11 +37,11 @@ class Player(diorite.Player):
             # If the queue is empty, wait for something to be added. Timeout and destroy player after 10 minutes.
             if self.queue.is_empty:
                 try:
-                    await self.bot.wait_for(f"life_queue_add", timeout=600.0, check=self.check)
+                    await self.bot.wait_for(f'life_queue_add', timeout=600.0, check=self.check)
 
                 except asyncio.TimeoutError:
-                    await self.channel.send("No tracks have been added to the queue for over 10 minutes, "
-                                            "disconnecting.")
+                    await self.channel.send('No tracks have been added to the queue for over 10 minutes, '
+                                            'disconnecting.')
                     await self.destroy()
                     self.queue.clear()
                     self.task.cancel()
@@ -50,7 +50,7 @@ class Player(diorite.Player):
             track = await self.queue.get()
             if isinstance(track, objects.SpotifyTrack):
                 try:
-                    search = await self.search(ctx=track.ctx, search=f"{track.title} - {track.author}")
+                    search = await self.search(ctx=track.ctx, search=f'{track.author} - {track.title}')
                 except exceptions.LifeVoiceError as e:
                     await self.channel.send(e)
                     continue
@@ -61,7 +61,7 @@ class Player(diorite.Player):
             self.current = track
             await self.play(track)
             try:
-                await self.bot.wait_for("life_track_start", timeout=5.0, check=self.check)
+                await self.bot.wait_for('life_track_start', timeout=5.0, check=self.check)
             except asyncio.TimeoutError:
                 continue
 
@@ -73,7 +73,7 @@ class Player(diorite.Player):
                 self.queue.put(self.current)
 
             # Wait for our end event to be dispatched by custom listeners, then continue the loop.
-            await self.bot.wait_for("life_track_end", check=self.check)
+            await self.bot.wait_for('life_track_end', check=self.check)
 
             self.current = None
 
@@ -108,7 +108,7 @@ class Player(diorite.Player):
         else:  # If the search wasn't a spotify URL then just search youtube.
 
             if self.bot.youtube_url_regex.match(search) is None:
-                yt_search = f"ytsearch: {search}"
+                yt_search = f'ytsearch: {search}'
             else:
                 yt_search = search
 
@@ -118,16 +118,16 @@ class Player(diorite.Player):
                     raise exceptions.LifeVoiceError(f'The search `{search}` found nothing.')
 
                 if isinstance(result, diorite.Playlist):  # If the result was a playlist.
-                    youtube_type = "playlist"
+                    youtube_type = 'playlist'
                     result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
                     tracks = result.tracks
                 else:  # Else, the link will be a list of tracks.
-                    youtube_type = "track"
+                    youtube_type = 'track'
                     result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
                     tracks = result
 
             except diorite.TrackLoadError as e:
-                raise exceptions.LifeVoiceError(f"There was a problem with your search: `{e.error_message}`")
+                raise exceptions.LifeVoiceError(f'There was a problem with your search: `{e.error_message}`')
 
             return {'type': 'youtube', 'return_type': youtube_type, 'result': result, 'tracks': tracks}
 

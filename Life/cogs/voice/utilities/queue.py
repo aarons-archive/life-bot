@@ -19,7 +19,7 @@ class LifeQueue:
         self.queue_list = []
 
     def __repr__(self):
-        return f"<LifeQueue entries={self.size}>"
+        return f'<LifeQueue entries={self.size}>'
 
     def wakeup_next(self, waiters):
 
@@ -65,16 +65,16 @@ class LifeQueue:
     def extend(self, items: typing.List[typing.Any]) -> None:
 
         self.queue_list.extend(items)
-        self.player.bot.dispatch(f"life_queue_add", self.player.guild.id)
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
     def put_pos(self, item: typing.Any, position: int = 0) -> None:
         self.queue_list.insert(position, item)
-        self.player.bot.dispatch(f"life_queue_add", self.player.guild)
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild)
 
     def put(self, item: typing.Any) -> None:
 
         self.queue_list.append(item)
-        self.player.bot.dispatch(f"life_queue_add", self.player.guild)
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild)
 
     async def get_pos(self, position: int = 0) -> typing.Any:
 
