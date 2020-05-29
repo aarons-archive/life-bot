@@ -44,11 +44,11 @@ class Todo(commands.Cog):
         `content`: The content of your todo. Can not be more than 200 characters.
         """
 
-        if len(content) > 200:
-            raise exceptions.ArgumentError('Your todo can not be more than 200 characters long.')
+        if len(content) > 180:
+            raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
-        if todo_count['c'] >= 200:
+        if todo_count['c'] > 200:
             message = f'You already have `{todo_count["c"]}` todos, you should do some of those before adding more.'
             return await ctx.send(message)
 
