@@ -80,17 +80,17 @@ class Player(diorite.Player):
     async def search(self, ctx: commands.Context, search: str):
 
         spotify_url = self.bot.spotify_url_regex.match(search)
-        if spotify_url:  # If the search is a spotify URL.
+        if spotify_url:
 
             spotify_type, spotify_id = spotify_url.groups()
             try:
-                if spotify_type == 'track':  # If the link was for a track.
+                if spotify_type == 'track':
                     result = await self.bot.spotify.get_track(spotify_id)
                     spotify_tracks = [result]
-                elif spotify_type == 'album':  # If the link was for an album.
+                elif spotify_type == 'album':
                     result = await self.bot.spotify.get_album(spotify_id)
                     spotify_tracks = await result.get_all_tracks()
-                else:  # Else, the link will be for a playlist.
+                else:
                     result = spotify.Playlist(self.bot.spotify, await self.bot.http_spotify.get_playlist(spotify_id))
                     spotify_tracks = await result.get_all_tracks()
 
@@ -105,23 +105,19 @@ class Player(diorite.Player):
 
             return {'type': 'spotify', 'return_type': spotify_type, 'result': result, 'tracks': tracks}
 
-        else:  # If the search wasn't a spotify URL then just search youtube.
+        else:
 
-            if self.bot.youtube_url_regex.match(search) is None:
-                yt_search = f'ytsearch: {search}'
-            else:
-                yt_search = search
-
+            yt_search = f'{"ytsearch: " if self.bot.youtube_url_regex.match(search) is None else ""}{search}'
             try:
                 result = await self.node.get_tracks(query=yt_search)
                 if not result:
                     raise exceptions.LifeVoiceError(f'The search `{search}` found nothing.')
 
-                if isinstance(result, diorite.Playlist):  # If the result was a playlist.
+                if isinstance(result, diorite.Playlist):
                     youtube_type = 'playlist'
                     result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
                     tracks = result.tracks
-                else:  # Else, the link will be a list of tracks.
+                else:
                     youtube_type = 'track'
                     result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
                     tracks = result
