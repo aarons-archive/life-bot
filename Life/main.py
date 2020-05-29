@@ -15,7 +15,7 @@ def logger():
     diorite_log = logging.getLogger('diorite')
     diorite_log.setLevel(logging.DEBUG)
     diorite_handler = RotatingFileHandler(filename='logs/diorite.log', mode='w', backupCount=5, encoding='utf-8',
-                                          maxBytes=2**20)
+                                          maxBytes=2**22)
     diorite_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
     if os.path.isfile('logs/diorite.log'):
         diorite_handler.doRollover()
@@ -24,7 +24,7 @@ def logger():
     bot_log = logging.getLogger('Life')
     bot_log.setLevel(logging.DEBUG)
     bot_handler = RotatingFileHandler(filename='logs/bot.log', mode='w', backupCount=5, encoding='utf-8',
-                                      maxBytes=2**20)
+                                      maxBytes=2**22)
     bot_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
     if os.path.isfile('logs/bot.log'):
         bot_handler.doRollover()
@@ -33,7 +33,7 @@ def logger():
     discord_log = logging.getLogger('discord')
     discord_log.setLevel(logging.INFO)
     discord_handler = RotatingFileHandler(filename='logs/discord.log', mode='w', backupCount=5, encoding='utf-8',
-                                          maxBytes=2**20)
+                                          maxBytes=2**22)
     discord_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
     if os.path.isfile('logs/discord.log'):
         discord_handler.doRollover()
