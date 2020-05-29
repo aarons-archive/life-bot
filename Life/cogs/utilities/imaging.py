@@ -1,7 +1,6 @@
 import functools
 import io
 import multiprocessing
-import re
 import typing
 
 import discord
@@ -14,100 +13,23 @@ from wand.sequence import SingleImage
 from cogs.utilities import exceptions
 
 
-def floor(image: typing.Union[Image, SingleImage]):
+def blur(image: typing.Union[Image, SingleImage], amount: float):
 
-    image.virtual_pixel = 'tile'
-    arguments = (0,            0,            image.width * 0.2, image.height * 0.4,
-                 image.width,  0,            image.width * 0.8, image.height * 0.4,
-                 0,            image.height, image.width * 0.1, image.height,
-                 image.width,  image.height, image.width * 0.9, image.height)
-    image.distort('perspective', arguments)
-
-    return image, ''
-
-
-def colorize(image: typing.Union[Image, SingleImage], colour: str):
-
-    hex_check = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$').match(colour)
-    if hex_check is None:
-        raise exceptions.ArgumentError('You provided an invalid colour format. Please use the format `#FFFFFF`.')
-
-    with Color(colour) as image_color:
-        with Color('rgb(50%, 50%, 50%)') as image_alpha:
-            image.colorize(color=image_color, alpha=image_alpha)
-
-    return image, f'Colour: {colour}'
-
-
-def solarize(image: typing.Union[Image, SingleImage], threshold: float):
-
-    image.solarize(threshold=threshold * image.quantum_range)
-    return image, f'Threshold: {threshold}'
-
-
-def sketch(image: typing.Union[Image, SingleImage], radius: float, sigma: float, angle: float):
-
-    image.sketch(radius=radius, sigma=sigma, angle=angle)
-    return image, f'Radius: {radius} | Sigma: {sigma} | Angle: {angle}'
-
-
-def implode(image: typing.Union[Image, SingleImage], amount: float):
-
-    image.implode(amount=amount)
+    image.blur(sigma=amount)
     return image, f'Amount: {amount}'
 
 
-def sepia_tone(image: typing.Union[Image, SingleImage], threshold: float):
+def edge(image: typing.Union[Image, SingleImage], level: float):
 
-    image.sepia_tone(threshold=threshold)
-    return image, f'Threshold: {threshold}'
-
-
-def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
-
-    image.polaroid(angle=angle, caption=caption)
-    return image, f'Angle: {angle} | Caption: {caption}'
+    image.transform_colorspace('gray')
+    image.edge(radius=level)
+    return image, f'Level: {level}'
 
 
-def vignette(image: typing.Union[Image, SingleImage], sigma: float, x: int, y: int):
+def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
-    image.vignette(sigma=sigma, x=x, y=y)
-    return image, f'Sigma: {sigma} | X: {x} | Y: {y}'
-
-
-def swirl(image: typing.Union[Image, SingleImage], degree: int):
-
-    image.swirl(degree=degree)
-    return image, f'Degree: {degree}'
-
-
-def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
-
-    image.charcoal(radius=radius, sigma=sigma)
-    return image, f'Radius: {radius} | Sigma: {sigma}'
-
-
-def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
-
-    image.noise(method, attenuate=attenuate)
-    return image, f'Method: {method} | Attenuate: {attenuate}'
-
-
-def blue_shift(image: typing.Union[Image, SingleImage], factor: float):
-
-    image.blue_shift(factor=factor)
-    return image, f'Factor: {factor}'
-
-
-def spread(image: typing.Union[Image, SingleImage], radius: float):
-
-    image.spread(radius=radius)
-    return image, f'Radius: {radius}'
-
-
-def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
-
-    image.adaptive_sharpen(radius=radius, sigma=sigma)
+    image.transform_colorspace('gray')
+    image.emboss(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
@@ -117,16 +39,79 @@ def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: floa
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
 
-    image.emboss(radius=radius, sigma=sigma)
+    image.adaptive_sharpen(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def edge(image: typing.Union[Image, SingleImage], radius: float):
+def spread(image: typing.Union[Image, SingleImage], radius: float):
 
-    image.edge(radius=radius)
+    image.spread(radius=radius)
     return image, f'Radius: {radius}'
+
+
+def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
+
+    image.noise(method, attenuate=attenuate)
+    return image, f'Method: {method} | Attenuate: {attenuate}'
+
+
+def blueshift(image: typing.Union[Image, SingleImage], factor: float):
+
+    image.blue_shift(factor=factor)
+    return image, f'Factor: {factor}'
+
+
+def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.charcoal(radius=radius, sigma=sigma)
+    return image, f'Radius: {radius} | Sigma: {sigma}'
+
+
+def colorize(image: typing.Union[Image, SingleImage], color: str):
+
+    with Color(color) as image_color:
+        with Color('rgb(50%, 50%, 50%)') as image_alpha:
+            image.colorize(color=image_color, alpha=image_alpha)
+
+    return image, f'Color: {color}'
+
+
+def implode(image: typing.Union[Image, SingleImage], amount: float):
+
+    image.implode(amount=amount)
+    return image, f'Amount: {amount}'
+
+
+def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
+
+    image.polaroid(angle=angle, caption=caption)
+    return image, f'Angle: {angle} | Caption: {caption}'
+
+
+def sepiatone(image: typing.Union[Image, SingleImage], threshold: float):
+
+    image.sepia_tone(threshold=threshold)
+    return image, f'Threshold: {threshold}'
+
+
+def solarize(image: typing.Union[Image, SingleImage], threshold: float):
+
+    image.solarize(threshold=threshold * image.quantum_range)
+    return image, f'Threshold: {threshold}'
+
+
+def swirl(image: typing.Union[Image, SingleImage], degree: float):
+
+    image.swirl(degree=degree)
+    return image, f'Degree: {degree}'
+
+
+def wave(image: typing.Union[Image, SingleImage]):
+
+    image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
+    return image, f''
 
 
 def flip(image: typing.Union[Image, SingleImage]):
@@ -147,27 +132,39 @@ def rotate(image: typing.Union[Image, SingleImage], degree: float):
     return image, f'Degree: {degree}'
 
 
+def floor(image: typing.Union[Image, SingleImage]):
+
+    image.virtual_pixel = 'tile'
+    arguments = (0,            0,            image.width * 0.2, image.height * 0.5,
+                 image.width,  0,            image.width * 0.8, image.height * 0.5,
+                 0,            image.height, image.width * 0.1, image.height,
+                 image.width,  image.height, image.width * 0.9, image.height)
+    image.distort('perspective', arguments)
+
+    return image, ''
+
+
 image_operations = {
-    'floor': floor,
-    'colorize': colorize,
-    'solarize': solarize,
-    'sketch': sketch,
-    'implode': implode,
-    'sepia_tone': sepia_tone,
-    'polaroid': polaroid,
-    'vignette': vignette,
-    'swirl': swirl,
-    'charcoal': charcoal,
-    'noise': noise,
-    'blue_shift': blue_shift,
-    'spread': spread,
-    'sharpen': sharpen,
-    'kuwahara': kuwahara,
-    'emboss': emboss,
+    'blur': blur,
     'edge': edge,
+    'emboss': emboss,
+    'kuwahara': kuwahara,
+    'sharpen': sharpen,
+    'spread': spread,
+    'noise': noise,
+    'blueshift': blueshift,
+    'charcoal': charcoal,
+    'colorize': colorize,
+    'implode': implode,
+    'polaroid': polaroid,
+    'sepiatone': sepiatone,
+    'solarize': solarize,
+    'swirl': swirl,
+    'wave': wave,
     'flip': flip,
     'flop': flop,
     'rotate': rotate,
+    'floor': floor
 }
 
 
@@ -199,7 +196,7 @@ class Imaging:
     def __init__(self, bot):
         self.bot = bot
 
-        self.queue = multiprocessing.Queue()
+        self.queue = multiprocessing.Queue() 
 
     async def get_image_url(self, ctx: commands.Context, argument: str):
 
@@ -226,12 +223,12 @@ class Imaging:
 
         return image_bytes
 
-    async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
+    async def edit_image(self, ctx: commands.Context, image: str, edit_type: str, **kwargs):
 
         if edit_type not in image_operations.keys():
             raise exceptions.ArgumentError(f"'{edit_type}' is not a valid image operation")
 
-        image_url = await self.get_image_url(ctx=ctx, argument=url)
+        image_url = await self.get_image_url(ctx=ctx, argument=image)
         image_bytes = await self.get_image_bytes(url=image_url)
 
         multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
