@@ -22,7 +22,7 @@ class MusicEvents(commands.Cog):
 
     @commands.Cog.listener()
     async def on_diorite_track_error(self, event):
-        await event.player.channel.send(f'The requested track could not be played. Error: `{event.error}`')
+        await event.player.channel.send(f'Something went wrong while playing a track. Error: `{event.error}`')
         self.bot.dispatch('life_track_end', event.player.guild.id)
 
     @commands.Cog.listener()
