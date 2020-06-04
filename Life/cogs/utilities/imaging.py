@@ -9,6 +9,7 @@ from discord.ext import commands
 from wand.color import Color
 from wand.image import Image
 from wand.sequence import SingleImage
+from wand.exceptions import *
 
 from cogs.utilities import exceptions
 
@@ -189,6 +190,7 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, queue: multipro
 
     image_edited.seek(0)
     queue.put((image_edited, image_format, image_text))
+    return
 
 
 class Imaging:
@@ -231,8 +233,11 @@ class Imaging:
         image_url = await self.get_image_url(ctx=ctx, argument=image)
         image_bytes = await self.get_image_bytes(url=image_url)
 
-        multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
-                                args=(image_operations[edit_type], image_bytes, self.queue)).start()
+        try:
+            multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
+                                    args=(image_operations[edit_type], image_bytes, self.queue)).start()
+        except MissingDelegateError:
+            return await ctx.send('Something went wrong while processing that image.')
 
         partial = functools.partial(self.queue.get)
         image_edited, image_format, image_text = await self.bot.loop.run_in_executor(None, partial)
