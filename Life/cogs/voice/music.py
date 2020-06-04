@@ -101,7 +101,7 @@ class Music(commands.Cog):
                 if result_type == 'playlist':
                     message = f'Added the youtube playlist **{result.name}** to the queue ' \
                               f'with a total of **{len(tracks)}** track(s)'
-                    ctx.player.queue.extend([tracks])
+                    ctx.player.queue.extend(tracks)
                 elif result_type == 'track':
                     message = f'Added the youtube track **{result[0].title}** to the queue.'
                     ctx.player.queue.extend([tracks[0]])
