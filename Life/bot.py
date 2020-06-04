@@ -3,6 +3,7 @@ import collections
 import logging
 import os
 import time
+import sys
 
 import aiohttp
 import asyncpg
@@ -16,6 +17,9 @@ from utilities import context, help
 
 os.environ['JISHAKU_HIDE'] = 'True'
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 class Life(commands.AutoShardedBot):
@@ -36,7 +40,6 @@ class Life(commands.AutoShardedBot):
         self.db = None
 
         self.pings = collections.deque(maxlen=1440)
-        self.socket_stats = collections.Counter()
         self.owner_ids = [238356301439041536]
         self.guild_blacklist = {}
         self.user_blacklist = {}
