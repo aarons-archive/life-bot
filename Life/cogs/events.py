@@ -185,13 +185,6 @@ class Events(commands.Cog):
         if ctx.author.id in self.bot.owner_ids:
             ctx.command.reset_cooldown(ctx)
 
-    @commands.Cog.listener()
-    async def on_socket_response(self, msg):
-
-        event = msg.get('t', 'None')
-        if event is not None:
-            self.bot.socket_stats[event] += 1
-
 
 def setup(bot):
     bot.add_cog(Events(bot))
