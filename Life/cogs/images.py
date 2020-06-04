@@ -361,7 +361,7 @@ class Images(commands.Cog):
         if angle < -360 or angle > 360:
             raise exceptions.ArgumentError('Angle must be between `-360` and `360`.')
 
-        if len(caption) > 100:
+        if caption and len(caption) > 100:
             raise exceptions.ArgumentError('Caption must be `100` characters or less.')
 
         async with ctx.channel.typing():
