@@ -233,14 +233,10 @@ class Imaging:
         image_url = await self.get_image_url(ctx=ctx, argument=image)
         image_bytes = await self.get_image_bytes(url=image_url)
 
-        try:
-            multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
-                                    args=(image_operations[edit_type], image_bytes, self.queue)).start()
-        except MissingDelegateError:
-            return await ctx.send('Something went wrong while processing that image.')
+        multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
+                                args=(image_operations[edit_type], image_bytes, self.queue)).start()
 
-        partial = functools.partial(self.queue.get)
-        image_edited, image_format, image_text = await self.bot.loop.run_in_executor(None, partial)
+        image_edited, image_format, image_text = await self.bot.loop.run_in_executor(None, self.queue.get)
 
         file = discord.File(filename=f'{edit_type}_image.{image_format.lower()}', fp=image_edited)
         embed = discord.Embed(colour=discord.Colour.gold())
