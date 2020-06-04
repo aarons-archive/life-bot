@@ -14,12 +14,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
+        print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
+        self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
+
         self.bot.log_channel = self.bot.get_channel(697324016658022441)
         self.bot.dm_channel = self.bot.get_channel(714307639609131018)
         self.bot.mention_channel = self.bot.get_channel(714601090771058719)
-
-        print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
-        self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
         for guild in self.bot.guilds:
             if guild.id in self.bot.guild_blacklist:
