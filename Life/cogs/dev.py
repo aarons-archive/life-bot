@@ -67,9 +67,9 @@ class Dev(commands.Cog):
     @dev.command(name='cleanup', hidden=True)
     async def dev_cleanup(self, ctx, limit: int = 50):
         """
-        Deletes the bot's messages in the current channel.
+        Deletes the bot's last 50 messages.
 
-        `limit`: The amount of messages to check. Defaults to 50.
+        `limit`: The amount of messages to check back through. Defaults to 50.
         """
 
         messages = await ctx.channel.purge(limit=limit, check=lambda m: m.author == ctx.guild.me,
@@ -81,7 +81,7 @@ class Dev(commands.Cog):
     @dev.command(name='guilds', hidden=True)
     async def dev_guilds(self, ctx, guilds_per_page: int = 20):
         """
-        Displays a list of guilds with the percentage of bots to members in them.
+        A list of guilds with the ratio of bots to members.
 
         `guilds_per_page`: The amount of guilds to show per page.
         """

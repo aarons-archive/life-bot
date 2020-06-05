@@ -41,7 +41,7 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     async def join(self, ctx):
         """
-        Joins the author's voice channel.
+        Joins your current voice channel.
         """
 
         channel = ctx.author.voice.channel
@@ -52,7 +52,7 @@ class Music(commands.Cog):
             return await ctx.send(f'Joined your voice channel `{channel}`.')
 
         if ctx.player.voice_channel.id != channel.id:
-            return await ctx.send(f'I am already the voice channel `{ctx.player.voice_channel}`. '
+            return await ctx.send(f'I am already in the voice channel `{ctx.player.voice_channel}`. '
                                   f'Please disconnect me from that channel and then use this command.')
 
         return await ctx.send('I am already in your voice channel.')
@@ -61,7 +61,7 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     async def play(self, ctx, *, search: str):
         """
-        Searches for and plays a track. Supports spotify.
+        Plays a track with the given search. Support spotify links.
 
         `search`: The name/link of the track you want to play. Spotify links will search youtube with the track name.
         """
@@ -114,7 +114,7 @@ class Music(commands.Cog):
     @checks.is_player_connected()
     async def leave(self, ctx):
         """
-        Leaves the voice channel.
+        Leaves the current voice channel.
         """
 
         ctx.player.queue.clear()

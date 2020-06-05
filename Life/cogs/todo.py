@@ -14,7 +14,7 @@ class Todo(commands.Cog):
     @commands.group(name='todo', invoke_without_command=True)
     async def todo(self, ctx):
         """
-        Base command for todo lists.
+        Base command for todos.
         """
 
         return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help todo` for more '
@@ -39,7 +39,7 @@ class Todo(commands.Cog):
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx, *, content: str):
         """
-        Creates a todo and adds it to your todo list.
+        Creates a todo.
 
         `content`: The content of your todo. Can not be more than 200 characters.
         """
@@ -58,10 +58,10 @@ class Todo(commands.Cog):
         embed.add_field(name='Content:', value=content)
         return await ctx.send(embed=embed)
 
-    @todo.command(name='remove', aliases=['delete'])
-    async def todo_remove(self, ctx, *, todo_ids: str):
+    @todo.command(name='delete', aliases=['remove'])
+    async def todo_delete(self, ctx, *, todo_ids: str):
         """
-        Removes a todo from your todo list.
+        Deletes a todo.
 
         `todo_ids`: The ids of the todos to delete. You can provide a list of ids and they will all be deleted.
         """

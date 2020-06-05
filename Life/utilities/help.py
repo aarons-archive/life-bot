@@ -1,157 +1,135 @@
-import discord
+from typing import Union
+
 from discord.ext import commands
+import discord
 
 
 class HelpCommand(commands.HelpCommand):
 
     def __init__(self):
-        super().__init__(command_attrs={
-            'help': 'Shows help about the Bot, an Extension or a Command.\n\n'
-                    '**<argument>** means the argument is **required**.\n'
-                    '**[argument]** means the argument is **optional**.\n'
-                    '**[a|b]** means it can be **"A" or "B"**.\n'
-                    '**[argument...]** means you can have **multiple arguments**.'
-        })
+        super().__init__(command_attrs={'help': 'Shows help for the bot, a category or a command.\n\n'
+                                                '**<argument>** means the argument is required.\n'
+                                                '**[argument]** means the argument is optional.\n'
+                                                '**[a|b]** means it can be "A" or "B".\n'
+                                                '**[argument...]** means you can have multiple arguments.'
+                                        }
+                         )
 
-    def formatter(self, command_list: list, aliases: bool = True, short_name: bool = False, level: int = 0):
+    def get_cog_commands(self, cog: commands.Cog):
+
+        ctx = self.context
+        filtered_commands = []
+
+        for command in cog.walk_commands():
+
+            if ctx.author.id in ctx.bot.owner_ids:
+                filtered_commands.append(command)  # Show all commands if author is owner.
+            elif cog.qualified_name == 'Kross' and ctx.guild and ctx.guild.id == 491312179476299786:
+                filtered_commands.append(command)  # Show kross cog command if in the right server.
+            elif command.hidden or command.root_parent and command.root_parent.hidden:
+                continue  # Skip command if it or its parents are hidden.
+            else:
+                filtered_commands.append(command)
+
+        return filtered_commands
+
+    def format_commands(self, command_list: list):
+
+        formatted_commands = []
 
         for command in command_list:
 
-            command_name = self.get_command(command, aliases, short_name)
+            command_help = command.help.strip().split('\n')[0] if command.help else 'No help provided for this command.'
 
-            if command.help:
-                command_help = command.help.strip().split('\n')[0]
+            space = '\u200b \u200b ' * (len(command.parents) - 1)
+            indent = '`╚╡` ' if command.parents else ''
+            formatted_commands.append(f'**{space}{indent}{command.name}** - {command_help}')
+
+        return formatted_commands
+
+    async def send_bot_help(self, mapping):
+
+        ctx = self.context
+        entries = []
+
+        for cog in sorted(ctx.bot.cogs.values(), key=lambda c: len(list(c.walk_commands())), reverse=True):
+
+            if cog.qualified_name == 'Jishaku':
+                continue
+
+            cog_commands = self.get_cog_commands(cog=cog)
+            if not cog_commands:
+                continue
+
+            cog_help = f'__**{cog.qualified_name}:**__\n'
+            cog_help += ''.join([f'`{command.qualified_name}`\u200b ' for command in cog_commands])
+            entries.append(cog_help)
+
+        title = f"__{ctx.bot.user.name}'s help page__"
+        header = f'Use `{ctx.bot.config.PREFIX}help [Command/Category]` for help on a command or category.\n'
+        await ctx.paginate_embed(title=title, header=header, entries=entries, entries_per_page=5)
+
+    async def send_cog_help(self, cog: commands.Cog):
+
+        ctx = self.context
+
+        cog_commands = self.get_cog_commands(cog=cog)
+        if not cog_commands:
+            return await ctx.send('That cog has no commands that you are able to see.')
+
+        title = f'__**{cog.qualified_name} help page:**__\n'
+        entries = self.format_commands(command_list=cog_commands)
+        await ctx.paginate_embed(title=title, entries=entries, entries_per_page=20)
+
+    async def send_group_help(self, group: commands.Group):
+
+        ctx = self.context
+
+        filtered_commands = []
+
+        for command in group.walk_commands():
+
+            if ctx.author.id in ctx.bot.owner_ids:
+                filtered_commands.append(command)  # Show all commands if author is owner.
+            elif group.cog.qualified_name == 'Kross' and ctx.guild and ctx.guild.id == 491312179476299786:
+                filtered_commands.append(command)  # Show kross cog command if in the right server.
+            elif command.hidden or command.root_parent and command.root_parent.hidden:
+                continue  # Skip command if it or its parents are hidden.
             else:
-                command_help = 'No help provided for this command.'
+                filtered_commands.append(command)
 
-            indent = ''
-            arrow = ''
-            if level > 1:
-                indent = '\u200b ' * level * 1
-            if level > 0:
-                arrow = '`╚╡`'
+        if not filtered_commands:
+            return await ctx.send('That command has no subcommands that you are able to see.')
 
-            yield f'{indent}{arrow}**{command_name}** - {command_help}'
+        command_help = group.help if group.help else 'No help provided for this command.'
+        aliases = f'**Aliases:** {"/".join(group.aliases)}\n\n'
 
-            if isinstance(command, commands.Group):
-                yield from self.formatter(command.commands, aliases=False, short_name=True, level=level + 1)
+        title = f'{group.name} {group.signature if group.signature else ""}'
+        header = f'{aliases if group.aliases else ""}{command_help}\n\n__**Subcommands:**__\n'
+        entries = self.format_commands(command_list=filtered_commands)
 
-    def get_command(self, command: commands.Command, aliases: bool, short_name: bool):
+        await ctx.paginate_embed(title=title, header=header, entries=entries, entries_per_page=20)
 
-        command_name = f'{self.context.bot.config.PREFIX}'
+    async def send_command_help(self, command: commands.Command):
 
-        command_parents = command.parents
-        for command_parent in command_parents[::-1]:
-            if short_name is True:
-                command_names = command_parent.aliases + [command_parent.name]
-                command_name += f'{min(command_names)} '
-            elif aliases is True:
-                command_aliases = '/'.join([command_parent.name] + command_parent.aliases)
-                command_name += f'{command_aliases} '
-        if short_name is True:
-            command_names = command.aliases + [command.name]
-            command_name += f'{min(command_names, key=len)} '
-        elif aliases is True:
-            command_aliases = '/'.join([command.name] + command.aliases)
-            command_name += f'{command_aliases} '
+        ctx = self.context
 
-        return command_name
+        command_help = command.help if command.help else 'No help provided for this command.'
+        aliases = f'**Aliases:** {"/".join(command.aliases)}\n\n'
+
+        title = f'{command.name} {command.signature if command.signature else ""}'
+        description = f'{aliases if command.aliases else ""}{command_help}'
+        embed = discord.Embed(colour=discord.Colour.gold(), title=title, description=description)
+
+        await ctx.send(embed=embed)
 
     def command_not_found(self, search: str):
         return f'There are no commands or categories with the name `{search}`. Be sure to capitalize the first ' \
                f'letter if you are looking for the help of a category.'
 
-    def subcommand_not_found(self, command, search: str):
+    def subcommand_not_found(self, command: Union[commands.Command, commands.Group], search: str):
 
         if isinstance(command, commands.Group):
             return f'The command `{command.qualified_name}` has no sub-commands called `{search}`.'
 
         return f'The command `{command.qualified_name}` has no sub-commands.'
-
-    async def send_bot_help(self, mapping):
-
-        ctx = self.context
-
-        embed = discord.Embed(
-            colour=discord.Color.gold(),
-            title=f"__{ctx.bot.user.name}'s help page__",
-            description=f'Use `{ctx.bot.config.PREFIX}help [Command/Category]` for more info on a command/category.\n'
-        )
-
-        def key(e):
-            return len(e.get_commands())
-
-        for cog in sorted(ctx.bot.cogs.values(), key=key, reverse=True):
-
-            if ctx.author.id in ctx.bot.owner_ids:
-                cog_commands = [command for command in cog.get_commands()]
-            else:
-                cog_commands = [command for command in cog.get_commands() if command.hidden is False]
-
-            if len(cog_commands) == 0:
-                continue
-            embed.description += f'\n__**{cog.qualified_name}:**__\n'
-
-            for command in cog_commands:
-                embed.description += f'`{command.name}` \u200b '
-
-        return await ctx.send(embed=embed)
-
-    async def send_cog_help(self, cog):
-
-        ctx = self.context
-
-        if ctx.author.id in ctx.bot.owner_ids:
-            cog_commands = [command for command in cog.get_commands()]
-        else:
-            cog_commands = [command for command in cog.get_commands() if command.hidden is False]
-
-        if len(cog_commands) == 0:
-            message = 'This cog has no commands. This could be because they are hidden, or there are just no commands.'
-            return await ctx.send(message)
-
-        return await ctx.paginate_embed(title=f'__**{cog.qualified_name} cog help page:**__\n\n',
-                                        entries=list(self.formatter(cog_commands)), entries_per_page=15)
-
-    async def send_command_help(self, command):
-
-        ctx = self.context
-
-        embed = discord.Embed(
-            colour=discord.Color.gold(),
-            title=f'',
-            description=f''
-        )
-
-        command_name = self.get_command(command, aliases=True, short_name=False)
-
-        if command.signature:
-            embed.title += f'{command_name}{command.signature}'
-        else:
-            embed.title += f'{command_name}'
-
-        if command.help:
-            embed.description += f'{command.help}\n'
-        else:
-            embed.description += f'No help provided for this command.\n'
-
-        return await ctx.send(embed=embed)
-
-    async def send_group_help(self, group):
-
-        ctx = self.context
-
-        group_name = self.get_command(group, aliases=True, short_name=False)
-
-        if group.signature:
-            embed_title = f'{group_name}{group.signature}'
-        else:
-            embed_title = f'{group_name}'
-
-        if group.help:
-            embed_description = f'{group.help}'
-        else:
-            embed_description = f'No help provided for this command.'
-
-        return await ctx.paginate_embed(title=f'**{embed_title}**', header=f'{embed_description}\n\n',
-                                        entries=list(self.formatter(group.commands)), entries_per_page=15)

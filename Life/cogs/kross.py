@@ -51,7 +51,7 @@ class Kross(commands.Cog):
 
     @checks.is_krossbot_user()
     @checks.is_kross_guild()
-    @commands.command(name='roles')
+    @commands.command(name='roles', hidden=True)
     async def roles(self, ctx):
         """
         Display how many members there are in each house.
@@ -78,7 +78,7 @@ class Kross(commands.Cog):
 
     @checks.is_krossbot_user()
     @checks.is_kross_guild()
-    @commands.command(name='points')
+    @commands.command(name='points', hidden=True)
     async def points(self, ctx, house: str = None, operation: str = None, points: int = None):
         """
         Command to manage house points.
