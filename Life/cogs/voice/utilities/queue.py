@@ -19,7 +19,7 @@ class LifeQueue:
         self.queue_list = []
 
     def __repr__(self):
-        return f'<LifeQueue entries={self.size}>'
+        return f'<LifeQueue entries={self.size} is_empty={self.is_empty}>'
 
     def wakeup_next(self, waiters):
 
@@ -38,28 +38,20 @@ class LifeQueue:
             self.finished.set()
 
     @property
-    def is_empty(self) -> bool:
-
-        if len(self.queue_list) == 0:
-            return True
-
-        return False
-
-    @property
     def size(self) -> int:
-
         return len(self.queue_list)
 
-    def clear(self) -> None:
+    @property
+    def is_empty(self) -> bool:
+        return len(self.queue_list) == 0
 
+    def clear(self) -> None:
         self.queue_list.clear()
 
     def reverse(self) -> None:
-
         self.queue_list.reverse()
 
     def shuffle(self) -> None:
-
         random.shuffle(self.queue_list)
 
     def extend(self, items: typing.List[typing.Any]) -> None:
@@ -68,13 +60,14 @@ class LifeQueue:
         self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
     def put_pos(self, item: typing.Any, position: int = 0) -> None:
+
         self.queue_list.insert(position, item)
-        self.player.bot.dispatch(f'life_queue_add', self.player.guild)
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
     def put(self, item: typing.Any) -> None:
 
         self.queue_list.append(item)
-        self.player.bot.dispatch(f'life_queue_add', self.player.guild)
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
     async def get_pos(self, position: int = 0) -> typing.Any:
 

@@ -1,10 +1,10 @@
 import asyncio
 import re
 
+import diorite
 import spotify
 from discord.ext import commands
 
-import diorite
 from cogs.utilities import checks
 
 
@@ -14,7 +14,7 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.bot.diorite = diorite.Client(bot=self.bot, session=self.bot.session, loop=self.bot.loop)
-        self.bot.http_spotify = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID,
+        self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID,
                                                    client_secret=self.bot.config.SPOTIFY_SECRET)
         self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_ID,
                                           client_secret=self.bot.config.SPOTIFY_SECRET)
@@ -41,7 +41,7 @@ class Music(commands.Cog):
     @checks.is_member_connected()
     async def join(self, ctx):
         """
-        Joins your current voice channel.
+        Joins your voice channel.
         """
 
         channel = ctx.author.voice.channel
@@ -59,11 +59,11 @@ class Music(commands.Cog):
 
     @commands.command(name='play')
     @checks.is_member_connected()
-    async def play(self, ctx, *, search: str):
+    async def play(self, ctx, *, query: str):
         """
         Plays a track with the given search. Support spotify links.
 
-        `search`: The name/link of the track you want to play. Spotify links will search youtube with the track name.
+        `query`: The name/link of the track you want to play. Spotify links will search youtube with the track name.
         """
 
         if not ctx.player.is_connected:
@@ -75,36 +75,28 @@ class Music(commands.Cog):
 
         async with ctx.channel.typing():
 
-            search_result = await ctx.player.search(ctx=ctx, search=search)
+            search = await ctx.player.search(ctx=ctx, search=query)
 
-            search_type = search_result.get('type')
-            result_type = search_result.get('return_type')
-            result = search_result.get('result')
-            tracks = search_result.get('tracks')
+            if search.source == 'spotify':
 
-            if search_type == 'spotify':
+                if search.source_type == 'track':
+                    message = f'Added the spotify track **{search.result.name}** to the queue.'
+                elif search.source_type in ('album', 'playlist'):
+                    message = f'Added the spotify {search.source_type} **{search.result.name}** to the queue ' \
+                              f'with a total of **{len(search.tracks)}** track(s).'
 
-                if result_type == 'track':
-                    message = f'Added the spotify track **{result.name}** to the queue.'
-                elif result_type == 'album':
-                    message = f'Added the spotify album **{result.name}** to the queue ' \
-                              f'with a total of **{len(tracks)}** track(s).'
-                elif result_type == 'playlist':
-                    message = f'Added the spotify playlist **{result.name}** to the queue ' \
-                              f'with a total of **{len(tracks)}** track(s).'
-
-                ctx.player.queue.extend(tracks)
+                ctx.player.queue.extend(search.tracks)
                 return await ctx.send(message)
 
-            elif search_type == 'youtube':
+            elif search.source == 'youtube':
 
-                if result_type == 'playlist':
-                    message = f'Added the youtube playlist **{result.name}** to the queue ' \
-                              f'with a total of **{len(tracks)}** track(s)'
-                    ctx.player.queue.extend(tracks)
-                elif result_type == 'track':
-                    message = f'Added the youtube track **{result[0].title}** to the queue.'
-                    ctx.player.queue.extend([tracks[0]])
+                if search.source_type == 'playlist':
+                    message = f'Added the youtube playlist **{search.result.name}** to the queue ' \
+                              f'with a total of **{len(search.tracks)}** track(s)'
+                    ctx.player.queue.extend(search.tracks)
+                elif search.source_type == 'track':
+                    message = f'Added the youtube track **{search.tracks[0].title}** to the queue.'
+                    ctx.player.queue.put(search.tracks[0])
 
                 return await ctx.send(message)
 

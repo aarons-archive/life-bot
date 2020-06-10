@@ -1,11 +1,11 @@
 import asyncio
-import typing
 from datetime import datetime
+from typing import List
 
 import discord
 from discord.ext import commands
 
-from cogs.utilities import exceptions, checks
+from cogs.utilities import checks, exceptions
 from cogs.voice.utilities import objects
 
 
@@ -14,31 +14,9 @@ class Playlists(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def get_playlist_tracks(self, ctx: commands.Context, playlist: objects.Playlist):
-
-        raw_tracks = await self.bot.db.fetch('SELECT * FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
-        if not raw_tracks:
-            return
-
-        for raw_track in raw_tracks:
-
-            if raw_track.get('source') == 'youtube':
-                track = objects.LifeTrack(track_id=raw_track.get('track_id'), info=raw_track, ctx=ctx)
-            elif raw_track.get('source') == 'spotify':
-                track = objects.SpotifyTrack(ctx=ctx, title=raw_track.get('title'), author=raw_track.get('author'),
-                                             length=raw_track.get('length'), uri=raw_track.get('uri'))
-            else:
-                continue
-
-            playlist.tracks.append(track)
-
     async def get_playlists(self, ctx, owner: discord.Member = None, owned_by: bool = True, search: str = None):
 
-        try:
-            search = int(search)
-        except ValueError:
-            pass
-
+        search = self.bot.utils.try_int(string=search)
         query = ['SELECT * FROM playlists ']
         query_data = []
 
@@ -59,19 +37,23 @@ class Playlists(commands.Cog):
             query_data.extend([owner.id, False])
 
         raw_playlists = await self.bot.db.fetch(''.join(query), *query_data)
-        if not raw_playlists:
-            return None
+        playlists = [objects.Playlist(raw_playlist) for raw_playlist in raw_playlists]
 
-        playlists = []
-        for raw_playlist in raw_playlists:
+        for playlist in playlists:
 
-            playlist = objects.Playlist(raw_playlist)
-            await self.get_playlist_tracks(ctx=ctx, playlist=playlist)
-            playlists.append(playlist)
+            raw_tracks = await self.bot.db.fetch('SELECT * FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
+
+            for raw_track in raw_tracks:
+                if raw_track.get('source') == 'youtube':
+                    track = objects.LifeTrack(track_id=raw_track.get('track_id'), info=raw_track, ctx=ctx)
+                else:
+                    track = objects.SpotifyTrack(info=raw_track, ctx=ctx)
+
+                playlist.tracks.append(track)
 
         return playlists
 
-    async def do_choice(self, ctx: commands.Context, message: str):
+    async def do_choice(self, ctx: commands.Context, message: str) -> str:
 
         await ctx.send(message)
 
@@ -80,29 +62,29 @@ class Playlists(commands.Cog):
 
         try:
             response = await self.bot.wait_for('message', check=check, timeout=30.0)
-            response = await self.bot.clean_content.convert(ctx, response.content)
         except asyncio.TimeoutError:
             raise exceptions.LifePlaylistError('You took too long to respond.')
+        else:
+            response = await self.bot.clean_content.convert(ctx, response.content)
 
         return response
 
-    async def choose_playlist(self, ctx: commands.Context, playlists: list):
+    async def choose_playlist(self, ctx, playlists: List[objects.Playlist]) -> objects.Playlist:
 
         if len(playlists) == 1:
             return playlists[0]
 
-        message = '```py\n' \
-                  'Your search returned more than one playlist, say the number of the playlist you want to use.\n\n'
+        message = [' ```py\nSay the number of the playlist you want to use.\n\n']
         for index, playlist in enumerate(playlists):
-            message += f'{index + 1}.  Name: {playlist.name} | ID: {playlist.id} | Tracks: ' \
-                       f'{len(playlist.tracks)} | Owner: {self.bot.get_user(playlist.owner_id)}\n'
-        message += '\n```'
+            message.append(f'{index + 1}.  Name: {playlist.name:<15} |ID: {playlist.id:<5} |'
+                           f'Tracks: {len(playlist.tracks):<5} |Owner: {self.bot.get_user(playlist.owner_id)}\n')
+        message.append('\n```')
 
-        response = await self.do_choice(ctx=ctx, message=message)
+        response = await self.do_choice(ctx=ctx, message=''.join(message))
         try:
             response = int(response) - 1
         except ValueError:
-            raise exceptions.LifePlaylistError('You need to choose the number of the playlist to use.')
+            raise exceptions.LifePlaylistError('You need to say the number of the playlist to use.')
 
         if response < 0 or response >= len(playlists):
             raise exceptions.LifePlaylistError('That was not one of the available playlists.')
@@ -110,29 +92,30 @@ class Playlists(commands.Cog):
         return playlists[response]
 
     @commands.group(name='playlist', aliases=['playlists'], invoke_without_command=True)
-    async def playlist(self, ctx, *, search: typing.Union[int, str] = None):
+    async def playlist(self, ctx, *, search: commands.clean_content):
         pass
 
     @playlist.command(name='create', aliases=['make'])
     async def playlist_create(self, ctx, *, name: commands.clean_content):
 
-        try:
-            name = int(str(name))
-            raise exceptions.LifePlaylistError('You can not use numbers in a playlist name.')
-        except ValueError:
-            pass
-        if '`' in name:
-            raise exceptions.LifePlaylistError('You can not use backtick characters in a playlist name.')
+        count = await self.bot.db.fetchrow('SELECT count(*) as c FROM playlists WHERE owner_id = $1', ctx.author.id)
+        if count['c'] > 20:
+            raise exceptions.LifePlaylistError('You can only have up to 20 playlists.')
 
-        query = 'INSERT INTO playlists (name, owner_id, private, creation_date, image_url) ' \
-                'VALUES ($1, $2, $3, $4, $5) RETURNING *'
-        image = self.bot.utils.member_avatar(ctx.author)
-        raw_playlist = await self.bot.db.fetchrow(query, name, ctx.author.id, False, datetime.now(), image)
+        name = self.bot.utils.try_int(string=str(name))
+        if type(name) == int:
+            raise exceptions.LifePlaylistError('You can not use a number as a playlist name.')
+        if len(name) > 15:
+            raise exceptions.LifePlaylistError('You can not have a playlist name longer than 15 characters.')
+        if '`' in name:
+            raise exceptions.LifePlaylistError('You can not use backticks in a playlist name.')
+
+        query = 'INSERT INTO playlists (name, owner_id, private, creation_date) VALUES ($1, $2, $3, $4) RETURNING *'
+        raw_playlist = await self.bot.db.fetchrow(query, name, ctx.author.id, False, datetime.now())
         playlist = objects.Playlist(raw_playlist)
 
         embed = discord.Embed(title='Playlist created', colour=discord.Colour.gold(),
-                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n'
-                                          f'**Image:** [link]({playlist.image_url})')
+                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n')
         embed.set_footer(text=f'ID: {playlist.id} | Creation Date: {playlist.creation_date}')
         return await ctx.send(embed=embed)
 
@@ -149,8 +132,7 @@ class Playlists(commands.Cog):
         await self.bot.db.execute('DELETE FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
 
         embed = discord.Embed(title='Playlist deleted', colour=discord.Colour.gold(),
-                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n'
-                                          f'**Image:** [link]({playlist.image_url})')
+                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n')
         embed.set_footer(text=f'ID: {playlist.id} | Creation Date: {playlist.creation_date}')
         return await ctx.send(embed=embed)
 
@@ -163,52 +145,39 @@ class Playlists(commands.Cog):
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
-        message = f'```py\n' \
-                  f'Say the number of the atrribute you would like to edit about your playlist.\n\n' \
-                  f'1. Name \n2. Image \n3. Private\n```'
+        message = f'```py\nSay the number of the atrribute you would like to edit about your playlist.\n\n' \
+                  f'1. Name \n2. Private\n```'
         response = await self.do_choice(ctx=ctx, message=message)
 
         if response == '1':
 
-            response = await self.do_choice(ctx=ctx, message='What would you like your new playlist to be called?')
-            try:
-                response = int(str(response))
-                raise exceptions.LifePlaylistError('You can not use numbers in a playlist name.')
-            except ValueError:
-                pass
-            if '`' in response:
-                raise exceptions.LifePlaylistError('You can not use backtick characters in a playlist name.')
+            new_name = await self.do_choice(ctx=ctx, message='What would you like to rename your playlist too?')
+            new_name = self.bot.utils.try_int(string=new_name)
+            if type(new_name) == int:
+                raise exceptions.LifePlaylistError('You can not use a number as a playlist name.')
+            if len(new_name) > 15:
+                raise exceptions.LifePlaylistError('You can not have a playlist name longer than 15 characters.')
+            if '`' in new_name:
+                raise exceptions.LifePlaylistError('You can not use backticks in a playlist name.')
 
             query = f'UPDATE playlists SET name = $1 WHERE id = $2 RETURNING *'
-            raw_playlist = await self.bot.db.fetchrow(query, response, playlist.id)
+            raw_playlist = await self.bot.db.fetchrow(query, new_name, playlist.id)
             new_playlist = objects.Playlist(raw_playlist)
             return await ctx.send(f'Your playlist `{playlist.name}` has been renamed to `{new_playlist.name}`.')
 
-        elif response == '2':
-
-            response = await self.do_choice(ctx=ctx, message='What would you the like your playlists image to be?')
-            if self.bot.image_url_regex.match(response) is None:
-                raise exceptions.LifePlaylistError('That was not a valid image url.')
-
-            query = f'UPDATE playlists SET image_url = $1 WHERE id = $2 RETURNING *'
-            raw_playlist = await self.bot.db.fetchrow(query, response, playlist.id)
-            new_playlist = objects.Playlist(raw_playlist)
-            return await ctx.send(f'Your playlists image has been changed from '
-                                  f'**<{playlist.image_url}>** to **<{new_playlist.image_url}>**')
-
-        elif response == '3':
+        if response == '2':
 
             query = f'UPDATE playlists SET private = $1 WHERE id = $2 RETURNING *'
             raw_playlist = await self.bot.db.fetchrow(query, False if playlist.private is True else True, playlist.id)
             new_playlist = objects.Playlist(raw_playlist)
-            return await ctx.send(f'Your playlists private status has been changed from '
-                                  f'**{playlist.is_private}** to **{new_playlist.is_private}**.')
+            return await ctx.send(f'Your playlists private status has been changed from `{playlist.is_private}` to '
+                                  f'`{new_playlist.is_private}`.')
 
         else:
             raise exceptions.LifePlaylistError('You need to say the number of the attribute you want to edit.')
 
     @playlist.command(name='add')
-    async def playlist_add(self, ctx, playlist: commands.clean_content, *, search: str):
+    async def playlist_add(self, ctx, playlist: commands.clean_content, *, query: str):
 
         playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
         if not playlists:
@@ -218,44 +187,36 @@ class Playlists(commands.Cog):
 
         async with ctx.channel.typing():
 
-            search_result = await ctx.player.search(ctx=ctx, search=search)
+            search = await ctx.player.search(ctx=ctx, search=query)
 
-            search_type = search_result.get('type')
-            result_type = search_result.get('return_type')
-            result = search_result.get('result')
-            tracks = search_result.get('tracks')
+            if search.source == 'spotify':
 
-            if search_type == 'spotify':
+                if search.source_type == 'track':
+                    message = f'Added the spotify track **{search.result.name}** to your playlist **{playlist.name}**.'
+                elif search.source_type in ('album', 'playlist'):
+                    message = f'Added the spotify {search.source_type} **{search.result.name}** to your playlist ' \
+                              f'**{playlist.name}** with a total of **{len(search.tracks)}** track(s).'
 
-                if result_type == 'track':
-                    message = f'Added the spotify track **{result.name}** to your playlist **{playlist.name}**.'
-                elif result_type == 'album':
-                    message = f'Added the spotify album **{result.name}** to your playlist **{playlist.name}** ' \
-                              f'with a total of **{len(tracks)}** track(s).'
-                elif result_type == 'playlist':
-                    message = f'Added the spotify playlist **{result.name}** to your playlist **{playlist.name}** ' \
-                              f'with a total of **{len(tracks)}** track(s).'
-
-                entries = [(playlist.id, None, track.title, track.author, track.length, None, track.uri, False, False,
-                            None, 'spotify') for track in tracks]
+                entries = [(playlist.id, None, track.title, track.author, track.length, track.identifier, track.uri,
+                            False, True, 0, 'spotify') for track in search.tracks]
 
                 query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
                 await self.bot.db.executemany(query, entries)
 
                 return await ctx.send(message)
 
-            elif search_type == 'youtube':
+            elif search.source == 'youtube':
 
-                if result_type == 'playlist':
-                    message = f'Added the youtube playlist **{result.name}** to your playlist **{playlist.name}** ' \
-                              f'with a total of **{len(result.tracks)}** track(s).'
-                    tracks = result.tracks
-
-                elif result_type == 'track':
-                    message = f'Added the youtube track **{result[0].title}** to your playlist **{playlist.name}**.'
-                    if result[0].is_stream:
-                        return await ctx.send('I am unable to add youtube livestreams to playlists.')
-                    tracks = [result[0]]
+                if search.source_type == 'playlist':
+                    message = f'Added the youtube playlist **{search.result.name}** to your playlist ' \
+                              f'**{playlist.name}** with a total of **{len(search.tracks)}** track(s).'
+                    tracks = search.tracks
+                elif search.source_type == 'track':
+                    if search.result[0].is_stream:
+                        raise exceptions.LifePlaylistError('I am unable to add youtube livestreams to playlists.')
+                    message = f'Added the youtube track **{search.result[0].title}** to your playlist ' \
+                              f'**{playlist.name}**.'
+                    tracks = [search.tracks[0]]
 
                 entries = [(playlist.id, track.track_id, track.title, track.author, track.length, track.identifier,
                             track.uri, track.is_stream, track.is_seekable, track.position, 'youtube')
@@ -277,43 +238,35 @@ class Playlists(commands.Cog):
 
         async with ctx.channel.typing():
 
-            search_result = await ctx.player.search(ctx=ctx, search=search)
+            search = await ctx.player.search(ctx=ctx, search=search)
 
-            search_type = search_result.get('type')
-            result_type = search_result.get('return_type')
-            result = search_result.get('result')
-            tracks = search_result.get('tracks')
+            if search.source == 'spotify':
 
-            if search_type == 'spotify':
-
-                tracks_to_remove = [track for track in tracks if track.uri in playlist.uris]
+                tracks_to_remove = [track for track in search.tracks if track.uri in [t.uri for t in playlist.tracks]]
                 if not tracks_to_remove:
                     raise exceptions.LifePlaylistError(f'Your spotify search returned no tracks which could be removed '
-                                                       f'from your playlist.')
+                                                       f'from the playlist `{playlist.name}`.')
 
-                if result_type == 'track':
-                    message = f'Removed the spotify track **{result.name}** from your playlist **{playlist.name}**.'
-                elif result_type == 'album':
-                    message = f'Removed all the tracks from the spotify album **{result.name}** from your playlist ' \
-                              f'**{playlist.name}** with a total of **{len(tracks_to_remove)}** track(s) removed.'
-                elif result_type == 'playlist':
-                    message = f'Removed all the tracks from the spotify playlist **{result.name}** from your playlist '\
-                              f'**{playlist.name}** with a total of **{len(tracks_to_remove)}** track(s) removed.'
-
-            elif search_type == 'youtube':
-
-                tracks_to_remove = [track for track in tracks if track.uri in playlist.uris]
-                if not tracks_to_remove:
-                    raise exceptions.LifePlaylistError(f'Your youtube search returned no tracks which '
-                                                       f'could be removed from your playlist.')
-
-                if result_type == 'playlist':
-                    message = f'Removed all the tracks from the youtube playlist ' \
-                              f'**{result.name}** from your playlist **{playlist.name}**' \
-                              f' with a total of **{len(tracks_to_remove)}** track(s) removed.'
-                elif result_type == 'track':
-                    message = f'Removed the youtube track **{result[0].title}** ' \
+                if search.source_type == 'track':
+                    message = f'Removed the spotify track **{search.result.name}** from your playlist ' \
+                              f'**{playlist.name}**.'
+                elif search.source_type in ('album', 'playlist'):
+                    message = f'Removed all the tracks from the spotify {search.source_type} **{search.result.name}** '\
                               f'from your playlist **{playlist.name}**.'
+
+            elif search.source == 'youtube':
+
+                tracks_to_remove = [track for track in search.tracks if track.uri in [t.uri for t in playlist.tracks]]
+                if not tracks_to_remove:
+                    raise exceptions.LifePlaylistError(f'Your youtube search returned no tracks which could be removed '
+                                                       f'from the playlist `{playlist.name}`.')
+
+                if search.source_type == 'playlist':
+                    message = f'Removed all the tracks from the youtube playlist **{search.result.name}** from your ' \
+                              f'playlist **{playlist.name}**'
+                elif search.source_type == 'track':
+                    message = f'Removed the youtube track **{search.result[0].title}** from your playlist ' \
+                              f'**{playlist.name}**.'
 
             entries = [(playlist.id, track.uri) for track in tracks_to_remove]
             await self.bot.db.executemany('DELETE FROM playlist_tracks WHERE playlist_id = $1 and uri = $2', entries)
