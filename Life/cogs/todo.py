@@ -49,8 +49,7 @@ class Todo(commands.Cog):
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
         if todo_count['c'] > 200:
-            message = f'You already have `{todo_count["c"]}` todos, you should do some of those before adding more.'
-            return await ctx.send(message)
+            raise exceptions.ArgumentError(f'You have too many todos, try doing some of them before adding more.')
 
         await self.bot.db.execute('INSERT INTO todos VALUES ($1, $2, $3)', ctx.author.id, datetime.now(), content)
 
@@ -68,20 +67,21 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            return await ctx.send('You do not have any todos.')
+            raise exceptions.ArgumentError('You do not have any todos.')
 
-        todos = {f'{index + 1}': todo for index, todo in enumerate(todos)}
+        todos = {int(f'{index + 1}'): todo for index, todo in enumerate(todos)}
         todos_to_remove = []
 
         todo_ids = todo_ids.split(' ')
         for todo_id in todo_ids:
 
-            if not todo_id.isdigit():
-                return await ctx.send(f'`{todo_id}` is not a valid todo id.')
+            todo_id = self.bot.utils.try_int(todo_id)
+            if type(todo_id) == str:
+                raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
             if todo_id not in todos.keys():
-                return await ctx.send(f'You do not have a todo with id `{todo_id}`.')
+                raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
             if todo_id in todos_to_remove:
-                return await ctx.send(f'You provided todo id `{todo_id}` more than once.')
+                raise exceptions.ArgumentError(f'You provided the todo id `{todo_id}` more than once.')
             todos_to_remove.append(todo_id)
 
         query = 'DELETE FROM todos WHERE owner_id = $1 and time_added = $2'
@@ -101,7 +101,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            return await ctx.send('You don not have any todos.')
+            raise exceptions.ArgumentError('You don not have any todos.')
 
         await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
 
@@ -119,14 +119,18 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            return await ctx.send('You don not have any todos.')
+            raise exceptions.ArgumentError('You do not have any todos.')
+
+        if len(content) > 180:
+            return await ctx.send('Your todo can not be more than 180 characters long.')
 
         todos = {f'{index + 1}': todo for index, todo in enumerate(todos)}
 
-        if not todo_id.isdigit():
-            return await ctx.send(f'`{todo_id}` is not a valid todo id.')
+        todo_id = self.bot.utils.try_int(todo_id)
+        if type(todo_id) == str:
+            raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
         if todo_id not in todos.keys():
-            return await ctx.send(f'You do not have a todo with id `{todo_id}`.')
+            raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
         todo_to_edit = todos[todo_id]
 
