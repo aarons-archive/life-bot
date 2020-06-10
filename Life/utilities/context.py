@@ -17,16 +17,16 @@ class LifeContext(commands.Context):
     
     async def paginate(self, **kwargs):
         
-        return await paginators.Paginator(ctx=self, **kwargs).paginate()
+        await paginators.Paginator(ctx=self, **kwargs).paginate()
     
     async def paginate_embed(self, **kwargs):
         
-        return await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
+        await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
     
     async def paginate_codeblock(self, **kwargs):
         
-        return await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
+        await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
     
     async def paginate_embeds(self, **kwargs):
         
-        return await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
+        await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()

@@ -124,6 +124,12 @@ class Utils:
 
         return formatted
 
+    def try_int(self, string: str):
+        try:
+            return int(string)
+        except ValueError:
+            return str(string)
+
     def random_colour(self):
         return '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
@@ -191,7 +197,7 @@ class Utils:
     def guild_region(self, guild: discord.Guild):
 
         if guild.region == discord.VoiceRegion.hongkong:
-            return 'Hong-Kong'
+            return 'Hong Kong'
         if guild.region == discord.VoiceRegion.southafrica:
             return 'South Africa'
 

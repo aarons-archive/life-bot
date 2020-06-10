@@ -2,8 +2,8 @@ import asyncio
 import collections
 import logging
 import os
-import time
 import sys
+import time
 
 import aiohttp
 import asyncpg
@@ -53,11 +53,10 @@ class Life(commands.AutoShardedBot):
                                                external_emojis=True, connect=True, speak=True)
         self.clean_content = commands.clean_content()
 
-        self.bot.add_check(self.can_run_command)
+        self.add_check(self.can_run_command)
 
     @property
     def uptime(self):
-
         return round(time.time() - self.start_time)
 
     async def get_context(self, message: discord.Message, *, cls=context.LifeContext):
