@@ -1,16 +1,16 @@
 # Life
-Life is an RPG discord bot coded by MrRandom#9258. Click the link below to invite it to your discord server and do `l-help` for more information.
+Life is a discord bot coded by MrRandom#9258. Click the link below to invite it to your server and do `l-help` for more information.
 
 ## Links
 * [Bot invite](https://discordapp.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848)
 * [Support Server](https://discord.gg/xP8xsHr)
-l
+
 ## Installing/Running
-While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
+While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life. (And for me incase I forget)
 
 ### Prerequisites
 * Python3.7 or higher
-* PostgreSQL database
+* PostgreSQL-12 database
 * A running lavalink node
 
 ### Setup
@@ -18,7 +18,7 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 ```
 pip install -U -r requirements.txt
 ```
-2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/tree/master/Life).
+2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/blob/master/Life/config/config_example.py).
 
 3. Fill in the config file with the correct information as seen below.
 ```python

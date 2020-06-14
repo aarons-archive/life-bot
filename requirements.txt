@@ -9,3 +9,4 @@ spotify>=0.10.2
 diorite>=0.1.0
 setproctitle>=1.1.10
 humanize>=2.4.0
+aiohttp>=3.6.2
