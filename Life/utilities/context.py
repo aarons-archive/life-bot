@@ -4,7 +4,7 @@ from cogs.utilities import paginators, exceptions
 from cogs.voice.utilities.player import Player
 
 
-class LifeContext(commands.Context):
+class Context(commands.Context):
 
     @property
     def player(self):
