@@ -53,16 +53,12 @@ class Life(commands.AutoShardedBot):
                                                external_emojis=True, connect=True, speak=True)
         self.clean_content = commands.clean_content()
 
-        self.add_check(self.can_run_command)
+        self.add_check(self.can_run_commands)
 
-    @property
-    def uptime(self):
-        return round(time.time() - self.start_time)
-
-    async def get_context(self, message: discord.Message, *, cls=context.LifeContext):
+    async def get_context(self, message: discord.Message, *, cls=context.Context):
         return await super().get_context(message, cls=cls)
 
-    async def can_run_command(self, ctx: commands.Context):
+    async def can_run_commands(self, ctx: commands.Context):
 
         if not ctx.guild and not ctx.command.name == 'help':
             raise commands.NoPrivateMessage()
@@ -72,7 +68,10 @@ class Life(commands.AutoShardedBot):
                                         f'`{self.bot.user_blacklist[ctx.author.id]}`')
 
         me = ctx.guild.me if ctx.guild else self.bot.user
-        needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is not False}
+        if ctx.command.cog.qualified_name in ('Music', 'Playlists'):
+            needed_perms = {perm: value for perm, value in dict(self.voice_perms).items() if value is not False}
+        else:
+            needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is not False}
         current_perms = dict(me.permissions_in(ctx.channel))
         missing = [perm for perm, value in needed_perms.items() if current_perms[perm] != value]
 

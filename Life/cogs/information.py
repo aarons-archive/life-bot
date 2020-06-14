@@ -1,5 +1,6 @@
 import inspect
 import os
+import time
 from datetime import datetime
 
 import discord
@@ -34,11 +35,12 @@ class Information(commands.Cog):
         """
 
         latency_ms, average_latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
+        uptime = round(time.time() - self.bot.start_time)
         files, functions, lines, classes = self.bot.utils.linecount()
 
         embed = discord.Embed(colour=discord.Color.gold())
         embed.add_field(name='__**Bot info:**__',
-                        value=f'**Uptime:** {self.bot.utils.format_time(seconds=self.bot.uptime, friendly=True)}\n'
+                        value=f'**Uptime:** {self.bot.utils.format_time(seconds=uptime, friendly=True)}\n'
                               f'**Users:** {len(self.bot.users)}\n **Guilds:** {len(self.bot.guilds)}\n'
                               f'**Shards:** {len(self.bot.shards)}')
         embed.add_field(name='\u200B', value='\u200B')
