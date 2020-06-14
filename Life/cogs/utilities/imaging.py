@@ -1,4 +1,3 @@
-import functools
 import io
 import multiprocessing
 import typing
@@ -9,7 +8,6 @@ from discord.ext import commands
 from wand.color import Color
 from wand.image import Image
 from wand.sequence import SingleImage
-from wand.exceptions import *
 
 from cogs.utilities import exceptions
 
@@ -183,9 +181,11 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, queue: multipro
                 for old_frame in old_image.sequence:
                     new_frame, image_text = edit_function(old_frame, **kwargs)
                     new_image.sequence.append(new_frame)
+                image_format = new_image.format
                 new_image.save(file=image_edited)
             else:
                 new_image, image_text = edit_function(old_image, **kwargs)
+                image_format = new_image.format
                 new_image.save(file=image_edited)
 
     image_edited.seek(0)
