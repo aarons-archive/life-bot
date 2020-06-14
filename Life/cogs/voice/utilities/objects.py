@@ -8,6 +8,8 @@ from discord.ext import commands
 
 class SpotifyTrack:
 
+    __slots__ = ('identifier', 'author', 'length', 'title', 'uri', 'ctx', 'requester', 'channel')
+
     def __init__(self, info: dict, ctx: commands.Context):
 
         self.identifier = info.get('identifier')
@@ -26,6 +28,8 @@ class SpotifyTrack:
 
 class LifeTrack(objects.Track):
 
+    __slots__ = ('ctx', 'requester', 'channel')
+
     def __init__(self, track_id: str, info: dict, ctx: commands.Context):
         super().__init__(track_id, info)
 
@@ -39,18 +43,22 @@ class LifeTrack(objects.Track):
 
 class LifePlaylist(objects.Playlist):
 
+    __slots__ = ('ctx', 'tracks')
+
     def __init__(self, playlist_info: dict, tracks: List[objects.Track], ctx: commands.Context):
         super().__init__(playlist_info, tracks)
 
         self.ctx = ctx
-        self.tracks = [LifeTrack(track_id=track['track'], info=track['info'],
-                                 ctx=self.ctx) for track in self.raw_tracks]
+        self.tracks = [LifeTrack(track_id=track['track'], info=track['info'], ctx=self.ctx)
+                       for track in self.raw_tracks]
 
     def __repr__(self):
         return f'<LifePlaylist name={self.name!r} track_count={len(self.tracks)}>'
 
 
 class LifeSearch:
+
+    __slots__ = ('source', 'source_type', 'tracks', 'result')
 
     def __init__(self, source: str, source_type: str, tracks: List[Union[LifeTrack, SpotifyTrack]],
                  result: Union[spotify.Track, spotify.Album, spotify.Playlist, LifeTrack, LifePlaylist]):
@@ -65,6 +73,8 @@ class LifeSearch:
 
 
 class Playlist:
+
+    __slots__ = ('data', 'id', 'name', 'owner_id', 'private', 'creation_date', 'tracks')
 
     def __init__(self, data: dict):
         self.data = data

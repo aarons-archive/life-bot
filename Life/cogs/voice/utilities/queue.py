@@ -108,4 +108,3 @@ class LifeQueue:
         self.wakeup_next(self.putters)
 
         return self.queue_list.pop(0)
-
