@@ -68,7 +68,7 @@ class Life(commands.AutoShardedBot):
                                         f'`{self.bot.user_blacklist[ctx.author.id]}`')
 
         me = ctx.guild.me if ctx.guild else self.bot.user
-        if ctx.command.cog.qualified_name in ('Music', 'Playlists'):
+        if ctx.command.cog and ctx.command.cog.qualified_name in ('Music', 'Playlists'):
             needed_perms = {perm: value for perm, value in dict(self.voice_perms).items() if value is not False}
         else:
             needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is not False}
