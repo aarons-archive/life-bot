@@ -48,9 +48,7 @@ class Life(commands.AutoShardedBot):
         self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
                                                  embed_links=True, attach_files=True, read_message_history=True,
                                                  external_emojis=True)
-        self.voice_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
-                                               embed_links=True, attach_files=True, read_message_history=True,
-                                               external_emojis=True, connect=True, speak=True)
+        self.voice_perms = discord.Permissions(connect=True, speak=True)
         self.clean_content = commands.clean_content()
 
         self.add_check(self.can_run_commands)
@@ -68,12 +66,14 @@ class Life(commands.AutoShardedBot):
                                         f'`{self.bot.user_blacklist[ctx.author.id]}`')
 
         me = ctx.guild.me if ctx.guild else self.bot.user
-        if ctx.command.cog and ctx.command.cog.qualified_name in ('Music', 'Playlists'):
-            needed_perms = {perm: value for perm, value in dict(self.voice_perms).items() if value is not False}
-            current_perms = dict(me.permissions_in(ctx.author.voice.channel))
-        else:
-            needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is not False}
-            current_perms = dict(me.permissions_in(ctx.channel))
+        needed_perms = {perm: value for perm, value in dict(self.general_perms).items() if value is True}
+        current_perms = dict(me.permissions_in(ctx.channel))
+
+        if ctx.command.cog and ctx.command.cog.qualified_name in ('Music', 'Playlists') and ctx.author.voice:
+            needed_perms.update({perm: value for perm, value in dict(self.voice_perms).items() if value is True})
+            current = {perm: value for perm, value in me.permissions_in(ctx.author.voice.channel) if value is True}
+            current_perms.update(current)
+
         missing = [perm for perm, value in needed_perms.items() if current_perms[perm] != value]
 
         if missing:
