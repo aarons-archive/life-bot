@@ -17,18 +17,18 @@ class Player(diorite.Player):
         self.task = self.bot.loop.create_task(self.player_loop())
         self.check = lambda guild_id: guild_id == self.guild.id
 
-        self.queue = queue.LifeQueue(self)
-        self.queue_loop = False
-
         self.text_channel = None
 
-    @property
-    def is_looping(self) -> bool:
-        return self.queue_loop is True
+        self.queue = queue.LifeQueue(self)
+        self.queue_loop = False
 
     @property
     def channel(self) -> discord.TextChannel:
         return self.text_channel
+
+    @property
+    def is_looping(self) -> bool:
+        return self.queue_loop is True
 
     async def search(self, ctx: commands.Context, search: str) -> objects.LifeSearch:
 
@@ -53,7 +53,8 @@ class Player(diorite.Player):
                 tracks = [objects.SpotifyTrack(ctx=ctx, info={'identifier': track.id,
                                                               'author': track.artist.name if track.artist else None,
                                                               'length': track.duration, 'title': track.name,
-                                                              'uri': track.url}) for track in tracks]
+                                                              'uri': track.url, 'image': track.images})
+                          for track in tracks]
                 return objects.LifeSearch(source='spotify', source_type=url_type, tracks=tracks, result=result)
 
             except spotify.NotFound:
@@ -77,6 +78,7 @@ class Player(diorite.Player):
 
                 if not result or result is None:
                     raise exceptions.LifeVoiceError(f'The search `{search}` found nothing.')
+
                 elif isinstance(result, diorite.Playlist):
                     source_type = 'playlist'
                     result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
@@ -90,6 +92,30 @@ class Player(diorite.Player):
 
             except diorite.TrackLoadError as e:
                 raise exceptions.LifeVoiceError(f'There was a problem with your search: `{e.error_message}`')
+
+    async def invoke_controller(self, track: objects.LifeTrack):
+
+        await asyncio.sleep(0.5)
+
+        embed = discord.Embed(title='Life bot music controller:', colour=discord.Color.gold())
+        embed.set_thumbnail(url=track.thumbnail)
+        embed.add_field(name=f'Now playing:', value=f'**[{track.title}]({track.uri})**', inline=False)
+        embed.add_field(name='Requester:', value=f'{track.requester.mention}', inline=False)
+
+        embed.add_field(name='Time:', value=f'`{self.bot.utils.format_time(round(self.position) / 1000)} / '
+                                            f'{self.bot.utils.format_time(round(track.length) / 1000)}`')
+        embed.add_field(name='\u200B', value='\u200B')
+        embed.add_field(name=f'Author', value=f'`{track.author}`')
+
+        embed.add_field(name='Paused:', value=f'`{self.is_paused}`')
+        embed.add_field(name='\u200B', value='\u200B')
+        embed.add_field(name='Queue looped:', value=f'`{self.is_looping}`')
+
+        embed.add_field(name='Volume:', value=f'`{self.volume}%`')
+        embed.add_field(name='\u200B', value='\u200B')
+        embed.add_field(name='Queue Length:', value=f'`{self.queue.size}`')
+
+        await self.channel.send(embed=embed)
 
     async def player_loop(self):
 
@@ -127,27 +153,3 @@ class Player(diorite.Player):
                 self.queue.put(self.current)
 
             self.current = None
-
-    async def invoke_controller(self, track: objects.LifeTrack):
-
-        await asyncio.sleep(0.5)
-
-        embed = discord.Embed(title='Life bot music controller:', colour=discord.Color.gold())
-        embed.set_thumbnail(url=track.thumbnail)
-        embed.add_field(name=f'Now playing:', value=f'**[{track.title}]({track.uri})**', inline=False)
-        embed.add_field(name='Requester:', value=f'{track.requester.mention}', inline=False)
-
-        embed.add_field(name='Time:', value=f'`{self.bot.utils.format_time(round(self.position) / 1000)} / '
-                                            f'{self.bot.utils.format_time(round(track.length) / 1000)}`')
-        embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name=f'Author', value=f'`{track.author}`')
-
-        embed.add_field(name='Paused:', value=f'`{self.is_paused}`')
-        embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name='Queue looped:', value=f'`{self.is_looping}`')
-
-        embed.add_field(name='Volume:', value=f'`{self.volume}%`')
-        embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name='Queue Length:', value=f'`{self.queue.size}`')
-
-        await self.channel.send(embed=embed)

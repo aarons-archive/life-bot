@@ -8,7 +8,7 @@ from discord.ext import commands
 
 class SpotifyTrack:
 
-    __slots__ = ('identifier', 'author', 'length', 'title', 'uri', 'ctx', 'requester', 'channel')
+    __slots__ = ('identifier', 'author', 'length', 'title', 'uri', 'thumbnail', 'ctx', 'requester', 'channel')
 
     def __init__(self, info: dict, ctx: commands.Context):
 
@@ -17,6 +17,7 @@ class SpotifyTrack:
         self.length = info.get('length')
         self.title = info.get('title')
         self.uri = info.get('uri')
+        self.thumbnail = info.get('image')[0].url
 
         self.ctx = ctx
         self.requester = ctx.author

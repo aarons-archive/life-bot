@@ -100,7 +100,7 @@ class Music(commands.Cog):
 
                 return await ctx.send(message)
 
-    @commands.command(name='leave', aliases=['disconnect'])
+    @commands.command(name='leave', aliases=['disconnect', 'dc'])
     @checks.is_member_in_channel()
     @checks.is_member_connected()
     @checks.is_player_connected()

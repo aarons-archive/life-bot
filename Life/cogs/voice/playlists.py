@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 import discord
 from discord.ext import commands
@@ -14,42 +14,79 @@ class Playlists(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def get_playlists(self, ctx, owner: discord.Member = None, owned_by: bool = True, search: str = None):
+    async def get_playlist_tracks(self, ctx, playlist: objects.Playlist) -> \
+            List[Union[objects.SpotifyTrack, objects.LifeTrack]]:
 
-        search = self.bot.utils.try_int(string=search)
-        query = ['SELECT * FROM playlists ']
-        query_data = []
+        raw_tracks = await self.bot.db.fetch('SELECT * FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
+        tracks = []
 
-        if type(search) == int:
-            query.append('WHERE id = $1 ')
-            query_data.append(search)
+        for raw_track in raw_tracks:
+            if raw_track.get('source') == 'spotify':
+                track = objects.SpotifyTrack(info=raw_track, ctx=ctx)
+            else:
+                track = objects.LifeTrack(track_id=raw_track.get('track_id'), info=raw_track, ctx=ctx)
 
-        elif type(search) == str:
-            query.append('WHERE name = $1 ')
-            query_data.append(search)
+            tracks.append(track)
 
-        if owner and owned_by is True:
-            query.append(f'{"AND" if search else "WHERE"} owner_id = {"$2" if search else "$1"} ')
-            query_data.append(owner.id)
+        return tracks
 
-        elif owner and owned_by is False:
-            query.append(f'{"AND" if search else "WHERE"} owner_id != {"$2" if search else "$1"} AND private = $3')
-            query_data.extend([owner.id, False])
+    async def get_playlists_owned_by(self, ctx, owner: discord.Member, search: Union[int, str] = None) -> \
+            List[objects.Playlist]:
+
+        query = ['SELECT * FROM playlists WHERE owner_id = $1 ']
+        query_data = [owner.id]
+
+        if search:
+            search = self.bot.utils.try_int(search)
+            if type(search) == int:
+                query.append('AND id = $2 ORDER BY creation_date DESC LIMIT 10')
+                query_data.append(search)
+            if type(search) == str:
+                query.append('ORDER BY SIMILARITY(name, $2) DESC, creation_date DESC LIMIT 10')
+                query_data.append(search)
+        else:
+            query.append('ORDER BY creation_date DESC LIMIT 10')
 
         raw_playlists = await self.bot.db.fetch(''.join(query), *query_data)
         playlists = [objects.Playlist(raw_playlist) for raw_playlist in raw_playlists]
+        playlist_names = [playlist.name for playlist in playlists]
 
         for playlist in playlists:
+            tracks = await self.get_playlist_tracks(ctx=ctx, playlist=playlist)
+            playlist.tracks.extend(tracks)
 
-            raw_tracks = await self.bot.db.fetch('SELECT * FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
+            if playlist.name == search and playlist_names.count(playlist.name) == 1:
+                return [playlist]
 
-            for raw_track in raw_tracks:
-                if raw_track.get('source') == 'youtube':
-                    track = objects.LifeTrack(track_id=raw_track.get('track_id'), info=raw_track, ctx=ctx)
-                else:
-                    track = objects.SpotifyTrack(info=raw_track, ctx=ctx)
+        return playlists
 
-                playlist.tracks.append(track)
+    async def get_playlists_not_owned_by(self, ctx, owner: discord.Member, search: Union[int, str] = None) -> \
+            List[objects.Playlist]:
+
+        query = ['SELECT * FROM playlists WHERE owner_id != $1 and private = $2 ']
+        query_data = [owner.id, False]
+
+        if search:
+            search = self.bot.utils.try_int(search)
+            if type(search) == int:
+                query.append('AND id = $3 ORDER BY creation_date DESC LIMIT 10')
+                query_data.append(search)
+            if type(search) == str:
+                query.append('ORDER BY SIMILARITY(name, $3) DESC, creation_date DESC LIMIT 10')
+                query_data.append(search)
+        else:
+            query.append('ORDER BY creation_date DESC LIMIT 10')
+
+        raw_playlists = await self.bot.db.fetch(''.join(query), *query_data)
+        playlists = [objects.Playlist(raw_playlist) for raw_playlist in raw_playlists]
+        playlist_names = [playlist.name for playlist in playlists]
+
+        for playlist in playlists:
+            tracks = await self.get_playlist_tracks(ctx=ctx, playlist=playlist)
+            playlist.tracks.extend(tracks)
+
+            if playlist.name == search and playlist_names.count(playlist.name) == 1:
+                return [playlist]
 
         return playlists
 
@@ -76,7 +113,7 @@ class Playlists(commands.Cog):
 
         message = [' ```py\nSay the number of the playlist you want to use.\n\n']
         for index, playlist in enumerate(playlists):
-            message.append(f'{index + 1}.  Name: {playlist.name:<15} |ID: {playlist.id:<5} |'
+            message.append(f'{index + 1:<3} |Name: {playlist.name:<15} |ID: {playlist.id:<5} |'
                            f'Tracks: {len(playlist.tracks):<5} |Owner: {self.bot.get_user(playlist.owner_id)}\n')
         message.append('\n```')
 
@@ -84,47 +121,80 @@ class Playlists(commands.Cog):
         try:
             response = int(response) - 1
         except ValueError:
-            raise exceptions.LifePlaylistError('You need to say the number of the playlist to use.')
+            raise exceptions.LifePlaylistError('That was not a valid number.')
 
         if response < 0 or response >= len(playlists):
             raise exceptions.LifePlaylistError('That was not one of the available playlists.')
 
         return playlists[response]
 
-    @commands.group(name='playlist', aliases=['playlists'], invoke_without_command=True)
-    async def playlist(self, ctx, *, search: commands.clean_content):
-        pass
+    @commands.group(name='playlist', aliases=['playlists', 'pl'], invoke_without_command=True)
+    async def playlist(self, ctx):
+        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help playlists` for '
+                              f'more information.')
+
+    @playlist.command(name='list')
+    async def playlist_list(self, ctx, *, search: commands.clean_content = None):
+        playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(search) if search else None)
+        if not playlists:
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
+
+        await ctx.paginate(entries=playlists, entries_per_page=20)  # TODO make this shit prettier i guess.
+
+    @playlist.command(name='view')
+    async def playlist_view(self, ctx, *, search: commands.clean_content):
+
+        playlists = []
+
+        owner_playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(search))
+        if owner_playlists:
+            playlists.extend(owner_playlists)
+
+        other_playlists = await self.get_playlists_not_owned_by(ctx=ctx, owner=ctx.author, search=str(search))
+        if other_playlists:
+            playlists.extend(other_playlists)
+
+        if not playlists:
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
+
+        playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
+
+        embed = discord.Embed(title=f'{playlist.name}', colour=discord.Colour.gold(),
+                              description=f'**Private:** {playlist.private}\n'
+                                          f'**ID:** {playlist.id}')
+        embed.set_footer(text=f'Creation Date: {playlist.creation_date}')
+        return await ctx.send(embed=embed)
 
     @playlist.command(name='create', aliases=['make'])
     async def playlist_create(self, ctx, *, name: commands.clean_content):
 
         count = await self.bot.db.fetchrow('SELECT count(*) as c FROM playlists WHERE owner_id = $1', ctx.author.id)
-        if count['c'] > 20:
-            raise exceptions.LifePlaylistError('You can only have up to 20 playlists.')
+        if count['c'] >= 30:
+            raise exceptions.LifePlaylistError('You can only have a maximum of 30 playlists.')
 
         name = self.bot.utils.try_int(string=str(name))
         if type(name) == int:
-            raise exceptions.LifePlaylistError('You can not use a number as a playlist name.')
+            raise exceptions.LifePlaylistError('You can not use only numbers as a playlist name.')
         if len(name) > 15:
-            raise exceptions.LifePlaylistError('You can not have a playlist name longer than 15 characters.')
+            raise exceptions.LifePlaylistError('You can not have more than 15 characters in your playlist name.')
         if '`' in name:
             raise exceptions.LifePlaylistError('You can not use backticks in a playlist name.')
 
         query = 'INSERT INTO playlists (name, owner_id, private, creation_date) VALUES ($1, $2, $3, $4) RETURNING *'
-        raw_playlist = await self.bot.db.fetchrow(query, name, ctx.author.id, False, datetime.now())
-        playlist = objects.Playlist(raw_playlist)
+        playlist = objects.Playlist(await self.bot.db.fetchrow(query, name, ctx.author.id, False, datetime.now()))
 
         embed = discord.Embed(title='Playlist created', colour=discord.Colour.gold(),
-                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n')
-        embed.set_footer(text=f'ID: {playlist.id} | Creation Date: {playlist.creation_date}')
+                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n'
+                                          f'**ID:** {playlist.id}')
+        embed.set_footer(text=f'Creation Date: {playlist.creation_date}')
         return await ctx.send(embed=embed)
 
     @playlist.command(name='delete')
     async def playlist_delete(self, ctx, *, playlist: commands.clean_content):
 
-        playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
+        playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if not playlists:
-            raise exceptions.LifePlaylistError(f'You have no playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
@@ -132,16 +202,17 @@ class Playlists(commands.Cog):
         await self.bot.db.execute('DELETE FROM playlist_tracks WHERE playlist_id = $1', playlist.id)
 
         embed = discord.Embed(title='Playlist deleted', colour=discord.Colour.gold(),
-                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n')
-        embed.set_footer(text=f'ID: {playlist.id} | Creation Date: {playlist.creation_date}')
+                              description=f'**Name:** `{playlist.name}`\n**Private:** {playlist.private}\n'
+                                          f'**ID:** {playlist.id}')
+        embed.set_footer(text=f'Creation Date: {playlist.creation_date}')
         return await ctx.send(embed=embed)
 
     @playlist.command(name='edit')
     async def playlist_edit(self, ctx, *, playlist: commands.clean_content):
 
-        playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
+        playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if not playlists:
-            raise exceptions.LifePlaylistError(f'You have no playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
@@ -154,9 +225,9 @@ class Playlists(commands.Cog):
             new_name = await self.do_choice(ctx=ctx, message='What would you like to rename your playlist too?')
             new_name = self.bot.utils.try_int(string=new_name)
             if type(new_name) == int:
-                raise exceptions.LifePlaylistError('You can not use a number as a playlist name.')
+                raise exceptions.LifePlaylistError('You can not use only numbers as a playlist name.')
             if len(new_name) > 15:
-                raise exceptions.LifePlaylistError('You can not have a playlist name longer than 15 characters.')
+                raise exceptions.LifePlaylistError('You can not have more than 15 characters in your playlist name.')
             if '`' in new_name:
                 raise exceptions.LifePlaylistError('You can not use backticks in a playlist name.')
 
@@ -174,14 +245,14 @@ class Playlists(commands.Cog):
                                   f'`{new_playlist.is_private}`.')
 
         else:
-            raise exceptions.LifePlaylistError('You need to say the number of the attribute you want to edit.')
+            raise exceptions.LifePlaylistError('That was not a valid attribute.')
 
     @playlist.command(name='add')
     async def playlist_add(self, ctx, playlist: commands.clean_content, *, query: str):
 
-        playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
+        playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if not playlists:
-            raise exceptions.LifePlaylistError(f'You have no playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
@@ -230,9 +301,9 @@ class Playlists(commands.Cog):
     @playlist.command(name='remove')
     async def playlist_remove(self, ctx, playlist: commands.clean_content, *, search: str):
 
-        playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
+        playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if not playlists:
-            raise exceptions.LifePlaylistError(f'You have no playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
@@ -279,16 +350,16 @@ class Playlists(commands.Cog):
 
         playlists = []
 
-        owner_playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, search=str(playlist))
+        owner_playlists = await self.get_playlists_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if owner_playlists:
             playlists.extend(owner_playlists)
 
-        other_playlists = await self.get_playlists(ctx=ctx, owner=ctx.author, owned_by=False, search=str(playlist))
+        other_playlists = await self.get_playlists_not_owned_by(ctx=ctx, owner=ctx.author, search=str(playlist))
         if other_playlists:
             playlists.extend(other_playlists)
 
         if not playlists:
-            raise exceptions.LifePlaylistError(f'There are no public playlists with the name or id: `{playlist}`')
+            raise exceptions.LifePlaylistError('You do not have any playlists.')
 
         playlist = await self.choose_playlist(ctx=ctx, playlists=playlists)
 
