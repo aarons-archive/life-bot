@@ -14,15 +14,6 @@ class Todo(commands.Cog):
     @commands.group(name='todo', invoke_without_command=True)
     async def todo(self, ctx):
         """
-        Base command for todos.
-        """
-
-        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help todo` for more '
-                              f'information.')
-
-    @todo.command(name='list')
-    async def todo_list(self, ctx):
-        """
         Display a list of your current todo's.
         """
 
