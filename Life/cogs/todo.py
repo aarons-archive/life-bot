@@ -64,7 +64,7 @@ class Todo(commands.Cog):
         if not todos:
             raise exceptions.ArgumentError('You do not have any todos.')
 
-        todos = {int(f'{index + 1}'): todo for index, todo in enumerate(todos)}
+        todos = {index + 1: todo for index, todo in enumerate(todos)}
         todos_to_remove = []
 
         todo_ids = todo_ids.split(' ')
@@ -119,7 +119,7 @@ class Todo(commands.Cog):
         if len(content) > 180:
             return await ctx.send('Your todo can not be more than 180 characters long.')
 
-        todos = {f'{index + 1}': todo for index, todo in enumerate(todos)}
+        todos = {index + 1: todo for index, todo in enumerate(todos)}
 
         todo_id = self.bot.utils.try_int(todo_id)
         if type(todo_id) == str:
