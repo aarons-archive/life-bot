@@ -17,7 +17,6 @@ class SpotifyTrack:
         self.length = info.get('length')
         self.title = info.get('title')
         self.uri = info.get('uri')
-        self.thumbnail = info.get('image')[0].url if info.get('image') else None
 
         self.ctx = ctx
         self.requester = ctx.author

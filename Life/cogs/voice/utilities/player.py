@@ -53,8 +53,7 @@ class Player(diorite.Player):
                 tracks = [objects.SpotifyTrack(ctx=ctx, info={'identifier': track.id,
                                                               'author': track.artist.name if track.artist else None,
                                                               'length': track.duration, 'title': track.name,
-                                                              'uri': track.url, 'image': track.images})
-                          for track in tracks]
+                                                              'uri': track.url}) for track in tracks]
                 return objects.LifeSearch(source='spotify', source_type=url_type, tracks=tracks, result=result)
 
             except spotify.NotFound:
