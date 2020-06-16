@@ -32,7 +32,10 @@ class Todo(commands.Cog):
         if not todos:
             return await ctx.send('You do not have any todos.')
 
-        entries = [f'{index + 1}. {todo["todo"]}' for index, todo in enumerate(todos)]
+        entries = []
+        for index, todo in enumerate(todos):
+            entries.append(f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}')
+
         title = f"{ctx.author}'s todo list."
         return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=title)
 
@@ -51,7 +54,8 @@ class Todo(commands.Cog):
         if todo_count['c'] > 200:
             raise exceptions.ArgumentError(f'You have too many todos, try doing some of them before adding more.')
 
-        await self.bot.db.execute('INSERT INTO todos VALUES ($1, $2, $3)', ctx.author.id, datetime.now(), content)
+        query = 'INSERT INTO todos VALUES ($1, $2, $3, $4)'
+        await self.bot.db.execute(query, ctx.author.id, datetime.now(), content, ctx.message.jump_url)
 
         embed = discord.Embed(title='Your todo was created.', colour=discord.Colour.gold())
         embed.add_field(name='Content:', value=content)
@@ -132,13 +136,13 @@ class Todo(commands.Cog):
         if todo_id not in todos.keys():
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
-        todo_to_edit = todos[todo_id]
+        todo = todos[todo_id]
 
-        query = 'UPDATE todos SET todo = $1 WHERE owner_id = $2 and time_added = $3'
-        await self.bot.db.execute(query, content, todo_to_edit['owner_id'], todo_to_edit['time_added'])
+        query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $2 and time_added = $3'
+        await self.bot.db.execute(query, content, ctx.message.jump_url, todo['owner_id'], todo['time_added'])
 
         embed = discord.Embed(title=f'Updated your todo.', colour=discord.Colour.gold())
-        embed.add_field(name='Old content:', value=todo_to_edit['todo'], inline=False)
+        embed.add_field(name='Old content:', value=todo['todo'], inline=False)
         embed.add_field(name='New content:', value=content, inline=False)
         return await ctx.send(embed=embed)
 
