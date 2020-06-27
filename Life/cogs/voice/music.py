@@ -111,9 +111,9 @@ class Music(commands.Cog):
 
         ctx.player.queue.clear()
         ctx.player.task.cancel()
-        await ctx.player.destroy()
 
-        return await ctx.send(f'Left the voice channel `{ctx.guild.me.voice.channel}`.')
+        await ctx.send(f'Left the voice channel `{ctx.guild.me.voice.channel}`.')
+        return await ctx.player.destroy()
 
     @commands.command(name='skip', aliases=['stop'])
     @checks.is_player_playing()
