@@ -17,5 +17,15 @@ class LifeVoiceError(LifeError):
 
 class LifePlaylistError(LifeError):
     """Base exception for errors in the Life playlist cog."""
-    
 
+
+class LifeHTTPError(LifeError):
+    """Raised when making a request failed."""
+
+
+class LifeHTTPForbidden(LifeError):
+    """Raised when a HTTP request is forbidden."""
+
+
+class LifeHTTPNotFound(LifeError):
+    """Raised when a HTTP request doesn't find anything."""
