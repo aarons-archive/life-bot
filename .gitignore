@@ -1,5 +1,4 @@
 *.pyc
-*.png
 *.ini
 *.log*
 Life/config/config.py
