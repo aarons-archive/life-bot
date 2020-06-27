@@ -20,7 +20,7 @@ class Success(endpoint.BaseEndpoint, ABC):
             access_token_response = await response.text()
 
         self.set_secure_cookie('access-token-response', access_token_response)
-        return self.redirect(f'{self.bot.config.URL}/guilds')
+        return self.redirect(f'/guilds')
 
 
 def setup(**kwargs):
