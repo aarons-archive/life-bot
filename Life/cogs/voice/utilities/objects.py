@@ -9,7 +9,7 @@ from diorite import objects
 
 class SpotifyTrack:
 
-    __slots__ = ('identifier', 'author', 'length', 'title', 'uri', 'thumbnail', 'ctx', 'requester', 'channel')
+    __slots__ = ('source', 'identifier', 'author', 'length', 'title', 'uri', 'thumbnail', 'ctx', 'requester', 'channel')
 
     def __init__(self, info: dict, ctx: commands.Context):
 
@@ -19,6 +19,7 @@ class SpotifyTrack:
         self.title = info.get('title')
         self.uri = info.get('uri')
         self.thumbnail = info.get('thumbnail')
+        self.source = 'spotify'
 
         self.ctx = ctx
         self.requester = ctx.author
@@ -30,7 +31,7 @@ class SpotifyTrack:
 
 class LifeTrack(objects.Track):
 
-    __slots__ = ('ctx', 'requester', 'channel')
+    __slots__ = ('source', 'ctx', 'requester', 'channel')
 
     def __init__(self, track_id: str, info: dict, ctx: commands.Context):
         super().__init__(track_id, info)
@@ -38,6 +39,7 @@ class LifeTrack(objects.Track):
         self.ctx = ctx
         self.requester: discord.Member = ctx.author
         self.channel: discord.TextChannel = ctx.channel
+        self.source = 'youtube'
 
     def __repr__(self):
         return f'<LifeTrack title={self.title!r} uri=<{self.uri}> length={self.length}>'
@@ -45,7 +47,7 @@ class LifeTrack(objects.Track):
 
 class LifePlaylist(objects.Playlist):
 
-    __slots__ = ('ctx', 'tracks')
+    __slots__ = ('source', 'ctx', 'tracks')
 
     def __init__(self, playlist_info: dict, tracks: List[objects.Track], ctx: commands.Context):
         super().__init__(playlist_info, tracks)
