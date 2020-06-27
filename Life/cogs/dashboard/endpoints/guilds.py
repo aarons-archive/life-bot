@@ -21,7 +21,7 @@ class Guilds(BaseEndpoint, ABC):
         guilds = [objects.Guild(guild_data) for guild_data in guilds_data]
 
         self.render('guilds.html', bot=self.bot, user=await self.get_user(), guilds=guilds,
-                    invite_url=self.bot.config.DISCORD_INVITE_URL)
+                    invite_url=self.bot.invite_url)
 
 
 def setup(**kwargs):
