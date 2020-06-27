@@ -27,70 +27,74 @@ class Player(diorite.Player):
         return self.text_channel
 
     @property
-    def is_looping(self) -> bool:
-        return self.queue_loop is True
+    def is_looping(self) -> str:
+        return 'Yes' if self.queue_loop is True else 'No'
+
+    @property
+    def is_paused(self) -> str:
+        return 'Yes' if self.paused is True else 'No'
 
     async def search(self, ctx: commands.Context, search: str) -> objects.LifeSearch:
 
         spotify_url_regex = self.bot.spotify_url_regex.match(search)
         if spotify_url_regex is not None:
 
-            url_type, url_id = spotify_url_regex.groups()
+            source_type, source_id = spotify_url_regex.groups()
             try:
-                if url_type == 'track':
-                    result = await self.bot.spotify.get_track(url_id)
+                if source_type == 'track':
+                    result = await self.bot.spotify.get_track(source_id)
                     tracks = [result]
-                elif url_type == 'album':
-                    result = await self.bot.spotify.get_album(url_id)
+                elif source_type == 'album':
+                    result = await self.bot.spotify.get_album(source_id)
                     tracks = await result.get_all_tracks()
-                elif url_type == 'playlist':
-                    result = spotify.Playlist(self.bot.spotify, await self.bot.spotify_http.get_playlist(url_id))
+                elif source_type == 'playlist':
+                    result = spotify.Playlist(self.bot.spotify, await self.bot.spotify_http.get_playlist(source_id))
                     tracks = await result.get_all_tracks()
                 else:
-                    raise exceptions.LifeVoiceError(f'The search `{search}` is a valid spotify URL but no tracks '
-                                                    f'could be found for it')
-
-                tracks = [objects.SpotifyTrack(ctx=ctx, info={'identifier': track.id,
-                                                              'author': track.artist.name if track.artist else None,
-                                                              'length': track.duration, 'title': track.name,
-                                                              'uri': track.url}) for track in tracks]
-                return objects.LifeSearch(source='spotify', source_type=url_type, tracks=tracks, result=result)
+                    msg = f'The search `{search}` is a valid spotify URL but no tracks could be found for it'
+                    raise exceptions.LifeVoiceError(msg)
 
             except spotify.NotFound:
                 raise exceptions.LifeVoiceError(f'The search `{search}` is not a valid spotify URL.')
+
+            spotify_tracks = []
+            for track in tracks:
+                author = track.artist.name if track.artist else None
+                images = track.images[0].url if track.images else None
+                track_info = {'identifier': track.id, 'author': author, 'length': track.duration,
+                              'title': track.name, 'uri': track.url, 'thumbnail': images}
+                spotify_tracks.append(objects.SpotifyTrack(ctx=ctx, info=track_info))
+
+            return objects.LifeSearch(source='spotify', source_type=source_type, tracks=spotify_tracks, result=result)
 
         else:
 
             youtube_url_regex = self.bot.youtube_url_regex.match(search)
             if youtube_url_regex is None:
-                search = f'ytsearch:{search}'
+                yt_search = f'ytsearch:{search}'
+            else:
+                yt_search = search
 
-            try:
-                result = None
-                for tries in range(3):
-                    result = await self.node.get_tracks(query=search)
-                    if not result:
-                        await asyncio.sleep(5 * tries)
-                        continue
-                    else:
+            result = None
+            for tries in range(5):
+                try:
+                    result = await self.node.get_tracks(query=yt_search)
+                    if result:
                         break
+                except diorite.TrackLoadError:
+                    pass
 
-                if not result or result is None:
-                    raise exceptions.LifeVoiceError(f'The search `{search}` found nothing.')
+                await asyncio.sleep(3 * tries)
+                continue
 
-                elif isinstance(result, diorite.Playlist):
-                    source_type = 'playlist'
-                    result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
-                    tracks = result.tracks
-                else:
-                    source_type = 'track'
-                    result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
-                    tracks = result
-
-                return objects.LifeSearch(source='youtube', source_type=source_type, result=result, tracks=tracks)
-
-            except diorite.TrackLoadError as e:
-                raise exceptions.LifeVoiceError(f'There was a problem with your search: `{e.error_message}`')
+            if result is None:
+                raise exceptions.LifeVoiceError(f'The youtube search `{search}` found no tracks.')
+            elif isinstance(result, diorite.Playlist):
+                result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
+                return objects.LifeSearch(source='youtube', source_type='playlist', result=result, tracks=result.tracks)
+            else:
+                result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
+                return objects.LifeSearch(source='youtube', source_type='track', result=result, tracks=result)
 
     async def invoke_controller(self, track: objects.LifeTrack):
 
@@ -131,8 +135,8 @@ class Player(diorite.Player):
             if isinstance(track, objects.SpotifyTrack):
                 try:
                     search = await self.search(ctx=track.ctx, search=f'{track.author} - {track.title}')
-                except exceptions.LifeVoiceError as e:
-                    await self.channel.send(str(e))
+                except exceptions.LifeVoiceError as error:
+                    await self.channel.send(f"{error}")
                     continue
                 else:
                     track = search.tracks[0]
@@ -148,7 +152,7 @@ class Player(diorite.Player):
             await self.invoke_controller(self.current)
             await self.bot.wait_for('life_track_end', check=self.check)
 
-            if self.is_looping:
+            if self.queue_loop is True:
                 self.queue.put(self.current)
 
             self.current = None

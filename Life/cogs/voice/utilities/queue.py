@@ -1,7 +1,6 @@
 import asyncio
 import collections
 import random
-import typing
 
 
 class LifeQueue:
@@ -54,22 +53,22 @@ class LifeQueue:
     def shuffle(self) -> None:
         random.shuffle(self.queue_list)
 
-    def extend(self, items: typing.List[typing.Any]) -> None:
+    def extend(self, items) -> None:
 
         self.queue_list.extend(items)
         self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
-    def put_pos(self, item: typing.Any, position: int = 0) -> None:
+    def put_pos(self, item, position: int = 0) -> None:
 
         self.queue_list.insert(position, item)
         self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
-    def put(self, item: typing.Any) -> None:
+    def put(self, item) -> None:
 
         self.queue_list.append(item)
         self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
-    async def get_pos(self, position: int = 0) -> typing.Any:
+    async def get_pos(self, position: int = 0):
 
         while self.is_empty:
             getter = self.player.bot.loop.create_future()
@@ -89,7 +88,7 @@ class LifeQueue:
 
         return self.queue_list.pop(position)
 
-    async def get(self) -> typing.Any:
+    async def get(self):
 
         while self.is_empty:
             getter = self.player.bot.loop.create_future()

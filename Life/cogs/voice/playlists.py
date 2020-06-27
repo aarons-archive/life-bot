@@ -269,9 +269,9 @@ class Playlists(commands.Cog):
                               f'**{playlist.name}** with a total of **{len(search.tracks)}** track(s).'
 
                 entries = [(playlist.id, None, track.title, track.author, track.length, track.identifier, track.uri,
-                            False, True, 0, 'spotify') for track in search.tracks]
+                            False, True, 0, 'spotify', track.thumbnail) for track in search.tracks]
 
-                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
+                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)'
                 await self.bot.db.executemany(query, entries)
 
                 return await ctx.send(message)
@@ -290,10 +290,10 @@ class Playlists(commands.Cog):
                     tracks = [search.tracks[0]]
 
                 entries = [(playlist.id, track.track_id, track.title, track.author, track.length, track.identifier,
-                            track.uri, track.is_stream, track.is_seekable, track.position, 'youtube')
+                            track.uri, track.is_stream, track.is_seekable, track.position, track.thumbnail, 'youtube')
                            for track in tracks]
 
-                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)'
+                query = 'INSERT INTO playlist_tracks values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)'
                 await self.bot.db.executemany(query, entries)
 
                 return await ctx.send(message)

@@ -2,8 +2,9 @@ from typing import List, Union
 
 import discord
 import spotify
-from diorite import objects
 from discord.ext import commands
+
+from diorite import objects
 
 
 class SpotifyTrack:
@@ -17,6 +18,7 @@ class SpotifyTrack:
         self.length = info.get('length')
         self.title = info.get('title')
         self.uri = info.get('uri')
+        self.thumbnail = info.get('thumbnail')
 
         self.ctx = ctx
         self.requester = ctx.author
@@ -61,7 +63,7 @@ class LifeSearch:
     __slots__ = ('source', 'source_type', 'tracks', 'result')
 
     def __init__(self, source: str, source_type: str, tracks: List[Union[LifeTrack, SpotifyTrack]],
-                 result: Union[spotify.Track, spotify.Album, spotify.Playlist, LifeTrack, LifePlaylist]):
+                 result: Union[spotify.Track, spotify.Album, spotify.Playlist, List[LifeTrack], LifePlaylist]):
 
         self.source = source
         self.source_type = source_type
@@ -92,4 +94,4 @@ class Playlist:
 
     @property
     def is_private(self):
-        return 'private' if self.private is True else 'public'
+        return 'Private' if self.private is True else 'Public'

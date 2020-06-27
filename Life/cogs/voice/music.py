@@ -153,7 +153,7 @@ class Music(commands.Cog):
         Pauses the player.
         """
 
-        if ctx.player.is_paused:
+        if ctx.player.paused is True:
             return await ctx.send('The player is already paused.')
 
         await ctx.player.set_pause(True)
@@ -166,10 +166,10 @@ class Music(commands.Cog):
     @checks.is_player_connected()
     async def un_pause(self, ctx):
         """
-        Un-pauses the player.
+        Resumes the player.
         """
 
-        if not ctx.player.is_paused:
+        if ctx.player.paused is False:
             return await ctx.send('The player is not paused.')
 
         await ctx.player.set_pause(False)

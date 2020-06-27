@@ -27,7 +27,7 @@ class MusicEvents(commands.Cog):
 
     @commands.Cog.listener()
     async def on_diorite_websocket_closed(self, event):
-        await event.player.channel.send(f'This nodes websocket decided to disconnect, ideally this should not happen so'
+        await event.player.channel.send(f'Your nodes websocket decided to disconnect, ideally this should not happen so'
                                         f'you can join my support server for more help.')
 
 
