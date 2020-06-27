@@ -28,7 +28,7 @@ class DashboardManager(commands.Cog):
 
     async def initialize(self):
 
-        self.bot.http_server.bind(self.bot.config.DASHBOARD_PORT, '0.0.0.0')
+        self.bot.http_server.bind(self.bot.config.PORT, '0.0.0.0')
         self.bot.http_server.start()
 
         print(f'\n[DASHBOARD] Dashboard has connected.')
