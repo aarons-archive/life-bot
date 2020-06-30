@@ -1,3 +1,18 @@
+"""
+Life Discord bot
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
+<https://www.gnu.org/licenses/>.
+"""
+
 from datetime import datetime
 
 import asyncpg
@@ -31,7 +46,6 @@ class Background(commands.Cog):
 
     @tasks.loop(minutes=1.0)
     async def log_bot_ping(self):
-
         self.bot.pings.append((datetime.now().strftime('%m-%d: %H:%M'), round(self.bot.latency * 1000)))
 
     @log_bot_ping.before_loop

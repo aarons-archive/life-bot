@@ -1,3 +1,18 @@
+"""
+Life Discord bot
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
+<https://www.gnu.org/licenses/>.
+"""
+
 import asyncio
 import collections
 import logging
@@ -29,10 +44,10 @@ class Life(commands.AutoShardedBot):
                          reconnect=True, help_command=help.HelpCommand())
 
         self.bot = self
-        self.log = logging.getLogger("Life")
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
 
+        self.log = logging.getLogger("Life")
         self.utils = utils.Utils(self.bot)
         self.process = psutil.Process()
         self.start_time = time.time()
@@ -45,12 +60,12 @@ class Life(commands.AutoShardedBot):
         self.user_blacklist = {}
 
         self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.bot.config.PREFIX}help')
+        self.clean_content = commands.clean_content()
+
         self.general_perms = discord.Permissions(add_reactions=True, read_messages=True, send_messages=True,
                                                  embed_links=True, attach_files=True, read_message_history=True,
                                                  external_emojis=True)
         self.voice_perms = discord.Permissions(connect=True, speak=True)
-        self.clean_content = commands.clean_content()
-
         self.add_check(self.can_run_commands)
 
     async def get_context(self, message: discord.Message, *, cls=context.Context):
