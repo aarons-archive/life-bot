@@ -1,3 +1,18 @@
+"""
+Life Discord bot
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
+<https://www.gnu.org/licenses/>.
+"""
+
 from discord.ext import commands
 
 
@@ -31,26 +46,4 @@ def is_member_connected():
             raise commands.CheckFailure(f'You are not connected to any voice channels.')
         return True
     return commands.check(predicate)
-
-
-def is_krossbot_user():
-    async def predicate(ctx):
-        guild = ctx.bot.get_guild(491312179476299786)
-        role = guild.get_role(548604302768209920)
-        if role not in ctx.author.roles:
-            raise commands.CheckFailure(f'You must have the role `{role.name}` to use this command.')
-        return True
-    return commands.check(predicate)
-
-
-def is_kross_guild():
-    async def predicate(ctx):
-        guild = ctx.bot.get_guild(491312179476299786)
-        if not ctx.guild == guild:
-            raise commands.CheckFailure(f'You must be in the guild `{guild.name}` to use this command.')
-        return True
-    return commands.check(predicate)
-
-
-
 

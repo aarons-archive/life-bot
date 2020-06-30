@@ -1,3 +1,18 @@
+"""
+Life Discord bot
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
+<https://www.gnu.org/licenses/>.
+"""
+
 from typing import Union
 
 from discord.ext import commands
@@ -24,8 +39,6 @@ class HelpCommand(commands.HelpCommand):
 
             if ctx.author.id in ctx.bot.owner_ids:
                 filtered_commands.append(command)  # Show all commands if author is owner.
-            elif cog.qualified_name == 'Kross' and ctx.guild and ctx.guild.id == 491312179476299786:
-                filtered_commands.append(command)  # Show kross cog command if in the right server.
             elif command.hidden or command.root_parent and command.root_parent.hidden:
                 continue  # Skip command if it or its parents are hidden.
             else:
@@ -91,8 +104,6 @@ class HelpCommand(commands.HelpCommand):
 
             if ctx.author.id in ctx.bot.owner_ids:
                 filtered_commands.append(command)  # Show all commands if author is owner.
-            elif group.cog.qualified_name == 'Kross' and ctx.guild and ctx.guild.id == 491312179476299786:
-                filtered_commands.append(command)  # Show kross cog command if in the right server.
             elif command.hidden or command.root_parent and command.root_parent.hidden:
                 continue  # Skip command if it or its parents are hidden.
             else:
