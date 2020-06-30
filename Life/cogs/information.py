@@ -1,3 +1,18 @@
+"""
+Life Discord bot
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
+<https://www.gnu.org/licenses/>.
+"""
+
 import inspect
 import os
 import time
@@ -114,7 +129,7 @@ class Information(commands.Cog):
         return await ctx.send(f'If you have any problems with the bot or if you have any suggestions/feedback be '
                               f'sure to join the support server using this link {self.bot.support_url}')
 
-    @commands.command(name='source')
+    @commands.command(name='source', aliases=["src"])
     async def source(self, ctx, *, command: str = None):
         """
         Get a github link to the source of a command.
@@ -125,19 +140,22 @@ class Information(commands.Cog):
         if command is None:
             return await ctx.send(f'<https://github.com/iDevision/Life>')
 
-        obj = self.bot.get_command(command.replace('.', ' '))
-        if obj is None:
+        command = self.bot.get_command(command)
+        if command is None:
             return await ctx.send('I could not find that command.')
 
-        src = obj.callback.__code__
-        lines, firstlineno = inspect.getsourcelines(src)
+        if isinstance(command, self.bot.help_command._command_impl.__class__):
+            command_obj = type(self.bot.help_command)
+            file_path = os.path.relpath(inspect.getsourcefile(command_obj))
+        else:
+            command_obj = command.callback
+            file_path = os.path.relpath(command_obj.__code__.co_filename)
 
-        location = ''
-        if not obj.callback.__module__.startswith('discord'):
-            location = os.path.relpath(src.co_filename).replace('\\', '/')
+        lines, first_line = inspect.getsourcelines(command_obj)
+        last_line = first_line + (len(lines) - 1)
 
-        return await ctx.send(f'<https://github.com/iDevision/Life/blob/master/'
-                              f'Life/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
+        link = f'<https://github.com/iDevision/Life/blob/master/Life/{file_path}#L{first_line}-L{last_line}>'
+        return await ctx.send(link)
 
     @commands.command(name='serverinfo', aliases=['server'])
     async def serverinfo(self, ctx):
