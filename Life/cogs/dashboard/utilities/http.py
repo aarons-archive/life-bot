@@ -1,8 +1,8 @@
 import asyncio
+import datetime
 import json
 import weakref
 from urllib.parse import quote
-import datetime
 
 from cogs.utilities import exceptions
 

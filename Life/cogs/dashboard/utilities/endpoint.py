@@ -1,8 +1,9 @@
-from abc import ABC
 import json
+from abc import ABC
 
 import tornado.web
-from cogs.dashboard.utilities import objects, http
+
+from cogs.dashboard.utilities import http, objects
 
 
 class BaseEndpoint(tornado.web.RequestHandler, ABC):
