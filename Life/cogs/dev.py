@@ -92,7 +92,7 @@ class Dev(commands.Cog):
         `limit`: The amount of messages to check back through. Defaults to 50.
         """
 
-        prefix = self.bot.config.PREFIX
+        prefix = self.bot.config.prefix
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
             messages = await ctx.channel.purge(check=lambda m: m.author == ctx.me or m.content.startswith(prefix),
@@ -149,14 +149,13 @@ class Dev(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-
     @dev.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
     async def dev_blacklist(self, ctx):
         """
         Base command for blacklisting.
         """
 
-        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help dev blacklist` '
+        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.prefix}help dev blacklist` '
                               f'for more information.')
 
     @dev_blacklist.command(name='reload', hidden=True)
@@ -281,7 +280,7 @@ class Dev(commands.Cog):
             pass
         else:
             if not reason:
-                reason = f'Name: {guild.name}'
+                reason = f'{guild.name}'
             await guild.leave()
 
         if not reason:

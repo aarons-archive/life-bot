@@ -65,4 +65,4 @@ def logger():
 if __name__ == '__main__':
     with logger():
         bot = Life()
-        bot.run(bot.config.TOKEN)
+        bot.run(bot.config.token)

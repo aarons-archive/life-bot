@@ -145,7 +145,7 @@ class Playlists(commands.Cog):
 
     @commands.group(name='playlist', aliases=['playlists', 'pl'], invoke_without_command=True)
     async def playlist(self, ctx):
-        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.PREFIX}help playlists` for '
+        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.prefix}help playlists` for '
                               f'more information.')
 
     @playlist.command(name='list')

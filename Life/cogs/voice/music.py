@@ -29,10 +29,10 @@ class Music(commands.Cog):
         self.bot = bot
 
         self.bot.diorite = diorite.Client(bot=self.bot, session=self.bot.session, loop=self.bot.loop)
-        self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.SPOTIFY_ID,
-                                                   client_secret=self.bot.config.SPOTIFY_SECRET)
-        self.bot.spotify = spotify.Client(client_id=self.bot.config.SPOTIFY_ID,
-                                          client_secret=self.bot.config.SPOTIFY_SECRET)
+        self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_app_id,
+                                                   client_secret=self.bot.config.spotify_secret)
+        self.bot.spotify = spotify.Client(client_id=self.bot.config.spotify_app_id,
+                                          client_secret=self.bot.config.spotify_secret)
 
         self.bot.spotify_url_regex = re.compile(r'https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)')
         self.bot.youtube_url_regex = re.compile(r'^(https?://)?(www\.)?(youtube\.com|youtu\.?be).+$')
@@ -40,7 +40,7 @@ class Music(commands.Cog):
 
     async def load_nodes(self):
 
-        for node in self.bot.config.NODES.values():
+        for node in self.bot.config.node_info.values():
             try:
                 await self.bot.diorite.create_node(host=node['host'], password=node['password'],
                                                    port=node['port'], identifier=node['identifier'])

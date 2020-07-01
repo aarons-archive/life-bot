@@ -79,7 +79,7 @@ class HelpCommand(commands.HelpCommand):
             entries.append(cog_help)
 
         title = f"__{ctx.bot.user.name}'s help page__"
-        header = f'Use `{ctx.bot.config.PREFIX}help [Command/Category]` for help on a command or category.\n'
+        header = f'Use `{ctx.bot.config.prefix}help [Command/Category]` for help on a command or category.\n'
         await ctx.paginate_embed(title=title, header=header, entries=entries, entries_per_page=5)
 
     async def send_cog_help(self, cog: commands.Cog):
