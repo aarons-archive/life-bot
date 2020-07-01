@@ -27,111 +27,11 @@ class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:'
-                                              'jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
+        self.bot.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
         self.bot.hex_colour_regex = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$')
         self.bot.imaging = imaging.Imaging(self.bot)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='user_graph', aliases=['ug'])
-    async def user_graph(self, ctx, history: int = 24):
-        """
-        Display the bots user count over the past 24 hours.
-
-        `history`: The amount of hours to display in the graph.
-        """
-
-        if history <= 0:
-            raise exceptions.ArgumentError('History must be more than `0`.')
-
-        async with ctx.channel.typing():
-
-            query = 'WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date'
-            user_growth = await self.bot.db.fetch(query, history)
-
-            if not user_growth:
-                return await ctx.send('No user growth data.')
-
-            title = f'User growth over the last {len(user_growth)} hour(s)'
-            y_axis = [record['member_count'] for record in user_growth]
-            x_axis = [record['date'] for record in user_growth]
-
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_growth_plot, title,
-                                                                               'Datetime (YYYY-MM-DD: HH:MM)', 'Users',
-                                                                               y_axis, x_axis))
-            return await ctx.send(file=discord.File(fp=plot, filename='UserGraph.png'))
-
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='guild_graph', aliases=['gg'])
-    async def guild_graph(self, ctx, history: int = 24):
-        """
-        Display the bots guild count over the past 24 hours.
-
-        `history`: The amount of hours to display in the graph.
-        """
-
-        if history <= 0:
-            raise exceptions.ArgumentError('History must be more than `0`.')
-
-        async with ctx.channel.typing():
-
-            query = 'WITH t AS (SELECT * from bot_growth ORDER BY date DESC LIMIT $1) SELECT * FROM t ORDER BY date'
-            guild_growth = await self.bot.db.fetch(query, history)
-
-            if not guild_growth:
-                return await ctx.send('No guild growth data.')
-
-            title = f'Guild growth over the last {len(guild_growth)} hour(s)'
-            y_axis = [record['guild_count'] for record in guild_growth]
-            x_axis = [record['date'] for record in guild_growth]
-
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_growth_plot, title,
-                                                                               'Datetime (YYYY-MM-DD: HH:MM)', 'Guilds',
-                                                                               y_axis, x_axis))
-            return await ctx.send(file=discord.File(fp=plot, filename='GuildGraph.png'))
-
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='ping_graph', aliases=['pg'])
-    async def ping_graph(self, ctx, history: int = 60):
-        """
-        Display the bot's latency over the last 60 minutes.
-
-        `history`: The amount of minutes to display the graph.
-        """
-
-        if history <= 0:
-            raise exceptions.ArgumentError('History must be more than `0`.')
-
-        if not self.bot.pings:
-            return await ctx.send('No ping data.')
-
-        async with ctx.channel.typing():
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_ping_plot, history))
-            return await ctx.send(file=discord.File(fp=plot, filename='PingGraph.png'))
-
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='serverstatus', aliases=['ss'])
-    async def serverstatus(self, ctx, graph_type: str = 'pie', all_servers=False):
-        """
-        Display member count per status in this server.
-
-        `graph_type`: The graph type. Can be either `pie` or `bar`.
-        `all_servers`: Whether the graph should be for all servers or just this one.
-        """
-
-        if graph_type not in ('bar', 'pie'):
-            raise exceptions.ArgumentError('That was not a valid graph type. Please choose either `pie` or `bar`.')
-
-        async with ctx.channel.typing():
-            plot = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.imaging.do_guild_status_plot,
-                                                                               ctx, graph_type, all_servers))
-            return await ctx.send(file=discord.File(fp=plot, filename='GuildStatus.png'))
-
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blur')
     async def blur(self, ctx, image: str = None, amount: float = 2.0):
@@ -150,7 +50,7 @@ class Images(commands.Cog):
                                                             edit_type='blur', amount=amount)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='edge')
     async def edge(self, ctx, image: str = None, level: float = 1.0):
@@ -169,7 +69,7 @@ class Images(commands.Cog):
                                                             edit_type='edge', level=level)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='emboss')
     async def emboss(self, ctx, image: str = None, radius: float = 3, sigma: float = 1.5):
@@ -191,7 +91,7 @@ class Images(commands.Cog):
                                                             edit_type='emboss', radius=radius, sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='kuwahara')
     async def kuwahara(self, ctx, image: str = None, radius: float = 2, sigma: float = 1.5):
@@ -214,7 +114,7 @@ class Images(commands.Cog):
                                                             edit_type='kuwahara', radius=radius, sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sharpen')
     async def sharpen(self, ctx, image: str = None, radius: float = 8, sigma: float = 4):
@@ -237,7 +137,7 @@ class Images(commands.Cog):
                                                             edit_type='sharpen', radius=radius, sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='spread')
     async def spread(self, ctx, image: str = None, radius: float = 2.0):
@@ -255,7 +155,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='spread', radius=radius)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='noise')
     async def noise(self, ctx, image: str = None, method: str = 'gaussian', attenuate: float = 0.5):
@@ -280,7 +180,7 @@ class Images(commands.Cog):
                                                             edit_type='noise', method=method, attenuate=attenuate)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blueshift')
     async def blueshift(self, ctx, image: str = None, factor: float = 1.25):
@@ -298,7 +198,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='blueshift', factor=factor)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='charcoal')
     async def charcoal(self, ctx, image: str = None, radius: float = 1.5, sigma: float = 0.5):
@@ -321,7 +221,7 @@ class Images(commands.Cog):
                                                             edit_type='charcoal', radius=radius, sigma=sigma)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='colorize')
     async def colorize(self, ctx, image: str = None, color: str = None):
@@ -342,7 +242,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='colorize', color=color)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='implode')
     async def implode(self, ctx, image: str = None, amount: float = 0.4):
@@ -361,7 +261,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='implode', amount=amount)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='polaroid')
     async def polaroid(self, ctx, image: str = None, angle: float = 0.0, *, caption: str = None):
@@ -384,7 +284,7 @@ class Images(commands.Cog):
                                                             edit_type='polaroid', angle=angle, caption=caption)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sepiatone')
     async def sepia_tone(self, ctx, image: str = None, threshold: float = 0.8):
@@ -403,7 +303,7 @@ class Images(commands.Cog):
                                                             edit_type='sepiatone', threshold=threshold)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='solarize')
     async def solarize(self, ctx, image: str = None, threshold: float = 0.5):
@@ -422,7 +322,7 @@ class Images(commands.Cog):
                                                             edit_type='solarize', threshold=threshold)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='swirl')
     async def swirl(self, ctx, image: str = None, degree: int = 45):
@@ -440,7 +340,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='swirl', degree=degree)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='wave')
     async def wave(self, ctx, image: str = None):
@@ -454,7 +354,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='wave')
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flip')
     async def flip(self, ctx, image: str = None):
@@ -468,7 +368,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='flip')
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flop')
     async def flop(self, ctx, image: str = None):
@@ -482,7 +382,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='flop')
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 10, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='rotate')
     async def rotate(self, ctx, image: str = None, degree: int = 45):
@@ -500,7 +400,7 @@ class Images(commands.Cog):
             file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='rotate', degree=degree)
             return await ctx.send(file=file, embed=embed)
 
-    @commands.cooldown(1, 30, commands.cooldowns.BucketType.guild)
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='floor')
     async def floor(self, ctx, image: str = None):

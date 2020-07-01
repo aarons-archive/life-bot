@@ -64,12 +64,6 @@ class Utils:
 
         latency_ms = f'{round(self.bot.latency * 1000)}ms'
 
-        if self.bot.pings:
-            pings = [latency for datetime, latency in list(self.bot.pings)]
-            average_latency_ms = f'{round((sum(pings) / len(pings)))}ms'
-        else:
-            average_latency_ms = 'Failed'
-
         typing_start = time.monotonic()
         await ctx.trigger_typing()
         typing_end = time.monotonic()
@@ -83,7 +77,7 @@ class Utils:
             else:
                 discord_ms = 'Failed'
 
-        return latency_ms, average_latency_ms, typing_ms, discord_ms
+        return latency_ms, typing_ms, discord_ms
 
     def linecount(self):
 

@@ -18,7 +18,6 @@ import multiprocessing
 import typing
 
 import discord
-import matplotlib.pyplot as plt
 from discord.ext import commands
 from wand.color import Color
 from wand.image import Image
@@ -213,7 +212,7 @@ class Imaging:
     def __init__(self, bot):
         self.bot = bot
 
-        self.queue = multiprocessing.Queue() 
+        self.queue = multiprocessing.Queue()
 
     async def get_image_url(self, ctx: commands.Context, argument: str):
 
@@ -259,151 +258,3 @@ class Imaging:
         embed.set_image(url=f'attachment://{edit_type}_image.{image_format.lower()}')
 
         return file, embed
-
-    def do_ping_plot(self, history: int):
-
-        buffer = io.BytesIO()
-
-        times = [time for time, ping in list(self.bot.pings)[-history:]]
-        pings = [ping for time, ping in list(self.bot.pings)[-history:]]
-        lowest_pings = [index for index, ping in enumerate(pings) if ping == min(pings)]
-        highest_pings = [index for index, ping in enumerate(pings) if ping == max(pings)]
-        average_ping = round(sum([ping for ping in pings]) / len(pings), 2)
-
-        plt.clf()
-        plt.figure(figsize=(10, 6))
-
-        plt.plot(times, pings, linewidth=1, c='navy', zorder=3)
-        plt.plot(times, pings, markevery=lowest_pings, c='green', linewidth=0.0, marker='s', markersize=5, zorder=3)
-        plt.plot(times, pings, markevery=highest_pings, c='red', linewidth=0.0, marker='s', markersize=5, zorder=3)
-        plt.fill_between(range(len(pings)), pings, [min(pings) - 6] * len(pings), facecolor='navy', alpha=0.5, zorder=3)
-        plt.text(0, min(pings) - 6, f'Average Ping: {average_ping}ms \n'
-                                    f'Current ping: {round(self.bot.latency * 1000)}ms \n'
-                                    f'Lowest ping: {min(pings)}ms \n'
-                                    f'Highest ping: {max(pings)}ms')
-
-        plt.xlabel('Time (HH:MM)')
-        plt.ylabel('Ping (MS)')
-        plt.title(f'Ping over the last {len(pings)} minutes(s)')
-        plt.xticks(rotation=-90)
-
-        if len(pings) <= 180:
-            plt.minorticks_on()
-            plt.grid(axis='x', zorder=1)
-
-        plt.grid(axis='y', which='both', zorder=1)
-        plt.tick_params(axis='x', which='major', bottom=True if len(pings) <= 60 else False,
-                        labelbottom=True if len(pings) <= 60 else False)
-        plt.tick_params(axis='x', which='minor', bottom=False)
-        plt.tight_layout()
-
-        plt.savefig(buffer)
-        plt.close()
-
-        buffer.seek(0)
-        return buffer
-
-    def do_growth_plot(self, title: str, x_label: str, y_label: str, values: list, names: list):
-
-        buffer = io.BytesIO()
-
-        plt.clf()
-        plt.figure(figsize=(10, 6))
-
-        plt.plot(names, values, color='navy', zorder=3)
-
-        plt.ylabel(y_label)
-        plt.xlabel(x_label)
-        plt.title(title)
-        plt.xticks(rotation=-90)
-
-        if len(values) <= 168:
-            plt.minorticks_on()
-            plt.grid(axis='x', zorder=1)
-
-        plt.grid(axis='y', which='both', zorder=1)
-        plt.tick_params(axis='x', which='major', bottom=True if len(values) <= 72 else False,
-                        labelbottom=True if len(values) <= 72 else False)
-        plt.tick_params(axis='x', which='minor', bottom=False)
-        plt.tight_layout()
-
-        plt.savefig(buffer)
-        plt.close()
-
-        buffer.seek(0)
-        return buffer
-
-    def do_guild_status_plot(self, ctx: commands.Context, graph_type: str, all_guilds: bool = False):
-
-        buffer = io.BytesIO()
-
-        statuses = self.bot.utils.guild_member_status(guild=ctx.guild, all_guilds=all_guilds)
-        total = sum(statuses.values())
-        online = statuses['online']
-        idle = statuses['idle']
-        dnd = statuses['dnd']
-        offline = statuses['offline']
-        streaming = statuses['streaming']
-
-        if graph_type == 'pie':
-
-            online_percent = round((online / total) * 100, 2)
-            idle_percent = round((idle / total) * 100, 2)
-            dnd_percent = round((dnd / total) * 100, 2)
-            offline_percent = round((offline / total) * 100, 2)
-            streaming_percent = round((streaming / total) * 100, 2)
-
-            labels = [f'{online_percent}%', f'{idle_percent}%', f'{dnd_percent}%', f'{offline_percent}%',
-                      f'{streaming_percent}%']
-            sizes = [online, idle, dnd, offline, streaming]
-            colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
-
-            plt.clf()
-            figure, axes = plt.subplots(figsize=(6, 4), subplot_kw=dict(aspect='equal'))
-
-            axes.pie(sizes, colors=colors, startangle=90)
-            axes.legend(labels, loc='center right', title="Status's", frameon=False)
-
-            if all_guilds is True:
-                axes.set_title(f'Percentage of members per status across all guilds.')
-            else:
-                axes.set_title(f'Percentage of members per status in {ctx.guild.name}')
-
-            axes.axis('equal')
-            plt.tight_layout()
-
-            plt.savefig(buffer)
-            plt.close()
-
-        if graph_type == 'bar':
-
-            labels = ['Online', 'Idle', 'DnD', 'Offline', 'Streaming']
-            values = [online, idle, dnd, offline, streaming]
-            colors = ['#7acba6', '#fcc15d', '#f57e7e', '#9ea4af', '#593695']
-
-            plt.clf()
-            plt.figure(figsize=(6, 4))
-
-            bar_chart = plt.bar(labels, values, color=colors, zorder=3)
-            if all_guilds is True:
-                plt.title(f'Member count per status across all guilds.')
-            else:
-                plt.title(f'Members count per status in {ctx.guild.name}')
-            plt.ylabel('Member count')
-            plt.xlabel('Status')
-
-            for bar in bar_chart:
-                height = bar.get_height()
-                plt.annotate('{}'.format(height), xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 2),
-                             textcoords='offset points', ha='center')
-
-            plt.minorticks_on()
-            plt.grid(which='both', axis='y', zorder=0)
-
-            plt.tight_layout()
-
-            plt.savefig(buffer)
-            plt.close()
-
-        buffer.seek(0)
-        return buffer
