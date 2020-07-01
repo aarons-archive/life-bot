@@ -55,6 +55,7 @@ class Life(commands.AutoShardedBot):
         self.db = None
 
         self.pings = collections.deque(maxlen=1440)
+        self.socket_stats = collections.Counter()
         self.owner_ids = [238356301439041536]
         self.guild_blacklist = {}
         self.user_blacklist = {}

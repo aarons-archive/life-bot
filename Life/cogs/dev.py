@@ -18,6 +18,7 @@ import sys
 import asyncpg
 import discord
 import humanize
+import collections
 import pkg_resources
 import setproctitle
 from discord.ext import commands
@@ -123,6 +124,31 @@ class Dev(commands.Cog):
 
         header = 'Guild id           |Total    |Members  |Bots     |Percent  |Name\n'
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds, header=header)
+
+    @dev.command(name='socketstats', aliases=['ss'], hidden=True)
+    async def dev_socket_stats(self, ctx):
+        """
+        Displays a list of socket event counts since startup.
+        """
+
+        event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(),
+                                                     key=lambda kv: kv[1], reverse=True))
+        events_total = sum(event_stats.values())
+        events_per_second = round(events_total / self.bot.uptime)
+
+        description = [f'```py\n'
+                       f'{events_total} socket events observed at a rate of {events_per_second} per second.\n']
+
+        for event, count in event_stats.items():
+            description.append(f'{event:28} | {count}')
+
+        description.append('```')
+
+        embed = discord.Embed(title=f'{self.bot.user.name} bot socket-stats.', colour=0xF5F5F5)
+        embed.description = '\n'.join(description)
+
+        return await ctx.send(embed=embed)
+
 
     @dev.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
     async def dev_blacklist(self, ctx):
