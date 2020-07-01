@@ -57,7 +57,7 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
-        if todo_count['c'] > 200:
+        if todo_count['c'] > 100:
             raise exceptions.ArgumentError(f'You have too many todos, try doing some of them before adding more.')
 
         query = 'INSERT INTO todos VALUES ($1, $2, $3, $4)'
