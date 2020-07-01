@@ -70,8 +70,8 @@ class Information(commands.Cog):
                         value=f'`Latency:` {latency_ms}\n`Discord:` {discord_ms}\n`Typing:` {typing_ms}')
 
         embed.add_field(name='Links:',
-                        value=f'`[Invite me]({self.bot.invite_url}) | [Support server]({self.bot.support_url}) | '
-                              f'[Source code]({self.bot.source_url}) | [Upvote me]({self.bot.upvote_url})`')
+                        value=f'[Invite me]({self.bot.invite_url}) | [Support server]({self.bot.support_url}) | '
+                              f'[Source code]({self.bot.source_url}) | [Upvote me]({self.bot.upvote_url})')
 
         embed.set_footer(text=f'Created on {datetime.strftime(self.bot.user.created_at, "%A %d %B %Y at %H:%M")}')
         return await ctx.send(embed=embed)
