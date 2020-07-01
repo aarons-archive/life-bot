@@ -49,7 +49,6 @@ class Information(commands.Cog):
         Display the bots stats.
         """
 
-        uyviyvy
         latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         uptime = self.bot.utils.format_time(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = self.bot.utils.linecount()
@@ -182,7 +181,7 @@ class Information(commands.Cog):
                               f'`2FA:` {self.bot.utils.mfa_level(ctx.guild)}\n'
                               f'`Verification level:` {self.bot.utils.verification_level(ctx.guild)}\n', inline=False)
 
-        embed.add_field(name='`Channels:`',
+        embed.add_field(name='Channels:',
                         value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | '
                               f'`AFK channel:` {ctx.guild.afk_channel}\n'
                               f'`Text channels:` {len(ctx.guild.text_channels)} | '
