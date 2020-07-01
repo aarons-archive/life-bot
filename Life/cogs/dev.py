@@ -13,12 +13,13 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
+import collections
 import sys
+import time
 
 import asyncpg
 import discord
 import humanize
-import collections
 import pkg_resources
 import setproctitle
 from discord.ext import commands
@@ -131,10 +132,9 @@ class Dev(commands.Cog):
         Displays a list of socket event counts since startup.
         """
 
-        event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(),
-                                                     key=lambda kv: kv[1], reverse=True))
+        event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
         events_total = sum(event_stats.values())
-        events_per_second = round(events_total / self.bot.uptime)
+        events_per_second = round(events_total / round(time.time() - self.bot.start_time))
 
         description = [f'```py\n'
                        f'{events_total} socket events observed at a rate of {events_per_second} per second.\n']
