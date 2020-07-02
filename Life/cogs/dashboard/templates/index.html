@@ -5,56 +5,52 @@
         <!-- Page config -->
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        <meta name="Description" content="A web dashboard for the Life discord bot, view your servers music information and queue here!">
+        <title>Life - Home page</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css" integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
         <link rel="stylesheet" href="{{ static_url('index.css') }}">
-        <title>Life - A Discord bot</title>
         <!-- Favicon links -->
+        <meta name="msapplication-TileImage" content="{{ static_url('resources/mstile-144x144.png') }}">
+        <meta name="msapplication-config" content="{{ static_url('resources/browserconfig.xml') }}">
+        <meta name="msapplication-TileColor" content="#222222">
+        <meta name="theme-color" content="#222222">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('resources/apple-touch-icon.png') }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ static_url('resources/favicon-32x32.png') }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ static_url('resources/favicon-16x16.png') }}">
-        <link rel="mask-icon" href="{{ static_url('resources/safari-pinned-tab.svg') }}" color="#5bbad5">
-        <meta name="msapplication-TileImage" content="{{ static_url('resources/mstile-144x144.png') }}">
-        <meta name="msapplication-config" content="{{ static_url('resources/browserconfig.xml') }}">
+        <link rel="mask-icon" href="{{ static_url('resources/safari-pinned-tab.svg') }}" color="#222222">
         <link rel="manifest" href="{{ static_url('resources/site.webmanifest') }}">
         <link rel="shortcut icon" href="{{ static_url('resources/favicon.ico') }}">
-        <meta name="msapplication-TileColor" content="#b91d47">
-        <meta name="theme-color" content="#ffffff">
         <!-- Javascript links -->
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js" integrity="sha384-oesi62hOLfzrys4LxRF63OJCXdXDipiYWBnvTl9Y9/TRlw5xlKIEHpNyvvDShgf/" crossorigin="anonymous"></script>
     </head>
 
-    <body class="bg-black">
+    <body class="bg-black text-light">
 
-        <nav class="navbar navbar-expand-md bg-yellow">
-
-            <a class="navbar-brand"><img class="img-fluid" src="{{ static_url('resources/Life - Black 500x261.png') }}" alt="Life logo" style="width: 50px; height: 26px"></a>
-            <button class="navbar-toggler btn bg-black" type="button" data-toggle="collapse" data-target="#collapsibleNavbar"></button>
-            <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
-                <ul class="navbar-nav">
-                    <li class="nav-item active"><a class="nav-link text-dark" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.source_url }}">Github</a></li>
-                    <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.support_url }}">Support server</a></li>
-                    {% if user is not None %}
-                        <li class="nav-item"><a class="nav-link text-dark" href="/guilds">Logged in as {{ user.name }}</a></li>
-                    {% else %}
-                        <li class="nav-item"><a class="nav-link text-dark" href="/login">Login</a></li>
-                    {% end %}
-                </ul>
+        <nav class="navbar navbar-expand-md bg-yellow text-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand"><img class="img-fluid" src="{{ static_url('resources/Life_black50x26.png') }}" alt="Life logo"></a>
+                <button class="navbar-toggler btn btn-lg bg-black" type="button" data-toggle="collapse" data-target="#LifeNavBar" aria-controls="LifeNavBar" aria-expanded="false" aria-label="Toggle navigation bar"></button>
+                <div class="collapse navbar-collapse justify-content-end" id="LifeNavBar">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link text-dark" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.source_url }}">Github</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.support_url }}">Support server</a></li>
+                        {% if user is not None %}
+                            <li class="nav-item"><a class="nav-link text-dark" href="/guilds">Logged in as {{ user.name }}</a></li>
+                        {% else %}
+                            <li class="nav-item"><a class="nav-link text-dark" href="/login">Login</a></li>
+                        {% end %}
+                    </ul>
+                </div>
             </div>
-
         </nav>
 
         <div class="jumbotron jumbotron-fluid bg-yellow p-3">
             <div class="container-fluid text-center text-dark">
-                <img class="img-fluid p-3" src="{{ static_url('resources/Life - Black 500x261.png') }}" alt="Life" style="width:350px;">
+                <img class="img-fluid p-3" src="{{ static_url('resources/Life_black500x261.png') }}" alt="Life" style="width:350px;">
                 <h5>Life is a discord bot coded by MrRandom#9258 that can see {{ len(bot.guilds) }} servers and a total of {{ len(bot.users) }} unique users.</h5>
             </div>
-        </div>
-
-        <div class="jumbotron jumbotron-fluid text-center bg-yellow" style="margin-bottom: 0">
-            <h1>Footer</h1>
         </div>
 
     </body>

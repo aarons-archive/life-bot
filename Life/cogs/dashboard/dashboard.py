@@ -19,7 +19,7 @@ class DashboardManager(commands.Cog):
                                            static_path=os.path.join(os.path.dirname(__file__), 'static/'),
                                            template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
                                            cookie_secret=self.bot.config.cookie_secret, default_host='0.0.0.0',
-                                           ui_methods=utils)
+                                           debug=True, ui_methods=utils)
 
         self.bot.http_server = httpserver.HTTPServer(self.application)
         self.bot.http_client = http.HTTPClient(bot=self.bot)

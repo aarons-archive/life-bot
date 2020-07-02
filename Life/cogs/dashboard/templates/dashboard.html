@@ -5,103 +5,104 @@
         <!-- Page config -->
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-        <link rel="stylesheet" href="{{ static_url('index.css') }}">
+        <meta name="Description" content="A web dashboard for the Life discord bot, view your servers music information and queue here!">
         <title>Life - Dashboard</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css" integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ static_url('index.css') }}">
         <!-- Favicon links -->
+        <meta name="msapplication-TileImage" content="{{ static_url('resources/mstile-144x144.png') }}">
+        <meta name="msapplication-config" content="{{ static_url('resources/browserconfig.xml') }}">
+        <meta name="msapplication-TileColor" content="#222222">
+        <meta name="theme-color" content="#222222">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('resources/apple-touch-icon.png') }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ static_url('resources/favicon-32x32.png') }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ static_url('resources/favicon-16x16.png') }}">
-        <link rel="mask-icon" href="{{ static_url('resources/safari-pinned-tab.svg') }}" color="#5bbad5">
-        <meta name="msapplication-TileImage" content="{{ static_url('resources/mstile-144x144.png') }}">
-        <meta name="msapplication-config" content="{{ static_url('resources/browserconfig.xml') }}">
+        <link rel="mask-icon" href="{{ static_url('resources/safari-pinned-tab.svg') }}" color="#222222">
         <link rel="manifest" href="{{ static_url('resources/site.webmanifest') }}">
         <link rel="shortcut icon" href="{{ static_url('resources/favicon.ico') }}">
-        <meta name="msapplication-TileColor" content="#b91d47">
-        <meta name="theme-color" content="#ffffff">
         <!-- Javascript links -->
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js" integrity="sha384-oesi62hOLfzrys4LxRF63OJCXdXDipiYWBnvTl9Y9/TRlw5xlKIEHpNyvvDShgf/" crossorigin="anonymous"></script>
     </head>
 
-    <body class="bg-black">
+    <body class="bg-black text-light">
 
-        <nav class="navbar navbar-expand-md bg-yellow">
-
-            <a class="navbar-brand"><img class="img-fluid" src="{{ static_url('resources/Life - Black 500x261.png') }}" alt="Life logo" style="width: 50px; height: 26px"></a>
-            <button class="navbar-toggler btn btn-lg bg-black" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" aria-controls="collapsibleNavbar" aria-expanded="false" aria-label="Toggle navigation bar"></button>
-            <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link text-dark" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.source_url }}">Github</a></li>
-                    <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.support_url }}">Support server</a></li>
-                    <li class="nav-item"><a class="nav-link text-dark" href="/guilds">Logged in as {{ user.name }}</a></li>
-                </ul>
+        <nav class="navbar navbar-expand-md bg-yellow text-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand"><img class="img-fluid" src="{{ static_url('resources/Life_black50x26.png') }}" alt="Life logo"></a>
+                <button class="navbar-toggler btn btn-lg bg-black" type="button" data-toggle="collapse" data-target="#LifeNavBar" aria-controls="LifeNavBar" aria-expanded="false" aria-label="Toggle navigation bar"></button>
+                <div class="collapse navbar-collapse justify-content-end" id="LifeNavBar">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link text-dark" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.source_url }}">Github</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="{{ bot.support_url }}">Support server</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="/guilds">Logged in as {{ user.name }}</a></li>
+                    </ul>
+                </div>
             </div>
-
         </nav>
 
-        <div class="container-fluid bg-black text-light">
+        <div class="container-fluid p-0">
 
-            <div class="row">
+            <div class="row g-0">
 
-                <div class="col-12 col-sm-5 col-md-5 col-lg-4 col-xl-3 bg-gray">
+                <div class="col-12 col-sm-5 col-md-5 col-lg-4 col-xl-3 px-3 bg-gray">
 
-                    <button class="btn btn-lg btn-block text-light text-left pl-0 mt-1" type="button" data-toggle="collapse" data-target=".multi-collapse">Life's queue:</button>
-                    <div class="list-group pb-2">
-                    {% for track in player.queue.queue_list[:10] %}
-                        <a tabindex="0" class="list-group-item list-group-item-action bg-black text-light text-left" data-toggle="popover" data-html="true" data-trigger="focus"
-                           data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
-                        {% if track.source == 'spotify' %}
-                            <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
-                            <p class="text-truncate">{{ track.title }}</p>
-                        {% else %}
-                            <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:80px; height:45px">
-                            <p class="text-truncate">{{ track.title }}</p>
+                    <button class="btn btn-lg btn-block text-light text-left pl-0" type="button" data-toggle="collapse" data-target=".multi-collapse">Life's queue:</button>
+                    <div class="list-group pb-3">
+                        {% for track in player.queue.queue_list[:10] %}
+                            <a tabindex="0" class="list-group-item list-group-item-action bg-black text-light" data-toggle="popover" data-html="true" data-trigger="focus"
+                                data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
+                            {% if track.source == 'spotify' %}
+                                <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
+                                <p class="text-truncate">{{ track.title }}</p>
+                            {% else %}
+                                <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:80px; height:45px">
+                                <p class="text-truncate">{{ track.title }}</p>
+                            {% end %}
+                            </a>
                         {% end %}
-                        </a>
-                    {% end %}
 
-                    {% for i in range(max(0, 10 - len(player.queue.queue_list))) %}
-                        <a class="list-group-item bg-black">
-                            <img class="img-fluid rounded float-left mr-2" src="{{ static_url('resources/no_image500x500.png') }}" alt="Empty queue slot thumbnail" style="width:80px; height:45px">
-                            <p class="text-truncate">This queue slot is empty </p>
-                        </a>
-                    {% end %}
-
-                    {% for track in player.queue.queue_list[10:] %}
-                        <a tabindex="0" class="list-group-item list-group-item-action collapse multi-collapse bg-black text-light text-left" data-toggle="popover" data-html="true" data-trigger="focus"
-                           data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
-                        {% if track.source == 'spotify' %}
-                            <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
-                            <p class="text-truncate">{{ track.title }}</p>
-                        {% else %}
-                            <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:80px; height:45px">
-                            <p class="text-truncate">{{ track.title }}</p>
+                        {% for i in range(max(0, 10 - len(player.queue.queue_list))) %}
+                            <a class="list-group-item bg-black text-light">
+                                <img class="img-fluid rounded float-left mr-2" src="{{ static_url('resources/no_image80x45.png') }}" alt="No track image" style="width:80px; height:45px">
+                                <p class="text-truncate">This queue slot is empty </p>
+                            </a>
                         {% end %}
-                        </a>
-                    {% end %}
+
+                        {% for track in player.queue.queue_list[10:] %}
+                            <span tabindex="0" data-toggle="popover" data-html="true" data-trigger="focus" data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
+                                <a class="list-group-item list-group-item-action collapse multi-collapse bg-black text-light">
+                                    {% if track.source == 'spotify' %}
+                                        <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
+                                        <p class="text-truncate">{{ track.title }}</p>
+                                    {% else %}
+                                        <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:80px; height:45px">
+                                        <p class="text-truncate">{{ track.title }}</p>
+                                    {% end %}
+                                </a>
+                            </span>
+                        {% end %}
                     </div>
-
                 </div>
 
-                <div class="col-12 col-sm-7 col-md-7 col-lg-8 col-xl-9">
+                <div class="col-12 col-sm-7 col-md-7 col-lg-8 col-xl-9 px-3 bg-black">
 
-                    <div class="card bg-gray my-3 ">
-                        <div class="row no-gutters">
-                            <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-3">
+                    <div class="card bg-gray my-3">
+                        <div class="row g-0">
+                            <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-4 col-xxl-3">
                                 {% if player.current %}
                                     <img class="card-img" src="{{ player.current.thumbnail }}" alt="Current track thumbnail">
                                 {% else %}
                                     <img class="card-img" src="{{ static_url('resources/no_image320x180.png') }}" alt="No current track image">
                                 {% end %}
                             </div>
-                            <div class="col-12 col-sm-12 col-md-12 col-lg-7 col-xl-9">
-                                <div class="card-body p-2">
+
+                            <div class="col-12 col-sm-12 col-md-12 col-lg-7 col-xl-8 col-xxl-9">
+                                <div class="card-body pt-2 pl-2">
                                     {% if player.current %}
                                         <h4 class="card-title">Current track</h4>
-                                        <h5 class="card-subtitle pb-2"><a class="card-title text-light" href="{{ player.current.uri }}">{{ player.current.title }}</a></h5>
+                                        <h5 class="card-subtitle"><a class="card-title text-light" href="{{ player.current.uri }}">{{ player.current.title }}</a></h5>
                                         <p class="card-text">Author: {{ player.current.author }}<br>Length: {{ bot.utils.format_time(round(player.current.length) / 1000) }}<br>Requester: {{ player.current.requester }}</p>
                                     {% else %}
                                         <h4 class="card-title">No track playing currently.</h4>
@@ -117,14 +118,9 @@
 
         </div>
 
-        <div class="jumbotron jumbotron-fluid text-center bg-yellow" style="margin-bottom: 0">
-            <h1>Footer</h1>
-        </div>
-
         <script>
-        $(document).ready(function(){
-          $('[data-toggle="popover"]').popover();
-        });
+            const PopoverTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="popover"]'));
+            PopoverTriggerList.map(function (popoverElement) { return new bootstrap.Popover(popoverElement) });
         </script>
 
     </body>
