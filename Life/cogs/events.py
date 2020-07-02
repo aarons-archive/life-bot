@@ -189,7 +189,7 @@ class Events(commands.Cog):
             commands.DisabledCommand: f'The command `{command}` has been disabled.',
         }
 
-        error_message = error_messages.get(type(error))
+        error_message = error_messages.get(type(getattr(error, 'original', error)))
 
         if error_message:
             try:
