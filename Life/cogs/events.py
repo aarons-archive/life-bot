@@ -14,10 +14,12 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import traceback
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 
+import diorite
 from cogs.utilities import exceptions
 
 
@@ -47,10 +49,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
 
+        time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
+
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
         embed.title = f'Joined a guild'
-        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}'
+        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}\n`Time:` {time}'
 
         self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         await self.bot.log_channel.send(embed=embed)
@@ -61,10 +65,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
 
+        time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
+
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
         embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
-        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}'
+        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
 
         self.bot.log.info(f'{embed.title}. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         return await self.bot.log_channel.send(embed=embed)
@@ -81,8 +87,8 @@ class Events(commands.Cog):
 
             guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
             guild_id = f'`Guild ID:` {ctx.guild.id}\n' if ctx.guild else ''
-            channel = f'#{ctx.channel}' if isinstance(ctx.channel, discord.TextChannel) else ctx.channel
-            info = f'{guild}{guild_id}`Channel:` {channel}\n`Channel ID:` {ctx.channel.id}'
+            time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
+            info = f'{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
             embed = discord.Embed(colour=discord.Colour.gold())
             embed.set_author(name=f'Mentioned by {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
@@ -92,11 +98,13 @@ class Events(commands.Cog):
 
         if message.guild is None:
 
+            time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
+            info = f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
+
             embed = discord.Embed(colour=discord.Colour.gold())
             embed.set_author(name=f'DM from {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
-
             embed.description = f'{message.content}'
-            embed.add_field(name='Info:', value=f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}')
+            embed.add_field(name='Info:', value=info)
             await self.bot.dm_channel.send(embed=embed)
 
     @commands.Cog.listener()
@@ -113,36 +121,37 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error):
 
+        error = getattr(error, 'original', error)
         prefix = self.bot.config.prefix
         command = ctx.command
 
         if ctx.author.id in self.bot.owner_ids:
-            command.reset_cooldown(ctx)
+            ctx.command.reset_cooldown(ctx) if ctx.command else None
 
         if isinstance(error, commands.CommandNotFound):
             return  # Ignore this exception
-
-        elif isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{command}`. '
-                                  f'Use `{self.bot.config.prefix}help {command}` for more information on what '
-                                  f'parameters to use.')
-
-        elif isinstance(error, commands.MissingPermissions):
-            permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            return await ctx.send(f'You are missing the following permissions required to run the command '
-                                  f'`{command}`.\n{permissions}')
 
         elif isinstance(error, commands.BotMissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
             message = f'I am missing the following permissions required to run the command `{command}`.' \
                       f'\n{permissions}'
-            try:
+            try:   # Special case for when the bot doesnt have permissions to send messages.
                 return await ctx.send(message)
             except discord.Forbidden:
                 try:
                     return await ctx.author.send(message)
                 except discord.Forbidden:
                     return
+
+        elif isinstance(error, commands.MissingPermissions):
+            permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
+            return await ctx.send(f'You are missing the following permissions required to run the command '
+                                  f'`{command}`.\n{permissions}')
+
+        elif isinstance(error, commands.MissingRequiredArgument):
+            return await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{command}`. '
+                                  f'Use `{self.bot.config.prefix}help {command}` for more information on what '
+                                  f'parameters to use.')
 
         elif isinstance(error, commands.CommandOnCooldown):
             cooldowns = {
@@ -171,11 +180,11 @@ class Events(commands.Cog):
                                   f'{error.number} time(s){cooldowns[error.per]} Retry a bit later.')
 
         error_messages = {
-            exceptions.BotNotReadyError: f'The bot is not ready yet.',
             exceptions.ArgumentError: f'{error}',
-            commands.CheckFailure: f'{error}',
             exceptions.LifePlaylistError: f'{error}',
             exceptions.LifeVoiceError: f'{error}',
+            commands.CheckFailure: f'{error}',
+            diorite.NodesNotAvailable: f'There are no nodes available.',
             commands.TooManyArguments: f'You used too many parameters for the command `{command}`. '
                                        f'Use `{prefix}help {command}` for more information on what parameters to use.',
             commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{command}`. '
@@ -189,37 +198,35 @@ class Events(commands.Cog):
             commands.DisabledCommand: f'The command `{command}` has been disabled.',
         }
 
-        error_message = error_messages.get(type(getattr(error, 'original', error)))
+        error_message = error_messages.get(type(error), None)
 
-        if error_message:
-            try:
-                return await ctx.send(error_message)
-            except discord.Forbidden:
-                pass
+        if error_message is not None:
+            return await ctx.send(error_message)
 
-        command.reset_cooldown(ctx)
-        error = error.original
+        await ctx.send(f'Something went wrong while executing that command. Please use `{prefix}support` for more '
+                       f'help/information.')
+
+        ctx.command.reset_cooldown(ctx) if ctx.command else None
 
         guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
         guild_id = f'`Guild ID:` {ctx.guild.id}\n' if ctx.guild else ''
-        channel = f'#{ctx.channel}' if isinstance(ctx.channel, discord.TextChannel) else ctx.channel
-        info = f'{guild}{guild_id}`Channel:` {channel}\n`Channel ID:` {ctx.channel.id}'
-        name = f'Error in command {command} used by {ctx.author}'
-
-        embed = discord.Embed(colour=discord.Colour.gold())
-        embed.set_author(name=name, icon_url=self.bot.utils.member_avatar(ctx.author))
+        time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
+        info = f'`Message content:` {ctx.message.content}\n{guild}{guild_id}`Channel:` {ctx.channel}\n' \
+               f'`Channel ID:` {ctx.channel.id}\n `Time`: {time}'
+        embed = discord.Embed(colour=discord.Colour.gold(), description=f'Error in command `{ctx.command}`')
+        embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
+        await self.bot.error_channel.send(embed=embed)
+
         error_traceback = f'```{"".join(traceback.format_exception(type(error), error, error.__traceback__))}```'
         await self.bot.error_channel.send(error_traceback)
-        await self.bot.error_channel.send(embed=embed)
-        await ctx.send('Something went wrong while executing that command.')
 
         traceback.print_exception(type(error), error, error.__traceback__)
 
     @commands.Cog.listener()
-    async def on_socket_response(self, msg):
+    async def on_socket_response(self, message):
 
-        event = msg.get('t', 'None')
+        event = message.get('t', 'None')
         if event is not None:
             self.bot.socket_stats[event] += 1
 
