@@ -20,7 +20,7 @@ class Success(endpoint.BaseEndpoint, ABC):
             'client_id': self.bot.config.client_id,
             'client_secret': self.bot.config.client_secret,
             'grant_type': 'authorization_code',
-            'redirect_uri': f'http://192.168.0.10:8080/success',
+            'redirect_uri': f'https://mrbot.xyz/success',
             'scope': 'identify, guilds',
             'code': code
         }
