@@ -36,3 +36,15 @@ class Context(commands.Context):
     
     async def paginate_embeds(self, **kwargs):
         await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
+
+    async def send_bin(self, content=None, **kwargs):
+
+        if content:
+            if len(content) > 2000:
+                async with self.bot.session.post('https://mystb.in/documents', data=content.encode('utf-8')) as post:
+                    post = await post.json()
+                return await self.send(content=f'<https://mystb.in/{post["key"]}>', **kwargs)
+            else:
+                return await self.send(content=content, **kwargs)
+        else:
+            await self.send(content=content, **kwargs)
