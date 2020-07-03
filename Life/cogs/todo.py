@@ -46,12 +46,13 @@ class Todo(commands.Cog):
         return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=title)
 
     @todo.command(name='add', aliases=['make', 'create'])
-    async def todo_add(self, ctx, *, content: str):
+    async def todo_add(self, ctx, *, content: commands.clean_content):
         """
         Creates a todo.
 
         `content`: The content of your todo. Can not be more than 200 characters.
         """
+        content = str(content)
 
         if len(content) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
@@ -119,7 +120,7 @@ class Todo(commands.Cog):
         return await ctx.send(embed=embed)
 
     @todo.command(name='edit')
-    async def todo_edit(self, ctx, todo_id: str, *, content: str):
+    async def todo_edit(self, ctx, todo_id: str, *, content: commands.clean_content):
         """
         Edits the todo with the given id.
 
@@ -130,6 +131,8 @@ class Todo(commands.Cog):
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
             raise exceptions.ArgumentError('You do not have any todos.')
+
+        content = str(content)
 
         if len(content) > 180:
             return await ctx.send('Your todo can not be more than 180 characters long.')
