@@ -18,41 +18,15 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 ```
 pip install -U -r requirements.txt
 ```
-2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/blob/master/Life/config/config_example.py).
+2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/tree/master/Life/config).
 
-3. Fill in the config file with the correct information as seen below.
-```python
-TOKEN = "BOT_TOKEN"
-PREFIX = "BOT_PREFIX"
-
-SPOTIFY_ID = "SPOTIFY APP ID"
-SPOTIFY_SECRET = "SPOTIFY API SECRET"
-
-DATABASE = {
-    "host": "DATABASE IP",
-    "user": "DATABASE USER",
-    "password": "DATABASE PASSWORD",
-    "database": "DATABASE NAME"
-}
-
-NODES = {
-    "NODE 1": {
-        "host": "LAVALINK NODE IP",
-        "port": 00000, # LAVALINK NODE PORT
-        "password": "LAVALINK NODE PASSWORD",
-        "identifier": "LAVALINK NODE IDENTIFIER"
-    }
-}
-
-EXTENSIONS = ['cogs.information', ...]
-```
+3. Fill in the config file with the correct information.
 
 ## Built with
 * [asyncpg](https://github.com/MagicStack/asyncpg)
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [jishaku](https://github.com/Gorialis/jishaku)
 * [psutil](https://github.com/giampaolo/psutil)
-* [matplotlib](https://github.com/matplotlib/matplotlib)
 * [wand](https://github.com/emcconville/wand)
 * [tabulate](https://github.com/astanin/python-tabulate)
 * [spotify](https://github.com/mental32/spotify.py)
