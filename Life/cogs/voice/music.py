@@ -17,10 +17,13 @@ import asyncio
 import re
 
 import diorite
+import humanize
+import discord
 import spotify
 from discord.ext import commands
 
 from cogs.utilities import checks
+from cogs.utilities.exceptions import LifeVoiceError
 
 
 class Music(commands.Cog):
@@ -36,57 +39,82 @@ class Music(commands.Cog):
 
         self.bot.spotify_url_regex = re.compile(r'https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)')
         self.bot.youtube_url_regex = re.compile(r'^(https?://)?(www\.)?(youtube\.com|youtu\.?be).+$')
+
         asyncio.create_task(self.load_nodes())
 
     async def load_nodes(self):
 
         for node in self.bot.config.node_info.values():
             try:
-                await self.bot.diorite.create_node(host=node['host'], password=node['password'],
-                                                   port=node['port'], identifier=node['identifier'])
+                await self.bot.diorite.create_node(**node)
                 print(f'[DIORITE] Node {node["identifier"]} connected.')
             except diorite.NodeCreationError as e:
                 print(f'[DIORITE] {e}')
-                continue
             except diorite.NodeConnectionError as e:
                 print(f'[DIORITE] {e}')
-                continue
+
+    @commands.Cog.listener()
+    async def on_diorite_track_start(self, event: diorite.TrackStartEvent):
+        self.bot.dispatch('life_track_start', event.player.guild.id)
+
+    @commands.Cog.listener()
+    async def on_diorite_track_end(self, event: diorite.TrackEndEvent):
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+
+    @commands.Cog.listener()
+    async def on_diorite_track_stuck(self, event: diorite.TrackStuckEvent):
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+        await event.player.channel.send(f'The current track got stuck while playing. This should not happen so you'
+                                        f'should use `{self.bot.config.prefix}support` for more help.')
+
+    @commands.Cog.listener()
+    async def on_diorite_track_error(self, event: diorite.TrackExceptionEvent):
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+        await event.player.channel.send(f'Something went wrong while playing a track. Error: `{event.error}`')
+
+    @commands.Cog.listener()
+    async def on_diorite_websocket_closed(self, event: diorite.WebSocketClosedEvent):
+        if event.code == 1000:
+            return
+        await event.player.channel.send(f'Your nodes websocket decided to disconnect, This should not happen so you'
+                                        f'should use `{self.bot.config.prefix}support` for more help.')
+        await event.player.destroy()
+        event.player.task.cancel()
 
     @commands.command(name='join', aliases=['connect'])
-    @checks.is_member_connected()
     async def join(self, ctx):
         """
         Joins your voice channel.
         """
 
-        channel = ctx.author.voice.channel
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel:
+            raise LifeVoiceError('You must be in a voice channel to use this command.')
 
-        if not ctx.player.is_connected:
-            ctx.player.text_channel = ctx.channel
-            await ctx.player.connect(channel)
-            return await ctx.send(f'Joined your voice channel `{channel}`.')
+        if ctx.player.is_connected:
 
-        if ctx.player.voice_channel.id != channel.id:
-            return await ctx.send(f'I am already in the voice channel `{ctx.player.voice_channel}`. '
-                                  f'Please disconnect me from that channel and then use this command.')
+            if channel.id != ctx.player.voice_channel.id:
+                return await ctx.send(f'I am already in the voice channel `{ctx.player.voice_channel}`.')
 
-        return await ctx.send('I am already in your voice channel.')
+            return await ctx.send('I am already in your voice channel.')
+
+        ctx.player.text_channel = ctx.channel
+        await ctx.player.connect(channel)
+        return await ctx.send(f'Joined your voice channel `{channel}`.')
 
     @commands.command(name='play')
-    @checks.is_member_connected()
     async def play(self, ctx, *, query: str):
         """
-        Plays a track with the given search. Support spotify links.
+        Plays/queues a track with the given search. Supports spotify.
 
         `query`: The name/link of the track you want to play. Spotify links will search youtube with the track name.
         """
 
         if not ctx.player.is_connected:
-            ctx.player.text_channel = ctx.channel
-            await ctx.player.connect(ctx.author.voice.channel)
-
-        if ctx.author.voice.channel != ctx.player.voice_channel:
-            raise commands.CheckFailure(f'You are not connected to the same voice channel as me.')
+            await ctx.invoke(self.join)
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         async with ctx.channel.typing():
 
@@ -99,30 +127,33 @@ class Music(commands.Cog):
                 elif search.source_type in ('album', 'playlist'):
                     message = f'Added the spotify {search.source_type} **{search.result.name}** to the queue ' \
                               f'with a total of **{len(search.tracks)}** track(s).'
-
-                ctx.player.queue.extend(search.tracks)
-                return await ctx.send(message)
+                tracks = search.tracks
 
             elif search.source == 'youtube':
 
-                if search.source_type == 'playlist':
+                if search.source_type == 'track':
+                    message = f'Added the youtube track **{search.tracks[0].title}** to the queue.'
+                    tracks = [search.tracks[0]]
+
+                elif search.source_type == 'playlist':
                     message = f'Added the youtube playlist **{search.result.name}** to the queue ' \
                               f'with a total of **{len(search.tracks)}** track(s)'
-                    ctx.player.queue.extend(search.tracks)
-                elif search.source_type == 'track':
-                    message = f'Added the youtube track **{search.tracks[0].title}** to the queue.'
-                    ctx.player.queue.put(search.tracks[0])
+                    tracks = search.tracks
 
-                return await ctx.send(message)
+            ctx.player.queue.extend(tracks)
+            return await ctx.send(message)
 
     @commands.command(name='leave', aliases=['disconnect', 'dc'])
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def leave(self, ctx):
         """
-        Leaves the current voice channel.
+        Leaves the voice channel.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         ctx.player.queue.clear()
         ctx.player.task.cancel()
@@ -131,19 +162,23 @@ class Music(commands.Cog):
         return await ctx.player.destroy()
 
     @commands.command(name='skip', aliases=['stop'])
-    @checks.is_player_playing()
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def skip(self, ctx, amount: int = 1):
         """
         Skips to the next track in the queue.
 
-        `amount`: The amount of tracks to skip. You must be the requester of all the tracks to do this.
+        `amount`: The amount of tracks to skip.
         """
 
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
+        if not ctx.player.is_playing:
+            raise LifeVoiceError(f'There are no tracks currently playing.')
+
         if ctx.player.current.requester.id != ctx.author.id:
-            return await ctx.send('https://cdn.discordapp.com/emojis/697246680084643951.png?v=1 <@238356301439041536>')
+            return await ctx.send('Yell at my owner to do vote skipping.')
 
         if amount <= 0 or amount > ctx.player.queue.size + 1:
             return await ctx.send(f'There are not enough tracks in the queue to skip that many. Choose a number between'
@@ -159,14 +194,16 @@ class Music(commands.Cog):
         return await ctx.send(f'The current tracks requester has skipped `{amount}` track(s).')
 
     @commands.command(name='pause')
-    @checks.is_player_playing()
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def pause(self, ctx):
         """
         Pauses the player.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.paused is True:
             return await ctx.send('The player is already paused.')
@@ -175,14 +212,16 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now paused.')
 
     @commands.command(name='unpause', aliases=['resume'])
-    @checks.is_player_playing()
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
-    async def un_pause(self, ctx):
+    async def unpause(self, ctx):
         """
         Resumes the player.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.paused is False:
             return await ctx.send('The player is not paused.')
@@ -191,16 +230,20 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now un-paused')
 
     @commands.command(name='seek')
-    @checks.is_player_playing()
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def seek(self, ctx, seconds: int = None):
         """
         Changes the position of the player.
 
         `position`: The position to seek the track to in seconds.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
+        if not ctx.player.is_playing:
+            raise LifeVoiceError(f'There are no tracks currently playing.')
 
         if not ctx.player.current.is_seekable:
             return await ctx.send('This track is not seekable.')
@@ -219,15 +262,18 @@ class Music(commands.Cog):
                               f'`{self.bot.utils.format_time(milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def volume(self, ctx, volume: int = None):
         """
         Changes the volume of the player.
 
         `volume`: The volume to change too, between 0 and 100.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if not volume and not volume == 0:
             return await ctx.send(f'The players current volume is `{ctx.player.volume}%`.')
@@ -239,17 +285,17 @@ class Music(commands.Cog):
         return await ctx.send(f'The players volume is now `{ctx.player.volume}%`.')
 
     @commands.command(name='now_playing', aliases=['np'])
-    @checks.is_player_playing()
-    @checks.is_player_connected()
     async def now_playing(self, ctx):
         """
         Displays the music controller
         """
 
-        if not ctx.player.current:
-            return await ctx.send('The player is not currently playing anything.')
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        if not ctx.player.is_playing:
+            raise LifeVoiceError(f'There are no tracks currently playing.')
 
-        return await ctx.player.invoke_controller(ctx.player.current)
+        return await ctx.player.invoke_controller(ctx.channel)
 
     @commands.command(name='queue', aliases=["q"])
     @checks.is_player_connected()
@@ -258,6 +304,11 @@ class Music(commands.Cog):
         Displays the players queue.
         """
 
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        if not ctx.player.is_playing:
+            raise LifeVoiceError(f'There are no tracks currently playing.')
+
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
 
@@ -265,7 +316,7 @@ class Music(commands.Cog):
                 f'`{self.bot.utils.format_time(round(ctx.player.current.length) / 1000)}` | ' \
                 f'`Requested by:` {ctx.player.current.requester.mention}\n\n' \
                 f'__**Up next:**__: Showing `{min([10, ctx.player.queue.size])}` out of ' \
-                f'`{ctx.player.queue.size}` track(s) in the queue.\n' \
+                f'`{ctx.player.queue.size}` track(s) in the queue.\n'
 
         entries = []
         for index, track in enumerate(ctx.player.queue.queue_list):
@@ -281,13 +332,16 @@ class Music(commands.Cog):
         return await ctx.paginate_embed(header=title, footer=footer, entries=entries, entries_per_page=10)
 
     @commands.command(name='shuffle')
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def shuffle(self, ctx):
         """
         Shuffles the players queue.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
@@ -296,13 +350,16 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been shuffled.')
 
     @commands.command(name='clear')
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def clear(self, ctx):
         """
         Clears the players queue.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
@@ -311,13 +368,16 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been cleared.')
 
     @commands.command(name='reverse')
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def reverse(self, ctx):
         """
         Reverses the players queue.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
@@ -326,13 +386,16 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been reversed.')
 
     @commands.command(name='loop', aliases=['repeat'])
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def loop(self, ctx):
         """
         Loops the players queue.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue_loop is True:
             ctx.player.queue_loop = False
@@ -342,15 +405,18 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue will start looping.')
 
     @commands.command(name='remove')
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def remove(self, ctx, entry: int = 0):
         """
         Remove a track from the queue.
 
         `entry`: The position of the track you want to remove.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
@@ -363,9 +429,6 @@ class Music(commands.Cog):
         return await ctx.send(f'Removed `{item.title}` from the queue.')
 
     @commands.command(name='move')
-    @checks.is_member_in_channel()
-    @checks.is_member_connected()
-    @checks.is_player_connected()
     async def move(self, ctx, entry_1: int = 0, entry_2: int = 0):
         """
         Move a track in the queue to a different position
@@ -373,6 +436,12 @@ class Music(commands.Cog):
         `entry_1`: The position of the track you want to move from.
         `entry_2`: The position of the track you want to move too.
         """
+
+        if not ctx.player.is_connected:
+            raise LifeVoiceError('I am not connected to any voice channels.')
+        channel = getattr(ctx.author.voice, 'channel')
+        if not channel or channel.id != ctx.player.voice_channel.id:
+            raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
             return await ctx.send('The players queue is empty.')
@@ -389,6 +458,36 @@ class Music(commands.Cog):
         ctx.player.queue.put_pos(item, entry_2 - 1)
 
         return await ctx.send(f'Moved `{item.title}` from position `{entry_1}` to position `{entry_2}`.')
+
+    @commands.command(name='musicinfo', aliases=['mi'])
+    async def musicinfo(self, ctx):
+        """
+        Display stats about the bots music cog.
+        """
+
+        uptime = self.bot.utils.format_time(round(ctx.player.node.stats.uptime / 1000), friendly=True)
+        reservable = humanize.naturalsize(ctx.player.node.stats.memory_reservable)
+        allocated = humanize.naturalsize(ctx.player.node.stats.memory_allocated)
+        used = humanize.naturalsize(ctx.player.node.stats.memory_used)
+        free = humanize.naturalsize(ctx.player.node.stats.memory_free)
+        cpu_cores = ctx.player.node.stats.cpu_cores
+
+        embed = discord.Embed(colour=discord.Color.gold())
+        embed.add_field(name='Lavalink info:',
+                        value=f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n'
+                              f'`Memory used:` {used}\n`Memory free:` {free}\n`CPU Cores:` {cpu_cores}\n'
+                              f'`Uptime:` {uptime}')
+        embed.add_field(name='\u200B', value='\u200B')
+        embed.add_field(name='Diorite stats:',
+                        value=f'`Version:` {diorite.__version__}\n`Players:` {len(self.bot.diorite.players)}\n'
+                              f'`Nodes:` {len(self.bot.diorite.nodes)}')
+
+        for node in self.bot.diorite.nodes.values():
+            active_players = len([player for player in node.players.values() if player.is_connected])
+            embed.add_field(name=f'Node: {node.identifier}',
+                            value=f'`Players:` {len(node.players)}\n`Active players:` {active_players}')
+
+        return await ctx.send(embed=embed)
 
 
 def setup(bot):

@@ -15,39 +15,38 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import asyncio
 
-import diorite
 import discord
 import spotify
 from discord.ext import commands
 
+import diorite
 from cogs.utilities import exceptions
 from cogs.voice.utilities import objects, queue
 
 
 class Player(diorite.Player):
 
-    def __init__(self, node: diorite.Node, guild: discord.Guild):
-        super().__init__(node, guild)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.task = self.bot.loop.create_task(self.player_loop())
-        self.check = lambda guild_id: guild_id == self.guild.id
+
+        self.queue = queue.LifeQueue(self)
+        self.looping = False
 
         self.text_channel = None
 
-        self.queue = queue.LifeQueue(self)
-        self.queue_loop = False
-
     @property
-    def channel(self) -> discord.TextChannel:
+    def channel(self):
         return self.text_channel
 
     @property
-    def is_looping(self) -> str:
-        return 'Yes' if self.queue_loop is True else 'No'
+    def is_paused(self):
+        return 'Yes' if self.paused is True else 'No'
 
     @property
-    def is_paused(self) -> str:
-        return 'Yes' if self.paused is True else 'No'
+    def is_looping(self):
+        return 'Yes' if self.looping is True else 'No'
 
     async def search(self, ctx: commands.Context, search: str) -> objects.LifeSearch:
 
@@ -111,9 +110,9 @@ class Player(diorite.Player):
                 result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
                 return objects.LifeSearch(source='youtube', source_type='track', result=result, tracks=result)
 
-    async def invoke_controller(self, track: objects.LifeTrack):
+    async def invoke_controller(self, channel: discord.TextChannel):
 
-        await asyncio.sleep(0.5)
+        track = self.current
 
         embed = discord.Embed(title='Life bot music controller:', colour=discord.Color.gold())
         embed.set_thumbnail(url=track.thumbnail)
@@ -133,7 +132,7 @@ class Player(diorite.Player):
         embed.add_field(name='\u200B', value='\u200B')
         embed.add_field(name='Queue Length:', value=f'`{self.queue.size}`')
 
-        await self.channel.send(embed=embed)
+        return await self.channel.send(embed=embed)
 
     async def player_loop(self):
 
@@ -141,33 +140,36 @@ class Player(diorite.Player):
 
             if self.queue.is_empty:
                 try:
-                    await self.bot.wait_for(f'life_queue_add', timeout=300.0, check=self.check)
+                    await self.bot.wait_for(f'life_queue_add', timeout=10.0, check=lambda g_id: g_id == self.guild.id)
                 except asyncio.TimeoutError:
                     await self.destroy()
                     self.task.cancel()
+                    break
 
             track = await self.queue.get()
+
             if isinstance(track, objects.SpotifyTrack):
                 try:
                     search = await self.search(ctx=track.ctx, search=f'{track.author} - {track.title}')
                 except exceptions.LifeVoiceError as error:
-                    await self.channel.send(f"{error}")
+                    await self.channel.send(f'{error}')
                     continue
                 else:
                     track = search.tracks[0]
 
-            self.current = track
-            await self.play(self.current)
+            await self.play(track)
+
             try:
-                await self.bot.wait_for('life_track_start', timeout=10.0, check=self.check)
+                await self.bot.wait_for('life_track_start', timeout=10.0, check=lambda g_id: g_id == self.guild.id)
             except asyncio.TimeoutError:
                 await self.channel.send('Something went wrong while playing that track.')
                 continue
 
-            await self.invoke_controller(self.current)
-            await self.bot.wait_for('life_track_end', check=self.check)
+            await self.invoke_controller(self.channel)
 
-            if self.queue_loop is True:
+            if self.looping is True:
                 self.queue.put(self.current)
+
+            await self.bot.wait_for('life_track_end', check=lambda g_id: g_id == self.guild.id)
 
             self.current = None
