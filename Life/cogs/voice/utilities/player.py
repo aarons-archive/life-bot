@@ -132,7 +132,7 @@ class Player(diorite.Player):
         embed.add_field(name='\u200B', value='\u200B')
         embed.add_field(name='Queue Length:', value=f'`{self.queue.size}`')
 
-        return await self.channel.send(embed=embed)
+        return await channel.send(embed=embed)
 
     async def player_loop(self):
 
@@ -140,7 +140,7 @@ class Player(diorite.Player):
 
             if self.queue.is_empty:
                 try:
-                    await self.bot.wait_for(f'life_queue_add', timeout=10.0, check=lambda g_id: g_id == self.guild.id)
+                    await self.bot.wait_for(f'life_queue_add', timeout=300.0, check=lambda g_id: g_id == self.guild.id)
                 except asyncio.TimeoutError:
                     await self.destroy()
                     self.task.cancel()

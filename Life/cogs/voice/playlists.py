@@ -20,7 +20,7 @@ from typing import List, Union
 import discord
 from discord.ext import commands
 
-from cogs.utilities import checks, exceptions
+from cogs.utilities import exceptions
 from cogs.voice.utilities import objects
 
 
@@ -360,7 +360,6 @@ class Playlists(commands.Cog):
             return await ctx.send(message)
 
     @playlist.command(name='queue', aliases=['play'])
-    @checks.is_member_connected()
     async def playlist_queue(self, ctx, *, playlist: commands.clean_content):
 
         playlists = []

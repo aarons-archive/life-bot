@@ -93,9 +93,9 @@ class Music(commands.Cog):
         if ctx.player.is_connected:
 
             if channel.id != ctx.player.voice_channel.id:
-                return await ctx.send(f'I am already in the voice channel `{ctx.player.voice_channel}`.')
+                raise LifeVoiceError(f'I am already in the voice channel `{ctx.player.voice_channel}`.')
 
-            return await ctx.send('I am already in your voice channel.')
+            raise LifeVoiceError('I am already in your voice channel.')
 
         ctx.player.text_channel = ctx.channel
         await ctx.player.connect(channel)
@@ -177,11 +177,11 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'There are no tracks currently playing.')
 
         if ctx.player.current.requester.id != ctx.author.id:
-            return await ctx.send('Yell at my owner to do vote skipping.')
+            raise LifeVoiceError('Yell at my owner to do vote skipping.')
 
         if amount <= 0 or amount > ctx.player.queue.size + 1:
-            return await ctx.send(f'There are not enough tracks in the queue to skip that many. Choose a number between'
-                                  f'`1` and `{ctx.player.queue.size + 1}`.')
+            raise LifeVoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between'
+                                 f'`1` and `{ctx.player.queue.size + 1}`.')
 
         for index, track in enumerate(ctx.player.queue.queue_list[:amount - 1]):
             if not track.requester.id == ctx.author.id:
@@ -205,7 +205,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.paused is True:
-            return await ctx.send('The player is already paused.')
+            raise LifeVoiceError('The player is already paused.')
 
         await ctx.player.set_pause(True)
         return await ctx.send(f'The player is now paused.')
@@ -223,7 +223,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.paused is False:
-            return await ctx.send('The player is not paused.')
+            raise LifeVoiceError('The player is not paused.')
 
         await ctx.player.set_pause(False)
         return await ctx.send(f'The player is now un-paused')
@@ -245,7 +245,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'There are no tracks currently playing.')
 
         if not ctx.player.current.is_seekable:
-            return await ctx.send('This track is not seekable.')
+            raise LifeVoiceError('This track is not seekable.')
 
         if not seconds and not seconds == 0:
             return await ctx.send(f'The current tracks position is '
@@ -253,7 +253,7 @@ class Music(commands.Cog):
 
         milliseconds = seconds * 1000
         if milliseconds < 0 or milliseconds > ctx.player.current.length:
-            return await ctx.send(f'The current track is not long enough the seek to that position. Please choose a '
+            raise LifeVoiceError(f'The current track is not long enough the seek to that position. Please choose a '
                                   f'number between `1` and `{round(ctx.player.current.length / 1000)}`.')
 
         await ctx.player.seek(milliseconds)
@@ -278,7 +278,7 @@ class Music(commands.Cog):
             return await ctx.send(f'The players current volume is `{ctx.player.volume}%`.')
 
         if volume < 0 or volume > 100:
-            return await ctx.send(f'That was not a valid volume, Please choose a number between `1` and and `100`.')
+            raise LifeVoiceError(f'That was not a valid volume, Please choose a number between `1` and and `100`.')
 
         await ctx.player.set_volume(volume)
         return await ctx.send(f'The players volume is now `{ctx.player.volume}%`.')
@@ -308,7 +308,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'There are no tracks currently playing.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         title = f'__**Current track:**__\n[{ctx.player.current.title}]({ctx.player.current.uri}) | ' \
                 f'`{self.bot.utils.format_time(round(ctx.player.current.length) / 1000)}` | ' \
@@ -342,7 +342,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         ctx.player.queue.shuffle()
         return await ctx.send(f'The queue has been shuffled.')
@@ -360,7 +360,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         ctx.player.queue.clear()
         return await ctx.send(f'The queue has been cleared.')
@@ -378,7 +378,7 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         ctx.player.queue.reverse()
         return await ctx.send(f'The queue has been reversed.')
@@ -395,11 +395,11 @@ class Music(commands.Cog):
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.player.queue_loop is True:
-            ctx.player.queue_loop = False
+        if ctx.player.looping is True:
+            ctx.player.looping = False
             return await ctx.send(f'The queue will stop looping.')
 
-        ctx.player.queue_loop = True
+        ctx.player.looping = True
         return await ctx.send(f'The queue will start looping.')
 
     @commands.command(name='remove')
@@ -417,11 +417,11 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         if entry <= 0 or entry > ctx.player.queue.size:
-            return await ctx.send(f'That was not a valid track entry number. Choose a number between `1` and '
-                                  f'`{ctx.player.queue.size + 1}` ')
+            raise LifeVoiceError(f'That was not a valid track entry number. Choose a number between `1` and '
+                                 f'`{ctx.player.queue.size + 1}` ')
 
         item = await ctx.player.queue.get_pos(entry - 1)
         return await ctx.send(f'Removed `{item.title}` from the queue.')
@@ -442,15 +442,15 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if ctx.player.queue.is_empty:
-            return await ctx.send('The players queue is empty.')
+            raise LifeVoiceError('The players queue is empty.')
 
         if entry_1 <= 0 or entry_1 > ctx.player.queue.size:
-            return await ctx.send(f'That was not a valid track entry to move from. Choose a number between `1` and '
-                                  f'`{ctx.player.queue.size + 1}` ')
+            raise LifeVoiceError(f'That was not a valid track entry to move from. Choose a number between `1` and '
+                                 f'`{ctx.player.queue.size + 1}` ')
 
         if entry_2 <= 0 or entry_2 > ctx.player.queue.size:
-            return await ctx.send(f'That was not a valid track entry to move too. Choose a number between `1` and '
-                                  f'`{ctx.player.queue.size + 1}` ')
+            raise LifeVoiceError(f'That was not a valid track entry to move too. Choose a number between `1` and '
+                                 f'`{ctx.player.queue.size + 1}` ')
 
         item = await ctx.player.queue.get_pos(entry_1 - 1)
         ctx.player.queue.put_pos(item, entry_2 - 1)
