@@ -22,7 +22,6 @@ import discord
 import spotify
 from discord.ext import commands
 
-from cogs.utilities import checks
 from cogs.utilities.exceptions import LifeVoiceError
 
 
