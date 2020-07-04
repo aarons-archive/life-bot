@@ -297,7 +297,6 @@ class Music(commands.Cog):
         return await ctx.player.invoke_controller(ctx.channel)
 
     @commands.command(name='queue', aliases=["q"])
-    @checks.is_player_connected()
     async def queue(self, ctx):
         """
         Displays the players queue.
