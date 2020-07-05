@@ -21,6 +21,7 @@ import sys
 import time
 
 import aiohttp
+import aredis
 import asyncpg
 import discord
 import psutil
@@ -53,6 +54,7 @@ class Life(commands.AutoShardedBot):
         self.utils = utils.Utils(self)
 
         self.db = None
+        self.redis = None
         self.guild_blacklist = {}
         self.user_blacklist = {}
 
@@ -110,7 +112,10 @@ class Life(commands.AutoShardedBot):
 
         try:
             self.db = await asyncpg.create_pool(**self.config.database_info)
-            print(f'\n[DB] Connected to the database.\n')
+        except Exception as e:
+            print(f'\n[DB] An error occurred while connecting to postgresql: {e}\n')
+        else:
+            print(f'\n[DB] Connected to the postgresql database.\n')
 
             blacklisted_users = await self.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
             for user in blacklisted_users:
@@ -122,8 +127,14 @@ class Life(commands.AutoShardedBot):
                 self.guild_blacklist[guild['id']] = guild['reason']
             print(f'[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n')
 
-        except Exception as e:
-            print(f'\n[DB] An error occurred: {e}\n')
+        try:
+            redis = aredis.StrictRedis(**self.config.redis_info)
+            await redis.set('connected', True)
+        except aredis.ConnectionError:
+            print(f'[REDIS] An error occurred while connecting to redis.\n')
+        else:
+            self.redis = redis
+            print(f'[REDIS] Connected to the redis database.\n')
 
         for extension in self.config.extensions:
             try:
@@ -137,6 +148,10 @@ class Life(commands.AutoShardedBot):
     async def close(self):
 
         print("\n[BOT] Closing bot down.")
+
+        music = self.get_cog('Music')
+        if music:
+            await music.unload()
 
         print("[EXT] Unloading all extensions.")
         for extension in self.config.extensions:

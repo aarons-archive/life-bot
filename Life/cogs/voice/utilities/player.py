@@ -17,7 +17,6 @@ import asyncio
 
 import discord
 import spotify
-from discord.ext import commands
 
 import diorite
 from cogs.utilities import exceptions
@@ -29,7 +28,7 @@ class Player(diorite.Player):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.task = self.bot.loop.create_task(self.player_loop())
+        self.task = self.bot.loop.create_task(self.loop())
 
         self.queue = queue.LifeQueue(self)
         self.looping = False
@@ -48,7 +47,11 @@ class Player(diorite.Player):
     def is_looping(self):
         return 'Yes' if self.looping is True else 'No'
 
-    async def search(self, ctx: commands.Context, search: str) -> objects.LifeSearch:
+    async def teardown(self):
+        await self.destroy()
+        self.task.cancel()
+
+    async def search(self, requester: discord.Member, search: str) -> objects.LifeSearch:
 
         spotify_url_regex = self.bot.spotify_url_regex.match(search)
         if spotify_url_regex is not None:
@@ -77,7 +80,7 @@ class Player(diorite.Player):
                 images = track.images[0].url if track.images else None
                 track_info = {'identifier': track.id, 'author': author, 'length': track.duration,
                               'title': track.name, 'uri': track.url, 'thumbnail': images}
-                spotify_tracks.append(objects.SpotifyTrack(ctx=ctx, info=track_info))
+                spotify_tracks.append(objects.SpotifyTrack(requester=requester, info=track_info))
 
             return objects.LifeSearch(source='spotify', source_type=source_type, tracks=spotify_tracks, result=result)
 
@@ -104,10 +107,12 @@ class Player(diorite.Player):
             if result is None:
                 raise exceptions.LifeVoiceError(f'The youtube search `{search}` found no tracks.')
             elif isinstance(result, diorite.Playlist):
-                result = objects.LifePlaylist(playlist_info=result.playlist_info, tracks=result.raw_tracks, ctx=ctx)
+                result = objects.LifePlaylist(playlist_info=result.playlist_info,
+                                              tracks=result.raw_tracks, requester=requester)
                 return objects.LifeSearch(source='youtube', source_type='playlist', result=result, tracks=result.tracks)
             else:
-                result = [objects.LifeTrack(track_id=track.track_id, info=track.info, ctx=ctx) for track in result]
+                result = [objects.LifeTrack(track_id=track.track_id, info=track.info,
+                                            requester=requester) for track in result]
                 return objects.LifeSearch(source='youtube', source_type='track', result=result, tracks=result)
 
     async def invoke_controller(self, channel: discord.TextChannel):
@@ -134,7 +139,7 @@ class Player(diorite.Player):
 
         return await channel.send(embed=embed)
 
-    async def player_loop(self):
+    async def loop(self):
 
         while True:
 
@@ -142,15 +147,14 @@ class Player(diorite.Player):
                 try:
                     await self.bot.wait_for(f'life_queue_add', timeout=300.0, check=lambda g_id: g_id == self.guild.id)
                 except asyncio.TimeoutError:
-                    await self.destroy()
-                    self.task.cancel()
+                    await self.teardown()
                     break
 
             track = await self.queue.get()
 
             if isinstance(track, objects.SpotifyTrack):
                 try:
-                    search = await self.search(ctx=track.ctx, search=f'{track.author} - {track.title}')
+                    search = await self.search(requester=track.requester, search=f'{track.author} - {track.title}')
                 except exceptions.LifeVoiceError as error:
                     await self.channel.send(f'{error}')
                     continue
@@ -167,9 +171,9 @@ class Player(diorite.Player):
 
             await self.invoke_controller(self.channel)
 
-            if self.looping is True:
-                self.queue.put(self.current)
-
             await self.bot.wait_for('life_track_end', check=lambda g_id: g_id == self.guild.id)
+
+            if self.looping is True and self.current is not None:
+                self.queue.put(self.current)
 
             self.current = None

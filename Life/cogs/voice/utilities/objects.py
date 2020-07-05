@@ -24,21 +24,26 @@ from diorite import objects
 
 class SpotifyTrack:
 
-    __slots__ = ('source', 'identifier', 'author', 'length', 'title', 'uri', 'thumbnail', 'ctx', 'requester', 'channel')
+    __slots__ = ('track_id', 'info', 'identifier', 'is_seekable', 'author', 'length', 'is_stream', 'position',
+                 'title', 'uri', 'thumbnail', 'source', 'ctx', 'requester', 'channel')
 
-    def __init__(self, info: dict, ctx: commands.Context):
+    def __init__(self, info: dict, requester: discord.Member):
+
+        self.track_id = None
+        self.info = info
 
         self.identifier = info.get('identifier')
+        self.is_seekable = info.get('isSeekable')
         self.author = info.get('author')
         self.length = info.get('length')
+        self.is_stream = info.get('isStream')
         self.title = info.get('title')
+        self.position = info.get('position')
         self.uri = info.get('uri')
         self.thumbnail = info.get('thumbnail')
-        self.source = 'spotify'
 
-        self.ctx = ctx
-        self.requester = ctx.author
-        self.channel = ctx.channel
+        self.requester = requester
+        self.source = 'spotify'
 
     def __repr__(self):
         return f'<LifeSpotifyTrack title={self.title!r} author={self.author!r} uri=<{self.uri!r}> length={self.length}>'
@@ -48,12 +53,10 @@ class LifeTrack(objects.Track):
 
     __slots__ = ('source', 'ctx', 'requester', 'channel')
 
-    def __init__(self, track_id: str, info: dict, ctx: commands.Context):
+    def __init__(self, track_id: str, info: dict, requester: discord.Member):
         super().__init__(track_id, info)
 
-        self.ctx = ctx
-        self.requester: discord.Member = ctx.author
-        self.channel: discord.TextChannel = ctx.channel
+        self.requester = requester
         self.source = 'youtube'
 
     def __repr__(self):
@@ -64,11 +67,10 @@ class LifePlaylist(objects.Playlist):
 
     __slots__ = ('source', 'ctx', 'tracks')
 
-    def __init__(self, playlist_info: dict, tracks: List[objects.Track], ctx: commands.Context):
+    def __init__(self, playlist_info: dict, tracks: List[objects.Track], requester: discord.Member):
         super().__init__(playlist_info, tracks)
 
-        self.ctx = ctx
-        self.tracks = [LifeTrack(track_id=track['track'], info=track['info'], ctx=self.ctx)
+        self.tracks = [LifeTrack(track_id=track['track'], info=track['info'], requester=requester)
                        for track in self.raw_tracks]
 
     def __repr__(self):
