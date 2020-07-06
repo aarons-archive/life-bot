@@ -110,7 +110,7 @@ class Music(commands.Cog):
 
             player_json = json.dumps(player_data)
 
-            await self.bot.redis.hset('queue_retention', player.guild.id, player_json)
+            await self.bot.redis.hset(f'player_retention_{self.bot.user.id}', player.guild.id, player_json)
             print(f'[PLAYER RETENTION] Player: \'{player.guild.id}\' saved.')
 
         for player in self.bot.diorite.players.copy().values():
@@ -135,7 +135,7 @@ class Music(commands.Cog):
             print('\n[PLAYER RETENTION] Redis not connected, player retention disabled.')
             return
 
-        players = await self.bot.redis.hgetall('queue_retention')
+        players = await self.bot.redis.hgetall(f'player_retention_{self.bot.user.id}')
 
         if not players:
             print('\n[PLAYER RETENTION] Found no players to load.')
@@ -148,7 +148,7 @@ class Music(commands.Cog):
             guild_id = guild_id.decode('utf-8')
             guild = self.bot.get_guild(int(guild_id))
             if not guild:
-                await self.bot.redis.hdel('queue_retention', guild_id)
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild_id)
                 print(f'[PLAYER RETENTION] Guild: \'{guild_id}\' is no longer available.')
                 continue
 
@@ -158,14 +158,14 @@ class Music(commands.Cog):
             voice_channel_id = player_data.get('voice_channel_id')
             voice_channel = self.bot.get_channel(voice_channel_id)
             if not voice_channel:
-                await self.bot.redis.hdel('queue_retention', guild.id)
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 print(f'[PLAYER RETENTION] Voice channel: \'{voice_channel_id}\' is no longer available.')
                 continue
 
             text_channel_id = player_data.get('text_channel_id')
             text_channel = self.bot.get_channel(text_channel_id)
             if not text_channel:
-                await self.bot.redis.hdel('queue_retention', guild.id)
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 print(f'[PLAYER RETENTION] Text channel: \'{voice_channel_id}\' is no longer available.')
                 continue
 
@@ -235,7 +235,7 @@ class Music(commands.Cog):
             await player.channel.send('Player was successfully reloaded.')
             print(f'[PLAYER RETENTION] Player: \'{guild_id}\' successfully loaded.')
 
-            await self.bot.redis.hdel('queue_retention', guild.id)
+            await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
 
     @commands.command(name='join', aliases=['connect'])
     async def join(self, ctx):
@@ -411,7 +411,7 @@ class Music(commands.Cog):
         milliseconds = seconds * 1000
         if milliseconds < 0 or milliseconds > ctx.player.current.length:
             raise LifeVoiceError(f'The current track is not long enough the seek to that position. Please choose a '
-                                  f'number between `1` and `{round(ctx.player.current.length / 1000)}`.')
+                                 f'number between `1` and `{round(ctx.player.current.length / 1000)}`.')
 
         await ctx.player.seek(milliseconds)
         return await ctx.send(f'The current tracks position is now '

@@ -17,7 +17,6 @@ from typing import List, Union
 
 import discord
 import spotify
-from discord.ext import commands
 
 from diorite import objects
 
