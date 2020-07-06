@@ -16,14 +16,8 @@ class Success(endpoint.BaseEndpoint, ABC):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        data = {
-            'client_id': self.bot.config.client_id,
-            'client_secret': self.bot.config.client_secret,
-            'grant_type': 'authorization_code',
-            'redirect_uri': f'https://www.mrbot.xyz/success',
-            'scope': 'identify, guilds',
-            'code': code
-        }
+        data = self.bot.config.auth_data.copy()
+        data['code'] = code
 
         async with self.bot.session.post(self.bot.config.discord_auth_url, data=data, headers=headers) as response:
             access_token_response = await response.json()
