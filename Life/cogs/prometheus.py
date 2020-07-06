@@ -13,9 +13,11 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
-from discord.ext import commands
-import prometheus_client
+import sys
+
 import discord
+import prometheus_client
+from discord.ext import commands
 
 
 class Prometheus(commands.Cog):
@@ -26,12 +28,15 @@ class Prometheus(commands.Cog):
                                                            namespace='life', labelnames=['event'])
         self.bot.counts = prometheus_client.Gauge('counts', documentation='Life counts',
                                                   namespace='life', labelnames=['count'])
+        self.bot.info = prometheus_client.Info('misc', documentation='Life info',
+                                               namespace='life')
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(sum([len(guild.members) for guild in self.bot.guilds]))
+        self.bot.info.info({'os': sys.platform})
         self.bot.counts.labels(count='members').set(sum([len(guild.members) for guild in self.bot.guilds]))
         self.bot.counts.labels(count='users').set(len(self.bot.users))
+        self.bot.counts.labels(count='guilds').set(len(self.bot.guilds))
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
@@ -49,6 +54,15 @@ class Prometheus(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         self.bot.counts.labels(count='members').dec()
         self.bot.counts.labels(count='users').dec()
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        self.bot.counts.labels(count='guilds').inc()
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        self.bot.counts.labels(count='guilds').dec()
+
 
 def setup(bot):
     bot.add_cog(Prometheus(bot))
