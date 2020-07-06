@@ -21,7 +21,6 @@ class Success(endpoint.BaseEndpoint, ABC):
 
         async with self.bot.session.post(self.bot.config.discord_auth_url, data=data, headers=headers) as response:
             access_token_response = await response.json()
-            print(access_token_response)
 
         if access_token_response.get('error') is not None:
             self.set_status(400)

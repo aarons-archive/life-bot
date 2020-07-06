@@ -12,4 +12,3 @@ def generate_track_html(handler, track: Union[objects.SpotifyTrack, objects.Spot
     </div>
     """
     return html
-
