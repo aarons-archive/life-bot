@@ -16,6 +16,8 @@ You should have received a copy of the GNU Affero General Public License along w
 import sys
 
 import discord
+import json
+import time
 import prometheus_client
 from discord.ext import commands
 
@@ -37,6 +39,7 @@ class Prometheus(commands.Cog):
         self.bot.counts.labels(count='members').set(sum([len(guild.members) for guild in self.bot.guilds]))
         self.bot.counts.labels(count='users').set(len(self.bot.users))
         self.bot.counts.labels(count='guilds').set(len(self.bot.guilds))
+        self.bot.counts.labels(count='shards').set(len(self.bot.shards))
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
@@ -44,6 +47,11 @@ class Prometheus(commands.Cog):
         event = message.get('t', 'None')
         if event is not None:
             self.bot.socket_events.labels(event=event).inc()
+
+        op = message.get('op')
+
+        if op == 11:
+            self.bot.counts.labels(count='latency').set(self.bot.latency)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):

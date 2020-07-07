@@ -8,8 +8,8 @@ class Metrics(BaseEndpoint, ABC):
 
     async def get(self):
 
-        output = prometheus_client.generate_latest(prometheus_client.REGISTRY)
-        self.write(output)
+        self.set_header(name='Content-Type', value=prometheus_client.CONTENT_TYPE_LATEST)
+        self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
 def setup(**kwargs):
