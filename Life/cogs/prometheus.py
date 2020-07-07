@@ -16,10 +16,9 @@ You should have received a copy of the GNU Affero General Public License along w
 import sys
 
 import discord
-import json
 import time
 import prometheus_client
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 
 class Prometheus(commands.Cog):
@@ -30,8 +29,12 @@ class Prometheus(commands.Cog):
                                                            namespace='life', labelnames=['event'])
         self.bot.counts = prometheus_client.Gauge('counts', documentation='Life counts',
                                                   namespace='life', labelnames=['count'])
+        self.bot.stats = prometheus_client.Counter('stats', documentation='Life stats',
+                                                   namespace='life', labelnames=['stat'])
         self.bot.info = prometheus_client.Info('misc', documentation='Life info',
                                                namespace='life')
+
+        self.get_stats.start()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -48,9 +51,7 @@ class Prometheus(commands.Cog):
         if event is not None:
             self.bot.socket_events.labels(event=event).inc()
 
-        op = message.get('op')
-
-        if op == 11:
+        if message.get('op') == 11:
             self.bot.counts.labels(count='latency').set(self.bot.latency)
 
     @commands.Cog.listener()
@@ -70,6 +71,40 @@ class Prometheus(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         self.bot.counts.labels(count='guilds').dec()
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        self.bot.stats.labels(stat='messages').inc()
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context):
+        self.bot.stats.labels(stat='commands').inc()
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, error):
+        self.bot.stats.labels(stat='commands_errored').inc()
+
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx: commands.Context):
+        self.bot.stats.labels(stat='commands_completed').inc()
+
+    @tasks.loop(seconds=20)
+    async def get_stats(self):
+
+        with self.bot.process.oneshot():
+            memory_info = self.bot.process.memory_full_info()
+            physical_memory = memory_info.rss
+            virtual_memory = memory_info.vms
+            unique_memory = memory_info.uss
+            cpu = self.bot.process.cpu_percent(interval=None)
+
+        self.bot.counts.labels(count='threads').set(self.bot.process.num_threads())
+        self.bot.counts.labels(count='physical_memory').set(physical_memory)
+        self.bot.counts.labels(count='virtual_memory').set(virtual_memory)
+        self.bot.counts.labels(count='unique_memory').set(unique_memory)
+        self.bot.counts.labels(count='cpu').set(cpu)
+
+        self.bot.counts.labels(count='uptime').set(round(time.time() - self.bot.start_time))
 
 
 def setup(bot):
