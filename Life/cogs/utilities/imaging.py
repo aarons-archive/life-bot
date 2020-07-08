@@ -16,27 +16,23 @@ You should have received a copy of the GNU Affero General Public License along w
 import io
 import multiprocessing
 import typing
+import aiohttp
 
 import discord
 from discord.ext import commands
+from wand.exceptions import MissingDelegateError
 from wand.color import Color
 from wand.image import Image
 from wand.sequence import SingleImage
 
-from cogs.utilities import exceptions
+
+from cogs.utilities.exceptions import ArgumentError, LifeImageError
 
 
 def blur(image: typing.Union[Image, SingleImage], amount: float):
 
     image.blur(sigma=amount)
     return image, f'Amount: {amount}'
-
-
-def edge(image: typing.Union[Image, SingleImage], level: float):
-
-    image.transform_colorspace('gray')
-    image.edge(radius=level)
-    return image, f'Level: {level}'
 
 
 def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
@@ -159,7 +155,6 @@ def floor(image: typing.Union[Image, SingleImage]):
 
 image_operations = {
     'blur': blur,
-    'edge': edge,
     'emboss': emboss,
     'kuwahara': kuwahara,
     'sharpen': sharpen,
@@ -181,30 +176,42 @@ image_operations = {
 }
 
 
-def do_edit_image(edit_function: typing.Any, image_bytes: bytes, queue: multiprocessing.Queue, **kwargs):
+def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: multiprocessing.Pipe, **kwargs):
 
-    image_original = io.BytesIO(image_bytes)
-    image_edited = io.BytesIO()
+    try:
 
-    with Image(file=image_original) as old_image:
-        with Image() as new_image:
-            image_format = old_image.format
+        image_original = io.BytesIO(image_bytes)
+        image_edited = io.BytesIO()
 
-            if image_format == 'GIF':
-                old_image.coalesce()
-                for old_frame in old_image.sequence:
-                    new_frame, image_text = edit_function(old_frame, **kwargs)
-                    new_image.sequence.append(new_frame)
-                image_format = new_image.format
-                new_image.save(file=image_edited)
-            else:
-                new_image, image_text = edit_function(old_image, **kwargs)
-                image_format = new_image.format
-                new_image.save(file=image_edited)
+        with Image(file=image_original) as old_image:
+            with Image() as new_image:
 
-    image_edited.seek(0)
-    queue.put((image_edited, image_format, image_text))
-    return
+                image_format = old_image.format
+                if image_format == 'GIF':
+                    old_image.coalesce()
+                    for old_frame in old_image.sequence:
+                        new_frame, image_text = edit_function(old_frame, **kwargs)
+                        new_image.sequence.append(new_frame)
+                    image_format = new_image.format
+                    new_image.save(file=image_edited)
+                else:
+                    new_image, image_text = edit_function(old_image, **kwargs)
+                    image_format = new_image.format
+                    new_image.save(file=image_edited)
+
+        image_edited.seek(0)
+
+        child_pipe.send({
+            'image': image_edited,
+            'format': image_format,
+            'text': image_text
+        })
+
+        image_original.close()
+        image_edited.close()
+
+    except MissingDelegateError:
+        child_pipe.send(LifeImageError())
 
 
 class Imaging:
@@ -212,49 +219,51 @@ class Imaging:
     def __init__(self, bot):
         self.bot = bot
 
-        self.queue = multiprocessing.Queue()
+    async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
 
-    async def get_image_url(self, ctx: commands.Context, argument: str):
+        if ctx.message.attachments:
+            url = ctx.message.attachments[0].url
 
-        if not argument:
-            argument = ctx.author.id
+        if url is None:
+            url = self.bot.utils.member_avatar(ctx.author)
 
         try:
-            member = await commands.MemberConverter().convert(ctx, str(argument))
-            argument = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
-        except commands.BadArgument:
-            pass
+            async with self.bot.session.get(url) as response:
+                image_bytes = await response.read()
+        except Exception:
+            raise ArgumentError(f'Something went wrong while trying to get that image. Check the url.')
+        else:
+            if not response.headers.get('Content-Type') in ['image/png', 'image/gif', 'image/jpeg', 'image/webp', 'video/quicktime']:
+                raise LifeImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
-        check_if_url = self.bot.image_url_regex.match(argument)
-        if check_if_url is None:
-            raise exceptions.ArgumentError('You provided an invalid argument. Please provide a members name, id or '
-                                           'mention or an image url.')
+        parent_pipe, child_pipe = multiprocessing.Pipe()
+        args = (image_operations[edit_type], image_bytes, child_pipe)
 
-        return argument
+        process = multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True, args=args)
+        process.start()
 
-    async def get_image_bytes(self, url: str):
+        data = await self.bot.loop.run_in_executor(None, parent_pipe.recv)
+        if isinstance(data, LifeImageError):
+            process.terminate()
+            raise LifeImageError('Something went wrong while trying to process that image.')
 
-        async with self.bot.session.get(url) as response:
-            image_bytes = await response.read()
+        process.join()
 
-        return image_bytes
+        image = data['image']
+        image_format = data['format']
+        image_text = data['text']
 
-    async def edit_image(self, ctx: commands.Context, image: str, edit_type: str, **kwargs):
+        url = 'https://idevision.net/api/media/post'
+        headers = {"Authorization": self.bot.config.idevision_auth}
+        upload_data = aiohttp.FormData()
+        upload_data.add_field('file', image, filename=f'image.{image_format.lower()}')
 
-        if edit_type not in image_operations.keys():
-            raise exceptions.ArgumentError(f"'{edit_type}' is not a valid image operation")
+        async with self.bot.session.post(url, data=upload_data, headers=headers) as response:
+            if response.status == 413:
+                raise LifeImageError('The image produced was over 100MB which is too large to send.')
+            post = await response.json()
 
-        image_url = await self.get_image_url(ctx=ctx, argument=image)
-        image_bytes = await self.get_image_bytes(url=image_url)
-
-        multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True,
-                                args=(image_operations[edit_type], image_bytes, self.queue)).start()
-
-        image_edited, image_format, image_text = await self.bot.loop.run_in_executor(None, self.queue.get)
-
-        file = discord.File(filename=f'{edit_type}_image.{image_format.lower()}', fp=image_edited)
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_footer(text=image_text)
-        embed.set_image(url=f'attachment://{edit_type}_image.{image_format.lower()}')
-
-        return file, embed
+        embed.set_image(url=post.get('url'))
+        return embed

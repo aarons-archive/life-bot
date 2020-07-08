@@ -13,13 +13,35 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
-import functools
 import re
+import typing
+import yarl
+from abc import ABC
 
-import discord
 from discord.ext import commands
 
 from cogs.utilities import exceptions, imaging
+
+
+class ImageConverter(commands.Converter, ABC):
+
+    async def convert(self, ctx: commands.Context, argument: str):
+
+        url = None
+
+        try:
+            member = await ctx.bot.member_converter.convert(ctx, str(argument))
+        except commands.BadArgument:
+            pass
+        else:
+            url = ctx.bot.utils.member_avatar(member=member)
+
+        if url is None:
+            check = yarl.URL(argument)
+            if check.scheme and check.host:
+                url = argument
+
+        return url
 
 
 class Images(commands.Cog):
@@ -27,18 +49,18 @@ class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.image_url_regex = re.compile('(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*\.(?:jpe?g|gif|png|webm))(?:\?([^#]*))?(?:#(.*))?')
+        self.bot.member_converter = commands.MemberConverter()
         self.bot.hex_colour_regex = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$')
         self.bot.imaging = imaging.Imaging(self.bot)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blur')
-    async def blur(self, ctx, image: str = None, amount: float = 2.0):
+    async def blur(self, ctx, image: typing.Optional[ImageConverter], amount: float = 2.0):
         """
         Blurs the given image.
 
-        `image`: Can either be a direct image url, or a members name, id or mention.
+        `image`: Can be a direct image url, or a members name, id, mention or an attachment.
         `amount`: The amount to blur the image by.
         """
 
@@ -46,33 +68,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Amount must be between `0.0` and `50.0`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='blur', amount=amount)
-            return await ctx.send(file=file, embed=embed)
-
-    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
-    @commands.command(name='edge')
-    async def edge(self, ctx, image: str = None, level: float = 1.0):
-        """
-        Converts the image to greyscale and detects edges.
-
-        `image`: Can either be a direct image url, or a members name, id or mention.
-        `level`: The level of filter to apply to detect edges, best to be left at 1.
-        """
-
-        if level < 0 or level > 20:
-            raise exceptions.ArgumentError('Level must be between `0` and `20`.')
-
-        async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='edge', level=level)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='blur', amount=amount)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='emboss')
-    async def emboss(self, ctx, image: str = None, radius: float = 3, sigma: float = 1.5):
+    async def emboss(self, ctx, image: typing.Optional[ImageConverter], radius: float = 3, sigma: float = 1.5):
         """
         Converts the image to greyscale and creates a 3d effect.
 
@@ -87,14 +89,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `30`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='emboss', radius=radius, sigma=sigma)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='emboss', radius=radius,
+                                                            sigma=sigma)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='kuwahara')
-    async def kuwahara(self, ctx, image: str = None, radius: float = 2, sigma: float = 1.5):
+    async def kuwahara(self, ctx, image: typing.Optional[ImageConverter], radius: float = 2, sigma: float = 1.5):
         """
         Smooths the given image while preserving edges.
 
@@ -110,14 +112,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `20`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='kuwahara', radius=radius, sigma=sigma)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='kuwahara', radius=radius,
+                                                            sigma=sigma)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sharpen')
-    async def sharpen(self, ctx, image: str = None, radius: float = 8, sigma: float = 4):
+    async def sharpen(self, ctx, image: typing.Optional[ImageConverter], radius: float = 8, sigma: float = 4):
         """
         Sharpens the given image.
 
@@ -133,14 +135,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `50`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='sharpen', radius=radius, sigma=sigma)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='sharpen', radius=radius,
+                                                            sigma=sigma)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='spread')
-    async def spread(self, ctx, image: str = None, radius: float = 2.0):
+    async def spread(self, ctx, image: typing.Optional[ImageConverter], radius: float = 2.0):
         """
         Replaces each pixel with one from the surrounding area.
 
@@ -152,19 +154,21 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Radius must be between `0` and `50`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='spread', radius=radius)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='spread', radius=radius)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='noise')
-    async def noise(self, ctx, image: str = None, method: str = 'gaussian', attenuate: float = 0.5):
+    async def noise(self, ctx, image: typing.Optional[ImageConverter], method: str = 'gaussian', attenuate: float = 0.5):
         """
         Adds random noise to the given image.
 
         `image`: Can either be a direct image url, or a members name, id or mention.
-        `method`: The method to generate noise with.
+        `method`: The method to generate noise with
         `attenuate`: The rate of noise distribution.
+
+        Methods: `uniform`, `gaussian`, `multiplicative_gaussian`, `impulse`, `laplacian`, `poisson`, `random`
         """
 
         methods = ['uniform', 'gaussian', 'multiplicative_gaussian', 'impulse', 'laplacian', 'poisson', 'random']
@@ -176,14 +180,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Attenuate must be between `0.0` and `1.0`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='noise', method=method, attenuate=attenuate)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='noise', method=method,
+                                                            attenuate=attenuate)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blueshift')
-    async def blueshift(self, ctx, image: str = None, factor: float = 1.25):
+    async def blueshift(self, ctx, image: typing.Optional[ImageConverter], factor: float = 1.25):
         """
         Creates a moonlight effect by shifting blue colours.
 
@@ -195,13 +199,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Factor must be be between `0` and `20`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='blueshift', factor=factor)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='blueshift', factor=factor)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='charcoal')
-    async def charcoal(self, ctx, image: str = None, radius: float = 1.5, sigma: float = 0.5):
+    async def charcoal(self, ctx, image: typing.Optional[ImageConverter], radius: float = 1.5, sigma: float = 0.5):
         """
         Redraw the image as if it were drawn with charcoal.
 
@@ -217,14 +221,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `-5.0` and `5.0`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
-                                                            edit_type='charcoal', radius=radius, sigma=sigma)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='charcoal', radius=radius,
+                                                            sigma=sigma)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='colorize')
-    async def colorize(self, ctx, image: str = None, color: str = None):
+    async def colorize(self, ctx, image: typing.Optional[ImageConverter], color: str = None):
         """
         Colorizes the given image with a random color.
 
@@ -239,13 +243,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError(f'The hex code `{color}` is invalid. Please use the format `#FFFFFF`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='colorize', color=color)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='colorize', color=color)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='implode')
-    async def implode(self, ctx, image: str = None, amount: float = 0.4):
+    async def implode(self, ctx, image: typing.Optional[ImageConverter], amount: float = 0.4):
         """
         Pulls or pushes pixels from the center the image.
 
@@ -258,13 +262,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Amount must be between `-20` and `20`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='implode', amount=amount)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='implode', amount=amount)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='polaroid')
-    async def polaroid(self, ctx, image: str = None, angle: float = 0.0, *, caption: str = None):
+    async def polaroid(self, ctx, image: typing.Optional[ImageConverter], angle: float = 0.0, *, caption: str = None):
         """
         Puts the image in the center of a polaroid-like card.
 
@@ -280,14 +284,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Caption must be `100` characters or less.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
                                                             edit_type='polaroid', angle=angle, caption=caption)
-            return await ctx.send(file=file, embed=embed)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sepiatone')
-    async def sepia_tone(self, ctx, image: str = None, threshold: float = 0.8):
+    async def sepia_tone(self, ctx, image: typing.Optional[ImageConverter], threshold: float = 0.8):
         """
         Applies a filter that simulates chemical photography.
 
@@ -299,14 +303,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Threshold must be between `0.0` and `1.0`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
                                                             edit_type='sepiatone', threshold=threshold)
-            return await ctx.send(file=file, embed=embed)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='solarize')
-    async def solarize(self, ctx, image: str = None, threshold: float = 0.5):
+    async def solarize(self, ctx, image: typing.Optional[ImageConverter], threshold: float = 0.5):
         """
         Replaces pixels above the threshold with negated ones.
 
@@ -318,14 +322,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Threshold must be between `0.0` and `1.0`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image,
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
                                                             edit_type='solarize', threshold=threshold)
-            return await ctx.send(file=file, embed=embed)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='swirl')
-    async def swirl(self, ctx, image: str = None, degree: int = 45):
+    async def swirl(self, ctx, image: typing.Optional[ImageConverter], degree: int = 45):
         """
         Swirls pixels around the center of the image.
 
@@ -337,13 +341,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Degree must be between `-360` and `360`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='swirl', degree=degree)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='swirl', degree=degree)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='wave')
-    async def wave(self, ctx, image: str = None):
+    async def wave(self, ctx, image: typing.Optional[ImageConverter]):
         """
         Creates a wave like effect on the image.
 
@@ -351,13 +355,13 @@ class Images(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='wave')
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='wave')
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flip')
-    async def flip(self, ctx, image: str = None):
+    async def flip(self, ctx, image: typing.Optional[ImageConverter]):
         """
         Flips the image along the x-axis.
 
@@ -365,13 +369,13 @@ class Images(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='flip')
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='flip')
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flop')
-    async def flop(self, ctx, image: str = None):
+    async def flop(self, ctx, image: typing.Optional[ImageConverter]):
         """
         Flips the image along the y-axis.
 
@@ -379,13 +383,13 @@ class Images(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='flop')
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='flop')
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='rotate')
-    async def rotate(self, ctx, image: str = None, degree: int = 45):
+    async def rotate(self, ctx, image: typing.Optional[ImageConverter], degree: int = 45):
         """
         Rotates the image an amount of degrees.
 
@@ -397,20 +401,20 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Degree must be between `-360` and `360`.')
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='rotate', degree=degree)
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='rotate', degree=degree)
+            return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='floor')
-    async def floor(self, ctx, image: str = None):
+    async def floor(self, ctx, image: typing.Optional[ImageConverter]):
         """
         Warps and tiles the image which makes it like a floor.
         """
 
         async with ctx.channel.typing():
-            file, embed = await self.bot.imaging.edit_image(ctx=ctx, image=image, edit_type='floor')
-            return await ctx.send(file=file, embed=embed)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='floor')
+            return await ctx.send(embed=embed)
 
 
 def setup(bot):
