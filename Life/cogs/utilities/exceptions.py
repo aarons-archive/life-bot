@@ -12,9 +12,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
 """
+from discord.ext import commands
 
 
-class LifeError(Exception):
+class LifeError(commands.CommandError):
     """Base exception for errors within the Life bot."""
 
 
