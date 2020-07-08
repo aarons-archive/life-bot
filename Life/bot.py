@@ -14,7 +14,6 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
-import collections
 import logging
 import os
 import sys
@@ -24,7 +23,6 @@ import aiohttp
 import aredis
 import asyncpg
 import discord
-import psutil
 from discord.ext import commands
 
 from cogs.utilities import utils
@@ -46,21 +44,19 @@ class Life(commands.AutoShardedBot):
 
         self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.log = logging.getLogger("Life")
-        self.process = psutil.Process()
-        self.start_time = time.time()
 
         self.config = config.LifeConfig(self)
         self.utils = utils.Utils(self)
 
-        self.db = None
-        self.redis = None
+        self.log = logging.getLogger("Life")
+        self.start_time = time.time()
+
         self.guild_blacklist = {}
         self.user_blacklist = {}
+        self.redis = None
+        self.db = None
 
-        self.socket_stats = collections.Counter()
         self.owner_ids = {238356301439041536}
-
         self.allowed_blacklisted_commands = ['help', 'appeal', 'support']
         self.allowed_dm_commands = ['help', 'support', 'invite']
 

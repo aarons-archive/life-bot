@@ -29,6 +29,8 @@ class Information(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.bot.process = psutil.Process()
+
         self.bot.support_url = 'https://discord.gg/xP8xsHr'
         self.bot.source_url = 'https://github.com/iDevision/Life'
         self.bot.upvote_url = 'https://top.gg/bot/628284183579721747'

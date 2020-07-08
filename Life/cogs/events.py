@@ -13,6 +13,7 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
+import collections
 import traceback
 from datetime import datetime
 
@@ -27,6 +28,7 @@ class Events(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.bot.socket_stats = collections.Counter()
 
     @commands.Cog.listener()
     async def on_ready(self):
