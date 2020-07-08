@@ -147,7 +147,7 @@ class Todo(commands.Cog):
 
         todo = todos[todo_id]
 
-        query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $2 and time_added = $3'
+        query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $3 and time_added = $3'
         await self.bot.db.execute(query, content, ctx.message.jump_url, todo['owner_id'], todo['time_added'])
 
         embed = discord.Embed(title=f'Updated your todo.', colour=discord.Colour.gold())
