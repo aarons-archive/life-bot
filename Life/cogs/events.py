@@ -187,6 +187,7 @@ class Events(commands.Cog):
 
         error_messages = {
             exceptions.ArgumentError: f'{error}',
+            exceptions.LifeImageError: f'{error}',
             exceptions.LifePlaylistError: f'{error}',
             exceptions.LifeVoiceError: f'{error}',
             commands.CheckFailure: f'{error}',

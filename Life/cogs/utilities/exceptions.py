@@ -23,6 +23,10 @@ class ArgumentError(LifeError):
     """Raised when an argument errors."""
 
 
+class LifeImageError(LifeError):
+    """Base exception for errors in the Life image cog."""
+
+
 class LifeVoiceError(LifeError):
     """Base exception for errors in the Life voice cog."""
 
