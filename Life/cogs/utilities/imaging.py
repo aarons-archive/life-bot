@@ -16,15 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 import io
 import multiprocessing
 import typing
-import aiohttp
 
+import aiohttp
 import discord
 from discord.ext import commands
-from wand.exceptions import MissingDelegateError
 from wand.color import Color
+from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
-
 
 from cogs.utilities.exceptions import ArgumentError, LifeImageError
 
@@ -233,7 +232,7 @@ class Imaging:
         except Exception:
             raise ArgumentError(f'Something went wrong while trying to get that image. Check the url.')
         else:
-            if not response.headers.get('Content-Type') in ['image/png', 'image/gif', 'image/jpeg', 'image/webp', 'video/quicktime']:
+            if not response.headers.get('Content-Type') in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
                 raise LifeImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
         parent_pipe, child_pipe = multiprocessing.Pipe()
@@ -248,6 +247,7 @@ class Imaging:
             raise LifeImageError('Something went wrong while trying to process that image.')
 
         process.join()
+        process.close()
 
         image = data['image']
         image_format = data['format']

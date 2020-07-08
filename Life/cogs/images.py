@@ -15,9 +15,9 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import re
 import typing
-import yarl
 from abc import ABC
 
+import yarl
 from discord.ext import commands
 
 from cogs.utilities import exceptions, imaging
