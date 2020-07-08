@@ -14,13 +14,14 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import sys
+import time
 
 import discord
-import time
 import prometheus_client
 from discord.ext import commands, tasks
 
 
+# noinspection PyUnusedLocal
 class Prometheus(commands.Cog):
 
     def __init__(self, bot):
@@ -88,7 +89,7 @@ class Prometheus(commands.Cog):
     async def on_command_completion(self, ctx: commands.Context):
         self.bot.stats.labels(stat='commands_completed').inc()
 
-    @tasks.loop(seconds=20)
+    @tasks.loop(seconds=5)
     async def get_stats(self):
 
         with self.bot.process.oneshot():
