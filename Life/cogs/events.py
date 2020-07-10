@@ -56,7 +56,7 @@ class Events(commands.Cog):
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
         embed.title = f'Joined a guild'
-        embed.description = f'**Name:** {guild.name}\n**ID:** {guild.id}\n**Owner:** {guild.owner}\n`Time:` {time}'
+        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
 
         self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         await self.bot.log_channel.send(embed=embed)
@@ -210,6 +210,8 @@ class Events(commands.Cog):
         if error_message is not None:
             return await ctx.send(error_message)
 
+        traceback.print_exception(type(error), error, error.__traceback__)
+
         await ctx.send(f'Something went wrong while executing that command. Please use `{prefix}support` for more '
                        f'help/information.')
 
@@ -225,8 +227,6 @@ class Events(commands.Cog):
 
         error_traceback = f'```{"".join(traceback.format_exception(type(error), error, error.__traceback__))}```'
         await self.bot.error_channel.send(error_traceback)
-
-        traceback.print_exception(type(error), error, error.__traceback__)
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
