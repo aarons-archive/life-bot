@@ -10,3 +10,6 @@ setproctitle>=1.1.10
 spotify>=0.10.2
 tabulate>=0.8.7
 tornado>=6.0.4
+yarl>=1.4.2
+Wand>=0.6.1
+setuptools>=47.3.1
