@@ -15,33 +15,10 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import re
 import typing
-from abc import ABC
 
-import yarl
 from discord.ext import commands
 
-from cogs.utilities import exceptions, imaging
-
-
-class ImageConverter(commands.Converter, ABC):
-
-    async def convert(self, ctx: commands.Context, argument: str):
-
-        url = None
-
-        try:
-            member = await ctx.bot.member_converter.convert(ctx, str(argument))
-        except commands.BadArgument:
-            pass
-        else:
-            url = ctx.bot.utils.member_avatar(member=member)
-
-        if url is None:
-            check = yarl.URL(argument)
-            if check.scheme and check.host:
-                url = argument
-
-        return url
+from cogs.utilities import exceptions, imaging, converters
 
 
 class Images(commands.Cog):
@@ -56,7 +33,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blur')
-    async def blur(self, ctx, image: typing.Optional[ImageConverter], amount: float = 2.0):
+    async def blur(self, ctx, image: typing.Optional[converters.ImageConverter], amount: float = 2.0):
         """
         Blurs the given image.
 
@@ -74,7 +51,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='emboss')
-    async def emboss(self, ctx, image: typing.Optional[ImageConverter], radius: float = 3, sigma: float = 1.5):
+    async def emboss(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1.5):
         """
         Converts the image to greyscale and creates a 3d effect.
 
@@ -96,7 +73,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='kuwahara')
-    async def kuwahara(self, ctx, image: typing.Optional[ImageConverter], radius: float = 2, sigma: float = 1.5):
+    async def kuwahara(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 2, sigma: float = 1.5):
         """
         Smooths the given image while preserving edges.
 
@@ -113,13 +90,13 @@ class Images(commands.Cog):
 
         async with ctx.channel.typing():
             embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='kuwahara', radius=radius,
-                                                            sigma=sigma)
+                                                      sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sharpen')
-    async def sharpen(self, ctx, image: typing.Optional[ImageConverter], radius: float = 8, sigma: float = 4):
+    async def sharpen(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 8, sigma: float = 4):
         """
         Sharpens the given image.
 
@@ -136,13 +113,13 @@ class Images(commands.Cog):
 
         async with ctx.channel.typing():
             embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='sharpen', radius=radius,
-                                                            sigma=sigma)
+                                                      sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='spread')
-    async def spread(self, ctx, image: typing.Optional[ImageConverter], radius: float = 2.0):
+    async def spread(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 2.0):
         """
         Replaces each pixel with one from the surrounding area.
 
@@ -160,7 +137,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='noise')
-    async def noise(self, ctx, image: typing.Optional[ImageConverter], method: str = 'gaussian', attenuate: float = 0.5):
+    async def noise(self, ctx, image: typing.Optional[converters.ImageConverter], method: str = 'gaussian', attenuate: float = 0.5):
         """
         Adds random noise to the given image.
 
@@ -181,13 +158,13 @@ class Images(commands.Cog):
 
         async with ctx.channel.typing():
             embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='noise', method=method,
-                                                            attenuate=attenuate)
+                                                      attenuate=attenuate)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blueshift')
-    async def blueshift(self, ctx, image: typing.Optional[ImageConverter], factor: float = 1.25):
+    async def blueshift(self, ctx, image: typing.Optional[converters.ImageConverter], factor: float = 1.25):
         """
         Creates a moonlight effect by shifting blue colours.
 
@@ -205,7 +182,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='charcoal')
-    async def charcoal(self, ctx, image: typing.Optional[ImageConverter], radius: float = 1.5, sigma: float = 0.5):
+    async def charcoal(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 1.5, sigma: float = 0.5):
         """
         Redraw the image as if it were drawn with charcoal.
 
@@ -228,7 +205,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='colorize')
-    async def colorize(self, ctx, image: typing.Optional[ImageConverter], color: str = None):
+    async def colorize(self, ctx, image: typing.Optional[converters.ImageConverter], color: str = None):
         """
         Colorizes the given image with a random color.
 
@@ -249,7 +226,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='implode')
-    async def implode(self, ctx, image: typing.Optional[ImageConverter], amount: float = 0.4):
+    async def implode(self, ctx, image: typing.Optional[converters.ImageConverter], amount: float = 0.4):
         """
         Pulls or pushes pixels from the center the image.
 
@@ -268,7 +245,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='polaroid')
-    async def polaroid(self, ctx, image: typing.Optional[ImageConverter], angle: float = 0.0, *, caption: str = None):
+    async def polaroid(self, ctx, image: typing.Optional[converters.ImageConverter], angle: float = 0.0, *, caption: str = None):
         """
         Puts the image in the center of a polaroid-like card.
 
@@ -284,14 +261,14 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Caption must be `100` characters or less.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
-                                                            edit_type='polaroid', angle=angle, caption=caption)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='polaroid', angle=angle,
+                                                      caption=caption)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='sepiatone')
-    async def sepia_tone(self, ctx, image: typing.Optional[ImageConverter], threshold: float = 0.8):
+    async def sepia_tone(self, ctx, image: typing.Optional[converters.ImageConverter], threshold: float = 0.8):
         """
         Applies a filter that simulates chemical photography.
 
@@ -303,14 +280,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Threshold must be between `0.0` and `1.0`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
-                                                            edit_type='sepiatone', threshold=threshold)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='sepiatone', threshold=threshold)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='solarize')
-    async def solarize(self, ctx, image: typing.Optional[ImageConverter], threshold: float = 0.5):
+    async def solarize(self, ctx, image: typing.Optional[converters.ImageConverter], threshold: float = 0.5):
         """
         Replaces pixels above the threshold with negated ones.
 
@@ -322,14 +298,13 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Threshold must be between `0.0` and `1.0`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image,
-                                                            edit_type='solarize', threshold=threshold)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='solarize', threshold=threshold)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='swirl')
-    async def swirl(self, ctx, image: typing.Optional[ImageConverter], degree: int = 45):
+    async def swirl(self, ctx, image: typing.Optional[converters.ImageConverter], degree: int = 45):
         """
         Swirls pixels around the center of the image.
 
@@ -347,7 +322,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='wave')
-    async def wave(self, ctx, image: typing.Optional[ImageConverter]):
+    async def wave(self, ctx, image: typing.Optional[converters.ImageConverter]):
         """
         Creates a wave like effect on the image.
 
@@ -361,7 +336,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flip')
-    async def flip(self, ctx, image: typing.Optional[ImageConverter]):
+    async def flip(self, ctx, image: typing.Optional[converters.ImageConverter]):
         """
         Flips the image along the x-axis.
 
@@ -375,7 +350,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='flop')
-    async def flop(self, ctx, image: typing.Optional[ImageConverter]):
+    async def flop(self, ctx, image: typing.Optional[converters.ImageConverter]):
         """
         Flips the image along the y-axis.
 
@@ -389,7 +364,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='rotate')
-    async def rotate(self, ctx, image: typing.Optional[ImageConverter], degree: int = 45):
+    async def rotate(self, ctx, image: typing.Optional[converters.ImageConverter], degree: int = 45):
         """
         Rotates the image an amount of degrees.
 
@@ -407,7 +382,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='floor')
-    async def floor(self, ctx, image: typing.Optional[ImageConverter]):
+    async def floor(self, ctx, image: typing.Optional[converters.ImageConverter]):
         """
         Warps and tiles the image which makes it like a floor.
         """
