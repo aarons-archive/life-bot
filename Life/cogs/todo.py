@@ -42,8 +42,7 @@ class Todo(commands.Cog):
         for index, todo in enumerate(todos):
             entries.append(f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}')
 
-        title = f"{ctx.author}'s todo list."
-        return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=title)
+        return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=f'{ctx.author}\'s todo list.')
 
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx, *, content: commands.clean_content):
