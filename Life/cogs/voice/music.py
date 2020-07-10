@@ -55,8 +55,8 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_diorite_track_stuck(self, event: diorite.TrackStuckEvent):
         self.bot.dispatch('life_track_end', event.player.guild.id)
-        await event.player.channel.send(f'The current track got stuck while playing. This should not happen so you'
-                                        f'should use `{self.bot.config.prefix}support` for more help.')
+        await event.player.channel.send(f'The current track got stuck while playing. You can use '
+                                        f'`{self.bot.config.prefix}support` for more help.')
 
     @commands.Cog.listener()
     async def on_diorite_track_error(self, event: diorite.TrackExceptionEvent):
@@ -67,8 +67,8 @@ class Music(commands.Cog):
     async def on_diorite_websocket_closed(self, event: diorite.WebSocketClosedEvent):
         if event.code == 1000:
             return
-        await event.player.channel.send(f'Your nodes websocket decided to disconnect, This should not happen so you'
-                                        f'should use `{self.bot.config.prefix}support` for more help.')
+        await event.player.channel.send(f'Your nodes websocket decided to disconnect. You can use '
+                                        f'`{self.bot.config.prefix}support` for more help.')
         await event.player.destroy()
         event.player.task.cancel()
 
