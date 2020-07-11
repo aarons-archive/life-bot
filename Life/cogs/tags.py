@@ -132,6 +132,83 @@ class Tags(commands.Cog):
         embed.add_field(name='New content:', value=f'{content}', inline=False)
         return await ctx.send(embed=embed)
 
+    @tag.command(name='claim')
+    async def tag_claim(self, ctx, *, name: converters.TagName):
+        """
+        Claim a tag if it's owner has left the server.
+
+        `name`: The name of the tag to claim.
+        """
+
+        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        tag = await self.bot.db.fetchrow(query, ctx.guild.id, name)
+        if not tag:
+            raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
+
+        owner = ctx.guild.get_member(tag['owner_id'])
+        if owner is not None:
+            raise exceptions.ArgumentError(f'The owner of that tag is still in the server.')
+
+        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
+        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name)
+
+        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag claimed:')
+        embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
+        embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
+        return await ctx.send(embed=embed)
+
+    @tag.command(name='alias')
+    async def tag_alias(self, ctx, alias: converters.TagName, original: converters.TagName):
+        """
+        Alias a name to a tag.
+
+        `alias`: The alias of the tag you want.
+        `name`: The name of the tag to point the alias at.
+        """
+
+        query = 'SELECT * FROM tags WHERE server_id = $1 AND alias = $2'
+        alias_tag = await self.bot.db.fetchrow(query, ctx.guild.id, alias)
+        if alias_tag:
+            raise exceptions.ArgumentError(f'There is already a tag alias in this server with the name `{alias}`.')
+
+        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        original_tag = await self.bot.db.fetchrow(query, ctx.guild.id, original)
+        if not original_tag:
+            raise exceptions.ArgumentError(f'There are no tags in this server with the name `{original}`.')
+
+        query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
+        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, datetime.now())
+
+        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag alias created:')
+        embed.add_field(name='Alias:', value=f'{alias}', inline=False)
+        embed.add_field(name='Links to:', value=f'{original}', inline=False)
+        return await ctx.send(embed=embed)
+
+    @tag.command(name='transfer')
+    async def tag_transfer(self, ctx, name: converters.TagName, *, member: discord.Member):
+        """
+        Transfer a tag to another member.
+
+        `name`: The name of the tag to transfer.
+        `member`: The member to transfer the tag too. Can be a name, id or mention.
+        """
+
+        if member.bot:
+            raise exceptions.ArgumentError('You can not transfer tags to bots.')
+
+        query = 'SELECT * FROM tags WHERE server_id = $1 AND owner_id = $2 and name = $3'
+        tag = await self.bot.db.fetchrow(query, ctx.guild.id, ctx.author.id, name)
+        if not tag:
+            raise exceptions.ArgumentError(f'You do not have any tags in this server with the name `{name}`.')
+
+        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
+        await self.bot.db.execute(query, member.id, ctx.guild.id, name)
+
+        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag transferred:')
+        embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
+        embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
+        return await ctx.send(embed=embed)
+
     @tag.command(name='delete', aliases=['remove'])
     async def tag_delete(self, ctx, *, name: converters.TagName):
         """
@@ -208,7 +285,7 @@ class Tags(commands.Cog):
     @tag.command(name='info')
     async def tag_info(self, ctx, *, name: converters.TagName):
         """
-        Display information about a tag.
+        Displays information about a tag.
 
         `name`: The name of the tag to get the information for.
         """
@@ -225,83 +302,6 @@ class Tags(commands.Cog):
         embed.title = f'{tag["name"]}'
         embed.description = f'`Owner:` {owner.mention if owner else "None"}\n`Claimable:` {owner is None}\n' \
                             f'`Alias:` {tag["alias"]}'
-        return await ctx.send(embed=embed)
-
-    @tag.command(name='alias')
-    async def tag_alias(self, ctx, alias: converters.TagName, original: converters.TagName):
-        """
-        Alias a name to a tag.
-
-        `alias`: The alias of the tag you want.
-        `name`: The name of the tag to point the alias at.
-        """
-
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND alias = $2'
-        alias_tag = await self.bot.db.fetchrow(query, ctx.guild.id, alias)
-        if alias_tag:
-            raise exceptions.ArgumentError(f'There is already a tag alias in this server with the name `{alias}`.')
-
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
-        original_tag = await self.bot.db.fetchrow(query, ctx.guild.id, original)
-        if not original_tag:
-            raise exceptions.ArgumentError(f'There are no tags in this server with the name `{original}`.')
-
-        query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6, $7)'
-        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, 0, datetime.now())
-
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag alias created:')
-        embed.add_field(name='Alias:', value=f'{alias}', inline=False)
-        embed.add_field(name='Links to:', value=f'{original}', inline=False)
-        return await ctx.send(embed=embed)
-
-    @tag.command(name='claim')
-    async def tag_claim(self, ctx, *, name: converters.TagName):
-        """
-        Claim a tag if it's owner has left the server.
-
-        `name`: The name of the tag to claim.
-        """
-
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
-        tag = await self.bot.db.fetchrow(query, ctx.guild.id, name)
-        if not tag:
-            raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
-
-        owner = ctx.guild.get_member(tag['owner_id'])
-        if owner is not None:
-            raise exceptions.ArgumentError(f'The owner of that tag is still in the server.')
-
-        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
-        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name)
-
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag claimed:')
-        embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
-        embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
-        return await ctx.send(embed=embed)
-
-    @tag.command(name='transfer')
-    async def tag_transfer(self, ctx, name: converters.TagName, *, member: discord.Member):
-        """
-        Transfer a tag to another member.
-
-        `name`: The name of the tag to transfer.
-        `member`: The member to transfer the tag too. Can be a name, id or mention.
-        """
-
-        if member.bot:
-            raise exceptions.ArgumentError('You can not transfer tags to bots.')
-
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND owner_id = $2 and name = $3'
-        tag = await self.bot.db.fetchrow(query, ctx.guild.id, ctx.author.id, name)
-        if not tag:
-            raise exceptions.ArgumentError(f'You do not have any tags in this server with the name `{name}`.')
-
-        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
-        await self.bot.db.execute(query, member.id, ctx.guild.id, name)
-
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag transferred:')
-        embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
-        embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
         return await ctx.send(embed=embed)
 
 

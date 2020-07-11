@@ -57,7 +57,7 @@ class Life(commands.AutoShardedBot):
         self.db = None
 
         self.owner_ids = {238356301439041536}
-        self.allowed_blacklisted_commands = ['help', 'appeal', 'support']
+        self.allowed_blacklisted_commands = ['help', 'support']
         self.allowed_dm_commands = ['help', 'support', 'invite']
 
         self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.config.prefix}help')
