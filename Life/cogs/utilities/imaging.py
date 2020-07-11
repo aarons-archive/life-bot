@@ -28,6 +28,12 @@ from wand.sequence import SingleImage
 from cogs.utilities.exceptions import ArgumentError, LifeImageError
 
 
+def edge(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+
+    image.canny(radius=radius, sigma=sigma)
+    return image, f'Radius: {radius} | Sigma: {sigma}'
+
+
 def blur(image: typing.Union[Image, SingleImage], amount: float):
 
     image.blur(sigma=amount)
@@ -154,6 +160,7 @@ def floor(image: typing.Union[Image, SingleImage]):
 
 image_operations = {
     'blur': blur,
+    'edge': edge,
     'emboss': emboss,
     'kuwahara': kuwahara,
     'sharpen': sharpen,
@@ -232,8 +239,14 @@ class Imaging:
         except Exception:
             raise ArgumentError(f'Something went wrong while trying to get that image. Check the url.')
         else:
-            if not response.headers.get('Content-Type') in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
+            content_type = response.headers.get('Content-Type')
+            content_length = response.headers.get('Content-Length')
+
+            if content_type not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
                 raise LifeImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
+
+            if content_length and int(content_length) > 15728640:
+                raise LifeImageError('That file is over 15mb.')
 
         parent_pipe, child_pipe = multiprocessing.Pipe()
         args = (image_operations[edit_type], image_bytes, child_pipe)
@@ -260,7 +273,7 @@ class Imaging:
 
         async with self.bot.session.post(url, data=upload_data, headers=headers) as response:
             if response.status == 413:
-                raise LifeImageError('The image produced was over 100MB which is too large to send.')
+                raise LifeImageError('The image produced was over 20mb.')
             post = await response.json()
 
         embed = discord.Embed(colour=discord.Colour.gold())

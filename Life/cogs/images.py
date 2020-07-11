@@ -32,6 +32,27 @@ class Images(commands.Cog):
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
+    @commands.command(name='edge')
+    async def edge(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1.5):
+        """
+        Outlines edges within an image.
+
+        `image`: Can either be a direct image url, or a members name, id or mention.
+        `radius`: Filter aperture size. Should be larger than sigma.
+        `sigma`: Filter standard deviation. Should be lower than radius.
+        """
+
+        if radius < 0 or radius > 30:
+            raise exceptions.ArgumentError('Radius must be between `0` and `30`.')
+        if sigma < 0 or sigma > 30:
+            raise exceptions.ArgumentError('Sigma must be between `0` and `30`.')
+
+        async with ctx.channel.typing():
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='edge', radius=radius, sigma=sigma)
+            return await ctx.send(embed=embed)
+
+    @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='blur')
     async def blur(self, ctx, image: typing.Optional[converters.ImageConverter], amount: float = 2.0):
         """
@@ -51,7 +72,7 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='emboss')
-    async def emboss(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1.5):
+    async def emboss(self, ctx, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1):
         """
         Converts the image to greyscale and creates a 3d effect.
 
