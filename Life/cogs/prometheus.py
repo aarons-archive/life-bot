@@ -35,7 +35,7 @@ class Prometheus(commands.Cog):
         self.bot.info = prometheus_client.Info('misc', documentation='Life info',
                                                namespace='life')
 
-        self.get_stats.start()
+        self.collect_stats.start()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -90,7 +90,7 @@ class Prometheus(commands.Cog):
         self.bot.stats.labels(stat='commands_completed').inc()
 
     @tasks.loop(seconds=5)
-    async def get_stats(self):
+    async def collect_stats(self):
 
         with self.bot.process.oneshot():
             memory_info = self.bot.process.memory_full_info()
