@@ -9,11 +9,11 @@ class Metrics(BaseEndpoint, ABC):
     async def get(self):
 
         self.set_header(name='Content-Type', value=prometheus_client.CONTENT_TYPE_LATEST)
-        self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
+        return await self.finish(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
 def setup(**kwargs):
-    return r'/metrics', Metrics, kwargs
+    return [(r'/metrics', Metrics, kwargs)]
 
 
 

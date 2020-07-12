@@ -45,9 +45,9 @@
         <div class="container-fluid text-center justify-content-center p-3">
 
             {% if guilds %}
-                {% set guild_ids = [guild.id for guild in bot.guilds] %}
-                {% set guilds_in = [guild for guild in guilds if guild.id in guild_ids] %}
-                {% set guilds_not_in = [guild for guild in guilds if guild.id not in guild_ids] %}
+                {% set guild_ids = [int(guild.id) for guild in bot.guilds] %}
+                {% set guilds_in = [guild for guild in guilds if int(guild.id) in guild_ids] %}
+                {% set guilds_not_in = [guild for guild in guilds if int(guild.id) not in guild_ids] %}
 
                 <div class="row">
                     {% if guilds_in %}
@@ -71,7 +71,7 @@
                         {% for guild in guilds_not_in %}
                             <div class="col-4 col-sm-3 col-md-2 col-lg-2 col-xl-1">
                                 {% if guild.permissions.manage_guild or guild.permissions.administrator %}
-                                    <a href="{{ invite_url }}"><img class="img-fluid rounded-circle" src="{{ guild.icon }}" alt="{{ guild.name }}" style="width:100px"></a>
+                                    <a href="{{ bot.invite_url }}"><img class="img-fluid rounded-circle" src="{{ guild.icon }}" alt="{{ guild.name }}" style="width:100px"></a>
                                 {% else %}
                                     <img class="img-fluid rounded-circle" src="{{ guild.icon }}" alt="{{ guild.name }}" style="width:100px">
                                 {% end %}

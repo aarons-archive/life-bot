@@ -12,13 +12,19 @@ class Dashboard(BaseEndpoint, ABC):
         user = await self.get_user()
         if not user:
             self.set_status(401)
-            return await self.finish({'error': 'you need to like, log in and shit dude.'})
+            return await self.finish({'error': 'you need to login to view this page.'})
 
         guild = self.bot.get_guild(int(guild_id))
-        player = self.bot.diorite.get_player(guild, cls=Player)
+        if not guild:
+            return self.set_status(403)
 
+        member = guild.get_member(int(user.id))
+        if not member:
+            return self.set_status(403)
+
+        player = self.bot.diorite.get_player(guild, cls=Player)
         self.render('dashboard.html', bot=self.bot, user=user, guild=guild, player=player)
 
 
 def setup(**kwargs):
-    return r'/dashboard/(\d+)', Dashboard, kwargs
+    return [(r'/dashboard/(\d+)', Dashboard, kwargs)]

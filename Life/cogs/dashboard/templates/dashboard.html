@@ -21,6 +21,8 @@
         <link rel="manifest" href="{{ static_url('resources/site.webmanifest') }}">
         <link rel="shortcut icon" href="{{ static_url('resources/favicon.ico') }}">
         <!-- Javascript links -->
+        <script type="text/javascript" src="{{ static_url('index.js') }}"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js" integrity="sha384-oesi62hOLfzrys4LxRF63OJCXdXDipiYWBnvTl9Y9/TRlw5xlKIEHpNyvvDShgf/" crossorigin="anonymous"></script>
     </head>
@@ -51,7 +53,7 @@
                     <button class="btn btn-lg btn-block text-light text-left pl-0" type="button" data-toggle="collapse" data-target=".multi-collapse">Life's queue:</button>
                     <div class="list-group pb-3">
                         {% for track in player.queue.queue_list[:10] %}
-                            <a tabindex="0" class="list-group-item list-group-item-action bg-black text-light" data-toggle="popover" data-html="true" data-trigger="focus"
+                            <a tabindex="0" class="list-group-item list-group-item-action bg-black text-light p-3" data-toggle="popover" data-html="true" data-trigger="focus"
                                 data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
                             {% if track.source == 'spotify' %}
                                 <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
@@ -64,7 +66,7 @@
                         {% end %}
 
                         {% for i in range(max(0, 10 - len(player.queue.queue_list))) %}
-                            <a class="list-group-item bg-black text-light">
+                            <a class="list-group-item bg-black text-light p-3">
                                 <img class="img-fluid rounded float-left mr-2" src="{{ static_url('resources/no_image80x45.png') }}" alt="No track image" style="width:80px; height:45px">
                                 <p class="text-truncate">This queue slot is empty </p>
                             </a>
@@ -72,7 +74,7 @@
 
                         {% for track in player.queue.queue_list[10:] %}
                             <span tabindex="0" data-toggle="popover" data-html="true" data-trigger="focus" data-title="<a class='text-light' href='{{ track.uri }}'>{{ track.title }}</a>" data-content="{{ generate_track_html(track) }}">
-                                <a class="list-group-item list-group-item-action collapse multi-collapse bg-black text-light">
+                                <a class="list-group-item list-group-item-action collapse multi-collapse bg-black text-light p-3">
                                     {% if track.source == 'spotify' %}
                                         <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail }}" alt="Track thumbnail" style="width:45px; height:45px">
                                         <p class="text-truncate">{{ track.title }}</p>
@@ -105,13 +107,13 @@
                                         <h5 class="card-subtitle"><a class="card-title text-light" href="{{ player.current.uri }}">{{ player.current.title }}</a></h5>
                                         <p class="card-text">Author: {{ player.current.author }}<br>Length: {{ bot.utils.format_time(round(player.current.length) / 1000) }}<br>Requester: {{ player.current.requester }}</p>
                                     {% else %}
-                                        <h4 class="card-title">No track playing currently.</h4>
+                                        <h4 class="card-title">No current track.</h4>
                                     {% end %}
                                 </div>
                             </div>
                         </div>
                     </div>
-
+                    
                 </div>
 
             </div>
