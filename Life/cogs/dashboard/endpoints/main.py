@@ -27,7 +27,7 @@ class Login(BaseEndpoint, ABC):
             self.set_secure_cookie('state', state)
 
             url = f'https://discord.com/api/oauth2/authorize?client_id={self.bot.config.client_id}&response_type=code' \
-                  f'&scope=identify%20guilds&redirect_url={self.bot.config.login_redirect_uri}&state={state}'
+                  f'&scope=identify%20guilds&redirect_uri={self.bot.config.login_redirect_uri}&state={state}'
             return self.redirect(url)
 
         if not auth_state == user_state.decode():
