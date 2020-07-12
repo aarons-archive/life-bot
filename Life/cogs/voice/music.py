@@ -243,7 +243,7 @@ class Music(commands.Cog):
         Joins your voice channel.
         """
 
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel:
             raise LifeVoiceError('You must be in a voice channel to use this command.')
 
@@ -268,7 +268,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             await ctx.invoke(self.join)
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -307,7 +307,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -327,7 +327,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
         if not ctx.player.is_playing:
@@ -357,7 +357,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -375,7 +375,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -395,7 +395,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
         if not ctx.player.is_playing:
@@ -427,7 +427,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -494,7 +494,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -512,7 +512,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -530,7 +530,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -548,7 +548,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -569,7 +569,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
@@ -594,7 +594,7 @@ class Music(commands.Cog):
 
         if not ctx.player.is_connected:
             raise LifeVoiceError('I am not connected to any voice channels.')
-        channel = getattr(ctx.author.voice, 'channel')
+        channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.player.voice_channel.id:
             raise LifeVoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
