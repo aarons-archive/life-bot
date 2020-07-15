@@ -92,7 +92,7 @@ class Life(commands.AutoShardedBot):
         needed = {perm: value for perm, value in dict(self.permissions).items() if value is True}
         current = dict(me.permissions_in(ctx.channel))
 
-        if ctx.command.cog and ctx.command.cog.qualified_name in ('Music', 'Playlists') and ctx.author.voice:
+        if ctx.command.cog and ctx.command.cog.qualified_name == 'Music' and ctx.author.voice:
             voice_channel = ctx.author.voice.channel
             needed.update({perm: value for perm, value in dict(self.voice_perms).items() if value is True})
             current.update({perm: value for perm, value in me.permissions_in(voice_channel) if value is True})
