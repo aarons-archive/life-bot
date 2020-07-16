@@ -49,7 +49,10 @@ class User:
 
     @property
     def avatar(self):
-        return f'https://cdn.discordapp.com/avatars/{self.id}/{self.avatar_hash}.png?size=512'
+        if not self.avatar_hash:
+            return None
+        avatar_format = '.gif' if self.avatar_hash.startswith('a_') else '.png'
+        return f'https://cdn.discordapp.com/avatars/{self.id}/{self.avatar_hash}{avatar_format}?size=512'
 
     @property
     def name(self):
@@ -82,7 +85,10 @@ class Guild:
 
     @property
     def icon(self):
-        return f'https://cdn.discordapp.com/icons/{self.id}/{self.icon_hash}.png?size=512'
+        if not self.icon_hash:
+            return None
+        icon_format = '.gif' if self.icon_hash.startswith('a_') else '.png'
+        return f'https://cdn.discordapp.com/icons/{self.id}/{self.icon_hash}{icon_format}?size=512'
 
     @property
     def has_expired(self):

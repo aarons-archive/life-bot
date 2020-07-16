@@ -58,14 +58,14 @@ class Login(BaseEndpoint, ABC):
         token_response = objects.TokenResponse(data=data)
 
         await self.bot.redis.hset('tokens', identifier, token_response.json)
-        return self.redirect(f'/')
+        return self.redirect(f'/dashboard')
 
 
-class Guilds(BaseEndpoint, ABC):
+class Dashboards(BaseEndpoint, ABC):
 
     async def get(self):
-        self.render('guilds.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())
+        self.render('dashboards.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())
 
 
 def setup(**kwargs):
-    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/guilds', Guilds, kwargs)]
+    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/dashboard', Dashboards, kwargs)]

@@ -1,6 +1,6 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "Life dashboard",
+    "short_name": "Life dashboard",
     "icons": [
         {
             "src": "/static/resources/android-chrome-192x192.png",
@@ -13,7 +13,7 @@
             "type": "image/png"
         }
     ],
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
+    "theme_color": "#f1c40f",
+    "background_color": "#f1c40f",
     "display": "standalone"
 }

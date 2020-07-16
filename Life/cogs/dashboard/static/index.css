@@ -1,8 +1,14 @@
-.bg-yellow{
+.bg-yellow {
     background: #f1c40f;
+}
+.bg-white {
+    background: #f8f9fa;
 }
 .bg-black {
     background: #222222;
+}
+.bg-lblack {
+    background: #2f2f2f;
 }
 .bg-gray {
     background: #333333;
