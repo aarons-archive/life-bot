@@ -123,7 +123,11 @@ class Utils:
         days, hours, minutes, seconds, = round(day), round(hour), round(minute), round(second)
 
         if friendly is True:
-            formatted = f'{days}d {hours}h {minutes}m {seconds}s'
+            formatted = f'{minutes}m {seconds}s'
+            if not hours == 0:
+                formatted = f'{hours}h {formatted}'
+            if not days == 0:
+                formatted = f'{days}d {formatted}'
         else:
             formatted = f'{minutes:02d}:{seconds:02d}'
             if not hours == 0:
