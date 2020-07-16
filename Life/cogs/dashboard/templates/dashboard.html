@@ -108,7 +108,7 @@
             const PopoverTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="popover"]'));
             PopoverTriggerList.map(function (popoverElement) { return new bootstrap.Popover(popoverElement) });
 
-            const ws = new WebSocket(`${document.URL.replace('http://', 'ws://')}/player`)
+            const ws = new WebSocket(`${document.URL.replace('http://', 'ws://').replace('https://', 'ws://')}/player`)
 
             function requestPosition() {
                 ws.send(JSON.stringify({guild_id: '{{ player.guild.id }}', user_id: '{{ user.id }}', op: 'position'}))
