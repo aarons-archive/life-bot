@@ -23,8 +23,8 @@ class Context(commands.Context):
 
     @property
     def player(self):
-        return self.bot.diorite.get_player(self.guild, cls=Player)
-    
+        return self.bot.diorite.get_player(self.guild, cls=Player, text_channel=self.channel)
+
     async def paginate(self, **kwargs):
         await paginators.Paginator(ctx=self, **kwargs).paginate()
     

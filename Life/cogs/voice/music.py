@@ -14,18 +14,18 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
+import json
 import re
 
-import diorite
-import humanize
-import json
 import discord
+import humanize
 import spotify
 from discord.ext import commands
 
+import diorite
 from cogs.utilities.exceptions import LifeVoiceError
-from cogs.voice.utilities.player import Player
 from cogs.voice.utilities import objects
+from cogs.voice.utilities.player import Player
 
 
 class Music(commands.Cog):
@@ -39,82 +39,46 @@ class Music(commands.Cog):
         self.bot.spotify = spotify.Client(client_id=self.bot.config.spotify_app_id,
                                           client_secret=self.bot.config.spotify_secret)
 
-        self.bot.spotify_url_regex = re.compile(r'https://open.spotify.com?.+(album|playlist|track)/([a-zA-Z0-9]+)')
-        self.bot.youtube_url_regex = re.compile(r'^(https?://)?(www\.)?(youtube\.com|youtu\.?be).+$')
+        self.bot.spotify_url_regex = re.compile('https?://open.spotify.com/(album|playlist|track)/([a-zA-Z0-9]+)')
+        self.bot.youtube_url_regex = re.compile('https?://(www.|m.)?youtube.com(/watch|/playlist)(\?v=[a-zA-Z0-9_-]+)?('
+                                                '([?&])list=[a-zA-Z0-9_-]+)?(&index=[0-9+])?(&t=[a-zA-Z0-9])?')
 
         asyncio.create_task(self.load())
 
     @commands.Cog.listener()
     async def on_diorite_track_start(self, event: diorite.TrackStartEvent):
+
         self.bot.dispatch('life_track_start', event.player.guild.id)
 
     @commands.Cog.listener()
     async def on_diorite_track_end(self, event: diorite.TrackEndEvent):
+
         self.bot.dispatch('life_track_end', event.player.guild.id)
 
     @commands.Cog.listener()
     async def on_diorite_track_stuck(self, event: diorite.TrackStuckEvent):
+
         self.bot.dispatch('life_track_end', event.player.guild.id)
-        await event.player.channel.send(f'The current track got stuck while playing. You can use '
-                                        f'`{self.bot.config.prefix}support` for more help.')
+        return await event.player.channel.send(f'This track got stuck while playing. You can use '
+                                               f'`{self.bot.config.prefix}support` for more help.')
 
     @commands.Cog.listener()
     async def on_diorite_track_error(self, event: diorite.TrackExceptionEvent):
+
         self.bot.dispatch('life_track_end', event.player.guild.id)
-        await event.player.channel.send(f'Something went wrong while playing a track. Error: `{event.error}`')
+        return await event.player.channel.send(f'Something went wrong while playing this track.\n`{event.error}`')
 
     @commands.Cog.listener()
     async def on_diorite_websocket_closed(self, event: diorite.WebSocketClosedEvent):
+
         if event.code == 1000:
             return
-        await event.player.channel.send(f'Your nodes websocket decided to disconnect. You can use '
-                                        f'`{self.bot.config.prefix}support` for more help.')
+
         await event.player.destroy()
         event.player.task.cancel()
 
-    async def unload(self):
-
-        if self.bot.redis is None:
-            print('[PLAYER RETENTION] Redis not connected, Queue retention disabled')
-            return
-
-        if not self.bot.diorite.players:
-            print('[PLAYER RETENTION] Found no players to save.')
-            return
-
-        players = [player for player in self.bot.diorite.players.copy().values() if player.is_connected]
-        print(f'[PLAYER RETENTION] Found \'{len(players)}\' player(s) to save.')
-        for player in players:
-
-            current_track = None
-            if player.current:
-                current_track = {'track_id': player.current.track_id, 'info': player.current.info,
-                                 'requester_id': player.current.requester.id, 'source': player.current.source}
-
-            queue_tracks = None
-            if not player.queue.is_empty:
-                queue_tracks = [{'track_id': track.track_id, 'info': track.info,
-                                 'requester_id': track.requester.id, 'source': track.source}
-                                for track in player.queue.queue_list]
-
-            player_data = {
-                'voice_channel_id': player.voice_channel.id,
-                'volume': player.volume,
-                'paused': player.paused,
-                'current': json.dumps(current_track),
-                'position': player.position,
-                'queue': json.dumps(queue_tracks),
-                'looping': player.looping,
-                'text_channel_id': player.text_channel.id
-            }
-
-            player_json = json.dumps(player_data)
-
-            await self.bot.redis.hset(f'player_retention_{self.bot.user.id}', player.guild.id, player_json)
-            print(f'[PLAYER RETENTION] Player: \'{player.guild.id}\' saved.')
-
-        for player in self.bot.diorite.players.copy().values():
-            await player.teardown()
+        return await event.player.channel.send(f'Your nodes websocket has disconnected. You can use '
+                                               f'`{self.bot.config.prefix}support` for more help.')
 
     async def load(self):
 
@@ -131,14 +95,10 @@ class Music(commands.Cog):
             print('\n[PLAYER RETENTION] No lavalink nodes connected, player retention disabled.')
             return
 
-        if self.bot.redis is None:
-            print('\n[PLAYER RETENTION] Redis not connected, player retention disabled.')
-            return
-
         players = await self.bot.redis.hgetall(f'player_retention_{self.bot.user.id}')
 
         if not players:
-            print('\n[PLAYER RETENTION] Found no players to load.')
+            print('[PLAYER RETENTION] Found no players to load.')
             return
 
         print(f'\n[PLAYER RETENTION] Found \'{len(players)}\' player(s) to load.')
@@ -148,32 +108,33 @@ class Music(commands.Cog):
             guild_id = guild_id.decode('utf-8')
             guild = self.bot.get_guild(int(guild_id))
             if not guild:
-                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild_id)
                 print(f'[PLAYER RETENTION] Guild: \'{guild_id}\' is no longer available.')
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild_id)
                 continue
 
-            player_data = json.loads(player_json)
+            player_data = json.loads(json.loads(player_json))
             print(f'[PLAYER RETENTION] Player: \'{guild_id}\' attempting load.')
 
             voice_channel_id = player_data.get('voice_channel_id')
-            voice_channel = self.bot.get_channel(voice_channel_id)
+            voice_channel = self.bot.get_channel(int(voice_channel_id))
             if not voice_channel:
-                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 print(f'[PLAYER RETENTION] Voice channel: \'{voice_channel_id}\' is no longer available.')
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 continue
 
             text_channel_id = player_data.get('text_channel_id')
-            text_channel = self.bot.get_channel(text_channel_id)
+            text_channel = self.bot.get_channel(int(text_channel_id))
             if not text_channel:
-                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 print(f'[PLAYER RETENTION] Text channel: \'{voice_channel_id}\' is no longer available.')
+                await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
                 continue
 
             player = self.bot.diorite.get_player(guild, cls=Player)
             player.text_channel = text_channel
             await player.connect(voice_channel)
 
-            await player.channel.send('The bot restarted while you were playing music, attempting to reload.')
+            await player.channel.send('The bot restarted while playing in this server, attempting to restart player '
+                                      'with preserved settings.')
 
             looping = player_data.get('looping')
             if looping is True:
@@ -189,21 +150,19 @@ class Music(commands.Cog):
                 track_data = json.loads(current_json)
 
                 current_requester_id = track_data.get('requester_id')
-                current_requester = guild.get_member(current_requester_id)
+                current_requester = guild.get_member(int(current_requester_id))
                 if not current_requester:
                     print(f'[PLAYER RETENTION] Track requester: \'{current_requester_id}\' is no longer available.')
                     current_requester = guild.get_member(guild.owner.id)
 
-                track = objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
-                                          requester=current_requester)
-                player.queue.put(track)
+                player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
+                                                   requester=current_requester, source='youtube'))
 
                 try:
                     await self.bot.wait_for('life_track_start', timeout=10.0, check=lambda g: g == player.guild.id)
                 except asyncio.TimeoutError:
                     continue
                 else:
-
                     paused = player_data.get('paused')
                     if paused is True:
                         await player.set_pause(True)
@@ -220,22 +179,34 @@ class Music(commands.Cog):
                 for track_data in queue_data:
 
                     track_requester_id = track_data.get('requester_id')
-                    track_requester = guild.get_member(track_requester_id)
+                    track_requester = guild.get_member(int(track_requester_id))
                     if not track_requester:
                         track_requester = guild.get_member(guild.owner.id)
 
-                    if track_data.get('source') == 'youtube':
-                        track = objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
-                                                  requester=track_requester)
-                    else:
-                        track = objects.SpotifyTrack(info=track_data.get('info'), requester=track_requester)
-
-                    player.queue.put(track)
-
-            await player.channel.send('Player was successfully reloaded.')
-            print(f'[PLAYER RETENTION] Player: \'{guild_id}\' successfully loaded.')
+                    player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
+                                                       requester=track_requester, source=track_data.get('source')))
 
             await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
+            print(f'[PLAYER RETENTION] Player: \'{guild_id}\' successfully loaded.')
+
+    async def unload(self):
+
+        if not self.bot.diorite.players:
+            print('[PLAYER RETENTION] Found no players to save.')
+            return
+
+        players = [player for player in self.bot.diorite.players.copy().values() if player.is_connected]
+        print(f'[PLAYER RETENTION] Found \'{len(players)}\' player(s) to save.')
+
+        for player in players:
+
+            player_json = json.dumps(player.json)
+            await self.bot.redis.hset(f'player_retention_{self.bot.user.id}', player.guild.id, player_json)
+
+            print(f'[PLAYER RETENTION] Player: \'{player.guild.id}\' saved.')
+
+        for player in self.bot.diorite.players.copy().values():
+            await player.teardown()
 
     @commands.command(name='join', aliases=['connect'])
     async def join(self, ctx):
