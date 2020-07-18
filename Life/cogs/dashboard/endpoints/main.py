@@ -3,16 +3,16 @@ import os
 from abc import ABC
 
 from cogs.dashboard.utilities import objects
-from cogs.dashboard.utilities.endpoint import BaseEndpoint
+from cogs.dashboard.utilities.bases import BaseHTTPHandler
 
 
-class Index(BaseEndpoint, ABC):
+class Index(BaseHTTPHandler, ABC):
 
     async def get(self):
         self.render('index.html', bot=self.bot, user=await self.get_user())
 
 
-class Login(BaseEndpoint, ABC):
+class Login(BaseHTTPHandler, ABC):
 
     async def get(self):
 
@@ -61,7 +61,7 @@ class Login(BaseEndpoint, ABC):
         return self.redirect(f'/dashboard')
 
 
-class Dashboards(BaseEndpoint, ABC):
+class Dashboards(BaseHTTPHandler, ABC):
 
     async def get(self):
         self.render('dashboards.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())

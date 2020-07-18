@@ -108,17 +108,7 @@
             const PopoverTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="popover"]'));
             PopoverTriggerList.map(function (popoverElement) { return new bootstrap.Popover(popoverElement) });
 
-            const ws = new WebSocket(`${document.URL.replace('http://', 'ws://').replace('https://', 'wss://')}/player`)
-
-            function requestPosition() {
-                ws.send(JSON.stringify({guild_id: '{{ player.guild.id }}', user_id: '{{ user.id }}', op: 'position'}))
-            }
-            setInterval(requestPosition, 500)
-
-            function requestCurrent() {
-                ws.send(JSON.stringify({guild_id: '{{ player.guild.id }}', user_id: '{{ user.id }}', op: 'current'}))
-            }
-            setInterval(requestCurrent, 1000)
+            const ws = new WebSocket(getWebsocketUrl())
 
             const title = document.getElementById('CurrentTitle')
             const thumbnail = document.getElementById('CurrentThumbnail')
@@ -129,52 +119,58 @@
             const progress = document.getElementById('CurrentProgress')
             const progress_bar = document.getElementById('CurrentProgressBar')
 
-            ws.onmessage = function(event) {
+            let current_length = 0
 
+            ws.onmessage = function(event) {
                 const event_data = JSON.parse(event.data)
 
-                if (event_data.op === 'current') {
+                if (event_data.op === 1) {
+                    ws.send(JSON.stringify({op: 2, data: {guild_id: '{{ player.guild.id }}', identifier: getCookie('identifier')}}))
+                }
 
-                    if (event_data.data !== null) {
+                if (event_data.op === 0) {
+
+                    if (event_data.event === 'CURRENT') {
+
                         const current_data = JSON.parse(event_data.data)
-                        const current_info = current_data.info
 
-                        title.href = current_info.uri
-                        title.innerHTML = current_info.title
-                        thumbnail.src = current_info.thumbnail
-                        author.innerHTML = `Author: ${current_info.author}`
-                        length.innerHTML = `Length: ${parseTime(current_info.length)}`
-                        requester.innerHTML = `Requester: ${current_data.requester_name}`
-                    }
-                    else {
-                        title.href = '#'
-                        title.innerHTML = 'No current track'
-                        thumbnail.src = '{{ static_url("resources/no_image320x180.png") }}'
-                        author.innerHTML = ''
-                        length.innerHTML = ''
-                        requester.innerHTML = ''
+                        if (current_data !== null) {
+                            title.href = current_data.info.uri
+                            title.innerHTML = current_data.info.title
+                            thumbnail.src = current_data.info.thumbnail
+                            author.innerHTML = `Author: ${current_data.info.author}`
+                            length.innerHTML = `Length: ${parseTime(current_data.info.length)}`
+                            requester.innerHTML = `Requester: ${current_data.requester_name}`
 
-                        position.innerHTML = ''
-                        progress.style.width = '0%'
+                            current_length = current_data.info.length
+                        }
+                        else {
+                            title.href = ''
+                            title.innerHTML = 'No current track'
+                            thumbnail.src = '{{ static_url("resources/no_image320x180.png") }}'
+                            author.innerHTML = ''
+                            length.innerHTML = ''
+                            requester.innerHTML = ''
+                        }
                     }
+
+                    if (event_data.event === 'POSITION') {
+
+                        const position_data = event_data.data
+
+                        if (position_data.position !== 0) {
+                            position.innerHTML = `Position: ${parseTime(position_data.position)}`
+                            progress.style.width = `${(100 / (Math.round(current_length) / 1000)) * (Math.round(position_data.position) / 1000)}%`
+                            progress_bar.classList.remove('invisible')
+                        }
+                        else {
+                            position.innerHTML = ''
+                            progress.style.width = '0%'
+                            progress_bar.classList.add('invisible')
+                        }
+                    }
+
                 }
-
-                else if (event_data.op === 'position') {
-
-                    const position_data = JSON.parse(event_data.data)
-                    if (position_data.position !== 0) {
-                        position.innerHTML = `Position: ${parseTime(position_data.position)}`
-                        progress.style.width = `${(100 / (Math.round(position_data.current) / 1000)) * (Math.round(position_data.position) / 1000)}%`
-                        progress_bar.classList.remove('invisible')
-                    }
-                    else {
-                        position.innerHTML = ''
-                        progress.style.width = '0%'
-                        progress_bar.classList.add('invisible')
-
-                    }
-                }
-
             }
 
         </script>

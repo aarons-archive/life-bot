@@ -1,11 +1,11 @@
 from abc import ABC
 
-from cogs.dashboard.utilities.endpoint import BaseEndpoint
+from cogs.dashboard.utilities.bases import BaseHTTPHandler
 
 from cogs.voice.utilities.player import Player
 
 
-class Dashboard(BaseEndpoint, ABC):
+class Dashboard(BaseHTTPHandler, ABC):
 
     async def get(self, guild_id):
 

@@ -1,10 +1,10 @@
 from abc import ABC
 
-from cogs.dashboard.utilities.endpoint import BaseEndpoint
+from cogs.dashboard.utilities.bases import BaseHTTPHandler
 import prometheus_client
 
 
-class Metrics(BaseEndpoint, ABC):
+class Metrics(BaseHTTPHandler, ABC):
 
     async def get(self):
 

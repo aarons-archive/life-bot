@@ -4,11 +4,12 @@ import os
 from abc import ABC
 
 from tornado.web import RequestHandler
+from tornado.websocket import WebSocketHandler
 
 from cogs.dashboard.utilities import http, objects
 
 
-class BaseEndpoint(RequestHandler, ABC):
+class BaseHTTPHandler(RequestHandler, ABC):
 
     def initialize(self, bot):
         self.bot = bot
@@ -94,3 +95,10 @@ class BaseEndpoint(RequestHandler, ABC):
         guilds = [objects.Guild(guild_data) for guild_data in guild_data]
 
         return guilds
+
+
+class BaseWebsocketHandler(WebSocketHandler, ABC):
+
+    def initialize(self, bot):
+        self.bot = bot
+        self.authenticated = False

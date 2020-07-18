@@ -38,21 +38,6 @@ class Player(diorite.Player):
         self.text_channel = kwargs.get('text_channel')
 
     @property
-    def json(self):
-
-        player_data = {
-            'voice_channel_id': str(getattr(self.voice_channel, 'id', None)),
-            'text_channel_id': str(getattr(self.text_channel, 'id', None)),
-            'position': self.position,
-            'looping': self.looping,
-            'volume': self.volume,
-            'paused': self.paused,
-            'current': getattr(self.current, 'json', None),
-            'queue': self.queue.json,
-        }
-        return json.dumps(player_data)
-
-    @property
     def channel(self):
         return self.text_channel
 
