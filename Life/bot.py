@@ -41,32 +41,28 @@ if sys.platform == 'win32':
 class Life(commands.AutoShardedBot):
 
     def __init__(self):
-        super().__init__(command_prefix=self.get_prefix, reconnect=True,
-                         help_command=help.HelpCommand())
+        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand())
 
-        self.loop = asyncio.get_event_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
-
         self.config = config.LifeConfig(self)
         self.utils = utils.Utils(self)
 
+        self.loop = asyncio.get_event_loop()
         self.log = logging.getLogger("Life")
         self.start_time = time.time()
 
+        self.allowed_blacklisted = {'help', 'support', 'invite'}
+        self.allowed_in_dms = {'help', 'support', 'invite', 'py'}
+        self.owner_ids = {238356301439041536}
         self.guild_blacklist = {}
         self.user_blacklist = {}
         self.redis = None
         self.db = None
 
-        self.owner_ids = {238356301439041536}
-        self.allowed_blacklisted_commands = {'help', 'support'}
-        self.allowed_dm_commands = {'help', 'support', 'invite'}
-
         self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.config.prefix}help')
         self.voice_perms = discord.Permissions(connect=True, speak=True)
-        self.permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True,
-                                               attach_files=True, read_message_history=True,
-                                               external_emojis=True, add_reactions=True)
+        self.permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True,
+                                               read_message_history=True, external_emojis=True, add_reactions=True)
         self.add_check(self.can_run_commands)
 
     async def get_context(self, message: discord.Message, *, cls=context.Context):
@@ -82,24 +78,23 @@ class Life(commands.AutoShardedBot):
 
     async def can_run_commands(self, ctx: commands.Context):
 
-        if not ctx.guild and ctx.command.name not in self.allowed_dm_commands:
+        if not ctx.guild and ctx.command.name not in self.allowed_in_dms:
             raise commands.NoPrivateMessage()
 
-        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in self.allowed_blacklisted_commands:
-            raise commands.CheckFailure(f'You are blacklisted from using this bot for the following reason:\n\n'
-                                        f'`{self.user_blacklist[ctx.author.id]}`\n\nIf you would like to appeal this '
-                                        f'please use the command `{self.config.prefix}appeal`.')
+        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in self.allowed_blacklisted:
+            raise commands.CheckFailure(f'You are blacklisted from using this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
+                                        f'If you would like to appeal this please use `{self.config.prefix}appeal`.')
 
-        me = ctx.guild.me if ctx.guild else self.user
-        needed = {perm: value for perm, value in dict(self.permissions).items() if value is True}
-        current = dict(me.permissions_in(ctx.channel))
+        needed_perms = {perm: value for perm, value in dict(self.permissions).items() if value is True}
+        current_perms = dict(ctx.channel.permissions_for(ctx.guild.me)) if ctx.guild else dict(ctx.channel.me.permissions_in(ctx.channel))
 
-        if ctx.command.cog and ctx.command.cog.qualified_name == 'Music' and ctx.author.voice:
-            voice_channel = ctx.author.voice.channel
-            needed.update({perm: value for perm, value in dict(self.voice_perms).items() if value is True})
-            current.update({perm: value for perm, value in me.permissions_in(voice_channel) if value is True})
+        if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and ctx.author.voice is not None:
 
-        missing = [perm for perm, value in needed.items() if current[perm] != value]
+            voice_channel = getattr(ctx.author.voice, 'channel', None)
+            needed_perms.update({perm: value for perm, value in dict(self.voice_perms).items() if value is True})
+            current_perms.update({perm: value for perm, value in voice_channel.permissions_for(ctx.guild.me) if value is True})
+
+        missing = [perm for perm, value in needed_perms.items() if current_perms[perm] != value]
 
         if missing:
             raise commands.BotMissingPermissions(missing)
@@ -127,7 +122,6 @@ class Life(commands.AutoShardedBot):
 
         try:
             redis = aredis.StrictRedis(**self.config.redis_info)
-            await redis.set('connected', True)
         except aredis.ConnectionError:
             print(f'[REDIS] An error occurred while connecting to redis.\n')
         else:
