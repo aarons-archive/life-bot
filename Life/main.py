@@ -24,42 +24,27 @@ from bot import Life
 @contextlib.contextmanager
 def logger():
 
-    log_format = '%(asctime)s - %(name)s - %(levelname)s: %(message)s'
-    date_format = f'%d/%m/%Y %H:%M:%S'
+    logs = {'discord': None, 'diorite': None, 'bot': None}
 
-    diorite_log = logging.getLogger('diorite')
-    diorite_log.setLevel(logging.DEBUG)
-    diorite_handler = RotatingFileHandler(filename='logs/diorite.log', mode='w', backupCount=5, encoding='utf-8',
-                                          maxBytes=2**22)
-    diorite_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
-    if os.path.isfile('logs/diorite.log'):
-        diorite_handler.doRollover()
-    diorite_log.addHandler(diorite_handler)
+    for log_name in logs.keys():
 
-    bot_log = logging.getLogger('Life')
-    bot_log.setLevel(logging.DEBUG)
-    bot_handler = RotatingFileHandler(filename='logs/bot.log', mode='w', backupCount=5, encoding='utf-8',
-                                      maxBytes=2**22)
-    bot_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
-    if os.path.isfile('logs/bot.log'):
-        bot_handler.doRollover()
-    bot_log.addHandler(bot_handler)
+        log = logging.getLogger(log_name)
+        handler = RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
+        handler.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S'))
+        if os.path.isfile(f'logs/{log_name}.log'):
+            handler.doRollover()
+        log.addHandler(handler)
 
-    discord_log = logging.getLogger('discord')
-    discord_log.setLevel(logging.INFO)
-    discord_handler = RotatingFileHandler(filename='logs/discord.log', mode='w', backupCount=5, encoding='utf-8',
-                                          maxBytes=2**22)
-    discord_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
-    if os.path.isfile('logs/discord.log'):
-        discord_handler.doRollover()
-    discord_log.addHandler(discord_handler)
+        logs[log_name] = log
+
+    logs['discord'].setLevel(logging.INFO)
+    logs['diorite'].setLevel(logging.DEBUG)
+    logs['bot'].setLevel(logging.INFO)
 
     try:
         yield
     finally:
-        diorite_handler.close()
-        bot_handler.close()
-        discord_handler.close()
+        [log.handlers[0].close() for log in logs.values()]
 
 
 if __name__ == '__main__':
