@@ -14,7 +14,6 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import collections
-import traceback
 from datetime import datetime
 
 import discord
@@ -22,6 +21,7 @@ from discord.ext import commands
 
 import diorite
 from cogs.utilities import exceptions
+import prettify_exceptions
 
 
 class Events(commands.Cog):
@@ -210,7 +210,8 @@ class Events(commands.Cog):
         if error_message is not None:
             return await ctx.send(error_message)
 
-        traceback.print_exception(type(error), error, error.__traceback__)
+        fmt = ''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip()
+        print(fmt)
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{prefix}support` for more '
                        f'help/information.')
@@ -224,9 +225,7 @@ class Events(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
-
-        error_traceback = f'```{"".join(traceback.format_exception(type(error), error, error.__traceback__))}```'
-        await self.bot.error_channel.send(error_traceback)
+        await self.bot.error_channel.send(f'```{fmt}```')
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
