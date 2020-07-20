@@ -37,7 +37,7 @@ class Information(commands.Cog):
         self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=' \
                               f'628284183579721747&scope=bot&permissions=103926848'
 
-    @commands.command(name='info')
+    @commands.command(name='info', aliases=['about'])
     async def info(self, ctx):
         """
         Get information about the bot.
@@ -119,7 +119,7 @@ class Information(commands.Cog):
                          headers='firstrow', tablefmt='psql')
         return await ctx.send(f'```py\n{table}\n```')
 
-    @commands.command(name='support')
+    @commands.command(name='support', aliases=['invite'])
     async def support(self, ctx):
         """
         Get an invite link to the bots support server.
