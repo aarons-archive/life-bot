@@ -16,12 +16,12 @@ You should have received a copy of the GNU Affero General Public License along w
 import collections
 from datetime import datetime
 
+import diorite
 import discord
+import prettify_exceptions
 from discord.ext import commands
 
-import diorite
 from cogs.utilities import exceptions
-import prettify_exceptions
 
 
 class Events(commands.Cog):
@@ -30,16 +30,21 @@ class Events(commands.Cog):
         self.bot = bot
         self.bot.socket_stats = collections.Counter()
 
+        self.bot.mention_channel = None
+        self.bot.error_channel = None
+        self.bot.log_channel = None
+        self.bot.dm_channel = None
+
     @commands.Cog.listener()
     async def on_ready(self):
 
         print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
         self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
-        self.bot.log_channel = self.bot.get_channel(697324016658022441)
-        self.bot.dm_channel = self.bot.get_channel(714307639609131018)
         self.bot.mention_channel = self.bot.get_channel(714601090771058719)
         self.bot.error_channel = self.bot.get_channel(728000870230523906)
+        self.bot.log_channel = self.bot.get_channel(697324016658022441)
+        self.bot.dm_channel = self.bot.get_channel(714307639609131018)
 
         for guild in self.bot.guilds:
             if guild.id in self.bot.guild_blacklist:
@@ -50,6 +55,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
+
+        if not self.bot.mention_channel or not self.bot.dm_channel:
+            return
 
         time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
 
@@ -67,12 +75,13 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
 
-        time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
+        if not self.bot.mention_channel or not self.bot.dm_channel:
+            return
 
         embed = discord.Embed(colour=discord.Colour.gold())
         embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
         embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
-        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
+        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
 
         self.bot.log.info(f'{embed.title}. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
         return await self.bot.log_channel.send(embed=embed)
@@ -81,6 +90,9 @@ class Events(commands.Cog):
     async def on_message(self, message: discord.Message):
 
         if message.author.bot:
+            return
+
+        if not self.bot.mention_channel or not self.bot.dm_channel:
             return
 
         ctx = await self.bot.get_context(message)
@@ -216,6 +228,9 @@ class Events(commands.Cog):
         await ctx.send(f'Something went wrong while executing that command. Please use `{prefix}support` for more '
                        f'help/information.')
 
+        if not self.bot.error_channel:
+            return
+
         guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
         guild_id = f'`Guild ID:` {ctx.guild.id}\n' if ctx.guild else ''
         time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
@@ -225,7 +240,7 @@ class Events(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
-        await self.bot.error_channel.send(f'```{fmt}```')
+        return await self.bot.error_channel.send(f'```{fmt}```')
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
