@@ -26,14 +26,10 @@ class Prometheus(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.bot.socket_events = prometheus_client.Counter('socket_events', documentation='Socket events',
-                                                           namespace='life', labelnames=['event'])
-        self.bot.counts = prometheus_client.Gauge('counts', documentation='Life counts',
-                                                  namespace='life', labelnames=['count'])
-        self.bot.stats = prometheus_client.Counter('stats', documentation='Life stats',
-                                                   namespace='life', labelnames=['stat'])
-        self.bot.info = prometheus_client.Info('misc', documentation='Life info',
-                                               namespace='life')
+        self.bot.socket_events = prometheus_client.Counter('socket_events', documentation='Socket events', namespace='life', labelnames=['event'])
+        self.bot.counts = prometheus_client.Gauge('counts', documentation='Life counts', namespace='life', labelnames=['count'])
+        self.bot.stats = prometheus_client.Counter('stats', documentation='Life stats', namespace='life', labelnames=['stat'])
+        self.bot.info = prometheus_client.Info('misc', documentation='Life info', namespace='life')
 
         self.collect_stats.start()
 
