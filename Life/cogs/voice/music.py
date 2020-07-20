@@ -40,7 +40,7 @@ class Music(commands.Cog):
                                           client_secret=self.bot.config.spotify_secret)
 
         self.bot.spotify_url_regex = re.compile('https?://open.spotify.com/(album|playlist|track)/([a-zA-Z0-9]+)')
-        self.bot.youtube_url_regex = re.compile('https?://(www.|m.)?youtube.com(/watch|/playlist)(\?v=[a-zA-Z0-9_-]+)?('
+        self.bot.youtube_url_regex = re.compile('https?://(www.|m.)?youtube.com(/watch|/playlist)(\\?v=[a-zA-Z0-9_-]+)?('
                                                 '([?&])list=[a-zA-Z0-9_-]+)?(&index=[0-9+])?(&t=[a-zA-Z0-9])?')
 
         asyncio.create_task(self.load())
