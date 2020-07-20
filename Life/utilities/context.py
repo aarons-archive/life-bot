@@ -46,5 +46,5 @@ class Context(commands.Context):
                 return await self.send(content=f'<https://mystb.in/{post["key"]}>', **kwargs)
             else:
                 return await self.send(content=content, **kwargs)
-        else:
-            await self.send(content=content, **kwargs)
+
+        return await self.send(content=content, **kwargs)

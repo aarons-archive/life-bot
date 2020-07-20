@@ -56,41 +56,35 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
 
-        if not self.bot.mention_channel or not self.bot.dm_channel:
-            return
+        if self.bot.log_channel:
 
-        time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
-
-        embed = discord.Embed(colour=discord.Colour.gold())
-        embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
-        embed.title = f'Joined a guild'
-        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
+            embed = discord.Embed(colour=discord.Colour.gold())
+            embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+            embed.title = f'Joined a guild'
+            time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
+            embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
+            await self.bot.log_channel.send(embed=embed)
 
         self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
-        await self.bot.log_channel.send(embed=embed)
 
         if guild.id in self.bot.guild_blacklist.keys():
-            return await guild.leave()
+            await guild.leave()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
 
-        if not self.bot.mention_channel or not self.bot.dm_channel:
-            return
+        if self.bot.log_channel:
 
-        embed = discord.Embed(colour=discord.Colour.gold())
-        embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
-        embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
-        embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
+            embed = discord.Embed(colour=discord.Colour.gold())
+            embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+            embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
+            embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
+            await self.bot.log_channel.send(embed=embed)
 
-        self.bot.log.info(f'{embed.title}. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
-        return await self.bot.log_channel.send(embed=embed)
+        self.bot.log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner}')
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-
-        if message.author.bot:
-            return
 
         if not self.bot.mention_channel or not self.bot.dm_channel:
             return
@@ -136,8 +130,6 @@ class Events(commands.Cog):
     async def on_command_error(self, ctx: commands.Context, error):
 
         error = getattr(error, 'original', error)
-        prefix = self.bot.config.prefix
-        command = ctx.command
 
         if isinstance(error, commands.CommandNotFound):
             return  # Ignore this exception
@@ -145,8 +137,8 @@ class Events(commands.Cog):
         elif isinstance(error, commands.CommandOnCooldown):
 
             if ctx.author.id in self.bot.owner_ids:
-                command.reset_cooldown(ctx)
-                return await command.reinvoke(ctx)
+                ctx.command.reset_cooldown(ctx)
+                return await ctx.command.reinvoke(ctx)
 
             cooldowns = {
                 commands.BucketType.default: f'for the whole bot.',
@@ -157,7 +149,7 @@ class Events(commands.Cog):
                 commands.BucketType.category: f'for this channel category.',
                 commands.BucketType.role: f'for your role.'
             }
-            return await ctx.send(f'The command `{command}` is on cooldown {cooldowns[error.cooldown.type]} '
+            return await ctx.send(f'The command `{ctx.command}` is on cooldown {cooldowns[error.cooldown.type]} '
                                   f'You can retry in `{self.bot.utils.format_time(error.retry_after, friendly=True)}`')
 
         elif isinstance(error, commands.MaxConcurrencyReached):
@@ -170,15 +162,14 @@ class Events(commands.Cog):
                 commands.BucketType.category: f' per channel category.',
                 commands.BucketType.role: f' per role.'
             }
-            return await ctx.send(f'The command `{command}` is already being ran at its maximum of '
+            return await ctx.send(f'The command `{ctx.command}` is already being ran at its maximum of '
                                   f'{error.number} time(s){cooldowns[error.per]} Retry a bit later.')
 
-        command.reset_cooldown(ctx)
+        ctx.command.reset_cooldown(ctx)
 
         if isinstance(error, commands.BotMissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            message = f'I am missing the following permissions required to run the command `{command}`.' \
-                      f'\n{permissions}'
+            message = f'I am missing the following permissions required to run the command `{ctx.command}`.\n{permissions}'
             try:
                 return await ctx.send(message)
             except discord.Forbidden:
@@ -189,13 +180,11 @@ class Events(commands.Cog):
 
         elif isinstance(error, commands.MissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            return await ctx.send(f'You are missing the following permissions required to run the command '
-                                  f'`{command}`.\n{permissions}')
+            return await ctx.send(f'You are missing the following permissions required to run the command `{ctx.command}`.\n{permissions}')
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{command}`. '
-                                  f'Use `{self.bot.config.prefix}help {command}` for more information on what '
-                                  f'parameters to use.')
+            return await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{ctx.command}`. '
+                                  f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.')
 
         error_messages = {
             exceptions.ArgumentError: f'{error}',
@@ -204,17 +193,16 @@ class Events(commands.Cog):
             exceptions.LifeVoiceError: f'{error}',
             commands.CheckFailure: f'{error}',
             diorite.NodesNotAvailable: f'There are no nodes available.',
-            commands.TooManyArguments: f'You used too many parameters for the command `{command}`. '
-                                       f'Use `{prefix}help {command}` for more information on what parameters to use.',
-            commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{command}`. '
-                                  f'Use `{prefix}help {command}` for more information on what parameters to use.',
-            commands.BadUnionArgument: f'I was unable to understand a parameter that you used for the command '
-                                       f'`{command}`. Use `{prefix}help {command}` for more information on what '
-                                       f'parameters to use.',
-            commands.NoPrivateMessage: f'The command `{command}` can not be used in private messages.',
-            commands.NotOwner: f'The command `{command}` is owner only.',
-            commands.NSFWChannelRequired: f'The command `{command}` can only be ran in a NSFW channel.',
-            commands.DisabledCommand: f'The command `{command}` has been disabled.',
+            commands.TooManyArguments: f'You used too many parameters for the command `{ctx.command}`. Use `{self.bot.config.prefix}help {ctx.command}` for '
+                                       f'more information on what parameters to use.',
+            commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
+                                  f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
+            commands.BadUnionArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
+                                       f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
+            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
+            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
+            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be ran in a NSFW channel.',
+            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
         }
 
         error_message = error_messages.get(type(error), None)
@@ -222,11 +210,9 @@ class Events(commands.Cog):
         if error_message is not None:
             return await ctx.send(error_message)
 
-        fmt = ''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip()
-        print(fmt)
+        print(''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip())
 
-        await ctx.send(f'Something went wrong while executing that command. Please use `{prefix}support` for more '
-                       f'help/information.')
+        await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
 
         if not self.bot.error_channel:
             return
@@ -234,13 +220,15 @@ class Events(commands.Cog):
         guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
         guild_id = f'`Guild ID:` {ctx.guild.id}\n' if ctx.guild else ''
         time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
-        info = f'`Message content:` {ctx.message.content}\n{guild}{guild_id}`Channel:` {ctx.channel}\n' \
-               f'`Channel ID:` {ctx.channel.id}\n `Time`: {time}'
-        embed = discord.Embed(colour=discord.Colour.gold(), description=f'Error in command `{command}`')
+        info = f'`Message content:` {ctx.message.content}\n{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n `Time`: {time}'
+
+        embed = discord.Embed(colour=discord.Colour.gold(), description=f'Error in command `{ctx.command}`')
         embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
-        return await self.bot.error_channel.send(f'```{fmt}```')
+
+        fmt = ''.join(prettify_exceptions.DefaultFormatter(theme={'_color_enabled': False}).format_exception(type(error), error, error.__traceback__)).strip()
+        await self.bot.error_channel.send(f'```{fmt}```')
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
