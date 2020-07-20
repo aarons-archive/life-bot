@@ -14,7 +14,6 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
-import json
 
 import discord
 import spotify
