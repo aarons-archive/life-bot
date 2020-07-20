@@ -55,13 +55,13 @@
 
                     <div class="col-12 col-sm-12 col-md-12 col-lg-7 col-xl-8 col-xxl-9">
                         <div class="card-body d-flex flex-column h-100 p-3">
-                            <h5 class="card-subtitle pb-2"><a class="link-light" id="CurrentTitle" style="text-decoration: none !important" href="#">No current track</a></h5>
+                            <h5 class="card-subtitle pb-2"><a class="link-light" id="CurrentTitle" style="text-decoration: none !important;" href="#">No current track</a></h5>
                             <p class="card-text m-0" id="CurrentAuthor"></p>
                             <p class="card-text m-0" id="CurrentLength"></p>
                             <p class="card-text m-0" id="CurrentRequester"></p>
                             <p class="card-text m-0 mb-3" id="CurrentPosition"></p>
-                            <div class="progress bg-black mt-auto invisible" id="CurrentProgressBar" style="height: 5px">
-                                <div class="progress-bar bg-white" role="progressbar" id="CurrentProgress" style="width: 0"></div>
+                            <div class="progress bg-black mt-auto invisible" id="CurrentProgressBar" style="height: 5px;">
+                                <div class="progress-bar bg-white" role="progressbar" id="CurrentProgress" style="width: 0;"></div>
                             </div>
                         </div>
                     </div>
@@ -75,9 +75,12 @@
                     <button class="btn btn-lg text-light text-left" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="QueueList">Click to expand:</button>
                     <div class="list-group px-3 pb-3">
                         {% for track in player.queue.queue_list[:3] %}
-                            {% set width = '90px' if track.source == 'spotify' else '160px'%}
                             <a class="list-group-item bg-lblack text-light p-3">
-                                <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: {{width}}; height:90px">
+                                {% if track.source == 'spotify' %}
+                                    <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: 90px; height: 90px;">
+                                {% else %}
+                                    <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: 160px; height: 90px;">
+                                {% end %}
                                 {{ track.title }}
                             </a>
                         {% end %}
@@ -92,7 +95,11 @@
                         {% for track in player.queue.queue_list[3:] %}
                             {% set width = '90px' if track.source == 'spotify' else '160px'%}
                             <a class="list-group-item collapse multi-collapse bg-lblack text-light p-3">
-                                <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: {{width}}; height:90px">
+                                {% if track.source == 'spotify' %}
+                                    <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: 90px; height: 90px;">
+                                {% else %}
+                                    <img class="img-fluid rounded float-left mr-2" src="{{ track.thumbnail if track.thumbnail else static_url('resources/no_image160x90.png') }}" alt="Track image" style="width: 160px; height: 90px;">
+                                {% end %}
                                 {{ track.title }}
                             </a>
                         {% end %}
@@ -106,7 +113,8 @@
         <script>
 
             const PopoverTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="popover"]'));
-            PopoverTriggerList.map(function (popoverElement) { return new bootstrap.Popover(popoverElement) });
+            PopoverTriggerList.map(function (popoverElement) { // noinspection JSUnresolvedFunction,JSUnresolvedVariable
+                return new bootstrap.Popover(popoverElement) });
 
             const ws = new WebSocket(getWebsocketUrl())
 

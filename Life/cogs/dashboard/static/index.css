@@ -1,56 +1,65 @@
 .bg-yellow {
-    background: #f1c40f;
+  background: rgb(241, 196, 15);
 }
+
 .bg-white {
-    background: #f8f9fa;
+  background: rgb(248, 249, 250);
 }
+
 .bg-black {
-    background: #222222;
+  background: rgb(34, 34, 34);
 }
+
 .bg-lblack {
-    background: #2f2f2f;
+  background: rgb(47, 47, 47);
 }
+
 .bg-gray {
-    background: #333333;
+  background: rgb(51, 51, 51);
 }
+
 .bg-lgray {
-    background: #444444;
+  background: rgb(68, 68, 68);
 }
 
+.bs-popover-right > .popover-arrow::after {
+  border-right-color: rgb(68, 68, 68) !important;
+}
 
-.bs-popover-right>.popover-arrow::after {
-    border-right-color: #444444!important;
+.bs-popover-left > .popover-arrow::after {
+  border-left-color: rgb(68, 68, 68) !important;
 }
-.bs-popover-left>.popover-arrow::after {
-    border-left-color: #444444!important;
+
+.bs-popover-top > .popover-arrow::after {
+  border-top-color: rgb(68, 68, 68) !important;
 }
-.bs-popover-top>.popover-arrow::after {
-    border-top-color: #444444!important;
+
+.bs-popover-bottom > .popover-arrow::after {
+  border-bottom-color: rgb(68, 68, 68) !important;
 }
-.bs-popover-bottom>.popover-arrow::after {
-    border-bottom-color: #444444!important;
-}
+
 .popover {
-    background-color: #222222;
-    border: #222222
+  background-color: rgb(34, 34, 34);
+  border: rgb(34, 34, 34);
 }
+
 .popover-header {
-    color: #f8f9fa;
-    background: #333333;
-    border-bottom: #333333;
-    border-top-left-radius: calc(.3rem - 0px);
-    border-top-right-radius: calc(.3rem - 0px);
+  color: rgb(248, 249, 250);
+  background: rgb(51, 51, 51);
+  border-bottom: rgb(51, 51, 51);
+  border-top-left-radius: calc(0.3rem - 0px);
+  border-top-right-radius: calc(0.3rem - 0px);
 }
+
 .popover-body {
-    color: #f8f9fa;
-    background-color: #444444;
-    border-bottom-left-radius: calc(.3rem - 0px);
-    border-bottom-right-radius: calc(.3rem - 0px);
-    padding-top: 0.5rem;
+  color: rgb(248, 249, 250);
+  background-color: rgb(68, 68, 68);
+  border-bottom-left-radius: calc(0.3rem - 0px);
+  border-bottom-right-radius: calc(0.3rem - 0px);
+  padding-top: 0.5rem;
 }
 
-.list-group-item-action:active, .list-group-item-action:focus, .list-group-item-action:hover {
-    background-color: #2f2f2f;
-    outline: none;
+.list-group-item-action:active .list-group-item-action:focus .list-group-item-action:hover {
+  background-color: rgb(47, 47, 47);
+  outline: none;
 }
-

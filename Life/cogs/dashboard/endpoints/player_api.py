@@ -1,51 +1,50 @@
 import asyncio
 import json
 from abc import ABC
-from typing import Union
 
-from cogs.dashboard.utilities.bases import BaseWebsocketHandler
-from cogs.dashboard.utilities import objects
-from cogs.voice.utilities.player import Player
 from tornado.web import decode_signed_value
 
+from cogs.dashboard.utilities import objects
+from cogs.dashboard.utilities.bases import BaseWebsocketHandler
+from cogs.voice.utilities.player import Player
 
+
+# noinspection PyAttributeOutsideInit
 class Websocket(BaseWebsocketHandler, ABC):
 
     async def open(self):
         self.authenticated = False
         return await self.write_message({'op': 1, 'data': 'waiting for identify'})
 
-    async def on_message(self, message: Union[str, bytes]):
+    async def on_message(self, message):
 
         try:
             message = json.loads(message)
         except json.JSONDecodeError:
-            return self.close(code=4001, reason='invalid payload received')
+            return self.close(code=4001, reason='invalid payload format. payloads must be in json.')
 
         op = message.get('op')
 
         if op == 0:  # DISPATCH
-            return self.close(code=4002, reason='invalid op code, code 0 must only be sent by server.')
-
+            return self.close(code=4002, reason='invalid op code. code 0 is receive only.')
         elif op == 1:  # HELLO
-            return self.close(code=4002, reason='invalid op code, code 1 must only be sent by server.')
+            return self.close(code=4002, reason='invalid op code. code 1 is receive only.')
 
         elif op == 2:  # IDENTIFY
 
             if self.authenticated is True:
-                return self.close(code=4004, reason='already authenticated')
+                return self.close(code=4005, reason='identify already received.')
 
             data = message.get('data')
 
             guild = self.bot.get_guild(int(data.get('guild_id')))
             if not guild:
-                return self.close(code=4006, reason='invalid guild id provided')
+                return self.close(code=4004, reason='invalid guild id provided')
 
             identifier = decode_signed_value(secret=self.application.settings["cookie_secret"], name='identifier',
                                              value=data.get('identifier').strip('"'))
-
             if identifier is None:
-                identifier = data.get('identifier').strip('"')
+                identifier = data.get('identifier')
 
             token_response = await self.bot.redis.hget('tokens', identifier)
             if not token_response:
@@ -83,7 +82,7 @@ class Websocket(BaseWebsocketHandler, ABC):
             self.send_position_task = asyncio.create_task(self.send_position())
 
         elif self.authenticated is False:
-            return self.close(code=4005, reason='not authenticated')
+            return self.close(code=4006, reason='identify not received.')
 
     async def send_current(self):
 

@@ -87,8 +87,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `30`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='emboss', radius=radius,
-                                                            sigma=sigma)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='emboss', radius=radius, sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
@@ -219,8 +218,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `-5.0` and `5.0`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='charcoal', radius=radius,
-                                                            sigma=sigma)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='charcoal', radius=radius, sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)

@@ -24,11 +24,13 @@ import aredis
 import asyncpg
 import discord
 from discord.ext import commands
+from prettify_exceptions import hook
 
 from cogs.utilities import utils
 from config import config
 from utilities import context, help
 
+hook()
 os.environ['JISHAKU_HIDE'] = 'True'
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
 
@@ -57,8 +59,8 @@ class Life(commands.AutoShardedBot):
         self.db = None
 
         self.owner_ids = {238356301439041536}
-        self.allowed_blacklisted_commands = ['help', 'support']
-        self.allowed_dm_commands = ['help', 'support', 'invite']
+        self.allowed_blacklisted_commands = {'help', 'support'}
+        self.allowed_dm_commands = {'help', 'support', 'invite'}
 
         self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.config.prefix}help')
         self.voice_perms = discord.Permissions(connect=True, speak=True)

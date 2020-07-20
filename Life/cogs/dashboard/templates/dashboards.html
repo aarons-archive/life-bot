@@ -54,7 +54,7 @@
                         <h3 class="col-sm-12 pb-3">Click an icon to go to that servers dashboard.</h3>
                         {% for guild in guilds_in %}
                             <div class="col-4 col-sm-3 col-md-2 col-lg-2 col-xl-1">
-                                <a href="/dashboard/{{ guild.id }}"><img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width:100px"></a>
+                                <a href="/dashboard/{{ guild.id }}"><img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width: 100px;"></a>
                                 <p>{{ guild.name }}</p>
                             </div>
                         {% end %}
@@ -71,9 +71,9 @@
                         {% for guild in guilds_not_in %}
                             <div class="col-4 col-sm-3 col-md-2 col-lg-2 col-xl-1">
                                 {% if guild.permissions.manage_guild or guild.permissions.administrator %}
-                                    <a href="{{ bot.invite_url }}"><img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width:100px"></a>
+                                    <a href="{{ bot.invite_url }}"><img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width: 100px;"></a>
                                 {% else %}
-                                    <img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width:100px">
+                                    <img class="img-fluid rounded-circle" src="{{ guild.icon if guild.icon else static_url('resources/no_image100x100.png') }}" alt="{{ guild.name }}" style="width: 100px;">
                                 {% end %}
                                 <p>{{ guild.name }}</p>
                             </div>

@@ -9,6 +9,7 @@ from tornado.websocket import WebSocketHandler
 from cogs.dashboard.utilities import http, objects
 
 
+# noinspection PyAttributeOutsideInit
 class BaseHTTPHandler(RequestHandler, ABC):
 
     def initialize(self, bot):
@@ -97,6 +98,7 @@ class BaseHTTPHandler(RequestHandler, ABC):
         return guilds
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
 class BaseWebsocketHandler(WebSocketHandler, ABC):
 
     def initialize(self, bot):

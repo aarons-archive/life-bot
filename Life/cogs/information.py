@@ -143,6 +143,7 @@ class Information(commands.Cog):
         if command is None:
             return await ctx.send('I could not find that command.')
 
+        # noinspection PyProtectedMember
         if isinstance(command, self.bot.help_command._command_impl.__class__):
             command_obj = type(self.bot.help_command)
             file_path = os.path.relpath(inspect.getsourcefile(command_obj))

@@ -6,6 +6,7 @@ from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
 
 
+# noinspection PyAsyncCall
 class Index(BaseHTTPHandler, ABC):
 
     async def get(self):
@@ -61,6 +62,7 @@ class Login(BaseHTTPHandler, ABC):
         return self.redirect(f'/dashboard')
 
 
+# noinspection PyAsyncCall
 class Dashboards(BaseHTTPHandler, ABC):
 
     async def get(self):
