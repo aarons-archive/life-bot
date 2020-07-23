@@ -43,42 +43,7 @@ class Music(commands.Cog):
         self.bot.youtube_url_regex = re.compile('https?://(www.|m.)?youtube.com(/watch|/playlist)(\\?v=[a-zA-Z0-9_-]+)?('
                                                 '([?&])list=[a-zA-Z0-9_-]+)?(&index=[0-9+])?(&t=[a-zA-Z0-9])?')
 
-        asyncio.create_task(self.load())
-
-    @commands.Cog.listener()
-    async def on_diorite_track_start(self, event: diorite.TrackStartEvent):
-
-        self.bot.dispatch('life_track_start', event.player.guild.id)
-
-    @commands.Cog.listener()
-    async def on_diorite_track_end(self, event: diorite.TrackEndEvent):
-
-        self.bot.dispatch('life_track_end', event.player.guild.id)
-
-    @commands.Cog.listener()
-    async def on_diorite_track_stuck(self, event: diorite.TrackStuckEvent):
-
-        self.bot.dispatch('life_track_end', event.player.guild.id)
-        return await event.player.channel.send(f'This track got stuck while playing. You can use '
-                                               f'`{self.bot.config.prefix}support` for more help.')
-
-    @commands.Cog.listener()
-    async def on_diorite_track_error(self, event: diorite.TrackExceptionEvent):
-
-        self.bot.dispatch('life_track_end', event.player.guild.id)
-        return await event.player.channel.send(f'Something went wrong while playing this track.\n`{event.error}`')
-
-    @commands.Cog.listener()
-    async def on_diorite_websocket_closed(self, event: diorite.WebSocketClosedEvent):
-
-        if event.code == 1000:
-            return
-
-        await event.player.destroy()
-        event.player.task.cancel()
-
-        return await event.player.channel.send(f'Your nodes websocket has disconnected. You can use '
-                                               f'`{self.bot.config.prefix}support` for more help.')
+        self.load_task = asyncio.create_task(self.load(), name='load music cog')
 
     async def load(self):
 
@@ -207,6 +172,41 @@ class Music(commands.Cog):
 
         for player in self.bot.diorite.players.copy().values():
             await player.teardown()
+
+    @commands.Cog.listener()
+    async def on_diorite_track_start(self, event: diorite.TrackStartEvent):
+
+        self.bot.dispatch('life_track_start', event.player.guild.id)
+
+    @commands.Cog.listener()
+    async def on_diorite_track_end(self, event: diorite.TrackEndEvent):
+
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+
+    @commands.Cog.listener()
+    async def on_diorite_track_stuck(self, event: diorite.TrackStuckEvent):
+
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+        return await event.player.channel.send(f'This track got stuck while playing. You can use '
+                                               f'`{self.bot.config.prefix}support` for more help.')
+
+    @commands.Cog.listener()
+    async def on_diorite_track_error(self, event: diorite.TrackExceptionEvent):
+
+        self.bot.dispatch('life_track_end', event.player.guild.id)
+        return await event.player.channel.send(f'Something went wrong while playing this track.\n`{event.error}`')
+
+    @commands.Cog.listener()
+    async def on_diorite_websocket_closed(self, event: diorite.WebSocketClosedEvent):
+
+        if event.code == 1000:
+            return
+
+        await event.player.destroy()
+        event.player.task.cancel()
+
+        return await event.player.channel.send(f'Your nodes websocket has disconnected. You can use '
+                                               f'`{self.bot.config.prefix}support` for more help.')
 
     @commands.command(name='join', aliases=['connect'])
     async def join(self, ctx):
