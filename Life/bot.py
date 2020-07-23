@@ -23,39 +23,49 @@ import aiohttp
 import aredis
 import asyncpg
 import discord
+import prettify_exceptions
+import setproctitle
 from discord.ext import commands
-from prettify_exceptions import hook
 
 from cogs.utilities import utils
 from config import config
 from utilities import context, help
 
-hook()
-os.environ['JISHAKU_HIDE'] = 'True'
-os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+try:
+    import uvloop
+    if sys.platform != 'win32':
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    loop = asyncio.get_event_loop()
+except ImportError:
+    uvloop = None
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    loop = asyncio.get_event_loop()
 
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+os.environ['JISHAKU_HIDE'] = 'True'
+prettify_exceptions.hook()
 
 
 class Life(commands.AutoShardedBot):
 
     def __init__(self):
-        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand())
+        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop)
 
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.config = config.LifeConfig(self)
-        self.utils = utils.Utils(self)
+        self.config = config.LifeConfig(bot=self)
+        self.utils = utils.Utils(bot=self)
 
         self.loop = asyncio.get_event_loop()
         self.log = logging.getLogger("Life")
         self.start_time = time.time()
 
         self.allowed_blacklisted = {'help', 'support', 'invite'}
-        self.allowed_in_dms = {'help', 'support', 'invite', 'py'}
         self.owner_ids = {238356301439041536}
         self.guild_blacklist = {}
         self.user_blacklist = {}
+        self.guild_prefixes = {}
         self.redis = None
         self.db = None
 
@@ -69,16 +79,16 @@ class Life(commands.AutoShardedBot):
         return await super().get_context(message, cls=cls)
 
     async def get_prefix(self, message: discord.Message):
-        if not message.guild:
-            prefixes = [self.config.prefix]
-        else:
-            prefixes = [self.config.prefix]
 
+        if not message.guild or message.guild.id not in self.guild_prefixes.keys():
+            return commands.when_mentioned_or(self.config.prefix)(self, message)
+
+        prefixes = [self.config.prefix, *self.guild_prefixes[message.guild.id]]
         return commands.when_mentioned_or(*prefixes)(self, message)
 
     async def can_run_commands(self, ctx: commands.Context):
 
-        if not ctx.guild and ctx.command.name not in self.allowed_in_dms:
+        if not ctx.guild:
             raise commands.NoPrivateMessage()
 
         if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in self.allowed_blacklisted:
@@ -103,22 +113,15 @@ class Life(commands.AutoShardedBot):
 
     async def start(self, *args, **kwargs):
 
+        setproctitle.setproctitle('LifeBot')
+
         try:
-            self.db = await asyncpg.create_pool(**self.config.database_info)
+            db = await asyncpg.create_pool(**self.config.database_info)
         except Exception as e:
-            print(f'\n[DB] An error occurred while connecting to postgresql: {e}\n')
+            print(f'\n[DATABASE] An error occurred while connecting to postgresql: {e}\n')
         else:
-            print(f'\n[DB] Connected to the postgresql database.\n')
-
-            blacklisted_users = await self.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
-            for user in blacklisted_users:
-                self.user_blacklist[user['id']] = user['reason']
-            print(f'[BLACKLIST] Loaded user blacklist. [{len(blacklisted_users)} users]')
-
-            blacklisted_guilds = await self.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
-            for guild in blacklisted_guilds:
-                self.guild_blacklist[guild['id']] = guild['reason']
-            print(f'[BLACKLIST] Loaded guild blacklist. [{len(blacklisted_guilds)} guilds]\n')
+            self.db = db
+            print(f'\n[DATABASE] Connected to the postgresql database.\n')
 
         try:
             redis = aredis.StrictRedis(**self.config.redis_info)
@@ -131,9 +134,10 @@ class Life(commands.AutoShardedBot):
         for extension in self.config.extensions:
             try:
                 self.load_extension(extension)
-                print(f'[EXT] Loaded - {extension}')
             except commands.ExtensionNotFound:
                 print(f'[EXT] Failed - {extension}')
+            else:
+                print(f'[EXT] Loaded - {extension}')
 
         await super().start(*args)
 
@@ -144,13 +148,6 @@ class Life(commands.AutoShardedBot):
         music = self.get_cog('Music')
         if music:
             await music.unload()
-
-        print("[EXT] Unloading all extensions.")
-        for extension in self.config.extensions:
-            try:
-                self.unload_extension(extension)
-            except commands.ExtensionNotFound:
-                pass
 
         print("[DB] Closing database connection.")
         await self.db.close()
