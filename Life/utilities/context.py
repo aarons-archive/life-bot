@@ -22,29 +22,29 @@ from cogs.voice.utilities.player import Player
 class Context(commands.Context):
 
     @property
-    def player(self):
+    def player(self) -> Player:
         return self.bot.diorite.get_player(self.guild, cls=Player, text_channel=self.channel)
 
-    async def paginate(self, **kwargs):
+    async def paginate(self, **kwargs) -> None:
         await paginators.Paginator(ctx=self, **kwargs).paginate()
     
-    async def paginate_embed(self, **kwargs):
+    async def paginate_embed(self, **kwargs) -> None:
         await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
     
-    async def paginate_codeblock(self, **kwargs):
+    async def paginate_codeblock(self, **kwargs) -> None:
         await paginators.CodeBlockPaginator(ctx=self, **kwargs).paginate()
     
-    async def paginate_embeds(self, **kwargs):
+    async def paginate_embeds(self, **kwargs) -> None:
         await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
 
-    async def send_bin(self, content=None, **kwargs):
+    async def send_bin(self, content=None, **kwargs) -> None:
 
         if content:
             if len(content) > 2000:
                 async with self.bot.session.post('https://mystb.in/documents', data=content.encode('utf-8')) as post:
                     post = await post.json()
-                return await self.send(content=f'<https://mystb.in/{post["key"]}>', **kwargs)
+                await self.send(content=f'<https://mystb.in/{post["key"]}>', **kwargs)
             else:
-                return await self.send(content=content, **kwargs)
+                await self.send(content=content, **kwargs)
 
-        return await self.send(content=content, **kwargs)
+        await self.send(content=content, **kwargs)
