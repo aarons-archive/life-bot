@@ -1,13 +1,12 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
@@ -18,7 +17,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.utilities import exceptions, converters
+from cogs.utilities import converters, exceptions
 
 
 class Tags(commands.Cog):

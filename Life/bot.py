@@ -1,55 +1,34 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import logging
-import os
-import sys
 import time
 
 import aiohttp
 import aredis
 import asyncpg
 import discord
-import setproctitle
 from discord.ext import commands
 
 from cogs.utilities import utils
 from config import config
 from utilities import context, help
 
-try:
-    import uvloop
-    if sys.platform != 'win32':
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    uvloop = None
-    if sys.platform == 'win32':
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-
-os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
-os.environ['PY_PRETTIFY_EXC'] = 'True'
-os.environ['JISHAKU_HIDE'] = 'True'
-setproctitle.setproctitle('Life')
-loop = asyncio.get_event_loop()
-
 
 class Life(commands.AutoShardedBot):
 
-    def __init__(self):
+    def __init__(self, loop):
         super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
                          activity=discord.Streaming(name=f'{config.LifeConfig().prefix}help', url='https://www.twitch.tv/mrrandoooom'))
 
@@ -76,27 +55,25 @@ class Life(commands.AutoShardedBot):
 
     async def can_run_commands(self, ctx: commands.Context):
 
-        if not ctx.guild and ctx.command.qualified_name in self.commands_not_allowed_dms:
-            raise commands.NoPrivateMessage()
+        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'invite'}:
+            raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
+                                        f'If you would like to appeal this please use `{self.config.prefix}appeal`.')
 
         if ctx.command.cog == self.get_cog('Dev') and ctx.author.id not in self.config.owner_ids:
             raise commands.NotOwner()
 
-        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'invite'}:
-            raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
-                                        f'If you would like to appeal this please use `{self.config.prefix}appeal`.')
+        if not ctx.guild and ctx.command.qualified_name in self.commands_not_allowed_dms:
+            raise commands.NoPrivateMessage()
 
         needed_perms = {perm: value for perm, value in dict(self.text_permissions).items() if value is True}
         current_perms = dict(ctx.channel.permissions_for(ctx.guild.me)) if ctx.guild else dict(ctx.channel.me.permissions_in(ctx.channel))
 
         if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and ctx.author.voice is not None:
 
-            voice_channel = getattr(ctx.author.voice, 'channel', None)
             needed_perms.update({perm: value for perm, value in dict(self.voice_permissions).items() if value is True})
-            current_perms.update({perm: value for perm, value in voice_channel.permissions_for(ctx.guild.me) if value is True})
+            current_perms.update({perm: value for perm, value in getattr(ctx.author.voice, 'channel', None).permissions_for(ctx.guild.me) if value is True})
 
         missing = [perm for perm, value in needed_perms.items() if current_perms[perm] != value]
-
         if missing:
             raise commands.BotMissingPermissions(missing)
 
@@ -110,8 +87,7 @@ class Life(commands.AutoShardedBot):
         if message.guild.id not in self.prefixes.keys():
             return commands.when_mentioned_or(self.config.prefix)(self, message)
 
-        prefixes = [self.config.prefix, *self.prefixes[message.guild.id]]
-        return commands.when_mentioned_or(*prefixes)(self, message)
+        return commands.when_mentioned_or(*[self.config.prefix, *self.prefixes[message.guild.id]])(self, message)
 
     async def start(self, *args, **kwargs):
 

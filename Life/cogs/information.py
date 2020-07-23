@@ -1,13 +1,12 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
@@ -21,7 +20,8 @@ from datetime import datetime
 import discord
 import psutil
 from discord.ext import commands
-from tabulate import tabulate
+
+from utilities.context import Context
 
 
 class Information(commands.Cog):
@@ -34,11 +34,10 @@ class Information(commands.Cog):
         self.bot.support_url = 'https://discord.gg/xP8xsHr'
         self.bot.source_url = 'https://github.com/iDevision/Life'
         self.bot.upvote_url = 'https://top.gg/bot/628284183579721747'
-        self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=' \
-                              f'628284183579721747&scope=bot&permissions=103926848'
+        self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848'
 
     @commands.command(name='info', aliases=['about'])
-    async def info(self, ctx):
+    async def info(self, ctx: Context):
         """
         Get information about the bot.
         """
@@ -46,12 +45,11 @@ class Information(commands.Cog):
         return await ctx.send("soon:tm:")
 
     @commands.command(name='stats')
-    async def stats(self, ctx):
+    async def stats(self, ctx: Context):
         """
         Display the bots stats.
         """
 
-        latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
         uptime = self.bot.utils.format_time(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = self.bot.utils.linecount()
 
@@ -69,7 +67,7 @@ class Information(commands.Cog):
                               f'`Lines:` {lines}\n`Files:` {files}\n')
         embed.add_field(name='\u200B', value='\u200B')
         embed.add_field(name='Ping:',
-                        value=f'`Latency:` {latency_ms}\n`Discord:` {discord_ms}\n`Typing:` {typing_ms}')
+                        value=f'`Latency:` {round(self.bot.latency * 1000)}ms')
 
         embed.add_field(name='Links:',
                         value=f'[Invite me]({self.bot.invite_url}) | [Support server]({self.bot.support_url}) | '
@@ -79,7 +77,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='system', aliases=['sys'])
-    async def system(self, ctx):
+    async def system(self, ctx: Context):
         """
         Display the bots system stats.
         """
@@ -108,28 +106,24 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='ping')
-    async def ping(self, ctx):
+    async def ping(self, ctx: Context):
         """
         Display the bots latency.
         """
 
-        latency_ms, typing_ms, discord_ms = await self.bot.utils.ping(ctx)
-        table = tabulate(tabular_data=[['Type', 'Ping'], ['Latency', latency_ms],
-                                       ['Discord', discord_ms], ['Typing', typing_ms]],
-                         headers='firstrow', tablefmt='psql')
-        return await ctx.send(f'```py\n{table}\n```')
+        return await ctx.send(f'{round(self.bot.latency * 1000)}ms')
 
     @commands.command(name='support', aliases=['invite'])
-    async def support(self, ctx):
+    async def support(self, ctx: Context):
         """
         Get an invite link to the bots support server.
         """
 
-        return await ctx.send(f'If you have any problems with the bot or if you have any suggestions/feedback be '
-                              f'sure to join the support server using this link {self.bot.support_url}')
+        return await ctx.send(f'If you have any problems with the bot or if you have any suggestions/feedback be sure to join the support server using this '
+                              f'link {self.bot.support_url}')
 
-    @commands.command(name='source', aliases=["src"])
-    async def source(self, ctx, *, command: str = None):
+    @commands.command(name='source')
+    async def source(self, ctx: Context, *, command: str = None):
         """
         Get a github link to the source of a command.
 
@@ -158,7 +152,7 @@ class Information(commands.Cog):
         return await ctx.send(link)
 
     @commands.command(name='serverinfo', aliases=['server'])
-    async def serverinfo(self, ctx):
+    async def serverinfo(self, ctx: Context):
         """
         Get information about the server.
         """
@@ -197,8 +191,8 @@ class Information(commands.Cog):
 
         return await ctx.send(embed=embed)
 
-    @commands.command(name='servericon', aliases=['icon'])
-    async def servericon(self, ctx):
+    @commands.command(name='icon', aliases=['ico'])
+    async def servericon(self, ctx: Context):
         """
         Display the servers icon.
         """
@@ -220,7 +214,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='userinfo', aliases=['user'])
-    async def userinfo(self, ctx, *, member: discord.Member = None):
+    async def userinfo(self, ctx: Context, *, member: discord.Member = None):
         """
         Get information about you, or a specified member.
 
@@ -249,7 +243,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='avatar', aliases=['avy'])
-    async def avatar(self, ctx, *, member: discord.Member = None):
+    async def avatar(self, ctx: Context, *, member: discord.Member = None):
         """
         Display yours, or a specified members avatar.
 

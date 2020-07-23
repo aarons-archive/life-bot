@@ -1,19 +1,19 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
 """
 
 import collections
+import os
 from datetime import datetime
 
 import diorite
@@ -213,6 +213,7 @@ class Events(commands.Cog):
         if error_message is not None:
             return await ctx.send(error_message)
 
+        prettify_exceptions.DefaultFormatter().theme['_ansi_enabled'] = True
         print(''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip())
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
@@ -230,7 +231,8 @@ class Events(commands.Cog):
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
 
-        fmt = ''.join(prettify_exceptions.DefaultFormatter(theme={'_color_enabled': False}).format_exception(type(error), error, error.__traceback__)).strip()
+        prettify_exceptions.DefaultFormatter().theme['_ansi_enabled'] = False
+        fmt = ''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip()
         await self.bot.error_channel.send(f'```{fmt}```')
 
     @commands.Cog.listener()

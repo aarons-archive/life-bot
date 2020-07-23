@@ -1,27 +1,24 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
 """
 
 import codecs
+import collections
 import os
 import pathlib
 import random
-import collections
-import time
 
 import discord
-from discord.ext import commands
 
 
 class Utils:
@@ -60,29 +57,10 @@ class Utils:
             discord.ContentFilter.all_members: 'All members',
         }
 
-    async def ping(self, ctx: commands.Context):
-
-        latency_ms = f'{round(self.bot.latency * 1000)}ms'
-
-        typing_start = time.monotonic()
-        await ctx.trigger_typing()
-        typing_end = time.monotonic()
-        typing_ms = f'{round((typing_end - typing_start) * 1000)}ms'
-
-        discord_start = time.monotonic()
-        async with self.bot.session.get('https://discordapp.com/') as resp:
-            if resp.status == 200:
-                discord_end = time.monotonic()
-                discord_ms = f'{round((discord_end - discord_start) * 1000)}ms'
-            else:
-                discord_ms = 'Failed'
-
-        return latency_ms, typing_ms, discord_ms
-
     def linecount(self):
 
-        docstring = False
         file_amount, functions, lines, classes = 0, 0, 0, 0
+        docstring = False
 
         for dirpath, dirname, filenames in os.walk('.'):
             for name in filenames:
@@ -136,12 +114,6 @@ class Utils:
                 formatted = f'{days:02d}:{formatted}'
 
         return formatted
-
-    def try_int(self, string: str):
-        try:
-            return int(string)
-        except ValueError:
-            return str(string)
 
     def random_colour(self):
         return '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
@@ -201,30 +173,6 @@ class Utils:
     def member_avatar(self, member: discord.Member):
         return str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
-    def guild_icon(self, guild: discord.Guild):
-        return str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png'))
-
-    def guild_banner(self, guild: discord.Guild):
-        return str(guild.banner_url_as(format='png'))
-
-    def guild_region(self, guild: discord.Guild):
-
-        if guild.region == discord.VoiceRegion.hongkong:
-            return 'Hong Kong'
-        if guild.region == discord.VoiceRegion.southafrica:
-            return 'South Africa'
-
-        return guild.region.name.title().replace('Vip', 'VIP').replace('_', '-')
-
-    def content_filter_level(self, guild: discord.Guild):
-        return self.content_filter_levels[guild.explicit_content_filter]
-
-    def verification_level(self, guild: discord.Guild):
-        return self.verification_levels[guild.verification_level]
-
-    def mfa_level(self, guild: discord.Guild):
-        return self.mfa_levels[guild.mfa_level]
-
     def guild_member_status(self, guild: discord.Guild, all_guilds: bool = False):
 
         if all_guilds is True:
@@ -243,3 +191,27 @@ class Utils:
                 statuses[activities[0].type.name] += 1
 
         return statuses
+
+    def content_filter_level(self, guild: discord.Guild):
+        return self.content_filter_levels[guild.explicit_content_filter]
+
+    def verification_level(self, guild: discord.Guild):
+        return self.verification_levels[guild.verification_level]
+
+    def guild_region(self, guild: discord.Guild):
+
+        if guild.region == discord.VoiceRegion.hongkong:
+            return 'Hong Kong'
+        if guild.region == discord.VoiceRegion.southafrica:
+            return 'South Africa'
+
+        return guild.region.name.title().replace('Vip', 'VIP').replace('_', '-')
+
+    def guild_banner(self, guild: discord.Guild):
+        return str(guild.banner_url_as(format='png'))
+
+    def guild_icon(self, guild: discord.Guild):
+        return str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png'))
+
+    def mfa_level(self, guild: discord.Guild):
+        return self.mfa_levels[guild.mfa_level]
