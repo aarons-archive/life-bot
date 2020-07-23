@@ -28,7 +28,7 @@ class Player(diorite.Player):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.task = self.bot.loop.create_task(self.loop(), name=f'{self.guild.id} player loop')
+        self.task = asyncio.create_task(self.loop())
         self.player_check = lambda guild_id: guild_id == self.guild.id
 
         self.queue = queue.LifeQueue(self)

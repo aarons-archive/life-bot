@@ -33,7 +33,7 @@ class Dev(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.load_task = asyncio.create_task(self.load(), name='load dev cog')
+        self.load_task = asyncio.create_task(self.load())
 
     async def load(self):
 

@@ -43,7 +43,7 @@ class Music(commands.Cog):
         self.bot.youtube_url_regex = re.compile('https?://(www.|m.)?youtube.com(/watch|/playlist)(\\?v=[a-zA-Z0-9_-]+)?('
                                                 '([?&])list=[a-zA-Z0-9_-]+)?(&index=[0-9+])?(&t=[a-zA-Z0-9])?')
 
-        self.load_task = asyncio.create_task(self.load(), name='load music cog')
+        self.load_task = asyncio.create_task(self.load())
 
     async def load(self):
 
