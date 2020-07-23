@@ -86,6 +86,9 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
 
+        if message.author.id == self.bot.user.id:
+            return
+
         if not self.bot.mention_channel or not self.bot.dm_channel:
             return
 
