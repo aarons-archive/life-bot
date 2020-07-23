@@ -31,9 +31,6 @@ class Todo(commands.Cog):
         Display a list of your current todo's.
         """
 
-        val = 30
-        assert val > 50
-
         query = 'SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added'
 
         todos = await self.bot.db.fetch(query, ctx.author.id)
