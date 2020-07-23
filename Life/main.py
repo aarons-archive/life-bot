@@ -13,10 +13,14 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import contextlib
 import logging
 import os
+import sys
 from logging.handlers import RotatingFileHandler
+
+import setproctitle
 
 from bot import Life
 
@@ -48,6 +52,24 @@ def logger():
 
 
 if __name__ == '__main__':
+
+    os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+    os.environ['JISHAKU_HIDE'] = 'True'
+
+    os.environ['PY_PRETTIFY_EXC'] = 'True'
+    setproctitle.setproctitle('Life')
+
+    try:
+        import uvloop
+        if sys.platform != 'win32':
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    except ImportError:
+        uvloop = None
+        if sys.platform == 'win32':
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    else:
+        del uvloop
+
     with logger():
-        bot = Life()
+        bot = Life(loop=asyncio.get_event_loop())
         bot.run(bot.config.token)

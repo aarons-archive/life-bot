@@ -1,13 +1,12 @@
 """
-Life Discord bot
+Life
 Copyright (C) 2020 MrRandom#9258
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
 
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
 <https://www.gnu.org/licenses/>.
@@ -272,7 +271,7 @@ class Music(commands.Cog):
             return await ctx.send(message)
 
     @commands.command(name='leave', aliases=['disconnect', 'dc'])
-    async def leave(self, ctx):
+    async def leave(self, ctx: Context):
         """
         Leaves the voice channel.
         """
@@ -322,7 +321,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The current tracks requester has skipped `{amount}` track(s).')
 
     @commands.command(name='pause')
-    async def pause(self, ctx):
+    async def pause(self, ctx: Context):
         """
         Pauses the player.
         """
@@ -340,7 +339,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now paused.')
 
     @commands.command(name='unpause', aliases=['resume'])
-    async def unpause(self, ctx):
+    async def unpause(self, ctx: Context):
         """
         Resumes the player.
         """
@@ -413,7 +412,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The players volume is now `{ctx.player.volume}%`.')
 
     @commands.command(name='now_playing', aliases=['np'])
-    async def now_playing(self, ctx):
+    async def now_playing(self, ctx: Context):
         """
         Displays the music controller
         """
@@ -426,7 +425,7 @@ class Music(commands.Cog):
         return await ctx.player.invoke_controller(ctx.channel)
 
     @commands.command(name='queue', aliases=["q"])
-    async def queue(self, ctx):
+    async def queue(self, ctx: Context):
         """
         Displays the players queue.
         """
@@ -459,7 +458,7 @@ class Music(commands.Cog):
         return await ctx.paginate_embed(header=title, footer=footer, entries=entries, entries_per_page=10)
 
     @commands.command(name='shuffle')
-    async def shuffle(self, ctx):
+    async def shuffle(self, ctx: Context):
         """
         Shuffles the players queue.
         """
@@ -477,7 +476,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been shuffled.')
 
     @commands.command(name='clear')
-    async def clear(self, ctx):
+    async def clear(self, ctx: Context):
         """
         Clears the players queue.
         """
@@ -495,7 +494,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been cleared.')
 
     @commands.command(name='reverse')
-    async def reverse(self, ctx):
+    async def reverse(self, ctx: Context):
         """
         Reverses the players queue.
         """
@@ -513,7 +512,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been reversed.')
 
     @commands.command(name='loop', aliases=['repeat'])
-    async def loop(self, ctx):
+    async def loop(self, ctx: Context):
         """
         Loops the players queue.
         """

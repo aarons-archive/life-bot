@@ -8,7 +8,6 @@ jishaku>=1.18.2.188
 psutil>=5.7.2
 setproctitle>=1.1.10
 spotify>=0.10.2
-tabulate>=0.8.7
 tornado>=6.0.4
 wand>=0.6.2
 prometheus_client>=0.8.0
