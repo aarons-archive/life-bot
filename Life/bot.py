@@ -23,7 +23,6 @@ import aiohttp
 import aredis
 import asyncpg
 import discord
-import prettify_exceptions
 import setproctitle
 from discord.ext import commands
 
@@ -35,73 +34,65 @@ try:
     import uvloop
     if sys.platform != 'win32':
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    loop = asyncio.get_event_loop()
 except ImportError:
     uvloop = None
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    loop = asyncio.get_event_loop()
 
 
 os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
+os.environ['PY_PRETTIFY_EXC'] = 'True'
 os.environ['JISHAKU_HIDE'] = 'True'
-prettify_exceptions.hook()
+setproctitle.setproctitle('Life')
+loop = asyncio.get_event_loop()
 
 
 class Life(commands.AutoShardedBot):
 
     def __init__(self):
-        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop)
+        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
+                         activity=discord.Streaming(name=f'{config.LifeConfig().prefix}help', url='https://www.twitch.tv/mrrandoooom'))
 
-        self.session = aiohttp.ClientSession(loop=self.loop)
-        self.config = config.LifeConfig(bot=self)
-        self.utils = utils.Utils(bot=self)
-
-        self.loop = asyncio.get_event_loop()
-        self.log = logging.getLogger("Life")
+        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
+                                                    external_emojis=True, add_reactions=True)
+        self.voice_permissions = discord.Permissions(connect=True, speak=True)
+        self.log = logging.getLogger('Life')
         self.start_time = time.time()
 
-        self.allowed_blacklisted = {'help', 'support', 'invite'}
-        self.owner_ids = {238356301439041536}
+        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.utils = utils.Utils(bot=self)
+        self.config = config.LifeConfig()
+
+        self.commands_not_allowed_dms = {}
         self.guild_blacklist = {}
         self.user_blacklist = {}
-        self.guild_prefixes = {}
+        self.prefixes = {}
+
         self.redis = None
         self.db = None
-
-        self.activity = discord.Activity(type=discord.ActivityType.playing, name=f'{self.config.prefix}help')
-        self.voice_perms = discord.Permissions(connect=True, speak=True)
-        self.permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True,
-                                               read_message_history=True, external_emojis=True, add_reactions=True)
-        self.add_check(self.can_run_commands)
 
     async def get_context(self, message: discord.Message, *, cls=context.Context):
         return await super().get_context(message, cls=cls)
 
-    async def get_prefix(self, message: discord.Message):
-
-        if not message.guild or message.guild.id not in self.guild_prefixes.keys():
-            return commands.when_mentioned_or(self.config.prefix)(self, message)
-
-        prefixes = [self.config.prefix, *self.guild_prefixes[message.guild.id]]
-        return commands.when_mentioned_or(*prefixes)(self, message)
-
     async def can_run_commands(self, ctx: commands.Context):
 
-        if not ctx.guild:
+        if not ctx.guild and ctx.command.qualified_name in self.commands_not_allowed_dms:
             raise commands.NoPrivateMessage()
 
-        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in self.allowed_blacklisted:
-            raise commands.CheckFailure(f'You are blacklisted from using this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
+        if ctx.command.cog == self.get_cog('Dev') and ctx.author.id not in self.config.owner_ids:
+            raise commands.NotOwner()
+
+        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'invite'}:
+            raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
                                         f'If you would like to appeal this please use `{self.config.prefix}appeal`.')
 
-        needed_perms = {perm: value for perm, value in dict(self.permissions).items() if value is True}
+        needed_perms = {perm: value for perm, value in dict(self.text_permissions).items() if value is True}
         current_perms = dict(ctx.channel.permissions_for(ctx.guild.me)) if ctx.guild else dict(ctx.channel.me.permissions_in(ctx.channel))
 
         if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and ctx.author.voice is not None:
 
             voice_channel = getattr(ctx.author.voice, 'channel', None)
-            needed_perms.update({perm: value for perm, value in dict(self.voice_perms).items() if value is True})
+            needed_perms.update({perm: value for perm, value in dict(self.voice_permissions).items() if value is True})
             current_perms.update({perm: value for perm, value in voice_channel.permissions_for(ctx.guild.me) if value is True})
 
         missing = [perm for perm, value in needed_perms.items() if current_perms[perm] != value]
@@ -111,20 +102,29 @@ class Life(commands.AutoShardedBot):
 
         return True
 
+    async def get_prefix(self, message: discord.Message):
+
+        if not message.guild:
+            return commands.when_mentioned_or(*[self.config.prefix, ''])(self, message)
+
+        if message.guild.id not in self.prefixes.keys():
+            return commands.when_mentioned_or(self.config.prefix)(self, message)
+
+        prefixes = [self.config.prefix, *self.prefixes[message.guild.id]]
+        return commands.when_mentioned_or(*prefixes)(self, message)
+
     async def start(self, *args, **kwargs):
 
-        setproctitle.setproctitle('LifeBot')
-
         try:
-            db = await asyncpg.create_pool(**self.config.database_info)
+            db = await asyncpg.create_pool(**self.config.postgresql)
         except Exception as e:
-            print(f'\n[DATABASE] An error occurred while connecting to postgresql: {e}\n')
+            print(f'\n[POSTGRESQL] An error occurred while connecting to postgresql: {e}')
         else:
             self.db = db
-            print(f'\n[DATABASE] Connected to the postgresql database.\n')
+            print(f'\n[POSTGRESQL] Connected to the postgresql database.')
 
         try:
-            redis = aredis.StrictRedis(**self.config.redis_info)
+            redis = aredis.StrictRedis(**self.config.redis)
         except aredis.ConnectionError:
             print(f'[REDIS] An error occurred while connecting to redis.\n')
         else:
@@ -134,10 +134,22 @@ class Life(commands.AutoShardedBot):
         for extension in self.config.extensions:
             try:
                 self.load_extension(extension)
+                print(f'[EXTENSIONS] Loaded - {extension}')
             except commands.ExtensionNotFound:
-                print(f'[EXT] Failed - {extension}')
-            else:
-                print(f'[EXT] Loaded - {extension}')
+                print(f'[EXTENSIONS] Extension not found - {extension}')
+            except commands.NoEntryPointError:
+                print(f'[EXTENSIONS] No entry point - {extension}')
+            except commands.ExtensionFailed as error:
+                print(f'[EXTENSIONS] Failed - {extension}\n{error}')
+
+        self.commands_not_allowed_dms = {
+            *[command.qualified_name for command in list(self.get_cog('Music').walk_commands())],
+            *[command.qualified_name for command in list(self.get_cog('Tags').walk_commands())],
+            *[command.qualified_name for command in self.get_command('prefix').commands],
+            'prefix', 'serverinfo', 'servericon', 'userinfo'
+        }
+
+        self.add_check(self.can_run_commands)
 
         await super().start(*args)
 
