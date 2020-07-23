@@ -39,22 +39,15 @@ class Dev(commands.Cog):
 
         await self.bot.wait_until_ready()
 
-        blacklisted_users = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
-        for user in blacklisted_users:
-            self.bot.user_blacklist[user['id']] = user['reason']
-        print(f'[DATABASE] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
-
         blacklisted_guilds = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
         for guild in blacklisted_guilds:
             self.bot.guild_blacklist[guild['id']] = guild['reason']
-        print(f'[DATABASE] Loaded guild blacklist. [{len(blacklisted_guilds)} guild(s)]')
+        print(f'[POSTGRESQL] Loaded guild blacklist. [{len(blacklisted_guilds)} guild(s)]')
 
-    async def cog_check(self, ctx):
-
-        if ctx.author.id in self.bot.owner_ids:
-            return True
-
-        raise commands.NotOwner()
+        blacklisted_users = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
+        for user in blacklisted_users:
+            self.bot.user_blacklist[user['id']] = user['reason']
+        print(f'[POSTGRESQL] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
 
     @commands.group(name='dev', hidden=True, invoke_without_command=True)
     async def dev(self, ctx):
