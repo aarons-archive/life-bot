@@ -13,6 +13,7 @@ You should have received a copy of the GNU Affero General Public License along w
 <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import collections
 import sys
 import time
@@ -32,12 +33,27 @@ class Dev(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        setproctitle.setproctitle('LifeBot')
+        self.load_task = asyncio.create_task(self.load(), name='load dev cog')
+
+    async def load(self):
+
+        await self.bot.wait_until_ready()
+
+        blacklisted_users = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
+        for user in blacklisted_users:
+            self.bot.user_blacklist[user['id']] = user['reason']
+        print(f'[DATABASE] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
+
+        blacklisted_guilds = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
+        for guild in blacklisted_guilds:
+            self.bot.guild_blacklist[guild['id']] = guild['reason']
+        print(f'[DATABASE] Loaded guild blacklist. [{len(blacklisted_guilds)} guild(s)]')
 
     async def cog_check(self, ctx):
 
         if ctx.author.id in self.bot.owner_ids:
             return True
+
         raise commands.NotOwner()
 
     @commands.group(name='dev', hidden=True, invoke_without_command=True)
@@ -164,16 +180,7 @@ class Dev(commands.Cog):
         Reload the bot's blacklist.
         """
 
-        blacklisted_users = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
-        for user in blacklisted_users:
-            self.bot.user_blacklist[user['id']] = user['reason']
-        print(f'\n[BLACKLIST] Reloaded user blacklist. [{len(blacklisted_users)} users]')
-
-        blacklisted_guilds = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
-        for guild in blacklisted_guilds:
-            self.bot.guild_blacklist[guild['id']] = guild['reason']
-        print(f'[BLACKLIST] Reloaded guild blacklist. [{len(blacklisted_guilds)} guilds]')
-
+        await self.load()
         return await ctx.send('Reloaded the blacklists.')
 
     @dev_blacklist.group(name='user', hidden=True, invoke_without_command=True)
