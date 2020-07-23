@@ -26,6 +26,7 @@ import diorite
 from cogs.utilities.exceptions import LifeVoiceError
 from cogs.voice.utilities import objects
 from cogs.voice.utilities.player import Player
+from utilities.context import Context
 
 
 class Music(commands.Cog):
@@ -47,7 +48,7 @@ class Music(commands.Cog):
 
     async def load(self):
 
-        for node in self.bot.config.node_info.values():
+        for node in self.bot.config.nodes.values():
             try:
                 await self.bot.diorite.create_node(**node)
                 print(f'[DIORITE] Node {node["identifier"]} connected.')
@@ -120,8 +121,8 @@ class Music(commands.Cog):
                     print(f'[PLAYER RETENTION] Track requester: \'{current_requester_id}\' is no longer available.')
                     current_requester = guild.get_member(guild.owner.id)
 
-                player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
-                                                   requester=current_requester, source='youtube'))
+                player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'), requester=current_requester,
+                                                   source='youtube'))
 
                 try:
                     await self.bot.wait_for('life_track_start', timeout=10.0, check=lambda g: g == player.guild.id)
@@ -148,8 +149,8 @@ class Music(commands.Cog):
                     if not track_requester:
                         track_requester = guild.get_member(guild.owner.id)
 
-                    player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'),
-                                                       requester=track_requester, source=track_data.get('source')))
+                    player.queue.put(objects.LifeTrack(track_id=track_data.get('track_id'), info=track_data.get('info'), requester=track_requester,
+                                                       source=track_data.get('source')))
 
             await self.bot.redis.hdel(f'player_retention_{self.bot.user.id}', guild.id)
             print(f'[PLAYER RETENTION] Player: \'{guild_id}\' successfully loaded.')
@@ -209,7 +210,7 @@ class Music(commands.Cog):
                                                f'`{self.bot.config.prefix}support` for more help.')
 
     @commands.command(name='join', aliases=['connect'])
-    async def join(self, ctx):
+    async def join(self, ctx: Context):
         """
         Joins your voice channel.
         """
@@ -230,7 +231,7 @@ class Music(commands.Cog):
         return await ctx.send(f'Joined your voice channel `{channel}`.')
 
     @commands.command(name='play')
-    async def play(self, ctx, *, query: str):
+    async def play(self, ctx: Context, *, query: str):
         """
         Plays/queues a track with the given search. Supports spotify.
 
@@ -289,7 +290,7 @@ class Music(commands.Cog):
         return await ctx.player.destroy()
 
     @commands.command(name='skip', aliases=['stop'])
-    async def skip(self, ctx, amount: int = 1):
+    async def skip(self, ctx: Context, amount: int = 1):
         """
         Skips to the next track in the queue.
 
@@ -315,7 +316,7 @@ class Music(commands.Cog):
             if not track.requester.id == ctx.author.id:
                 return await ctx.send(f'You only skipped `{index + 1}` out of the next `{amount}` tracks because you'
                                       f'were not the requester of all them.')
-            await ctx.player.queue.get_pos(0)
+            await ctx.player.queue.get(0)
 
         await ctx.player.stop()
         return await ctx.send(f'The current tracks requester has skipped `{amount}` track(s).')
@@ -357,7 +358,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now un-paused')
 
     @commands.command(name='seek')
-    async def seek(self, ctx, seconds: int = None):
+    async def seek(self, ctx: Context, seconds: int = None):
         """
         Changes the position of the player.
 
@@ -389,7 +390,7 @@ class Music(commands.Cog):
                               f'`{self.bot.utils.format_time(milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
-    async def volume(self, ctx, volume: int = None):
+    async def volume(self, ctx: Context, volume: int = None):
         """
         Changes the volume of the player.
 
@@ -531,7 +532,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue will start looping.')
 
     @commands.command(name='remove')
-    async def remove(self, ctx, entry: int = 0):
+    async def remove(self, ctx: Context, entry: int = 0):
         """
         Remove a track from the queue.
 
@@ -551,11 +552,11 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'That was not a valid track entry number. Choose a number between `1` and '
                                  f'`{ctx.player.queue.size + 1}` ')
 
-        item = await ctx.player.queue.get_pos(entry - 1)
+        item = await ctx.player.queue.get(entry - 1)
         return await ctx.send(f'Removed `{item.title}` from the queue.')
 
     @commands.command(name='move')
-    async def move(self, ctx, entry_1: int = 0, entry_2: int = 0):
+    async def move(self, ctx: Context, entry_1: int = 0, entry_2: int = 0):
         """
         Move a track in the queue to a different position
 
@@ -580,13 +581,13 @@ class Music(commands.Cog):
             raise LifeVoiceError(f'That was not a valid track entry to move too. Choose a number between `1` and '
                                  f'`{ctx.player.queue.size + 1}` ')
 
-        item = await ctx.player.queue.get_pos(entry_1 - 1)
-        ctx.player.queue.put_pos(item, entry_2 - 1)
+        item = await ctx.player.queue.get(entry_1 - 1)
+        ctx.player.queue.put(item, entry_2 - 1)
 
         return await ctx.send(f'Moved `{item.title}` from position `{entry_1}` to position `{entry_2}`.')
 
     @commands.command(name='musicinfo', aliases=['mi'])
-    async def musicinfo(self, ctx):
+    async def musicinfo(self, ctx: Context):
         """
         Display stats about the bots music cog.
         """
