@@ -205,34 +205,42 @@ class Events(commands.Cog):
             commands.NotOwner: f'The command `{ctx.command}` is owner only.',
             commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be ran in a NSFW channel.',
             commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+            commands.ExpectedClosingQuoteError: f'You missed a closing quote in the parameters passed to the `{ctx.command}` command.',
+            commands.UnexpectedQuoteError: f'There was an unexpected quote in the parameters passed to the `{ctx.command}` command.'
         }
 
         error_message = error_messages.get(type(error), None)
-
         if error_message is not None:
             return await ctx.send(error_message)
 
-        prettify_exceptions.DefaultFormatter().theme['_ansi_enabled'] = True
-        print(''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip())
-
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
+
+        formatter = prettify_exceptions.DefaultFormatter()
+
+        formatter.theme['_ansi_enabled'] = True
+        print(f'\n{"".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()}')
 
         if not self.bot.error_channel:
             return
 
-        guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
-        guild_id = f'`Guild ID:` {ctx.guild.id}\n' if ctx.guild else ''
-        time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
-        info = f'`Message content:` {ctx.message.content}\n{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n `Time`: {time}'
+        guild = f'`Guild:` {ctx.guild} ({ctx.guild.id})' if ctx.guild else ''
+        channel = f'`Channel:` {ctx.channel} ({ctx.channel.id})'
+        author = f'`Author:` {ctx.author} ({ctx.author.id})'
+        time = f'`Time:` {datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")}'
+        info = f'`Message content:` {ctx.message.content}\n{guild}\n{channel}\n{author}\n{time}'
 
         embed = discord.Embed(colour=discord.Colour.gold(), description=f'Error in command `{ctx.command}`')
         embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
 
-        prettify_exceptions.DefaultFormatter().theme['_ansi_enabled'] = False
-        fmt = ''.join(prettify_exceptions.DefaultFormatter().format_exception(type(error), error, error.__traceback__)).strip()
-        await self.bot.error_channel.send(f'```{fmt}```')
+        formatter.theme['_ansi_enabled'] = False
+        traceback = "".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()
+
+        if len(traceback) < 2000:
+            return await self.bot.error_channel.send(f'```{traceback}```')
+
+        [await self.bot.error_channel.send(f'```{msg}```') for msg in [traceback[i:i+1900] for i in range(0, len(traceback), 1900)]]
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict):
