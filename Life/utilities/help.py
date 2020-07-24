@@ -21,13 +21,13 @@ from discord.ext import commands
 class HelpCommand(commands.HelpCommand):
 
     def __init__(self):
-        super().__init__(command_attrs={'help': 'Shows help for the bot, a category or a command.\n\n'
-                                                '**<argument>** means the argument is required.\n'
-                                                '**[argument]** means the argument is optional.\n'
-                                                '**[a|b]** means it can be "A" or "B".\n'
-                                                '**[argument...]** means you can have multiple arguments.'
-                                        }
-                         )
+        super().__init__(command_attrs={
+            'help': 'Shows help for the bot, a category or a command.\n\n'
+                    '**<argument>** means the argument is required.\n'
+                    '**[argument]** means the argument is optional.\n'
+                    '**[a|b]** means it can be "A" or "B".\n'
+                    '**[argument...]** means you can have multiple arguments.'
+        })
 
     def get_cog_commands(self, cog: commands.Cog):
 
