@@ -18,19 +18,25 @@ While I would prefer you don't run your own instance of this bot, setup instruct
 ```
 pip install -U -r requirements.txt
 ```
-2. Rename `config_example.py` to `config.py` [here](https://github.com/iDevision/Life/tree/master/Life/config).
-
+2. Rename `config_example.py` to `config.py` [here](https://github.com/MyNameBeMrRandom/Life/tree/master/Life/config).
+```
+mv config_example.py config.py
+```
 3. Fill in the config file with the correct information.
 
 ## Built with
+* [aiohttp](https://github.com/aio-libs/aiohttp)
+* [aredis](https://github.com/NoneGG/aredis)
 * [asyncpg](https://github.com/MagicStack/asyncpg)
+* [diorite](https://github.com/iDevision/diorite)
 * [discord.py](https://github.com/Rapptz/discord.py)
+* [humanize](https://github.com/jmoiron/humanize)
 * [jishaku](https://github.com/Gorialis/jishaku)
 * [psutil](https://github.com/giampaolo/psutil)
-* [wand](https://github.com/emcconville/wand)
-* [tabulate](https://github.com/astanin/python-tabulate)
-* [spotify](https://github.com/mental32/spotify.py)
-* [diorite](https://github.com/iDevision/diorite)
 * [setproctitle](https://github.com/dvarrazzo/py-setproctitle)
-* [lavalink](https://github.com/Frederikam/Lavalink)
-
+* [spotify](https://github.com/mental32/spotify.py)
+* [tornado](https://github.com/tornadoweb/tornado)
+* [wand](https://github.com/emcconville/wand)
+* [prometheus_client](https://github.com/prometheus/client_python)
+* [yarl](https://github.com/aio-libs/yarl)
+* [uvloop](https://github.com/MagicStack/uvloop)
