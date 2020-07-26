@@ -1,53 +1,55 @@
+from cogs.dashboard.endpoints import main, dashboard, metrics, player_api
 
 
 class LifeConfig:
 
-    def __init__(self, bot):
-
-        self.bot = bot
+    def __init__(self):
 
         self.token = ''
         self.prefix = ''
 
+        self.idevision_key = ''
         self.spotify_app_id = ''
         self.spotify_secret = ''
 
-        self.database_info = {
+        self.owner_ids = {}
+
+        self.extensions = [
+            'jishaku', 'cogs.dev', 'cogs.todo', 'cogs.tags', 'cogs.images', 'cogs.config', 'cogs.events', 'cogs.information', 'cogs.voice.music',
+            'cogs.dashboard.dashboard', 'cogs.prometheus',
+        ]
+
+        self.nodes = {
+            'MAIN': {'host': '',
+                     'port': '',
+                     'identifier': 'MAIN',
+                     'password': ''
+                     },
+        }
+
+        self.postgresql = {
             'host': '',
             'user': '',
             'database': '',
             'password': '',
         }
 
-        self.node_info = {
-            'ALPHA': {
-                'host': '',
-                'port': '',
-                'identifier': '',
-                'password': ''
-            },
+        self.redis = {
+            'host': '',
+            'port': 00000,
+            'password': '',
+            'db': 0,
         }
 
-        self.extensions = [
-            'jishaku',
-            'cogs.dev',
-            'cogs.todo',
-            'cogs.images',
-            'cogs.events',
-            'cogs.information',
-            'cogs.voice.music',
-            'cogs.voice.events',
-            'cogs.voice.playlists',
-            'cogs.dashboard.dashboard'
-        ]
-
-        self.port = f''
         self.ip = f''
+        self.port = 00000
 
-        self.client_id = f''
-        self.client_secret = f''
+        self.endpoints = [main, dashboard, metrics, player_api]
 
-        self.discord_login_url = f''
+        self.client_id = ''
+        self.client_secret = ''
 
-        self.discord_auth_url = f''
+        self.login_redirect_uri = ''
+        self.redirect_uri = f''
+
         self.cookie_secret = f''

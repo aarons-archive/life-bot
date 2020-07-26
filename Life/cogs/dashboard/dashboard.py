@@ -8,9 +8,9 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with Life.  If not, see
-<https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import asyncio
 import os
@@ -30,7 +30,7 @@ class DashboardManager(commands.Cog):
         self.application = web.Application([endpoint for endpoints in self.endpoints for endpoint in endpoints],
                                            static_path=os.path.join(os.path.dirname(__file__), 'static/'),
                                            template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
-                                           default_host='0.0.0.0', ui_methods=utils, debug=True,
+                                           default_host='0.0.0.0', ui_methods=utils,
                                            cookie_secret=self.bot.config.cookie_secret)
 
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)
