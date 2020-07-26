@@ -1,8 +1,10 @@
 *.pyc
 *.ini
 *.log*
-Life/config/config.py
 
 .idea/
 node_modules/
+
+Life/config/config.py
 package-lock.json
+.stylelintrc.json
