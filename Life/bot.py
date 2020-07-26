@@ -35,7 +35,7 @@ class Life(commands.AutoShardedBot):
         self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
                                                     external_emojis=True, add_reactions=True)
         self.voice_permissions = discord.Permissions(connect=True, speak=True)
-        self.log = logging.getLogger('Life')
+        self.log = logging.getLogger('bot')
         self.start_time = time.time()
 
         self.session = aiohttp.ClientSession(loop=self.loop)
