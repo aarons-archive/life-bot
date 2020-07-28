@@ -11,9 +11,11 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import typing
+
 from discord.ext import commands
 
-from cogs.utilities import paginators
+from cogs.utilities import objects, paginators
 from cogs.voice.utilities.player import Player
 
 
@@ -22,6 +24,14 @@ class Context(commands.Context):
     @property
     def player(self) -> Player:
         return self.bot.diorite.get_player(self.guild, cls=Player, text_channel=self.channel)
+
+    @property
+    def config(self) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+
+        if not self.guild:
+            return self.bot.default_guild_config
+
+        return self.bot.utils.guild_config(self.guild)
 
     async def paginate(self, **kwargs) -> None:
         return await paginators.Paginator(ctx=self, **kwargs).paginate()

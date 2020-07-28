@@ -598,7 +598,7 @@ class Music(commands.Cog):
         free = humanize.naturalsize(ctx.player.node.stats.memory_free)
         cpu_cores = ctx.player.node.stats.cpu_cores
 
-        embed = discord.Embed(colour=discord.Color.gold())
+        embed = discord.Embed(colour=ctx.config.colour)
         embed.add_field(name='Lavalink info:',
                         value=f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n'
                               f'`Memory used:` {used}\n`Memory free:` {free}\n`CPU Cores:` {cpu_cores}\n'

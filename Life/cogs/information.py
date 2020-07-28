@@ -32,7 +32,7 @@ class Information(commands.Cog):
         self.bot.process = psutil.Process()
 
         self.bot.support_url = 'https://discord.gg/xP8xsHr'
-        self.bot.source_url = 'https://github.com/iDevision/Life'
+        self.bot.source_url = 'https://github.com/MyNameBeMrRandom/Life'
         self.bot.upvote_url = 'https://top.gg/bot/628284183579721747'
         self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848'
 
@@ -53,7 +53,7 @@ class Information(commands.Cog):
         uptime = self.bot.utils.format_time(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = self.bot.utils.linecount()
 
-        embed = discord.Embed(colour=discord.Color.gold())
+        embed = discord.Embed(colour=ctx.config.colour)
         embed.add_field(name='Bot info:',
                         value=f'`Uptime:` {uptime}\n`Guilds:`{len(self.bot.guilds)}\n'
                               f'`Shards:` {len(self.bot.shards)}\n`Users:` {len(self.bot.users)}\n')
@@ -82,7 +82,7 @@ class Information(commands.Cog):
         Display the bots system stats.
         """
 
-        embed = discord.Embed(colour=discord.Color.gold())
+        embed = discord.Embed(colour=ctx.config.colour)
         embed.add_field(name='System CPU:',
                         value=f'`Frequency:` {round(psutil.cpu_freq().current, 2)} Mhz\n'
                               f'`Cores:` {psutil.cpu_count()}\n'
@@ -113,7 +113,7 @@ class Information(commands.Cog):
 
         return await ctx.send(f'{round(self.bot.latency * 1000)}ms')
 
-    @commands.command(name='support', aliases=['invite'])
+    @commands.command(name='support')
     async def support(self, ctx: Context):
         """
         Get an invite link to the bots support server.
@@ -121,6 +121,14 @@ class Information(commands.Cog):
 
         return await ctx.send(f'If you have any problems with the bot or if you have any suggestions/feedback be sure to join the support server using this '
                               f'link {self.bot.support_url}')
+
+    @commands.command(name='invite')
+    async def support(self, ctx: Context):
+        """
+        Get a link the invite the bot.
+        """
+
+        return await ctx.send(f'You can invite the bot here <{self.bot.invite_url}>')
 
     @commands.command(name='source')
     async def source(self, ctx: Context, *, command: str = None):
@@ -159,7 +167,7 @@ class Information(commands.Cog):
 
         statuses = self.bot.utils.guild_member_status(ctx.guild)
 
-        embed = discord.Embed(colour=discord.Color.gold(), title=f"{ctx.guild.name}'s stats and information.")
+        embed = discord.Embed(colour=ctx.config.colour, title=f"{ctx.guild.name}'s stats and information.")
         embed.description = ctx.guild.description if ctx.guild.description else None
         embed.add_field(name='General information:',
                         value=f'`Owner:` {ctx.guild.owner}\n'
@@ -174,9 +182,9 @@ class Information(commands.Cog):
                               f'`File Size:` {round(ctx.guild.filesize_limit / 1048576)} MB | '
                               f'`Bitrate:` {round(ctx.guild.bitrate_limit / 1000)} kbps | '
                               f'`Emoji:` {ctx.guild.emoji_limit}\n'
-                              f'`Content filter level:` {self.bot.utils.content_filter_level(ctx.guild)} | '
-                              f'`2FA:` {self.bot.utils.mfa_level(ctx.guild)}\n'
-                              f'`Verification level:` {self.bot.utils.verification_level(ctx.guild)}\n', inline=False)
+                              f'`Content filter level:` {self.bot.utils.guild_content_filter_level(ctx.guild)} | '
+                              f'`2FA:` {self.bot.utils.guild_mfa_level(ctx.guild)}\n'
+                              f'`Verification level:` {self.bot.utils.guild_verification_level(ctx.guild)}\n', inline=False)
 
         embed.add_field(name='Channels:',
                         value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | '
@@ -198,7 +206,7 @@ class Information(commands.Cog):
         """
 
         embed = discord.Embed(
-            colour=discord.Color.gold(),
+            colour=ctx.config.colour,
             title=f"{ctx.guild.name}'s icon",
             description=f'[PNG]({ctx.guild.icon_url_as(size=1024, format="png")}) | ' 
                         f'[JPEG]({ctx.guild.icon_url_as(size=1024, format="jpeg")}) | '
@@ -254,7 +262,7 @@ class Information(commands.Cog):
             member = ctx.author
 
         embed = discord.Embed(
-            colour=discord.Color.gold(),
+            colour=ctx.config.colour,
             title=f"{member.name}'s avatar",
             description=f'[PNG]({member.avatar_url_as(size=1024, format="png")}) | ' 
                         f'[JPEG]({member.avatar_url_as(size=1024, format="jpeg")}) | '

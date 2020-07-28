@@ -114,6 +114,12 @@ class Utils:
 
         return formatted
 
+    def try_int(self, string: str):
+        try:
+            return int(string)
+        except ValueError:
+            return str(string)
+
     def random_colour(self):
         return '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
@@ -191,11 +197,14 @@ class Utils:
 
         return statuses
 
-    def content_filter_level(self, guild: discord.Guild):
+    def guild_content_filter_level(self, guild: discord.Guild):
         return self.content_filter_levels[guild.explicit_content_filter]
 
-    def verification_level(self, guild: discord.Guild):
+    def guild_verification_level(self, guild: discord.Guild):
         return self.verification_levels[guild.verification_level]
+
+    def guild_mfa_level(self, guild: discord.Guild):
+        return self.mfa_levels[guild.mfa_level]
 
     def guild_region(self, guild: discord.Guild):
 
@@ -212,5 +221,10 @@ class Utils:
     def guild_icon(self, guild: discord.Guild):
         return str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png'))
 
-    def mfa_level(self, guild: discord.Guild):
-        return self.mfa_levels[guild.mfa_level]
+    def guild_config(self, guild: discord.Guild):
+
+        guild_config = self.bot.guild_configs.get(guild.id)
+        if not guild_config:
+            return self.bot.default_guild_config
+
+        return guild_config

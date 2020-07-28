@@ -49,14 +49,12 @@ class Events(commands.Cog):
                 await guild.leave()
             continue
 
-        await self.bot.change_presence(activity=self.bot.activity)
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
 
         if self.bot.log_channel:
 
-            embed = discord.Embed(colour=discord.Colour.gold())
+            embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
             embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
             embed.title = f'Joined a guild'
             time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
@@ -73,7 +71,7 @@ class Events(commands.Cog):
 
         if self.bot.log_channel:
 
-            embed = discord.Embed(colour=discord.Colour.gold())
+            embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
             embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
             embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
             embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
@@ -92,6 +90,17 @@ class Events(commands.Cog):
 
         ctx = await self.bot.get_context(message)
 
+        if message.guild is None:
+
+            time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
+            info = f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
+
+            embed = discord.Embed(colour=ctx.config.colour)
+            embed.set_author(name=f'DM from {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
+            embed.description = f'{message.content}'
+            embed.add_field(name='Info:', value=info)
+            await self.bot.dm_channel.send(embed=embed)
+
         if self.bot.user in message.mentions:
 
             guild = f'`Guild:` {ctx.guild}\n' if ctx.guild else ''
@@ -99,22 +108,11 @@ class Events(commands.Cog):
             time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
             info = f'{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
-            embed = discord.Embed(colour=discord.Colour.gold())
+            embed = discord.Embed(colour=ctx.config.colour)
             embed.set_author(name=f'Mentioned by {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
             embed.description = f'{message.content}'
             embed.add_field(name='Info:', value=info)
             await self.bot.mention_channel.send(embed=embed)
-
-        if message.guild is None:
-
-            time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
-            info = f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
-
-            embed = discord.Embed(colour=discord.Colour.gold())
-            embed.set_author(name=f'DM from {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
-            embed.description = f'{message.content}'
-            embed.add_field(name='Info:', value=info)
-            await self.bot.dm_channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -128,7 +126,7 @@ class Events(commands.Cog):
         await self.bot.process_commands(after)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    async def on_command_error(self, ctx, error):
 
         error = getattr(error, 'original', error)
 
@@ -228,7 +226,7 @@ class Events(commands.Cog):
         time = f'`Time:` {datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")}'
         info = f'`Message content:` {ctx.message.content}\n{guild}\n{channel}\n{author}\n{time}'
 
-        embed = discord.Embed(colour=discord.Colour.gold(), description=f'Error in command `{ctx.command}`')
+        embed = discord.Embed(colour=ctx.config.colour, description=f'Error in command `{ctx.command}`')
         embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)

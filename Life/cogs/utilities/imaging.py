@@ -224,7 +224,7 @@ class Imaging:
     def __init__(self, bot):
         self.bot = bot
 
-    async def edit_image(self, ctx: commands.Context, url: str, edit_type: str, **kwargs):
+    async def edit_image(self, ctx, url: str, edit_type: str, **kwargs):
 
         if ctx.message.attachments:
             url = ctx.message.attachments[0].url
@@ -275,7 +275,7 @@ class Imaging:
                 raise LifeImageError('The image produced was over 20mb.')
             post = await response.json()
 
-        embed = discord.Embed(colour=discord.Colour.gold())
+        embed = discord.Embed(colour=ctx.config.colour)
         embed.set_footer(text=image_text)
         embed.set_image(url=post.get('url'))
         return embed

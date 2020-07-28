@@ -41,6 +41,24 @@ class TagName(commands.clean_content):
         return argument
 
 
+class Prefix(commands.clean_content):
+
+    async def convert(self, ctx: commands.Context, argument: str):
+
+        argument = await super().convert(ctx, argument)
+        argument = discord.utils.escape_markdown(argument)
+        argument = argument.strip()
+
+        if not argument:
+            raise commands.BadArgument
+
+        if '`' in argument:
+            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
+        if len(argument) > 15:
+            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
+        return argument
+
+
 class ImageConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: commands.Context, argument: str):

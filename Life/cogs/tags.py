@@ -33,7 +33,7 @@ class Tags(commands.Cog):
         `name`: The name or alias of the tag you want to find.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 5'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 5'
         tags = await self.bot.db.fetch(query, ctx.guild.id, name)
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
@@ -48,7 +48,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`. {extra_msg}')
 
         if tags[0]['alias'] is not None:
-            query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+            query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
             tags = await self.bot.db.fetch(query, ctx.guild.id, tags[0]['alias'])
 
         return await ctx.send(tags[0]['content'])
@@ -61,7 +61,7 @@ class Tags(commands.Cog):
         `name`: The name of the tag you want to find.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 5'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 5'
         tags = await self.bot.db.fetch(query, ctx.guild.id, name)
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
@@ -76,7 +76,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`. {extra_msg}')
 
         if tags[0]['alias'] is not None:
-            query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+            query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
             tags = await self.bot.db.fetch(query, ctx.guild.id, tags[0]['alias'])
 
         return await ctx.send(discord.utils.escape_markdown(tags[0]['content']))
@@ -90,7 +90,7 @@ class Tags(commands.Cog):
         `content`: The content of your tag.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, name)
         if tag:
             raise exceptions.ArgumentError(f'There is already a tag in this server with the name `{name}`.')
@@ -101,7 +101,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name, content, None, datetime.now())
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag created:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag created:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{content}', inline=False)
         return await ctx.send(embed=embed)
@@ -115,7 +115,7 @@ class Tags(commands.Cog):
         `content:` The content of the edited tag.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND owner_id = $2 and name = $3'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND owner_id = $2 and name = $3'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, ctx.author.id, name)
         if not tag:
             raise exceptions.ArgumentError(f'You do not have any tags in this server with the name `{name}`.')
@@ -123,10 +123,10 @@ class Tags(commands.Cog):
         if len(str(content)) > 1024:
             raise exceptions.ArgumentError('Your tag content can not be more than 1024 characters.')
 
-        query = 'UPDATE tags SET content = $1 WHERE server_id = $2 AND name = $3'
+        query = 'UPDATE tags SET content = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, content, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag edited:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag edited:')
         embed.add_field(name='Old content:', value=f'{tag["content"]}', inline=False)
         embed.add_field(name='New content:', value=f'{content}', inline=False)
         return await ctx.send(embed=embed)
@@ -139,7 +139,7 @@ class Tags(commands.Cog):
         `name`: The name of the tag to claim.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, name)
         if not tag:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
@@ -148,10 +148,10 @@ class Tags(commands.Cog):
         if owner is not None:
             raise exceptions.ArgumentError(f'The owner of that tag is still in the server.')
 
-        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
+        query = 'UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag claimed:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag claimed:')
         embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
         embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
         return await ctx.send(embed=embed)
@@ -165,12 +165,12 @@ class Tags(commands.Cog):
         `name`: The name of the tag to point the alias at.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND alias = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND alias = $2'
         alias_tag = await self.bot.db.fetchrow(query, ctx.guild.id, alias)
         if alias_tag:
             raise exceptions.ArgumentError(f'There is already a tag alias in this server with the name `{alias}`.')
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
         original_tag = await self.bot.db.fetchrow(query, ctx.guild.id, original)
         if not original_tag:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{original}`.')
@@ -178,7 +178,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, datetime.now())
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag alias created:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag alias created:')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
         embed.add_field(name='Links to:', value=f'{original}', inline=False)
         return await ctx.send(embed=embed)
@@ -195,15 +195,15 @@ class Tags(commands.Cog):
         if member.bot:
             raise exceptions.ArgumentError('You can not transfer tags to bots.')
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND owner_id = $2 and name = $3'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND owner_id = $2 and name = $3'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, ctx.author.id, name)
         if not tag:
             raise exceptions.ArgumentError(f'You do not have any tags in this server with the name `{name}`.')
 
-        query = 'UPDATE tags SET owner_id = $1 WHERE server_id = $2 AND name = $3'
+        query = 'UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, member.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag transferred:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag transferred:')
         embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
         embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
         return await ctx.send(embed=embed)
@@ -216,18 +216,18 @@ class Tags(commands.Cog):
         `name`: The name of the tag to delete.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND owner_id = $2 AND name = $3'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND owner_id = $2 AND name = $3'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, ctx.author.id, name)
         if not tag:
             raise exceptions.ArgumentError(f'You do not have any tags in this server with the name `{name}`.')
 
-        query = 'DELETE FROM tags WHERE server_id = $1 AND owner_id = $2 AND name = $3'
+        query = 'DELETE FROM tags WHERE guild_id = $1 AND owner_id = $2 AND name = $3'
         await self.bot.db.execute(query, ctx.guild.id, ctx.author.id, name)
 
-        query = 'DELETE FROM tags WHERE server_id = $1 AND alias = $2'
+        query = 'DELETE FROM tags WHERE guild_id = $1 AND alias = $2'
         await self.bot.db.execute(query, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Tag deleted:')
+        embed = discord.Embed(colour=ctx.config.colour, title='Tag deleted:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{tag["content"]}', inline=False)
         return await ctx.send(embed=embed)
@@ -240,7 +240,7 @@ class Tags(commands.Cog):
         `name`: The search terms to look for tags with.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 100'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name % $2 ORDER BY name <-> $2 LIMIT 100'
         tags = await self.bot.db.fetch(query, ctx.guild.id, name)
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server similar to the term `{name}`.')
@@ -259,7 +259,7 @@ class Tags(commands.Cog):
         if not member:
             member = ctx.author
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 and owner_id = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 and owner_id = $2'
         tags = await self.bot.db.fetch(query, ctx.guild.id, member.id)
         if not tags:
             raise exceptions.ArgumentError(f'`{member}` has no tags in this server.')
@@ -273,7 +273,7 @@ class Tags(commands.Cog):
         Get a list of all tags in this server.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1'
+        query = 'SELECT * FROM tags WHERE guild_id = $1'
         tags = await self.bot.db.fetch(query, ctx.guild.id)
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server.')
@@ -289,14 +289,14 @@ class Tags(commands.Cog):
         `name`: The name of the tag to get the information for.
         """
 
-        query = 'SELECT * FROM tags WHERE server_id = $1 AND name = $2'
+        query = 'SELECT * FROM tags WHERE guild_id = $1 AND name = $2'
         tag = await self.bot.db.fetchrow(query, ctx.guild.id, name)
         if not tag:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
 
         owner = ctx.guild.get_member(tag['owner_id'])
 
-        embed = discord.Embed(colour=discord.Colour.gold())
+        embed = discord.Embed(colour=ctx.config.colour)
         embed.set_footer(text=f'Created on {datetime.strftime(tag["created_at"], "%A %d %B %Y at %H:%M")}')
         embed.title = f'{tag["name"]}'
         embed.description = f'`Owner:` {owner.mention if owner else "None"}\n`Claimable:` {owner is None}\n' \
