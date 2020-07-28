@@ -58,7 +58,7 @@ class Life(commands.AutoShardedBot):
     async def get_context(self, message: discord.Message, *, cls=context.Context):
         return await super().get_context(message, cls=cls)
 
-    async def can_run_commands(self, ctx: commands.Context):
+    async def can_run_commands(self, ctx: context.Context):
 
         if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'support'}:
             raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`')

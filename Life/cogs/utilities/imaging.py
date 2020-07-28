@@ -18,13 +18,13 @@ import typing
 
 import aiohttp
 import discord
-from discord.ext import commands
 from wand.color import Color
 from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
 
 from cogs.utilities.exceptions import ArgumentError, LifeImageError
+from utilities import context
 
 
 def edge(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
@@ -224,7 +224,7 @@ class Imaging:
     def __init__(self, bot):
         self.bot = bot
 
-    async def edit_image(self, ctx, url: str, edit_type: str, **kwargs):
+    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs):
 
         if ctx.message.attachments:
             url = ctx.message.attachments[0].url

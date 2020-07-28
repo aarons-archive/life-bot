@@ -18,6 +18,7 @@ import discord
 from discord.ext import commands
 
 from cogs.utilities import exceptions
+from utilities import context
 
 
 class Todo(commands.Cog):
@@ -44,7 +45,7 @@ class Todo(commands.Cog):
         return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=f'{ctx.author}\'s todo list.')
 
     @todo.command(name='add', aliases=['make', 'create'])
-    async def todo_add(self, ctx, *, content: commands.clean_content):
+    async def todo_add(self, ctx: context.Context, *, content: commands.clean_content):
         """
         Creates a todo.
 
@@ -67,7 +68,7 @@ class Todo(commands.Cog):
         return await ctx.send(embed=embed)
 
     @todo.command(name='delete', aliases=['remove'])
-    async def todo_delete(self, ctx, *, todo_ids: str):
+    async def todo_delete(self, ctx: context.Context, *, todo_ids: str):
         """
         Deletes a todo.
 
@@ -103,7 +104,7 @@ class Todo(commands.Cog):
         return await ctx.send(embed=embed)
 
     @todo.command(name='clear')
-    async def todo_clear(self, ctx):
+    async def todo_clear(self, ctx: context.Context):
         """
         Clears your todo list.
         """
@@ -118,7 +119,7 @@ class Todo(commands.Cog):
         return await ctx.send(embed=embed)
 
     @todo.command(name='edit')
-    async def todo_edit(self, ctx, todo_id: str, *, content: commands.clean_content):
+    async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content):
         """
         Edits the todo with the given id.
 

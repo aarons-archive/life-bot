@@ -25,6 +25,7 @@ import setproctitle
 from discord.ext import commands
 
 from cogs.utilities import exceptions
+from utilities import context
 
 
 class Dev(commands.Cog):
@@ -55,7 +56,7 @@ class Dev(commands.Cog):
         return True
 
     @commands.group(name='dev', hidden=True, invoke_without_command=True)
-    async def dev(self, ctx):
+    async def dev(self, ctx: context.Context):
         """
         Base command for bot developer commands.
 
@@ -99,7 +100,7 @@ class Dev(commands.Cog):
         return await ctx.send(embed=embed)
 
     @dev.command(name='cleanup', aliases=['clean'], hidden=True)
-    async def dev_cleanup(self, ctx, limit: int = 50):
+    async def dev_cleanup(self, ctx: context.Context, limit: int = 50):
         """
         Cleans up the bots messages.
 
@@ -118,7 +119,7 @@ class Dev(commands.Cog):
                               f'message(s) out of the last `{limit}` message(s).', delete_after=3)
 
     @dev.command(name='guilds', hidden=True)
-    async def dev_guilds(self, ctx, guilds: int = 20):
+    async def dev_guilds(self, ctx: context.Context, guilds: int = 20):
         """
         A list of guilds with the ratio of bots to members.
 
@@ -141,7 +142,7 @@ class Dev(commands.Cog):
         return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds, header=header)
 
     @dev.command(name='socketstats', aliases=['ss'], hidden=True)
-    async def dev_socket_stats(self, ctx):
+    async def dev_socket_stats(self, ctx: context.Context):
         """
         Displays a list of socket event counts since startup.
         """
@@ -164,7 +165,7 @@ class Dev(commands.Cog):
         return await ctx.send(embed=embed)
 
     @dev.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
-    async def dev_blacklist(self, ctx):
+    async def dev_blacklist(self, ctx: context.Context):
         """
         Base command for blacklisting.
         """
@@ -173,7 +174,7 @@ class Dev(commands.Cog):
                               f'for more information.')
 
     @dev_blacklist.command(name='reload', hidden=True)
-    async def dev_blacklist_reload(self, ctx):
+    async def dev_blacklist_reload(self, ctx: context.Context):
         """
         Reload the bot's blacklist.
         """
@@ -182,7 +183,7 @@ class Dev(commands.Cog):
         return await ctx.send('Reloaded the blacklists.')
 
     @dev_blacklist.group(name='user', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_user(self, ctx):
+    async def dev_blacklist_user(self, ctx: context.Context):
         """
         Display a list of all blacklisted users.
         """
@@ -205,7 +206,7 @@ class Dev(commands.Cog):
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, header=header)
 
     @dev_blacklist_user.command(name='add', hidden=True)
-    async def dev_blacklist_user_add(self, ctx, user_id: int, *, reason: str = None):
+    async def dev_blacklist_user_add(self, ctx: context.Context, user_id: int, *, reason: str = None):
         """
         Add a user to the blacklist.
 
@@ -230,7 +231,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError(f'User with id `{user.id}` is already blacklisted.')
 
     @dev_blacklist_user.command(name='remove', hidden=True)
-    async def dev_blacklist_user_remove(self, ctx, user_id: int):
+    async def dev_blacklist_user_remove(self, ctx: context.Context, user_id: int):
         """
         Remove a user from the blacklist.
 
@@ -253,7 +254,7 @@ class Dev(commands.Cog):
         return await ctx.send(message)
 
     @dev_blacklist.group(name='guild', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_guild(self, ctx):
+    async def dev_blacklist_guild(self, ctx: context.Context):
         """
         Display a list of all blacklisted guilds.
         """
@@ -271,7 +272,7 @@ class Dev(commands.Cog):
         return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, header=header)
 
     @dev_blacklist_guild.command(name='add', hidden=True)
-    async def dev_blacklist_guild_add(self, ctx, guild_id: int, *, reason: str = None):
+    async def dev_blacklist_guild_add(self, ctx: context.Context, guild_id: int, *, reason: str = None):
         """
         Add a guild to the blacklist.
 
@@ -300,7 +301,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError(f'Guild with id `{guild_id}` is already blacklisted.')
 
     @dev_blacklist_guild.command(name='remove', hidden=True)
-    async def dev_blacklist_guild_remove(self, ctx, guild_id: int):
+    async def dev_blacklist_guild_remove(self, ctx: context.Context, guild_id: int):
         """
         Remove a guild from the blacklist.
 

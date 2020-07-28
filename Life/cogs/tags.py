@@ -18,6 +18,7 @@ import discord
 from discord.ext import commands
 
 from cogs.utilities import converters, exceptions
+from utilities import context
 
 
 class Tags(commands.Cog):
@@ -26,7 +27,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @commands.group(name='tag', invoke_without_command=True)
-    async def tag(self, ctx, *, name: converters.TagName):
+    async def tag(self, ctx: context.Context, *, name: converters.TagName):
         """
         Get a tag by it's name or alias's.
 
@@ -54,7 +55,7 @@ class Tags(commands.Cog):
         return await ctx.send(tags[0]['content'])
 
     @tag.command(name='raw')
-    async def tag_raw(self, ctx, *, name: converters.TagName):
+    async def tag_raw(self, ctx: context.Context, *, name: converters.TagName):
         """
         Get a tags raw content.
 
@@ -82,7 +83,7 @@ class Tags(commands.Cog):
         return await ctx.send(discord.utils.escape_markdown(tags[0]['content']))
 
     @tag.command(name='create', aliases=['make'])
-    async def tag_create(self, ctx, name: converters.TagName, *, content: commands.clean_content):
+    async def tag_create(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content):
         """
         Creates a tag.
 
@@ -107,7 +108,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='edit')
-    async def tag_edit(self, ctx, name: converters.TagName, *, content: commands.clean_content):
+    async def tag_edit(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content):
         """
         Edits a tags content.
 
@@ -132,7 +133,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='claim')
-    async def tag_claim(self, ctx, *, name: converters.TagName):
+    async def tag_claim(self, ctx: context.Context, *, name: converters.TagName):
         """
         Claim a tag if it's owner has left the server.
 
@@ -157,7 +158,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='alias')
-    async def tag_alias(self, ctx, alias: converters.TagName, original: converters.TagName):
+    async def tag_alias(self, ctx: context.Context, alias: converters.TagName, original: converters.TagName):
         """
         Alias a name to a tag.
 
@@ -184,7 +185,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='transfer')
-    async def tag_transfer(self, ctx, name: converters.TagName, *, member: discord.Member):
+    async def tag_transfer(self, ctx: context.Context, name: converters.TagName, *, member: discord.Member):
         """
         Transfer a tag to another member.
 
@@ -209,7 +210,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='delete', aliases=['remove'])
-    async def tag_delete(self, ctx, *, name: converters.TagName):
+    async def tag_delete(self, ctx: context.Context, *, name: converters.TagName):
         """
         Deletes a tag.
 
@@ -233,7 +234,7 @@ class Tags(commands.Cog):
         return await ctx.send(embed=embed)
 
     @tag.command(name='search')
-    async def tag_search(self, ctx, *, name: converters.TagName):
+    async def tag_search(self, ctx: context.Context, *, name: converters.TagName):
         """
         Displays a list of tags that are similar to the search.
 
@@ -249,7 +250,7 @@ class Tags(commands.Cog):
         return await ctx.paginate_embed(entries=entries, entries_per_page=25, header=f'Tags matching: `{name}`\n\n')
 
     @tag.command(name='list')
-    async def tag_list(self, ctx, *, member: discord.Member = None):
+    async def tag_list(self, ctx: context.Context, *, member: discord.Member = None):
         """
         Get a list of yours or someones else's tags.
 
@@ -268,7 +269,7 @@ class Tags(commands.Cog):
         return await ctx.paginate_embed(entries=entries, entries_per_page=25, title=f'{member}\'s tags')
 
     @tag.command(name='all')
-    async def tag_all(self, ctx):
+    async def tag_all(self, ctx: context.Context):
         """
         Get a list of all tags in this server.
         """
@@ -282,7 +283,7 @@ class Tags(commands.Cog):
         return await ctx.paginate_embed(entries=entries, entries_per_page=25, title=f'{ctx.guild}\'s tags')
 
     @tag.command(name='info')
-    async def tag_info(self, ctx, *, name: converters.TagName):
+    async def tag_info(self, ctx: context.Context, *, name: converters.TagName):
         """
         Displays information about a tag.
 
