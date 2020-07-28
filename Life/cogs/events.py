@@ -20,6 +20,7 @@ import prettify_exceptions
 from discord.ext import commands
 
 from cogs.utilities import exceptions
+from utilities import context
 
 
 class Events(commands.Cog):
@@ -126,7 +127,7 @@ class Events(commands.Cog):
         await self.bot.process_commands(after)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: context.Context, error):
 
         error = getattr(error, 'original', error)
 
