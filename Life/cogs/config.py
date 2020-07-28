@@ -11,10 +11,12 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from discord.ext import commands
 import asyncio
 
-from cogs.utilities import exceptions, checks
+import discord
+from discord.ext import commands
+
+from cogs.utilities import checks, converters, exceptions, objects
 from utilities.context import Context
 
 
@@ -29,24 +31,36 @@ class Config(commands.Cog):
 
         await self.bot.wait_until_ready()
 
-        prefixes = await self.bot.db.fetch('SELECT * FROM prefixes')
-        for guild in prefixes:
-            self.bot.prefixes[guild['server_id']] = sorted(guild['prefixes'], key=lambda prefix: prefix.endswith(' '))
-        print(f'[POSTGRESQL] Loaded guild prefixes. [{len(prefixes)} guild(s)]')
+        configs = await self.bot.db.fetch('SELECT * FROM guild_configs')
+        for config in configs:
+            self.bot.guild_configs[config['guild_id']] = objects.GuildConfig(data=dict(config))
+
+        print(f'[POSTGRESQL] Loaded guild configs. [{len(configs)} guild(s)]')
+
+    async def load_guild_config(self, guild: discord.Guild, data: dict = None):
+
+        await self.bot.wait_until_ready()
+
+        if not data:
+            data = await self.bot.db.fetchrow('SELECT * FROM guild_configs WHERE guild_id = %1', guild.id)
+
+        self.bot.guild_configs[guild.id] = objects.GuildConfig(data=dict(data))
 
     @commands.group(name='prefix', invoke_without_command=True)
-    async def prefix(self, ctx: Context):
+    async def _prefix(self, ctx: Context):
         """
-        Displays a list of prefixes available in the current server.
+        Displays a list of available prefixes.
         """
+
         prefixes = await self.bot.get_prefix(ctx.message)
+
         entries = [f'`1.` {prefixes[1]}']
         entries.extend(f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:]))
         return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=f'List of usable prefixes in {ctx.guild}.')
 
-    @prefix.command(name='add')
+    @_prefix.command(name='add')
     @checks.has_guild_permissions(manage_guild=True)
-    async def prefix_add(self, ctx: Context, prefix: commands.clean_content):
+    async def prefix_add(self, ctx: Context, prefix: converters.Prefix):
         """
         Adds a prefix to the server.
 
@@ -55,61 +69,50 @@ class Config(commands.Cog):
         `prefix`: The prefix to add.
         """
 
-        if len(str(prefix)) > 20:
-            raise exceptions.ArgumentError(f'Prefixes can not be more than 20 characters long.')
-        if '`' in prefix:
-            raise exceptions.ArgumentError(f'Prefixes can not contain backtick characters.')
-
-        guild_prefixes = await self.bot.db.fetchrow('SELECT * FROM prefixes WHERE server_id = $1', ctx.guild.id)
-        if not guild_prefixes:
-            self.bot.prefixes[ctx.guild.id] = [prefix]
-            await self.bot.db.execute('INSERT INTO prefixes values ($1, array[$2])', ctx.guild.id, prefix)
+        if isinstance(ctx.config, objects.DefaultGuildConfig) or ctx.config.prefixes is None:
+            data = await self.bot.db.fetchrow('INSERT INTO guild_configs (guild_id, prefixes) values ($1, array[$2]) RETURNING *', ctx.guild.id, prefix)
+            await self.load_guild_config(guild=ctx.guild, data=data)
             return await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
-        if prefix in guild_prefixes['prefixes']:
+        if prefix in ctx.config.prefixes:
             raise exceptions.ArgumentError(f'This server already has the `{prefix}` prefix.')
-        if len(guild_prefixes['prefixes']) > 10:
-            raise exceptions.ArgumentError(f'This server can only have up to 10 prefixes.')
+        if len(ctx.config.prefixes) > 20:
+            raise exceptions.ArgumentError(f'This server can only have up to 20 prefixes.')
 
-        self.bot.prefixes[ctx.guild.id].append(prefix)
-        await self.bot.db.execute('UPDATE prefixes SET prefixes = array_append(prefixes.prefixes, $1) WHERE server_id = $2', prefix, ctx.guild.id)
+        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING *', prefix, ctx.guild.id)
+        await self.load_guild_config(guild=ctx.guild, data=data)
         return await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
-    @prefix.command(name='delete', aliases=['remove'])
+    @_prefix.command(name='delete', aliases=['remove'])
     @checks.has_guild_permissions(manage_guild=True)
-    async def prefix_delete(self, ctx: Context, prefix: commands.clean_content):
+    async def prefix_delete(self, ctx: Context, prefix: converters.Prefix):
         """
         Deletes a prefix from the server.
 
         `prefix`: The prefix to delete.
         """
 
-        if len(str(prefix)) > 20:
-            raise exceptions.ArgumentError(f'Prefixes can not be more than 20 characters long.')
-        if '`' in prefix:
-            raise exceptions.ArgumentError(f'Prefixes can not contain backtick characters.')
-
-        guild_prefixes = await self.bot.db.fetchrow('SELECT * FROM prefixes WHERE server_id = $1', ctx.guild.id)
-        if prefix not in guild_prefixes['prefixes']:
+        if isinstance(ctx.config, objects.DefaultGuildConfig) or not ctx.config.prefixes:
+            raise exceptions.ArgumentError('This server does not have any custom prefixes.')
+        if prefix not in ctx.config.prefixes:
             raise exceptions.ArgumentError(f'This server does not have the `{prefix}` prefix.')
 
-        self.bot.prefixes[ctx.guild.id].remove(prefix)
-        await self.bot.db.execute('UPDATE prefixes SET prefixes = array_remove(prefixes.prefixes, $1) WHERE server_id = $2', prefix, ctx.guild.id)
+        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING *', prefix, ctx.guild.id)
+        await self.load_guild_config(guild=ctx.guild, data=data)
         return await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
 
-    @prefix.command(name='clear')
+    @_prefix.command(name='clear')
     @checks.has_guild_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: Context):
         """
         Clear all prefixes from the server.
         """
 
-        guild_prefixes = await self.bot.db.fetchrow('SELECT * FROM prefixes WHERE server_id = $1', ctx.guild.id)
-        if not guild_prefixes:
-            raise exceptions.ArgumentError('This server has no customizable prefixes.')
+        if isinstance(ctx.config, objects.DefaultGuildConfig) or not ctx.config.prefixes:
+            raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
-        del self.bot.prefixes[ctx.guild.id]
-        await self.bot.db.execute('DELETE FROM prefixes WHERE server_id = $1', ctx.guild.id)
+        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING *', [], ctx.guild.id)
+        await self.load_guild_config(guild=ctx.guild, data=data)
         return await ctx.send(f'Cleared this servers prefixes.')
 
 

@@ -36,7 +36,7 @@ class HelpCommand(commands.HelpCommand):
 
         for command in cog.walk_commands():
 
-            if ctx.author.id in ctx.bot.owner_ids:
+            if ctx.author.id in ctx.bot.config.owner_ids:
                 filtered_commands.append(command)  # Show all commands if author is owner.
             elif command.hidden or command.root_parent and command.root_parent.hidden:
                 continue  # Skip command if it or its parents are hidden.
@@ -101,7 +101,7 @@ class HelpCommand(commands.HelpCommand):
 
         for command in group.walk_commands():
 
-            if ctx.author.id in ctx.bot.owner_ids:
+            if ctx.author.id in ctx.bot.config.owner_ids:
                 filtered_commands.append(command)  # Show all commands if author is owner.
             elif command.hidden or command.root_parent and command.root_parent.hidden:
                 continue  # Skip command if it or its parents are hidden.
@@ -129,7 +129,7 @@ class HelpCommand(commands.HelpCommand):
 
         title = f'{command.name} {command.signature if command.signature else ""}'
         description = f'{aliases if command.aliases else ""}{command_help}'
-        embed = discord.Embed(colour=discord.Colour.gold(), title=title, description=description)
+        embed = discord.Embed(colour=ctx.config.colour, title=title, description=description)
 
         await ctx.send(embed=embed)
 

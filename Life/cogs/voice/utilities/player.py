@@ -54,7 +54,7 @@ class Player(diorite.Player):
 
         track = self.current
 
-        embed = discord.Embed(title='Life bot music controller:', colour=discord.Color.gold())
+        embed = discord.Embed(title='Life bot music controller:', colour=self.bot.utils.guild_config(self.guild).colour)
         embed.set_thumbnail(url=track.thumbnail)
         embed.add_field(name=f'Now playing:', value=f'**[{track.title}]({track.uri})**', inline=False)
         embed.add_field(name='Requester:', value=f'{track.requester.mention}', inline=False)

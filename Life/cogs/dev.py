@@ -48,6 +48,12 @@ class Dev(commands.Cog):
             self.bot.user_blacklist[user['id']] = user['reason']
         print(f'[POSTGRESQL] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
 
+    def cog_check(self, ctx):
+
+        if ctx.author.id not in self.bot.config.owner_ids:
+            return False
+        return True
+
     @commands.group(name='dev', hidden=True, invoke_without_command=True)
     async def dev(self, ctx):
         """

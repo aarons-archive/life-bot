@@ -20,7 +20,7 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from cogs.utilities import utils
+from cogs.utilities import utils, objects
 from config import config
 from utilities import context, help
 
@@ -34,6 +34,7 @@ class Life(commands.AutoShardedBot):
         self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
                                                     external_emojis=True, add_reactions=True)
         self.voice_permissions = discord.Permissions(connect=True, speak=True)
+
         self.log = logging.getLogger('bot')
         self.start_time = time.time()
 
@@ -42,9 +43,14 @@ class Life(commands.AutoShardedBot):
         self.config = config.LifeConfig()
 
         self.commands_not_allowed_dms = {}
+
         self.guild_blacklist = {}
         self.user_blacklist = {}
-        self.prefixes = {}
+
+        self.guild_configs = {}
+        self.user_configs = {}
+
+        self.default_guild_config = objects.DefaultGuildConfig()
 
         self.redis = None
         self.db = None
@@ -54,12 +60,8 @@ class Life(commands.AutoShardedBot):
 
     async def can_run_commands(self, ctx: commands.Context):
 
-        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'invite'}:
-            raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`\n\n'
-                                        f'If you would like to appeal this please use `{self.config.prefix}appeal`.')
-
-        if ctx.command.cog == self.get_cog('Dev') and ctx.author.id not in self.config.owner_ids:
-            raise commands.NotOwner()
+        if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'support'}:
+            raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`')
 
         if not ctx.guild and ctx.command.qualified_name in self.commands_not_allowed_dms:
             raise commands.NoPrivateMessage()
@@ -68,7 +70,6 @@ class Life(commands.AutoShardedBot):
         current_perms = dict(ctx.channel.permissions_for(ctx.guild.me)) if ctx.guild else dict(ctx.channel.me.permissions_in(ctx.channel))
 
         if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and ctx.author.voice is not None:
-
             needed_perms.update({perm: value for perm, value in dict(self.voice_permissions).items() if value is True})
             current_perms.update({perm: value for perm, value in getattr(ctx.author.voice, 'channel', None).permissions_for(ctx.guild.me) if value is True})
 
@@ -81,12 +82,13 @@ class Life(commands.AutoShardedBot):
     async def get_prefix(self, message: discord.Message):
 
         if not message.guild:
-            return commands.when_mentioned_or(*[self.config.prefix, ''])(self, message)
+            return commands.when_mentioned_or(self.config.prefix, '')(self, message)
 
-        if message.guild.id not in self.prefixes.keys():
+        guild_config = self.guild_configs.get(message.guild.id)
+        if not guild_config:
             return commands.when_mentioned_or(self.config.prefix)(self, message)
 
-        return commands.when_mentioned_or(*[self.config.prefix, *self.prefixes[message.guild.id]])(self, message)
+        return commands.when_mentioned_or(self.config.prefix, *guild_config.prefixes)(self, message)
 
     async def start(self, *args, **kwargs):
 
@@ -121,7 +123,7 @@ class Life(commands.AutoShardedBot):
             *[command.qualified_name for command in list(self.get_cog('Music').walk_commands())],
             *[command.qualified_name for command in list(self.get_cog('Tags').walk_commands())],
             *[command.qualified_name for command in self.get_command('prefix').commands],
-            'prefix', 'serverinfo', 'servericon', 'userinfo'
+            self.get_command('serverinfo').qualified_name, self.get_command('icon').qualified_name, self.get_command('userinfo').qualified_name
         }
 
         self.add_check(self.can_run_commands)
