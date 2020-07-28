@@ -11,7 +11,6 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import asyncio
 import os
 
@@ -21,7 +20,7 @@ from tornado import httpserver, web
 from cogs.dashboard.utilities import http, utils
 
 
-class DashboardManager(commands.Cog):
+class Dashboard(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -29,9 +28,8 @@ class DashboardManager(commands.Cog):
         self.endpoints = [endpoint.setup(bot=self.bot) for endpoint in self.bot.config.endpoints]
         self.application = web.Application([endpoint for endpoints in self.endpoints for endpoint in endpoints],
                                            static_path=os.path.join(os.path.dirname(__file__), 'static/'),
-                                           template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
-                                           default_host='0.0.0.0', ui_methods=utils,
-                                           cookie_secret=self.bot.config.cookie_secret)
+                                           template_path=os.path.join(os.path.dirname(__file__), 'templates/'), debug=True,
+                                           default_host='0.0.0.0', ui_methods=utils, cookie_secret=self.bot.config.cookie_secret)
 
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)
         self.bot.http_client = http.HTTPClient(bot=self.bot)
@@ -47,4 +45,4 @@ class DashboardManager(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(DashboardManager(bot))
+    bot.add_cog(Dashboard(bot))

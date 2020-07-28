@@ -72,15 +72,15 @@ class Login(BaseHTTPHandler, ABC):
         token_response = objects.TokenResponse(data=data)
 
         await self.bot.redis.hset('tokens', identifier, token_response.json)
-        return self.redirect(f'/dashboard')
+        return self.redirect(f'/profile')
 
 
 # noinspection PyAsyncCall
-class Dashboards(BaseHTTPHandler, ABC):
+class Profile(BaseHTTPHandler, ABC):
 
     async def get(self):
-        self.render('dashboards.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())
+        self.render('profile.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())
 
 
 def setup(**kwargs):
-    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/dashboard', Dashboards, kwargs)]
+    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/profile', Profile, kwargs)]

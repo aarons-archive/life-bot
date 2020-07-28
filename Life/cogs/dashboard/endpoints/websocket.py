@@ -34,7 +34,7 @@ class Websocket(BaseWebsocketHandler, ABC):
         try:
             message = json.loads(message)
         except json.JSONDecodeError:
-            return self.close(code=4001, reason='invalid payload format. payloads must be in json.')
+            return self.close(code=4001, reason='invalid payload format. payloads must be json.')
 
         op = message.get('op')
 
@@ -46,22 +46,21 @@ class Websocket(BaseWebsocketHandler, ABC):
         elif op == 2:  # IDENTIFY
 
             if self.authenticated is True:
-                return self.close(code=4005, reason='identify already received.')
+                return self.close(code=4005, reason='already authenticated.')
 
             data = message.get('data')
 
             guild = self.bot.get_guild(int(data.get('guild_id')))
             if not guild:
-                return self.close(code=4004, reason='invalid guild id provided')
+                return self.close(code=4004, reason='invalid guild id.')
 
-            identifier = decode_signed_value(secret=self.application.settings["cookie_secret"], name='identifier',
-                                             value=data.get('identifier').strip('"'))
+            identifier = decode_signed_value(secret=self.application.settings["cookie_secret"], name='identifier', value=data.get('identifier').strip('"'))
             if identifier is None:
                 identifier = data.get('identifier')
 
             token_response = await self.bot.redis.hget('tokens', identifier)
             if not token_response:
-                return self.close(code=4003, reason='not logged in with discord')
+                return self.close(code=4003, reason='not logged in. must log in with discord on the site at least once.')
 
             token_response = objects.TokenResponse(data=json.loads(token_response.decode()))
 
@@ -95,7 +94,7 @@ class Websocket(BaseWebsocketHandler, ABC):
             self.send_position_task = asyncio.create_task(self.send_position())
 
         elif self.authenticated is False:
-            return self.close(code=4006, reason='identify not received.')
+            return self.close(code=4006, reason='not authorized.')
 
     async def send_current(self):
 
@@ -167,6 +166,7 @@ class Websocket(BaseWebsocketHandler, ABC):
             self.last_position_data = position_data
 
             await self.write_message({'op': 0, 'event': 'POSITION', 'data': position_data})
+            await asyncio.sleep(1)
 
 
 def setup(**kwargs):
