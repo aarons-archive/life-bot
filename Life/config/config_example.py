@@ -1,4 +1,4 @@
-from cogs.dashboard.endpoints import main, dashboard, metrics, player_api
+from cogs.dashboard.endpoints import main, dashboard, metrics, websocket
 
 
 class LifeConfig:
@@ -44,7 +44,7 @@ class LifeConfig:
         self.ip = f''
         self.port = 00000
 
-        self.endpoints = [main, dashboard, metrics, player_api]
+        self.endpoints = [main, dashboard, metrics, websocket]
 
         self.client_id = ''
         self.client_secret = ''
