@@ -79,7 +79,7 @@ class HelpCommand(commands.HelpCommand):
 
         title = f"__{ctx.bot.user.name}'s help page__"
         header = f'Use `{ctx.bot.config.prefix}help [Command/Category]` for help on a command or category.\n'
-        await ctx.paginate_embed(title=title, header=header, entries=entries, entries_per_page=5)
+        return await ctx.paginate_embed(entries=entries, per_page=5, title=title, header=header)
 
     async def send_cog_help(self, cog: commands.Cog):
 
@@ -91,7 +91,7 @@ class HelpCommand(commands.HelpCommand):
 
         title = f'__**{cog.qualified_name} help page:**__\n'
         entries = self.format_commands(command_list=cog_commands)
-        await ctx.paginate_embed(title=title, entries=entries, entries_per_page=20)
+        await ctx.paginate_embed(entries=entries, per_page=20, title=title)
 
     async def send_group_help(self, group: commands.Group):
 
@@ -118,7 +118,7 @@ class HelpCommand(commands.HelpCommand):
         header = f'{aliases if group.aliases else ""}{command_help}\n\n__**Subcommands:**__\n'
         entries = self.format_commands(command_list=filtered_commands)
 
-        await ctx.paginate_embed(title=title, header=header, entries=entries, entries_per_page=20)
+        await ctx.paginate_embed(entries=entries, per_page=20, title=title, header=header)
 
     async def send_command_help(self, command: commands.Command):
 

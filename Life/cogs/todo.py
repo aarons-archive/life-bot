@@ -27,14 +27,12 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', invoke_without_command=True)
-    async def todo(self, ctx):
+    async def todo(self, ctx: context.Context):
         """
         Display a list of your current todo's.
         """
 
-        query = 'SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added'
-
-        todos = await self.bot.db.fetch(query, ctx.author.id)
+        todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
             return await ctx.send('You do not have any todos.')
 
@@ -42,7 +40,7 @@ class Todo(commands.Cog):
         for index, todo in enumerate(todos):
             entries.append(f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}')
 
-        return await ctx.paginate_embed(entries=entries, entries_per_page=10, title=f'{ctx.author}\'s todo list.')
+        return await ctx.paginate_embed(entries=entries, per_page=10, title=f'{ctx.author}\'s todo list.')
 
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx: context.Context, *, content: commands.clean_content):

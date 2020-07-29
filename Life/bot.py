@@ -20,7 +20,7 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from cogs.utilities import utils, objects
+from cogs.utilities import objects, utils
 from config import config
 from utilities import context, help
 
@@ -55,10 +55,10 @@ class Life(commands.AutoShardedBot):
         self.redis = None
         self.db = None
 
-    async def get_context(self, message: discord.Message, *, cls=context.Context):
+    async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
 
-    async def can_run_commands(self, ctx: context.Context):
+    async def can_run_commands(self, ctx: context.Context) -> bool:
 
         if ctx.author.id in self.user_blacklist.keys() and ctx.command.name not in {'help', 'support'}:
             raise commands.CheckFailure(f'You are blacklisted from this bot for the following reason:\n\n`{self.user_blacklist[ctx.author.id]}`')
@@ -79,7 +79,7 @@ class Life(commands.AutoShardedBot):
 
         return True
 
-    async def get_prefix(self, message: discord.Message):
+    async def get_prefix(self, message: discord.Message) -> list:
 
         if not message.guild:
             return commands.when_mentioned_or(self.config.prefix, '')(self, message)
@@ -90,7 +90,7 @@ class Life(commands.AutoShardedBot):
 
         return commands.when_mentioned_or(self.config.prefix, *guild_config.prefixes)(self, message)
 
-    async def start(self, *args, **kwargs):
+    async def start(self, *args, **kwargs) -> None:
 
         try:
             db = await asyncpg.create_pool(**self.config.postgresql)
@@ -130,7 +130,7 @@ class Life(commands.AutoShardedBot):
 
         await super().start(*args)
 
-    async def close(self):
+    async def close(self) -> None:
 
         print("\n[BOT] Closing bot down.")
 

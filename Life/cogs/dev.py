@@ -49,7 +49,7 @@ class Dev(commands.Cog):
             self.bot.user_blacklist[user['id']] = user['reason']
         print(f'[POSTGRESQL] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
 
-    def cog_check(self, ctx):
+    def cog_check(self, ctx: context.Context):
 
         if ctx.author.id not in self.bot.config.owner_ids:
             return False
@@ -139,7 +139,7 @@ class Dev(commands.Cog):
             entries.append(f'{guild.id:<18} |{total:<9}|{members:<9}|{bots:<9}|{percent_bots:9}|{guild.name}')
 
         header = 'Guild id           |Total    |Members  |Bots     |Percent  |Name\n'
-        return await ctx.paginate_codeblock(entries=entries, entries_per_page=guilds, header=header)
+        return await ctx.paginate(entries=entries, per_page=guilds, header=header, codeblock=True)
 
     @dev.command(name='socketstats', aliases=['ss'], hidden=True)
     async def dev_socket_stats(self, ctx: context.Context):
@@ -203,7 +203,7 @@ class Dev(commands.Cog):
                 blacklisted.append(f'{user.id:<18} |{user.name:<32} |{entry["reason"]}')
 
         header = 'User id            |Name                             |Reason\n'
-        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, header=header)
+        return await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_user.command(name='add', hidden=True)
     async def dev_blacklist_user_add(self, ctx: context.Context, user_id: int, *, reason: str = None):
@@ -269,7 +269,7 @@ class Dev(commands.Cog):
             blacklisted.append(f'{entry["id"]:<18} |{entry["reason"]}')
 
         header = 'Guild id           |Reason\n'
-        return await ctx.paginate_codeblock(entries=blacklisted, entries_per_page=10, header=header)
+        return await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_guild.command(name='add', hidden=True)
     async def dev_blacklist_guild_add(self, ctx: context.Context, guild_id: int, *, reason: str = None):

@@ -13,55 +13,109 @@ You should have received a copy of the GNU Affero General Public License along w
 
 
 import asyncio
-import math
 
 import discord
-from discord.ext import commands
 
 
 class BasePaginator:
 
     def __init__(self, **kwargs):
 
+        self.kwargs = kwargs
+
         self.ctx = kwargs.get('ctx')
+        self.entries = [str(entry) for entry in kwargs.get('entries')]
+        self.per_page = kwargs.get('per_page')
 
-        self.original_entries = kwargs.get('entries')
-        self.entries_per_page = kwargs.get('entries_per_page')
+        self.delete_when_done = kwargs.get('delete_when_done', True)
+        self.bot = kwargs.get('bot', self.ctx.bot)
+        self.timeout = kwargs.get('timeout', 60)
 
-        self.pages = math.ceil(len(self.original_entries) / self.entries_per_page)
-        self.entries = []
+        self.codeblock = kwargs.get('codeblock')
+        self.codeblock_start = '```\n' if self.codeblock else ''
+        self.codeblock_end = '\n```' if self.codeblock else ''
 
-        for page_number in range(1, self.pages + 1):
-            self.entries.append('\n'.join([str(entry) for entry in self.original_entries[self.entries_per_page * page_number - self.entries_per_page:self.entries_per_page * page_number]]))
+        self.pages = ['\n'.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)]
 
-        self.page = 0
         self.message = None
         self.looping = True
+        self.page = 0
 
-        self.emote_thresholds = {
-            '\u23ea': 15,
-            '\u2b05': 0,
-            '\u23f9': 0,
-            '\u27a1': 0,
-            '\u23e9': 15,
+        self.buttons = {
+            ':first:737826967910481931': self.first,
+            ':backward:737826960885153800': self.backward,
+            ':stop:737826951980646491': self.stop,
+            ':forward:737826943193448513': self.forward,
+            ':last:737826943520473198': self.last
         }
 
-    async def react(self):
-        try:
-            if self.pages == 1:
-                return await self.message.add_reaction('\u23f9')
-            else:
-                for emote, threshold in self.emote_thresholds.items():
-                    if self.pages >= int(threshold):
-                        await self.message.add_reaction(emote)
-                    else:
-                        continue
-        except discord.Forbidden:
-            raise commands.BotMissingPermissions(['Add Reactions'])
+    def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
 
-    async def stop(self):
-        # Stop pagination by deleting the message.
-        return await self.message.delete()
+        if payload.message_id != self.message.id:
+            return False
+
+        if payload.user_id not in (self.bot.owner_id, self.ctx.author.id):
+            return False
+
+        return str(payload.emoji).strip('<>') in self.buttons.keys()
+
+    async def react(self) -> None:
+
+        if len(self.pages) == 1:
+            await self.message.add_reaction(':stop:737826951980646491')
+        else:
+            for emote in self.buttons.keys():
+                if emote in (':start:737826967910481931', ':end:737826943520473198') and len(self.pages) < 5:
+                    continue
+                await self.message.add_reaction(emote)
+
+    async def loop(self) -> None:
+
+        await self.react()
+
+        while self.looping is True:
+
+            try:
+                tasks = [
+                    asyncio.ensure_future(self.bot.wait_for('raw_reaction_add', check=self.check_reaction)),
+                    asyncio.ensure_future(self.bot.wait_for('raw_reaction_remove', check=self.check_reaction))
+                ]
+                done, pending = await asyncio.wait(tasks, timeout=self.timeout, return_when=asyncio.FIRST_COMPLETED)
+
+                for task in pending:
+                    task.cancel()
+
+                if len(done) == 0:
+                    raise asyncio.TimeoutError()
+
+                await self.buttons[str(done.pop().result().emoji).strip('<>')]()
+
+            except asyncio.TimeoutError:
+                self.looping = False
+
+        if not self.message:
+            return
+
+        if self.delete_when_done:
+            return await self.message.delete()
+
+        for reaction in self.buttons.keys():
+            await self.message.remove_reaction(reaction, self.bot.user)
+
+    async def first(self) -> None:
+        pass
+
+    async def backward(self) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass
+
+    async def forward(self) -> None:
+        pass
+
+    async def last(self) -> None:
+        pass
 
 
 class Paginator(BasePaginator):
@@ -70,176 +124,46 @@ class Paginator(BasePaginator):
         super().__init__(**kwargs)
 
         self.header = kwargs.get('header', '')
-        self.footer = kwargs.get('footer', '')
 
-        self.emotes = {
-            '\u23ea': self.page_first,
-            '\u2b05': self.page_backward,
-            '\u23f9': self.stop,
-            '\u27a1': self.page_forward,
-            '\u23e9': self.page_last,
-        }
+    @property
+    def footer(self) -> str:
+        return self.kwargs.get('footer', f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}')
 
-    async def paginate(self):
+    async def paginate(self) -> None:
 
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
+        self.message = await self.ctx.send(f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
+        asyncio.create_task(self.loop())
 
-        self.message = await self.ctx.send(f'{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}')
-        await self.react()
-
-        while self.looping:
-
-            try:
-
-                # Wait for reactions, check that they are on the same message, from the same author and are in the emoji list.
-                reaction, _ = await self.ctx.bot.wait_for('reaction_add', timeout=300.0, check=lambda r, u: r.message.id == self.message.id and u.id == self.ctx.author.id and str(r.emoji) in self.emotes.keys())
-
-                if str(reaction.emoji) == '\u23f9':
-                    self.looping = False
-                else:
-                    await self.emotes[str(reaction.emoji)]()
-
-            except asyncio.TimeoutError:
-                self.looping = False
-
-        return await self.stop()
-
-    async def page_first(self):
+    async def first(self) -> None:
 
         self.page = 0
+        await self.message.edit(content=f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
 
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
+    async def backward(self) -> None:
 
-        await self.message.edit(content=f'{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}')
-
-    async def page_backward(self):
-
-        # If the current page is smaller then or equal too 0, do nothing.
         if self.page <= 0:
             return
+
         self.page -= 1
+        await self.message.edit(content=f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
 
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
+    async def stop(self) -> None:
 
-        await self.message.edit(content=f'{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}')
+        self.looping = False
+        self.message = await self.message.delete()
 
-    async def page_forward(self):
+    async def forward(self) -> None:
 
-        # If the current page is bigger then or equal too the amount of the pages, do nothing.
-        if self.page >= self.pages - 1:
+        if self.page >= len(self.pages) - 1:
             return
+
         self.page += 1
+        await self.message.edit(content=f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
 
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
+    async def last(self) -> None:
 
-        await self.message.edit(content=f'{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}')
-
-    async def page_last(self):
-
-        self.page = self.pages - 1
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        await self.message.edit(content=f'{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}')
-
-
-class CodeBlockPaginator(BasePaginator):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.header = kwargs.get('header', '')
-        self.footer = kwargs.get('footer', '')
-
-        self.emotes = {
-            '\u23ea': self.page_first,
-            '\u2b05': self.page_backward,
-            '\u23f9': self.stop,
-            '\u27a1': self.page_forward,
-            '\u23e9': self.page_last,
-        }
-
-    async def paginate(self):
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        self.message = await self.ctx.send(f'```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```')
-
-        await self.react()
-
-        while self.looping:
-
-            try:
-                # Wait for reactions, check that they are on the same message, from the same author and are in the emoji list.
-                reaction, _ = await self.ctx.bot.wait_for('reaction_add', timeout=300.0, check=lambda r, u: r.message.id == self.message.id and u.id == self.ctx.author.id and str(r.emoji) in self.emotes.keys())
-
-                if str(reaction.emoji) == '\u23f9':
-                    self.looping = False
-                else:
-                    await self.emotes[str(reaction.emoji)]()
-
-            except asyncio.TimeoutError:
-                self.looping = False
-
-        return await self.stop()
-
-    async def page_first(self):
-
-        self.page = 0
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        await self.message.edit(content=f'```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```')
-
-    async def page_backward(self):
-
-        # If the current page is smaller then or equal too 0, do nothing.
-        if self.page <= 0:
-            return
-        self.page -= 1
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        await self.message.edit(content=f'```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```')
-
-    async def page_forward(self):
-
-        # If the current page is bigger then or equal too the amount of the pages, do nothing.
-        if self.page >= self.pages - 1:
-            return
-        self.page += 1
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        await self.message.edit(content=f'```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```')
-
-    async def page_last(self):
-
-        self.page = self.pages - 1
-
-        footer = None
-        if len(self.footer) == 0:
-            footer = f'\n\nPage: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}'
-
-        await self.message.edit(content=f'```\n{self.header}{self.entries[self.page]}{footer if len(self.footer) == 0 else self.footer}\n```')
+        self.page = len(self.pages) - 1
+        await self.message.edit(content=f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
 
 
 class EmbedPaginator(BasePaginator):
@@ -249,191 +173,69 @@ class EmbedPaginator(BasePaginator):
 
         self.header = kwargs.get('header', '')
         self.footer = kwargs.get('footer', '')
-        self.colour = kwargs.get('colour', self.ctx.config.colour)
+
         self.title = kwargs.get('title', '')
+
+        self.colour = kwargs.get('colour', self.ctx.config.colour)
         self.image = kwargs.get('image', None)
         self.thumbnail = kwargs.get('thumbnail', None)
 
-        self.embed = discord.Embed(colour=self.colour)
+        self.embed = discord.Embed(colour=self.colour, title=self.title)
+        self.embed.set_footer(text=self.embed_footer)
 
-        if self.title:
-            self.embed.title = self.title
         if self.image:
             self.embed.set_image(url=self.image)
         if self.thumbnail:
             self.embed.set_thumbnail(url=self.thumbnail)
 
-        self.emotes = {
-            '\u23ea': self.page_first,
-            '\u2b05': self.page_backward,
-            '\u23f9': self.stop,
-            '\u27a1': self.page_forward,
-            '\u23e9': self.page_last,
-        }
+    @property
+    def embed_footer(self) -> str:
+        return self.kwargs.get('embed_footer', f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}')
 
-    async def paginate(self):
+    async def paginate(self) -> None:
 
-        self.embed.description = f'{self.header}{self.entries[self.page]}{self.footer}'
-        self.embed.set_footer(text=f'Page: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}')
-
+        self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
         self.message = await self.ctx.send(embed=self.embed)
 
-        await self.react()
+        asyncio.create_task(self.loop())
 
-        while self.looping:
-
-            try:
-                # Wait for reactions, check that they are on the same message, from the same author and are in the emoji list.
-                reaction, _ = await self.ctx.bot.wait_for('reaction_add', timeout=300.0, check=lambda r, u: r.message.id == self.message.id and u.id == self.ctx.author.id and str(r.emoji) in self.emotes.keys())
-
-                if str(reaction.emoji) == '\u23f9':
-                    self.looping = False
-                else:
-                    await self.emotes[str(reaction.emoji)]()
-
-            except asyncio.TimeoutError:
-                self.looping = False
-
-        return await self.stop()
-
-    async def page_first(self):
+    async def first(self) -> None:
 
         self.page = 0
 
-        self.embed.description = f'{self.header}{self.entries[self.page]}{self.footer}'
-        self.embed.set_footer(text=f'Page: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}')
-
+        self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
+        self.embed.set_footer(text=self.embed_footer)
         await self.message.edit(embed=self.embed)
 
-    async def page_backward(self):
+    async def backward(self) -> None:
 
-        # If the current page is smaller then or equal too 0, do nothing.
-        if self.page <= 0:
-            return
-
-        self.page -= 1
-
-        self.embed.description = f'{self.header}{self.entries[self.page]}{self.footer}'
-        self.embed.set_footer(text=f'Page: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}')
-
-        await self.message.edit(embed=self.embed)
-
-    async def page_forward(self):
-
-        # If the current page is bigger then or equal too the amount of the pages, do nothing.
-        if self.page >= self.pages - 1:
-            return
-
-        self.page += 1
-
-        self.embed.description = f'{self.header}{self.entries[self.page]}{self.footer}'
-        self.embed.set_footer(text=f'Page: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}')
-
-        await self.message.edit(embed=self.embed)
-
-    async def page_last(self):
-
-        self.page = self.pages - 1
-
-        self.embed.description = f'{self.header}{self.entries[self.page]}{self.footer}'
-        self.embed.set_footer(text=f'Page: {self.page + 1}/{self.pages} | Total entries: {len(self.original_entries)}')
-
-        await self.message.edit(embed=self.embed)
-
-
-class EmbedsPaginator:
-
-    def __init__(self, **kwargs):
-
-        self.ctx = kwargs.get('ctx')
-
-        self.entries = kwargs.get('entries')
-        self.page = 0
-
-        self.message = None
-        self.looping = True
-
-        self.emote_thresholds = {
-            '\u23ea': 15,
-            '\u2b05': 0,
-            '\u23f9': 0,
-            '\u27a1': 0,
-            '\u23e9': 15,
-        }
-
-        self.emotes = {
-            '\u23ea': self.page_first,
-            '\u2b05': self.page_backward,
-            '\u23f9': self.stop,
-            '\u27a1': self.page_forward,
-            '\u23e9': self.page_last,
-        }
-
-    async def react(self):
-        try:
-            if len(self.entries) == 1:
-                return await self.message.add_reaction('\u23f9')
-            else:
-                for emote, threshold in self.emote_thresholds.items():
-                    if len(self.entries) >= int(threshold):
-                        await self.message.add_reaction(emote)
-                    else:
-                        continue
-        except discord.Forbidden:
-            raise commands.BotMissingPermissions(['Add Reactions'])
-
-    async def stop(self):
-        # Stop pagination by deleting the message.
-        return await self.message.delete()
-
-    async def paginate(self):
-
-        self.message = await self.ctx.send(embed=self.entries[self.page])
-        await self.react()
-
-        while self.looping:
-
-            try:
-                # Wait for reactions, check that they are on the same message, from the same author and are in the emoji list.
-                reaction, _ = await self.ctx.bot.wait_for('reaction_add', timeout=300.0, check=lambda r, u: r.message.id == self.message.id and u.id == self.ctx.author.id and str(r.emoji) in self.emotes.keys())
-
-                if str(reaction.emoji) == '\u23f9':
-                    self.looping = False
-                else:
-                    await self.emotes[str(reaction.emoji)]()
-
-            except asyncio.TimeoutError:
-                self.looping = False
-
-        return await self.stop()
-
-    async def page_first(self):
-
-        self.page = 0
-
-        await self.message.edit(embed=self.entries[self.page])
-
-    async def page_backward(self):
-
-        # If the current page is smaller then or equal too 0, do nothing.
         if self.page <= 0:
             return
         self.page -= 1
 
-        await self.message.edit(embed=self.entries[self.page])
+        self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
+        self.embed.set_footer(text=self.embed_footer)
+        await self.message.edit(embed=self.embed)
 
-    async def page_forward(self):
+    async def stop(self) -> None:
 
-        # If the current page is bigger then or equal too the amount of the pages, do nothing.
-        if self.page >= len(self.entries) - 1:
+        self.looping = False
+        self.message = await self.message.delete()
+
+    async def forward(self) -> None:
+
+        if self.page >= len(self.pages) - 1:
             return
         self.page += 1
 
-        await self.message.edit(embed=self.entries[self.page])
+        self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
+        self.embed.set_footer(text=self.embed_footer)
+        await self.message.edit(embed=self.embed)
 
-    async def page_last(self):
+    async def last(self) -> None:
 
-        self.page = len(self.entries) - 1
+        self.page = len(self.pages) - 1
 
-        await self.message.edit(embed=self.entries[self.page])
-
+        self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
+        self.embed.set_footer(text=self.embed_footer)
+        await self.message.edit(embed=self.embed)

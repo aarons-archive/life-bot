@@ -14,9 +14,9 @@ You should have received a copy of the GNU Affero General Public License along w
 import asyncio
 import contextlib
 import logging
+import logging.handlers
 import os
 import sys
-from logging.handlers import RotatingFileHandler
 
 import setproctitle
 
@@ -31,7 +31,7 @@ def logger():
     for log_name in logs.keys():
 
         log = logging.getLogger(log_name)
-        handler = RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
+        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
         handler.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S'))
         if os.path.isfile(f'logs/{log_name}.log'):
             handler.doRollover()

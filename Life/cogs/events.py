@@ -48,7 +48,6 @@ class Events(commands.Cog):
         for guild in self.bot.guilds:
             if guild.id in self.bot.guild_blacklist:
                 await guild.leave()
-            continue
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
