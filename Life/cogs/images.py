@@ -12,12 +12,13 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 
+import random
 import re
 import typing
 
 from discord.ext import commands
 
-from cogs.utilities import exceptions, imaging, converters
+from cogs.utilities import converters, exceptions, imaging
 from utilities import context
 
 
@@ -233,7 +234,7 @@ class Images(commands.Cog):
         """
 
         if not color:
-            color = self.bot.utils.random_colour()
+            color = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         if self.bot.hex_colour_regex.match(color) is None:
             raise exceptions.ArgumentError(f'The hex code `{color}` is invalid. Please use the format `#FFFFFF`.')

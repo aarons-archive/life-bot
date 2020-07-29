@@ -11,9 +11,11 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
+import codecs
+import collections
 import inspect
 import os
+import pathlib
 import time
 from datetime import datetime
 
@@ -36,6 +38,37 @@ class Information(commands.Cog):
         self.bot.upvote_url = 'https://top.gg/bot/628284183579721747'
         self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848'
 
+        self.colours = {
+            discord.Status.online: 0x008000,
+            discord.Status.idle: 0xFF8000,
+            discord.Status.dnd: 0xFF0000,
+            discord.Status.offline: 0x808080,
+            discord.Status.invisible: 0x808080,
+        }
+
+        self.mfa_levels = {
+            0: 'Not required',
+            1: 'Required'
+        }
+
+        self.verification_levels = {
+            discord.VerificationLevel.none: 'None - No criteria set.',
+            discord.VerificationLevel.low: 'Low - Must have a verified email.',
+            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for '
+                                              'more than 5 minutes.',
+            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more '
+                                            'than 5 minutes and be a member of the guild for more then 10 minutes.',
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for '
+                                               'more than 5 minutes, be a member of the guild for more then 10 minutes '
+                                               'and a have a verified phone number.'
+        }
+
+        self.content_filter_levels = {
+            discord.ContentFilter.disabled: 'None',
+            discord.ContentFilter.no_role: 'No roles',
+            discord.ContentFilter.all_members: 'All members',
+        }
+
     @commands.command(name='info', aliases=['about'])
     async def info(self, ctx: context.Context):
         """
@@ -51,7 +84,39 @@ class Information(commands.Cog):
         """
 
         uptime = self.bot.utils.format_time(seconds=round(time.time() - self.bot.start_time), friendly=True)
-        files, functions, lines, classes = self.bot.utils.linecount()
+
+        files, functions, lines, classes = 0, 0, 0, 0
+        docstring = False
+
+        for dirpath, dirname, filenames in os.walk('.'):
+
+            for filename in filenames:
+                if not filename.endswith('.py'):
+                    continue
+                files += 1
+
+                with codecs.open('./' + str(pathlib.PurePath(dirpath, filename)), 'r', 'utf-8') as filelines:
+                    filelines = [line.strip() for line in filelines]
+                    for line in filelines:
+                        if len(line) == 0:
+                            continue
+
+                        if line.startswith('"""'):
+                            if docstring is False:
+                                docstring = True
+                            else:
+                                docstring = False
+                        if docstring is True:
+                            print(line)
+                            continue
+
+                        if line.startswith('#'):
+                            continue
+                        if line.startswith(('def', 'async def')):
+                            functions += 1
+                        if line.startswith('class'):
+                            classes += 1
+                        lines += 1
 
         embed = discord.Embed(colour=ctx.config.colour)
         embed.add_field(name='Bot info:',
@@ -130,14 +195,6 @@ class Information(commands.Cog):
 
         return await ctx.send(f'You can invite the bot here <{self.bot.invite_url}>')
 
-    @commands.command(name='dashboard')
-    async def dashboard(self, ctx: context.Context):
-        """
-        Get a link to the bots web dashboard
-        """
-
-        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, description='[Link](https://dashboard.mrrandom.xyz)'))
-
     @commands.command(name='source')
     async def source(self, ctx: context.Context, *, command: str = None):
         """
@@ -173,7 +230,19 @@ class Information(commands.Cog):
         Get information about the server.
         """
 
-        statuses = self.bot.utils.guild_member_status(ctx.guild)
+        region = ctx.guild.region.name.title().replace('Vip', 'VIP').replace('_', '-')
+        if ctx.guild.region == discord.VoiceRegion.hongkong:
+            region = 'Hong Kong'
+        if ctx.guild.region == discord.VoiceRegion.southafrica:
+            region = 'South Africa'
+
+        statuses = collections.Counter()
+        for member in ctx.guild.members:
+
+            statuses[member.status.name] += 1
+            activities = [activity for activity in member.activities if activity.type == discord.ActivityType.streaming]
+            if activities:
+                statuses[activities[0].type.name] += 1
 
         embed = discord.Embed(colour=ctx.config.colour, title=f"{ctx.guild.name}'s stats and information.")
         embed.description = ctx.guild.description if ctx.guild.description else None
@@ -190,19 +259,19 @@ class Information(commands.Cog):
                               f'`File Size:` {round(ctx.guild.filesize_limit / 1048576)} MB | '
                               f'`Bitrate:` {round(ctx.guild.bitrate_limit / 1000)} kbps | '
                               f'`Emoji:` {ctx.guild.emoji_limit}\n'
-                              f'`Content filter level:` {self.bot.utils.guild_content_filter_level(ctx.guild)} | '
-                              f'`2FA:` {self.bot.utils.guild_mfa_level(ctx.guild)}\n'
-                              f'`Verification level:` {self.bot.utils.guild_verification_level(ctx.guild)}\n', inline=False)
+                              f'`Content filter level:` {self.content_filter_levels[ctx.guild.explicit_content_filter]} | '
+                              f'`2FA:` {self.mfa_levels[ctx.guild.mfa_level]}\n'
+                              f'`Verification level:` {self.verification_levels[ctx.guild.verification_level]}\n', inline=False)
 
         embed.add_field(name='Channels:',
                         value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | '
                               f'`AFK channel:` {ctx.guild.afk_channel}\n'
                               f'`Text channels:` {len(ctx.guild.text_channels)} | '
                               f'`Voice channels:` {len(ctx.guild.voice_channels)}\n'
-                              f'`Voice region:` {self.bot.utils.guild_region(ctx.guild)}\n', inline=False)
+                              f'`Voice region:` {region}\n', inline=False)
 
-        embed.set_thumbnail(url=self.bot.utils.guild_icon(ctx.guild))
-        embed.set_image(url=self.bot.utils.guild_banner(ctx.guild))
+        embed.set_thumbnail(url=str(ctx.guild.icon_url_as(format='gif' if ctx.guild.is_icon_animated() is True else 'png')))
+        embed.set_image(url=str(ctx.guild.banner_url_as(format='png')))
         embed.set_footer(text=f'ID: {ctx.guild.id}')
 
         return await ctx.send(embed=embed)
@@ -240,20 +309,61 @@ class Information(commands.Cog):
         if member is None:
             member = ctx.author
 
-        embed = discord.Embed(colour=self.bot.utils.member_colour(ctx.author))
+        if not member.activity or not member.activities:
+            return 'N/A'
+
+        message = '\n'
+        for activity in member.activities:
+
+            if activity.type == discord.ActivityType.custom:
+                message += f'• '
+                if activity.emoji:
+                    message += f'{activity.emoji} '
+                if activity.name:
+                    message += f'{activity.name}'
+                message += '\n'
+
+            elif activity.type == discord.ActivityType.playing:
+
+                message += f'• Playing **{activity.name}** '
+                if not isinstance(activity, discord.Game):
+                    if activity.details:
+                        message += f'**| {activity.details}** '
+                    if activity.state:
+                        message += f'**| {activity.state}** '
+                    message += '\n'
+
+            elif activity.type == discord.ActivityType.streaming:
+                message += f'• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**\n'
+
+            elif activity.type == discord.ActivityType.watching:
+                message += f'• Watching **{activity.name}**\n'
+
+            elif activity.type == discord.ActivityType.listening:
+
+                if isinstance(activity, discord.Spotify):
+                    url = f'https://open.spotify.com/track/{activity.track_id}'
+                    message += f'• Listening to **[{activity.title}]({url})** by **{", ".join(activity.artists)}** '
+                    if activity.album and not activity.album == activity.title:
+                        message += f'from the album **{activity.album}** '
+                    message += '\n'
+                else:
+                    message += f'• Listening to **{activity.name}**\n'
+
+        embed = discord.Embed(colour=self.colours[member.status])
         embed.title = f"{member}'s stats and information."
         embed.add_field(name='General information:',
                         value=f'`Discord Name:` {member}\n'
                               f'`Created at:` {datetime.strftime(member.created_at, "%A %d %B %Y at %H:%M")}\n'
-                              f'`Status:` {self.bot.utils.member_status(member)}\n'
-                              f'`Activity:` {self.bot.utils.member_activity(member)}', inline=False)
+                              f'`Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}\n'
+                              f'`Activity:` {message}', inline=False)
 
         embed.add_field(name='Server-related information:',
                         value=f'`Joined server:` {datetime.strftime(member.joined_at, "%A %d %B %Y at %H:%M")}\n'
                               f'`Nickname:` {member.nick}\n'
                               f'`Top role:` {member.top_role.mention}', inline=False)
 
-        embed.set_thumbnail(url=member.avatar_url_as(format='png'))
+        embed.set_thumbnail(url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
         embed.set_footer(text=f'ID: {member.id}')
 
         return await ctx.send(embed=embed)

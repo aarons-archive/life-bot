@@ -230,7 +230,7 @@ class Imaging:
             url = ctx.message.attachments[0].url
 
         if url is None:
-            url = self.bot.utils.member_avatar(ctx.author)
+            url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
 
         try:
             async with self.bot.session.get(url) as response:
