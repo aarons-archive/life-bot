@@ -55,7 +55,7 @@ class Events(commands.Cog):
         if self.bot.log_channel:
 
             embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
-            embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+            embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png')))
             embed.title = f'Joined a guild'
             time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
             embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}'
@@ -72,7 +72,7 @@ class Events(commands.Cog):
         if self.bot.log_channel:
 
             embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
-            embed.set_thumbnail(url=self.bot.utils.guild_icon(guild))
+            embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png')))
             embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
             embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
             await self.bot.log_channel.send(embed=embed)
@@ -96,7 +96,8 @@ class Events(commands.Cog):
             info = f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
             embed = discord.Embed(colour=ctx.config.colour)
-            embed.set_author(name=f'DM from {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
+            embed.set_author(name=f'DM from {ctx.author}',
+                             icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
             embed.description = f'{message.content}'
             embed.add_field(name='Info:', value=info)
             await self.bot.dm_channel.send(embed=embed)
@@ -109,7 +110,8 @@ class Events(commands.Cog):
             info = f'{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
             embed = discord.Embed(colour=ctx.config.colour)
-            embed.set_author(name=f'Mentioned by {ctx.author}', icon_url=self.bot.utils.member_avatar(ctx.author))
+            embed.set_author(name=f'Mentioned by {ctx.author}',
+                             icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
             embed.description = f'{message.content}'
             embed.add_field(name='Info:', value=info)
             await self.bot.mention_channel.send(embed=embed)
@@ -227,7 +229,7 @@ class Events(commands.Cog):
         info = f'`Message content:` {ctx.message.content}\n{guild}\n{channel}\n{author}\n{time}'
 
         embed = discord.Embed(colour=ctx.config.colour, description=f'Error in command `{ctx.command}`')
-        embed.set_author(name=ctx.author, icon_url=self.bot.utils.member_avatar(ctx.author))
+        embed.set_author(name=ctx.author, icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)
 

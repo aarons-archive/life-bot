@@ -70,7 +70,7 @@ class ImageConverter(commands.Converter, ABC):
         except commands.BadArgument:
             pass
         else:
-            url = ctx.bot.utils.member_avatar(member=member)
+            url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
         if url is None:
             check = yarl.URL(argument)

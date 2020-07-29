@@ -15,32 +15,32 @@ from discord.ext import commands
 
 
 class LifeError(commands.CommandError):
-    """Base exception for errors within the Life bot."""
+    pass
 
 
 class ArgumentError(LifeError):
-    """Raised when an argument errors."""
+    pass
 
 
 class LifeImageError(LifeError):
-    """Base exception for errors in the Life image cog."""
+    pass
 
 
 class LifeVoiceError(LifeError):
-    """Base exception for errors in the Life voice cog."""
+    pass
 
 
 class LifePlaylistError(LifeError):
-    """Base exception for errors in the Life playlist cog."""
+    pass
 
 
 class LifeHTTPError(LifeError):
-    """Raised when making a request failed."""
+    pass
 
 
 class LifeHTTPForbidden(LifeError):
-    """Raised when a HTTP request is forbidden."""
+    pass
 
 
 class LifeHTTPNotFound(LifeError):
-    """Raised when a HTTP request doesn't find anything."""
+    pass
