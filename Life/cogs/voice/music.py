@@ -25,7 +25,7 @@ import diorite
 from cogs.utilities.exceptions import LifeVoiceError
 from cogs.voice.utilities import objects
 from cogs.voice.utilities.player import Player
-from utilities.context import Context
+from utilities import context
 
 
 class Music(commands.Cog):
@@ -209,7 +209,7 @@ class Music(commands.Cog):
                                                f'`{self.bot.config.prefix}support` for more help.')
 
     @commands.command(name='join', aliases=['connect'])
-    async def join(self, ctx: Context):
+    async def join(self, ctx: context.Context):
         """
         Joins your voice channel.
         """
@@ -230,7 +230,7 @@ class Music(commands.Cog):
         return await ctx.send(f'Joined your voice channel `{channel}`.')
 
     @commands.command(name='play')
-    async def play(self, ctx: Context, *, query: str):
+    async def play(self, ctx: context.Context, *, query: str):
         """
         Plays/queues a track with the given search. Supports spotify.
 
@@ -271,7 +271,7 @@ class Music(commands.Cog):
             return await ctx.send(message)
 
     @commands.command(name='leave', aliases=['disconnect', 'dc'])
-    async def leave(self, ctx: Context):
+    async def leave(self, ctx: context.Context):
         """
         Leaves the voice channel.
         """
@@ -289,7 +289,7 @@ class Music(commands.Cog):
         return await ctx.player.destroy()
 
     @commands.command(name='skip', aliases=['stop'])
-    async def skip(self, ctx: Context, amount: int = 1):
+    async def skip(self, ctx: context.Context, amount: int = 1):
         """
         Skips to the next track in the queue.
 
@@ -321,7 +321,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The current tracks requester has skipped `{amount}` track(s).')
 
     @commands.command(name='pause')
-    async def pause(self, ctx: Context):
+    async def pause(self, ctx: context.Context):
         """
         Pauses the player.
         """
@@ -339,7 +339,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now paused.')
 
     @commands.command(name='unpause', aliases=['resume'])
-    async def unpause(self, ctx: Context):
+    async def unpause(self, ctx: context.Context):
         """
         Resumes the player.
         """
@@ -357,7 +357,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The player is now un-paused')
 
     @commands.command(name='seek')
-    async def seek(self, ctx: Context, seconds: int = None):
+    async def seek(self, ctx: context.Context, seconds: int = None):
         """
         Changes the position of the player.
 
@@ -389,7 +389,7 @@ class Music(commands.Cog):
                               f'`{self.bot.utils.format_time(milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
-    async def volume(self, ctx: Context, volume: int = None):
+    async def volume(self, ctx: context.Context, volume: int = None):
         """
         Changes the volume of the player.
 
@@ -412,7 +412,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The players volume is now `{ctx.player.volume}%`.')
 
     @commands.command(name='now_playing', aliases=['np'])
-    async def now_playing(self, ctx: Context):
+    async def now_playing(self, ctx: context.Context):
         """
         Displays the music controller
         """
@@ -425,7 +425,7 @@ class Music(commands.Cog):
         return await ctx.player.invoke_controller(ctx.channel)
 
     @commands.command(name='queue', aliases=["q"])
-    async def queue(self, ctx: Context):
+    async def queue(self, ctx: context.Context):
         """
         Displays the players queue.
         """
@@ -455,10 +455,10 @@ class Music(commands.Cog):
         footer = f'\nThere are `{ctx.player.queue.size}` track(s) in the queue ' \
                  f'with a total time of `{self.bot.utils.format_time(round(time) / 1000)}`'
 
-        return await ctx.paginate_embed(header=title, footer=footer, entries=entries, entries_per_page=10)
+        return await ctx.paginate_embed(entries=entries, per_page=10, header=title, footer=footer, )
 
     @commands.command(name='shuffle')
-    async def shuffle(self, ctx: Context):
+    async def shuffle(self, ctx: context.Context):
         """
         Shuffles the players queue.
         """
@@ -476,7 +476,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been shuffled.')
 
     @commands.command(name='clear')
-    async def clear(self, ctx: Context):
+    async def clear(self, ctx: context.Context):
         """
         Clears the players queue.
         """
@@ -494,7 +494,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been cleared.')
 
     @commands.command(name='reverse')
-    async def reverse(self, ctx: Context):
+    async def reverse(self, ctx: context.Context):
         """
         Reverses the players queue.
         """
@@ -512,7 +512,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue has been reversed.')
 
     @commands.command(name='loop', aliases=['repeat'])
-    async def loop(self, ctx: Context):
+    async def loop(self, ctx: context.Context):
         """
         Loops the players queue.
         """
@@ -531,7 +531,7 @@ class Music(commands.Cog):
         return await ctx.send(f'The queue will start looping.')
 
     @commands.command(name='remove')
-    async def remove(self, ctx: Context, entry: int = 0):
+    async def remove(self, ctx: context.Context, entry: int = 0):
         """
         Remove a track from the queue.
 
@@ -555,7 +555,7 @@ class Music(commands.Cog):
         return await ctx.send(f'Removed `{item.title}` from the queue.')
 
     @commands.command(name='move')
-    async def move(self, ctx: Context, entry_1: int = 0, entry_2: int = 0):
+    async def move(self, ctx: context.Context, entry_1: int = 0, entry_2: int = 0):
         """
         Move a track in the queue to a different position
 
@@ -586,7 +586,7 @@ class Music(commands.Cog):
         return await ctx.send(f'Moved `{item.title}` from position `{entry_1}` to position `{entry_2}`.')
 
     @commands.command(name='musicinfo', aliases=['mi'])
-    async def musicinfo(self, ctx: Context):
+    async def musicinfo(self, ctx: context.Context):
         """
         Display stats about the bots music cog.
         """

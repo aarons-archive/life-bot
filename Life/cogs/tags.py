@@ -247,7 +247,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server similar to the term `{name}`.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        return await ctx.paginate_embed(entries=entries, entries_per_page=25, header=f'Tags matching: `{name}`\n\n')
+        return await ctx.paginate_embed(entries=entries, per_page=25, header=f'Tags matching: `{name}`\n\n')
 
     @tag.command(name='list')
     async def tag_list(self, ctx: context.Context, *, member: discord.Member = None):
@@ -266,7 +266,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'`{member}` has no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        return await ctx.paginate_embed(entries=entries, entries_per_page=25, title=f'{member}\'s tags')
+        return await ctx.paginate_embed(entries=entries, per_page=25, title=f'{member}\'s tags')
 
     @tag.command(name='all')
     async def tag_all(self, ctx: context.Context):
@@ -280,7 +280,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        return await ctx.paginate_embed(entries=entries, entries_per_page=25, title=f'{ctx.guild}\'s tags')
+        return await ctx.paginate_embed(entries=entries, per_page=25, title=f'{ctx.guild}\'s tags')
 
     @tag.command(name='info')
     async def tag_info(self, ctx: context.Context, *, name: converters.TagName):

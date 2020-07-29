@@ -28,7 +28,7 @@ class Dashboard(commands.Cog):
         self.endpoints = [endpoint.setup(bot=self.bot) for endpoint in self.bot.config.endpoints]
         self.application = web.Application([endpoint for endpoints in self.endpoints for endpoint in endpoints],
                                            static_path=os.path.join(os.path.dirname(__file__), 'static/'),
-                                           template_path=os.path.join(os.path.dirname(__file__), 'templates/'), debug=True,
+                                           template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
                                            default_host='0.0.0.0', ui_methods=utils, cookie_secret=self.bot.config.cookie_secret)
 
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)

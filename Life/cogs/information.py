@@ -21,7 +21,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from utilities.context import Context
+from utilities import context
 
 
 class Information(commands.Cog):
@@ -37,7 +37,7 @@ class Information(commands.Cog):
         self.bot.invite_url = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=103926848'
 
     @commands.command(name='info', aliases=['about'])
-    async def info(self, ctx: Context):
+    async def info(self, ctx: context.Context):
         """
         Get information about the bot.
         """
@@ -45,7 +45,7 @@ class Information(commands.Cog):
         return await ctx.send("soon:tm:")
 
     @commands.command(name='stats')
-    async def stats(self, ctx: Context):
+    async def stats(self, ctx: context.Context):
         """
         Display the bots stats.
         """
@@ -77,7 +77,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='system', aliases=['sys'])
-    async def system(self, ctx: Context):
+    async def system(self, ctx: context.Context):
         """
         Display the bots system stats.
         """
@@ -106,7 +106,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='ping')
-    async def ping(self, ctx: Context):
+    async def ping(self, ctx: context.Context):
         """
         Display the bots latency.
         """
@@ -114,7 +114,7 @@ class Information(commands.Cog):
         return await ctx.send(f'{round(self.bot.latency * 1000)}ms')
 
     @commands.command(name='support')
-    async def support(self, ctx: Context):
+    async def support(self, ctx: context.Context):
         """
         Get an invite link to the bots support server.
         """
@@ -123,15 +123,23 @@ class Information(commands.Cog):
                               f'link {self.bot.support_url}')
 
     @commands.command(name='invite')
-    async def support(self, ctx: Context):
+    async def support(self, ctx: context.Context):
         """
         Get a link the invite the bot.
         """
 
         return await ctx.send(f'You can invite the bot here <{self.bot.invite_url}>')
 
+    @commands.command(name='dashboard')
+    async def dashboard(self, ctx: context.Context):
+        """
+        Get a link to the bots web dashboard
+        """
+
+        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, description='[Link](https://dashboard.mrrandom.xyz)'))
+
     @commands.command(name='source')
-    async def source(self, ctx: Context, *, command: str = None):
+    async def source(self, ctx: context.Context, *, command: str = None):
         """
         Get a github link to the source of a command.
 
@@ -160,7 +168,7 @@ class Information(commands.Cog):
         return await ctx.send(link)
 
     @commands.command(name='serverinfo', aliases=['server'])
-    async def serverinfo(self, ctx: Context):
+    async def serverinfo(self, ctx: context.Context):
         """
         Get information about the server.
         """
@@ -173,7 +181,7 @@ class Information(commands.Cog):
                         value=f'`Owner:` {ctx.guild.owner}\n'
                               f'`Created at:` {datetime.strftime(ctx.guild.created_at, "%A %d %B %Y at %H:%M")}\n'
                               f'`Members:` {ctx.guild.member_count} |'
-                              f'<:online:627627415224713226>{statuses["online"]} |'
+                              f'<:online:737824551471284356>{statuses["online"]} |'
                               f'<:away:627627415119724554>{statuses["idle"]} |'
                               f'<:dnd:627627404784828416>{statuses["dnd"]} |'
                               f'<:offline:627627415144890389>{statuses["offline"]}\n'
@@ -200,7 +208,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='icon', aliases=['ico'])
-    async def servericon(self, ctx: Context):
+    async def servericon(self, ctx: context.Context):
         """
         Display the servers icon.
         """
@@ -222,7 +230,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='userinfo', aliases=['user'])
-    async def userinfo(self, ctx: Context, *, member: discord.Member = None):
+    async def userinfo(self, ctx: context.Context, *, member: discord.Member = None):
         """
         Get information about you, or a specified member.
 
@@ -251,7 +259,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='avatar', aliases=['avy'])
-    async def avatar(self, ctx: Context, *, member: discord.Member = None):
+    async def avatar(self, ctx: context.Context, *, member: discord.Member = None):
         """
         Display yours, or a specified members avatar.
 
