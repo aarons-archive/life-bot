@@ -12,11 +12,12 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
+import json
 
+import diorite
 import discord
 import spotify
 
-import diorite
 from cogs.utilities import exceptions
 from cogs.voice.utilities import objects, queue
 
@@ -33,6 +34,21 @@ class Player(diorite.Player):
         self.looping = False
 
         self.text_channel = kwargs.get('text_channel')
+
+    @property
+    def json(self):
+
+        player_data = {
+            'voice_channel_id': str(getattr(self.voice_channel, 'id', None)),
+            'text_channel_id': str(getattr(self.text_channel, 'id', None)),
+            'position': self.position,
+            'looping': self.looping,
+            'volume': self.volume,
+            'paused': self.paused,
+            'current': getattr(self.current, 'json', None),
+            'queue': self.queue.json,
+        }
+        return json.dumps(player_data)
 
     @property
     def channel(self):
