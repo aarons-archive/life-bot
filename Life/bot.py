@@ -13,6 +13,7 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import logging
 import time
+import re
 
 import aiohttp
 import aredis
@@ -51,6 +52,7 @@ class Life(commands.AutoShardedBot):
         self.user_configs = {}
 
         self.default_guild_config = objects.DefaultGuildConfig()
+        self.hex_colour_regex = re.compile('#[A-Fa-f0-9]{6}')
 
         self.redis = None
         self.db = None
@@ -120,10 +122,12 @@ class Life(commands.AutoShardedBot):
                 print(f'[EXTENSIONS] Failed - {extension}\n{error}')
 
         self.commands_not_allowed_dms = {
-            *[command.qualified_name for command in list(self.get_cog('Music').walk_commands())],
-            *[command.qualified_name for command in list(self.get_cog('Tags').walk_commands())],
-            *[command.qualified_name for command in self.get_command('prefix').commands],
-            self.get_command('serverinfo').qualified_name, self.get_command('icon').qualified_name, self.get_command('userinfo').qualified_name
+            'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'shuffle', 'clear', 'reverse', 'loop', 'remove', 'move',
+            'musicinfo',
+            'tag', 'tag raw', 'tag create', 'tag edit', 'tag claim', 'tag alias', 'tag transfer', 'prefix delete', 'tag search', 'tag list', 'tag all', 'tag info',
+            'userinfo', 'serverinfo', 'icon',
+
+            'prefix add', 'prefix delete', 'prefix clear', 'config colour set', 'config colour clear'
         }
 
         self.add_check(self.can_run_commands)
