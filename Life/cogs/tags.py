@@ -26,7 +26,7 @@ class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name='tag', invoke_without_command=True)
+    @commands.group(name='tag', aliases=['tags'], invoke_without_command=True)
     async def tag(self, ctx: context.Context, *, name: converters.TagName):
         """
         Get a tag by it's name or alias's.

@@ -47,7 +47,6 @@ class Prefix(commands.clean_content):
 
         argument = await super().convert(ctx, argument)
         argument = discord.utils.escape_markdown(argument)
-        argument = argument.strip()
 
         if not argument:
             raise commands.BadArgument

@@ -21,7 +21,7 @@ class GuildConfig:
     def __init__(self, data: dict):
 
         self.prefixes = data.get('prefixes')
-        self.colour = int(data.get('colour'), 16)
+        self.colour = discord.Colour(int(data.get('colour'), 16))
 
     def __repr__(self):
         return f'<GuildConfig prefixes={self.prefixes} colour={self.colour}>'

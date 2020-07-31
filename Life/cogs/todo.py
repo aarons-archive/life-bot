@@ -26,7 +26,7 @@ class Todo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name='todo', invoke_without_command=True)
+    @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
     async def todo(self, ctx: context.Context):
         """
         Display a list of your current todo's.
