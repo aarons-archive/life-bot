@@ -26,7 +26,7 @@ class LifeQueue:
     def __repr__(self):
         return f'<LifeQueue entries={self.size} is_empty={self.is_empty}>'
 
-    def wakeup_next(self, waiters: collections.deque):
+    def wakeup_next(self, waiters: collections.deque) -> None:
 
         while waiters:
             waiter = waiters.popleft()
@@ -34,7 +34,7 @@ class LifeQueue:
                 waiter.set_result(None)
                 break
 
-    def task_done(self):
+    def task_done(self) -> None:
 
         if self.unfinished_tasks <= 0:
             raise ValueError('task_done() called too many times')
@@ -44,25 +44,18 @@ class LifeQueue:
         if self.unfinished_tasks == 0:
             self.finished.set()
 
-    @property
-    def is_empty(self) -> bool:
-        return len(self.queue_list) == 0
-
-    @property
-    def size(self) -> int:
-        return len(self.queue_list)
-
-    @property
-    def json(self):
-        return json.dumps([track.json for track in self.queue_list])
-
-    def put(self, item: objects.LifeTrack, position: int = None):
+    def put(self, item: objects.LifeTrack, position: int = None) -> None:
 
         if position is None:
             self.queue_list.append(item)
         else:
             self.queue_list.insert(position, item)
 
+        self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
+
+    def extend(self, items: typing.List[objects.LifeTrack]) -> None:
+
+        self.queue_list.extend(items)
         self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
 
     async def get(self, position: int = 0) -> objects.LifeTrack:
@@ -85,16 +78,23 @@ class LifeQueue:
 
         return self.queue_list.pop(position)
 
-    def extend(self, items: typing.List[objects.LifeTrack]):
-
-        self.queue_list.extend(items)
-        self.player.bot.dispatch(f'life_queue_add', self.player.guild.id)
-
-    def reverse(self):
+    def reverse(self) -> None:
         self.queue_list.reverse()
 
-    def shuffle(self):
+    def shuffle(self) -> None:
         random.shuffle(self.queue_list)
 
-    def clear(self):
+    def clear(self) -> None:
         self.queue_list.clear()
+
+    @property
+    def is_empty(self) -> bool:
+        return len(self.queue_list) == 0
+
+    @property
+    def size(self) -> int:
+        return len(self.queue_list)
+
+    @property
+    def json(self) -> str:
+        return json.dumps([track.json for track in self.queue_list])
