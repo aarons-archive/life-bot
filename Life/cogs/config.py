@@ -12,8 +12,9 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
-
+import typing
 import discord
+
 from discord.ext import commands
 
 from cogs.utilities import checks, converters, exceptions, objects
@@ -33,87 +34,153 @@ class Config(commands.Cog):
 
         configs = await self.bot.db.fetch('SELECT * FROM guild_configs')
         for config in configs:
+            if self.bot.guild_configs.get(config['guild_id']) is not None:
+                continue
             self.bot.guild_configs[config['guild_id']] = objects.GuildConfig(data=dict(config))
 
         print(f'[POSTGRESQL] Loaded guild configs. [{len(configs)} guild(s)]')
 
-    async def load_guild_config(self, guild: discord.Guild, data: dict = None):
+    async def set_guild_config(self, ctx: context.Context, attribute: str, value: typing.Any, operation: str = 'add'):
 
-        await self.bot.wait_until_ready()
+        if isinstance(ctx.config, objects.DefaultGuildConfig):
+            query = 'INSERT INTO guild_configs (guild_id) values ($1) ON CONFLICT (guild_id) DO UPDATE SET guild_id = excluded.guild_id RETURNING *'
+            data = await self.bot.db.fetchrow(query, ctx.guild.id)
+            self.bot.guild_configs[ctx.guild.id] = objects.GuildConfig(data=dict(data))
 
-        if not data:
-            data = await self.bot.db.fetchrow('SELECT * FROM guild_configs WHERE guild_id = %1', guild.id)
+        if attribute == 'prefix':
+            query = 'UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
+            if operation == 'remove':
+                query = 'UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
+            if operation == 'clear':
+                query = 'UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes'
+            data = await self.bot.db.fetchrow(query, value, ctx.guild.id)
+            ctx.config.prefixes = data['prefixes']
 
-        self.bot.guild_configs[guild.id] = objects.GuildConfig(data=dict(data))
+        elif attribute == 'colour':
+            query = 'UPDATE guild_configs SET colour = $1 WHERE guild_id = $2 RETURNING *'
+            data = await self.bot.db.fetchrow(query, value, ctx.guild.id)
+            ctx.config.colour = discord.Colour(int(data['colour'], 16))
+
+    @commands.group(name='config', aliases=['configuration'], invoke_without_command=True)
+    async def config(self, ctx: context.Context):
+        """
+        Display the current server/channel config.
+        """
+
+        embed = discord.Embed(colour=ctx.config.colour, title=f'Current configuration:')
+        embed.add_field(name='Embed colour:', value=f'`<---` `{str(ctx.config.colour).upper()}`')
+        return await ctx.send(embed=embed)
+
+    #
+
+    @config.group(name='colour', aliases=['color'], invoke_without_command=True)
+    async def config_colour(self, ctx: context.Context):
+        """
+        Display the current server/channel embed colour.
+        """
+
+        embed = discord.Embed(colour=ctx.config.colour, title=f'{str(ctx.config.colour).upper()}')
+        return await ctx.send(embed=embed)
+
+    @config_colour.command(name='set', aliases=['change'])
+    @checks.has_guild_permissions(manage_guild=True)
+    async def config_colour_set(self, ctx: context.Context, hexcode: str):
+        """
+        Set the embed colour for this server.
+
+        You must have the `manage server` permission to use this command.
+
+        `hexcode`: The colour code to set embeds too. Must be in the format `#FFFFFF`
+        """
+
+        if self.bot.hex_colour_regex.match(hexcode) is None:
+            raise exceptions.ArgumentError(f'The colour code `{hexcode}` is invalid. Please use the format `#FFFFFF`.')
+
+        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='Before'))
+        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{hexcode.strip("#")}')
+        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='After'))
+
+    @config_colour.command(name='clear', aliases=['revert', 'default'])
+    @checks.has_guild_permissions(manage_guild=True)
+    async def config_colour_clear(self, ctx: context.Context):
+        """
+        Set the embed colour for this server back to default.
+
+        You must have the `manage server` permission to use this command.
+        """
+
+        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='Before'))
+        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{str(discord.Colour.gold()).strip("#")}')
+        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='After'))
+
+    #
 
     @commands.group(name='prefix', invoke_without_command=True)
     async def _prefix(self, ctx: context.Context):
         """
-        Displays a list of available prefixes.
+        Display a list of available prefixes.
         """
 
         prefixes = await self.bot.get_prefix(ctx.message)
 
         entries = [f'`1.` {prefixes[1]}']
         entries.extend(f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:]))
-        return await ctx.paginate_embed(entries=entries, per_page=10, title=f'List of usable prefixes in {ctx.guild}.')
+        return await ctx.paginate_embed(entries=entries, per_page=10, title=f'List of usable prefixes in {ctx.guild if ctx.guild else ctx.channel}.')
 
     @_prefix.command(name='add')
     @checks.has_guild_permissions(manage_guild=True)
     async def prefix_add(self, ctx: context.Context, prefix: converters.Prefix):
         """
-        Adds a prefix to the server.
+        Add a prefix to this server.
+
+        You must have the `manage server` permission to use this command.
 
         Please note that adding a prefix such as `!` and then `!?` will not work as commands will try to match with the first one.
 
         `prefix`: The prefix to add.
         """
 
-        if isinstance(ctx.config, objects.DefaultGuildConfig) or ctx.config.prefixes is None:
-            data = await self.bot.db.fetchrow('INSERT INTO guild_configs (guild_id, prefixes) values ($1, array[$2]) RETURNING *', ctx.guild.id, prefix)
-            await self.load_guild_config(guild=ctx.guild, data=data)
-            return await ctx.send(f'Added `{prefix}` to this servers prefixes.')
-
-        if prefix in ctx.config.prefixes:
-            raise exceptions.ArgumentError(f'This server already has the `{prefix}` prefix.')
         if len(ctx.config.prefixes) > 20:
             raise exceptions.ArgumentError(f'This server can only have up to 20 prefixes.')
+        if prefix in ctx.config.prefixes:
+            raise exceptions.ArgumentError(f'This server already has the `{prefix}` prefix.')
 
-        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING *', prefix, ctx.guild.id)
-        await self.load_guild_config(guild=ctx.guild, data=data)
-        return await ctx.send(f'Added `{prefix}` to this servers prefixes.')
+        await self.set_guild_config(ctx=ctx, attribute='prefix', value=prefix)
+        return await ctx.send(f'Added `{prefix}` to this server\'s prefixes.')
 
     @_prefix.command(name='delete', aliases=['remove'])
     @checks.has_guild_permissions(manage_guild=True)
     async def prefix_delete(self, ctx: context.Context, prefix: converters.Prefix):
         """
-        Deletes a prefix from the server.
+        Delete a prefix from this server.
+
+        You must have the `manage server` permission to use this command.
 
         `prefix`: The prefix to delete.
         """
 
-        if isinstance(ctx.config, objects.DefaultGuildConfig) or not ctx.config.prefixes:
-            raise exceptions.ArgumentError('This server does not have any custom prefixes.')
+        if not ctx.config.prefixes:
+            raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
         if prefix not in ctx.config.prefixes:
             raise exceptions.ArgumentError(f'This server does not have the `{prefix}` prefix.')
 
-        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING *', prefix, ctx.guild.id)
-        await self.load_guild_config(guild=ctx.guild, data=data)
-        return await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
+        await self.set_guild_config(ctx=ctx, attribute='prefix', value=prefix, operation='remove')
+        return await ctx.send(f'Removed `{prefix}` from this server\'s prefixes.')
 
-    @_prefix.command(name='clear')
+    @_prefix.command(name='clear', aliases=['revert', 'default'])
     @checks.has_guild_permissions(manage_guild=True)
     async def prefix_clear(self, ctx: context.Context):
         """
-        Clear all prefixes from the server.
+        Clear all prefixes from this server.
+
+        You must have the `manage server` permission to use this command.
         """
 
-        if isinstance(ctx.config, objects.DefaultGuildConfig) or not ctx.config.prefixes:
-            raise exceptions.ArgumentError('This server does not have any custom prefixes.')
+        if not ctx.config.prefixes:
+            raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
 
-        data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING *', [], ctx.guild.id)
-        await self.load_guild_config(guild=ctx.guild, data=data)
-        return await ctx.send(f'Cleared this servers prefixes.')
+        await self.set_guild_config(ctx=ctx, attribute='prefix', value=[], operation='clear')
+        return await ctx.send(f'Cleared this server\'s prefixes.')
 
 
 def setup(bot):

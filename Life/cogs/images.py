@@ -28,7 +28,6 @@ class Images(commands.Cog):
         self.bot = bot
 
         self.bot.member_converter = commands.MemberConverter()
-        self.bot.hex_colour_regex = re.compile('^#[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}$')
         self.bot.imaging = imaging.Imaging(self.bot)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
