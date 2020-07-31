@@ -75,6 +75,8 @@ class Information(commands.Cog):
         Get information about the bot.
         """
 
+        embed = discord.Embed(colour=ctx.config.colour)
+
         return await ctx.send("soon:tm:")
 
     @commands.command(name='stats')
@@ -309,10 +311,7 @@ class Information(commands.Cog):
         if member is None:
             member = ctx.author
 
-        if not member.activity or not member.activities:
-            return 'N/A'
-
-        message = '\n'
+        message = ''
         for activity in member.activities:
 
             if activity.type == discord.ActivityType.custom:
@@ -350,13 +349,16 @@ class Information(commands.Cog):
                 else:
                     message += f'• Listening to **{activity.name}**\n'
 
+        if not message:
+            message = 'N/A'
+
         embed = discord.Embed(colour=self.colours[member.status])
         embed.title = f"{member}'s stats and information."
         embed.add_field(name='General information:',
                         value=f'`Discord Name:` {member}\n'
                               f'`Created at:` {datetime.strftime(member.created_at, "%A %d %B %Y at %H:%M")}\n'
                               f'`Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}\n'
-                              f'`Activity:` {message}', inline=False)
+                              f'`Activity:` \n{message}', inline=False)
 
         embed.add_field(name='Server-related information:',
                         value=f'`Joined server:` {datetime.strftime(member.joined_at, "%A %d %B %Y at %H:%M")}\n'
