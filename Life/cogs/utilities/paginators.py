@@ -29,7 +29,7 @@ class BasePaginator:
 
         self.delete_when_done = kwargs.get('delete_when_done', True)
         self.bot = kwargs.get('bot', self.ctx.bot)
-        self.timeout = kwargs.get('timeout', 60)
+        self.timeout = kwargs.get('timeout', 300)
 
         self.codeblock = kwargs.get('codeblock')
         self.codeblock_start = '```\n' if self.codeblock else ''
