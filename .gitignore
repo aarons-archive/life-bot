@@ -4,6 +4,7 @@
 
 .idea/
 node_modules/
+venv/
 
 Life/config/config.py
 package-lock.json
