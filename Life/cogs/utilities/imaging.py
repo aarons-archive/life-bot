@@ -82,13 +82,13 @@ def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: floa
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def colorize(image: typing.Union[Image, SingleImage], color: str):
+def colorize(image: typing.Union[Image, SingleImage], colour: str):
 
-    with Color(color) as image_color:
+    with Color(colour) as image_colour:
         with Color('rgb(50%, 50%, 50%)') as image_alpha:
-            image.colorize(color=image_color, alpha=image_alpha)
+            image.colorize(color=image_colour, alpha=image_alpha)
 
-    return image, f'Color: {color}'
+    return image, f'Color: {colour}'
 
 
 def implode(image: typing.Union[Image, SingleImage], amount: float):
