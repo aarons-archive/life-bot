@@ -18,11 +18,32 @@ import yarl
 from discord.ext import commands
 
 from cogs.utilities import exceptions
+from utilities import context
+
+
+class User(commands.UserConverter):
+
+    async def convert(self, ctx: context.Context, argument: str):
+        user = None
+        try:
+            user = await super().convert(ctx, argument)
+        except commands.BadArgument:
+            pass
+
+        if not user:
+            try:
+                user = await ctx.bot.fetch_user(argument)
+            except discord.NotFound:
+                raise commands.BadArgument
+            except discord.HTTPException:
+                raise commands.BadArgument
+
+        return user
 
 
 class TagName(commands.clean_content):
 
-    async def convert(self, ctx: commands.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str):
 
         argument = await super().convert(ctx, argument)
         argument = discord.utils.escape_markdown(argument)
@@ -43,7 +64,7 @@ class TagName(commands.clean_content):
 
 class Prefix(commands.clean_content):
 
-    async def convert(self, ctx: commands.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str):
 
         argument = await super().convert(ctx, argument)
         argument = discord.utils.escape_markdown(argument)
@@ -60,7 +81,7 @@ class Prefix(commands.clean_content):
 
 class ImageConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: commands.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str):
 
         url = None
 
