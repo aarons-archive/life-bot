@@ -8,12 +8,11 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
 import time
-import re
 
 import aiohttp
 import aredis
@@ -52,7 +51,7 @@ class Life(commands.AutoShardedBot):
         self.user_configs = {}
 
         self.default_guild_config = objects.DefaultGuildConfig()
-        self.hex_colour_regex = re.compile('#[A-Fa-f0-9]{6}')
+        self.time_format = '%A %d %B %Y at %H:%M'
 
         self.redis = None
         self.db = None
@@ -125,7 +124,7 @@ class Life(commands.AutoShardedBot):
             'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'shuffle', 'clear', 'reverse', 'loop', 'remove', 'move',
             'musicinfo',
             'tag', 'tag raw', 'tag create', 'tag edit', 'tag claim', 'tag alias', 'tag transfer', 'prefix delete', 'tag search', 'tag list', 'tag all', 'tag info',
-            'userinfo', 'serverinfo', 'icon',
+            'icon', 'server', 'channels', 'member'
 
             'prefix add', 'prefix delete', 'prefix clear', 'config colour set', 'config colour clear'
         }
