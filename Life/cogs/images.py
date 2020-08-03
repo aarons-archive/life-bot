@@ -13,7 +13,6 @@ You should have received a copy of the GNU Affero General Public License along w
 
 
 import random
-import re
 import typing
 
 from discord.ext import commands
@@ -109,8 +108,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `20`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='kuwahara', radius=radius,
-                                                      sigma=sigma)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='kuwahara', radius=radius, sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
@@ -132,8 +130,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Sigma must be between `0` and `50`.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='sharpen', radius=radius,
-                                                      sigma=sigma)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='sharpen', radius=radius, sigma=sigma)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
@@ -170,8 +167,8 @@ class Images(commands.Cog):
 
         methods = ['uniform', 'gaussian', 'multiplicative_gaussian', 'impulse', 'laplacian', 'poisson', 'random']
         if method not in methods:
-            return await ctx.send(f'`{method}` is not a valid method. Please use one of `uniform`, `gaussian`, '
-                                  f'`multiplicative_gaussian`, `impulse`, `laplacian`, `poisson` or `random`.')
+            return await ctx.send(f'`{method}` is not a valid method. Please use one of `uniform`, `gaussian`, `multiplicative_gaussian`, `impulse`, `laplacian`, '
+                                  f'`poisson` or `random`.')
 
         if attenuate < 0 or attenuate > 1:
             raise exceptions.ArgumentError('Attenuate must be between `0.0` and `1.0`.')
@@ -224,22 +221,19 @@ class Images(commands.Cog):
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.guild)
     @commands.command(name='colorize')
-    async def colorize(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], color: str = None):
+    async def colorize(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], colour: commands.ColourConverter = None):
         """
-        Colorizes the given image with a random color.
+        Colorizes the given image with a random colour.
 
         `image`: Can either be a direct image url, or a members name, id or mention.
-        `colour`: The color to use. Must be formatted like `#FFFFFF`.
+        `colour`: The colour code to use. Must be in the format `0xFFFFFF`, `#FFFFFF` or `0x#FFFFFF`.
         """
 
-        if not color:
-            color = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-        if self.bot.hex_colour_regex.match(color) is None:
-            raise exceptions.ArgumentError(f'The hex code `{color}` is invalid. Please use the format `#FFFFFF`.')
+        if not colour:
+            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='colorize', color=color)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='colorize', colour=str(colour))
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)
@@ -280,8 +274,7 @@ class Images(commands.Cog):
             raise exceptions.ArgumentError('Caption must be `100` characters or less.')
 
         async with ctx.channel.typing():
-            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='polaroid', angle=angle,
-                                                      caption=caption)
+            embed = await self.bot.imaging.edit_image(ctx=ctx, url=image, edit_type='polaroid', angle=angle, caption=caption)
             return await ctx.send(embed=embed)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)

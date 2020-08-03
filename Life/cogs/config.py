@@ -84,21 +84,18 @@ class Config(commands.Cog):
 
     @config_colour.command(name='set', aliases=['change'])
     @checks.has_guild_permissions(manage_guild=True)
-    async def config_colour_set(self, ctx: context.Context, hexcode: str):
+    async def config_colour_set(self, ctx: context.Context, *, colour: commands.ColourConverter):
         """
         Set the embed colour for this server.
 
         You must have the `manage server` permission to use this command.
 
-        `hexcode`: The colour code to set embeds too. Must be in the format `#FFFFFF`
+        `colour`: The colour code to set embeds too. Must be in the format `0xFFFFFF`, `#FFFFFF` or `0x#FFFFFF`.
         """
 
-        if self.bot.hex_colour_regex.match(hexcode) is None:
-            raise exceptions.ArgumentError(f'The colour code `{hexcode}` is invalid. Please use the format `#FFFFFF`.')
-
-        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='Before'))
-        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{hexcode.strip("#")}')
-        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='After'))
+        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title=f'Before: {str(ctx.config.colour).upper()}'))
+        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{str(colour).strip("#")}')
+        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title=f'After: {str(ctx.config.colour).upper()}'))
 
     @config_colour.command(name='clear', aliases=['revert', 'default'])
     @checks.has_guild_permissions(manage_guild=True)
@@ -109,9 +106,9 @@ class Config(commands.Cog):
         You must have the `manage server` permission to use this command.
         """
 
-        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='Before'))
+        await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title=f'Before: {str(ctx.config.colour).upper()}'))
         await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{str(discord.Colour.gold()).strip("#")}')
-        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title='After'))
+        return await ctx.send(embed=discord.Embed(colour=ctx.config.colour, title=f'After: {str(ctx.config.colour).upper()}'))
 
     #
 
