@@ -51,8 +51,8 @@ class Todo(commands.Cog):
         """
         content = str(content)
 
-        if len(content) > 180:
-            raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
+        if len(content) > 100:
+            raise exceptions.ArgumentError('Your todo can not be more than 100 characters long.')
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
         if todo_count['c'] > 100:
@@ -131,8 +131,8 @@ class Todo(commands.Cog):
 
         content = str(content)
 
-        if len(content) > 180:
-            return await ctx.send('Your todo can not be more than 180 characters long.')
+        if len(content) > 100:
+            return await ctx.send('Your todo can not be more than 100 characters long.')
 
         todos = {index + 1: todo for index, todo in enumerate(todos)}
 
