@@ -6,12 +6,12 @@ Life is a discord bot coded by MrRandom#9258. Click the link below to invite it 
 * [Support Server](https://discord.gg/xP8xsHr)
 
 ## Installing/Running
-While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life. (And for me incase I forget)
+While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
 
 ### Prerequisites
 * Python3.7 or higher
 * PostgreSQL-12 database
-* A running lavalink node
+* A running LavaLink node
 
 ### Setup
 1. Install dependencies
