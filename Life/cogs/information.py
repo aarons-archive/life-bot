@@ -26,7 +26,7 @@ import psutil
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
-from cogs.utilities import converters, exceptions
+from utilities import converters, exceptions
 from utilities import context
 
 
@@ -166,7 +166,7 @@ class Information(commands.Cog):
                             classes += 1
                         lines += 1
 
-        embed = discord.Embed(colour=ctx.config.colour)
+        embed = discord.Embed(colour=ctx.colour)
         embed.add_field(name='Bot info:',
                         value=f'`Uptime:` {uptime}\n`Guilds:`{len(self.bot.guilds)}\n'
                               f'`Shards:` {len(self.bot.shards)}\n`Users:` {len(self.bot.users)}\n')
@@ -195,7 +195,7 @@ class Information(commands.Cog):
         Display the bots system stats.
         """
 
-        embed = discord.Embed(colour=ctx.config.colour)
+        embed = discord.Embed(colour=ctx.colour)
         embed.add_field(name='System CPU:',
                         value=f'`Frequency:` {round(psutil.cpu_freq().current, 2)} Mhz\n'
                               f'`Cores:` {psutil.cpu_count()}\n'
@@ -286,7 +286,7 @@ class Information(commands.Cog):
         if not guild.icon:
             raise exceptions.ArgumentError(f'The server `{guild}` does not have an icon.')
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f"{guild.name}'s icon")
+        embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s icon")
         embed.description = f'[PNG]({guild.icon_url_as(format="png")}) | [JPEG]({guild.icon_url_as(format="jpeg")}) | [WEBP]({guild.icon_url_as(format="webp")})'
         embed.set_image(url=str(guild.icon_url_as(format='png')))
 
@@ -310,7 +310,7 @@ class Information(commands.Cog):
         if not guild.banner:
             raise exceptions.ArgumentError(f'The server `{guild}` does not have a banner.')
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f"{guild.name}'s banner")
+        embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s banner")
         embed.description = f'[PNG]({guild.banner_url_as(format="png")}) | [JPEG]({guild.banner_url_as(format="jpeg")}) | [WEBP]({guild.banner_url_as(format="webp")})'
         embed.set_image(url=str(guild.banner_url_as(format='png')))
 
@@ -330,7 +330,7 @@ class Information(commands.Cog):
         if not guild.splash:
             raise exceptions.ArgumentError(f'The server `{guild}` does not have an splash.')
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f"{guild.name}'s splash")
+        embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s splash")
         embed.description = f'[PNG]({guild.splash_url_as(format="png")}) | [JPEG]({guild.splash_url_as(format="jpeg")}) | [WEBP]({guild.splash_url_as(format="webp")})'
         embed.set_image(url=str(guild.splash_url_as(format='png')))
 
@@ -362,7 +362,7 @@ class Information(commands.Cog):
             else:
                 features.append(f'<:cross:739315361811267594> {description}')
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f"{guild.name}'s information.")
+        embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s information.")
         embed.description = f'`Owner:` {guild.owner}\n' \
                             f'`Created on:` {datetime.strftime(guild.created_at, self.bot.time_format)}\n' \
                             f'`Created:` {humanize.precisedelta(datetime.utcnow() - guild.created_at, suppress=["seconds", "minutes"], format="%0.0f")} ago\n' \
@@ -426,7 +426,7 @@ class Information(commands.Cog):
         if not user:
             user = ctx.author
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f"{user.name}'s avatar")
+        embed = discord.Embed(colour=ctx.colour, title=f"{user.name}'s avatar")
         embed.description = f'[PNG]({user.avatar_url_as(format="png")}) | [JPEG]({user.avatar_url_as(format="jpeg")}) | [WEBP]({user.avatar_url_as(format="webp")})'
         embed.set_image(url=str(user.avatar_url_as(format='png')))
 
@@ -447,7 +447,7 @@ class Information(commands.Cog):
         if not user:
             user = self.bot.get_user(ctx.author.id)
 
-        embed = discord.Embed(colour=ctx.config.colour, title=f'{user}\'s information:')
+        embed = discord.Embed(colour=ctx.colour, title=f'{user}\'s information:')
         embed.description = f'`Discord name:` {user}\n' \
                             f'`Created on:` {datetime.strftime(user.created_at, self.bot.time_format)}\n' \
                             f'`Created:` {humanize.precisedelta(datetime.utcnow() - user.created_at, suppress=["seconds", "minutes"], format="%0.0f")} ago\n' \

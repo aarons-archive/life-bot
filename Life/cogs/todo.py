@@ -17,7 +17,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.utilities import exceptions
+from utilities import exceptions
 from utilities import context
 
 
@@ -29,7 +29,7 @@ class Todo(commands.Cog):
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
     async def todo(self, ctx: context.Context):
         """
-        Display a list of your current todo's.
+        Display a list of your current todos.
         """
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
@@ -61,7 +61,7 @@ class Todo(commands.Cog):
         query = 'INSERT INTO todos VALUES ($1, $2, $3, $4)'
         await self.bot.db.execute(query, ctx.author.id, datetime.now(), content, ctx.message.jump_url)
 
-        embed = discord.Embed(title='Your todo was created.', colour=ctx.config.colour)
+        embed = discord.Embed(title='Your todo was created.', colour=ctx.colour)
         embed.add_field(name='Content:', value=content)
         return await ctx.send(embed=embed)
 
@@ -83,7 +83,11 @@ class Todo(commands.Cog):
         todo_ids = todo_ids.split(' ')
         for todo_id in todo_ids:
 
-            todo_id = self.bot.utils.try_int(todo_id)
+            try:
+                todo_id = int(todo_id)
+            except ValueError:
+                todo_id = str(todo_id)
+
             if type(todo_id) == str:
                 raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
             if todo_id not in todos.keys():
@@ -97,7 +101,7 @@ class Todo(commands.Cog):
         await self.bot.db.executemany(query, entries)
 
         contents = '\n'.join([f'{todo_id}. {todos[todo_id]["todo"]}' for todo_id in todos_to_remove])
-        embed = discord.Embed(title=f'Deleted {len(todos_to_remove)} todo(s).', colour=ctx.config.colour)
+        embed = discord.Embed(title=f'Deleted {len(todos_to_remove)} todo(s).', colour=ctx.colour)
         embed.add_field(name='Contents:', value=contents)
         return await ctx.send(embed=embed)
 
@@ -113,7 +117,7 @@ class Todo(commands.Cog):
 
         await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
 
-        embed = discord.Embed(title=f'Cleared your todo list of {len(todos)} todo(s).', colour=ctx.config.colour)
+        embed = discord.Embed(title=f'Cleared your todo list of {len(todos)} todo(s).', colour=ctx.colour)
         return await ctx.send(embed=embed)
 
     @todo.command(name='edit')
@@ -136,7 +140,11 @@ class Todo(commands.Cog):
 
         todos = {index + 1: todo for index, todo in enumerate(todos)}
 
-        todo_id = self.bot.utils.try_int(todo_id)
+        try:
+            todo_id = int(todo_id)
+        except ValueError:
+            todo_id = str(todo_id)
+
         if type(todo_id) == str:
             raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
         if todo_id not in todos.keys():
@@ -147,7 +155,7 @@ class Todo(commands.Cog):
         query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $3 and time_added = $4'
         await self.bot.db.execute(query, content, ctx.message.jump_url, todo['owner_id'], todo['time_added'])
 
-        embed = discord.Embed(title=f'Updated your todo.', colour=ctx.config.colour)
+        embed = discord.Embed(title=f'Updated your todo.', colour=ctx.colour)
         embed.add_field(name='Old content:', value=todo['todo'], inline=False)
         embed.add_field(name='New content:', value=content, inline=False)
         return await ctx.send(embed=embed)

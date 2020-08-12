@@ -22,7 +22,7 @@ import spotify
 from discord.ext import commands
 
 import diorite
-from cogs.utilities.exceptions import LifeVoiceError
+from utilities.exceptions import LifeVoiceError
 from cogs.voice.utilities import objects
 from cogs.voice.utilities.player import Player
 from utilities import context
@@ -57,7 +57,7 @@ class Music(commands.Cog):
                 print(f'[DIORITE] {e}')
 
         if not self.bot.diorite.nodes:
-            print('\n[PLAYER RETENTION] No lavalink nodes connected, player retention disabled.')
+            print('\n[PLAYER RETENTION] No LavaLink nodes connected, player retention disabled.')
             return
 
         players = await self.bot.redis.hgetall(f'player_retention_{self.bot.user.id}')
@@ -598,8 +598,8 @@ class Music(commands.Cog):
         free = humanize.naturalsize(ctx.player.node.stats.memory_free)
         cpu_cores = ctx.player.node.stats.cpu_cores
 
-        embed = discord.Embed(colour=ctx.config.colour)
-        embed.add_field(name='Lavalink info:',
+        embed = discord.Embed(colour=ctx.colour)
+        embed.add_field(name='LavaLink info:',
                         value=f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n'
                               f'`Memory used:` {used}\n`Memory free:` {free}\n`CPU Cores:` {cpu_cores}\n'
                               f'`Uptime:` {uptime}')

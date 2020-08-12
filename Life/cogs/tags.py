@@ -17,7 +17,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.utilities import converters, exceptions
+from utilities import converters, exceptions
 from utilities import context
 
 
@@ -102,7 +102,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name, content, None, datetime.now())
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag created:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag created:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{content}', inline=False)
         return await ctx.send(embed=embed)
@@ -127,7 +127,7 @@ class Tags(commands.Cog):
         query = 'UPDATE tags SET content = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, content, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag edited:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag edited:')
         embed.add_field(name='Old content:', value=f'{tag["content"]}', inline=False)
         embed.add_field(name='New content:', value=f'{content}', inline=False)
         return await ctx.send(embed=embed)
@@ -152,7 +152,7 @@ class Tags(commands.Cog):
         query = 'UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag claimed:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag claimed:')
         embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
         embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
         return await ctx.send(embed=embed)
@@ -179,7 +179,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, datetime.now())
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag alias created:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag alias created:')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
         embed.add_field(name='Links to:', value=f'{original}', inline=False)
         return await ctx.send(embed=embed)
@@ -204,7 +204,7 @@ class Tags(commands.Cog):
         query = 'UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3'
         await self.bot.db.execute(query, member.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag transferred:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag transferred:')
         embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
         embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
         return await ctx.send(embed=embed)
@@ -228,7 +228,7 @@ class Tags(commands.Cog):
         query = 'DELETE FROM tags WHERE guild_id = $1 AND alias = $2'
         await self.bot.db.execute(query, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.config.colour, title='Tag deleted:')
+        embed = discord.Embed(colour=ctx.colour, title='Tag deleted:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{tag["content"]}', inline=False)
         return await ctx.send(embed=embed)
@@ -297,7 +297,7 @@ class Tags(commands.Cog):
 
         owner = ctx.guild.get_member(tag['owner_id'])
 
-        embed = discord.Embed(colour=ctx.config.colour)
+        embed = discord.Embed(colour=ctx.colour)
         embed.set_footer(text=f'Created on {datetime.strftime(tag["created_at"], "%A %d %B %Y at %H:%M")}')
         embed.title = f'{tag["name"]}'
         embed.description = f'`Owner:` {owner.mention if owner else "None"}\n`Claimable:` {owner is None}\n' \

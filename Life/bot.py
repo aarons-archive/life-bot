@@ -13,6 +13,7 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import logging
 import time
+import typing
 
 import aiohttp
 import aredis
@@ -20,41 +21,47 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from cogs.utilities import objects, utils
 from config import config
-from utilities import context, help
+from utilities import context, help, objects, utils
 
 
 class Life(commands.AutoShardedBot):
 
-    def __init__(self, loop):
+    def __init__(self, loop) -> None:
         super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
-                         activity=discord.Streaming(name=f'{config.LifeConfig().prefix}help', url='https://www.twitch.tv/mrrandoooom'))
+                         activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/mrrandoooom'))
 
-        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
-                                                    external_emojis=True, add_reactions=True)
+        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True,
+                                                    read_message_history=True, external_emojis=True, add_reactions=True)
         self.voice_permissions = discord.Permissions(connect=True, speak=True)
 
         self.log = logging.getLogger('bot')
         self.start_time = time.time()
 
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.config = config.Config(bot=self)
         self.utils = utils.Utils(bot=self)
-        self.config = config.LifeConfig()
 
         self.commands_not_allowed_dms = {}
 
         self.guild_blacklist = {}
-        self.user_blacklist = {}
-
+        self.default_guild_config = objects.DefaultGuildConfig()
         self.guild_configs = {}
+
+        self.user_blacklist = {}
+        self.default_user_config = objects.DefaultUserConfig()
         self.user_configs = {}
 
-        self.default_guild_config = objects.DefaultGuildConfig()
         self.time_format = '%A %d %B %Y at %H:%M'
 
         self.redis = None
         self.db = None
+
+    def get_user_config(self, user: typing.Union[discord.User, discord.Member]) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
+        return self.user_configs.get(user.id, self.default_user_config)
+
+    def get_guild_config(self, guild: discord.Guild) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+        return self.guild_configs.get(guild.id, self.default_guild_config)
 
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
@@ -96,18 +103,18 @@ class Life(commands.AutoShardedBot):
         try:
             db = await asyncpg.create_pool(**self.config.postgresql)
         except Exception as e:
-            print(f'\n[POSTGRESQL] An error occurred while connecting to postgresql: {e}')
+            print(f'\n[POSTGRESQL] An error occurred while connecting to PostgreSQL: {e}')
         else:
+            print(f'\n[POSTGRESQL] Connected to the PostgreSQL database.')
             self.db = db
-            print(f'\n[POSTGRESQL] Connected to the postgresql database.')
 
         try:
             redis = aredis.StrictRedis(**self.config.redis)
         except aredis.ConnectionError:
-            print(f'[REDIS] An error occurred while connecting to redis.\n')
+            print(f'[REDIS] An error occurred while connecting to Redis.\n')
         else:
+            print(f'[REDIS] Connected to Redis.\n')
             self.redis = redis
-            print(f'[REDIS] Connected to the redis database.\n')
 
         for extension in self.config.extensions:
             try:
@@ -118,11 +125,12 @@ class Life(commands.AutoShardedBot):
             except commands.NoEntryPointError:
                 print(f'[EXTENSIONS] No entry point - {extension}')
             except commands.ExtensionFailed as error:
-                print(f'[EXTENSIONS] Failed - {extension}\n{error}')
+                print(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
 
         self.commands_not_allowed_dms = {
             'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'shuffle', 'clear', 'reverse', 'loop', 'remove', 'move',
             'musicinfo',
+
             'tag', 'tag raw', 'tag create', 'tag edit', 'tag claim', 'tag alias', 'tag transfer', 'prefix delete', 'tag search', 'tag list', 'tag all', 'tag info',
             'icon', 'server', 'channels', 'member'
 
@@ -131,7 +139,7 @@ class Life(commands.AutoShardedBot):
 
         self.add_check(self.can_run_commands)
 
-        await super().start(*args)
+        await super().start(*args, **kwargs)
 
     async def close(self) -> None:
 
@@ -148,3 +156,4 @@ class Life(commands.AutoShardedBot):
         await self.session.close()
 
         print("Bye bye!")
+        await super().close()

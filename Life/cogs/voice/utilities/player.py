@@ -18,7 +18,7 @@ import diorite
 import discord
 import spotify
 
-from cogs.utilities import exceptions
+from utilities import exceptions
 from cogs.voice.utilities import objects, queue
 
 

@@ -19,7 +19,7 @@ import discord
 import prettify_exceptions
 from discord.ext import commands
 
-from cogs.utilities import exceptions
+from utilities import exceptions
 from utilities import context
 
 
@@ -95,7 +95,7 @@ class Events(commands.Cog):
             time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
             info = f'`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
-            embed = discord.Embed(colour=ctx.config.colour)
+            embed = discord.Embed(colour=ctx.colour)
             embed.set_author(name=f'DM from {ctx.author}',
                              icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
             embed.description = f'{message.content}'
@@ -109,7 +109,7 @@ class Events(commands.Cog):
             time = datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")
             info = f'{guild}{guild_id}`Channel:` {ctx.channel}\n`Channel ID:` {ctx.channel.id}\n`Time`: {time}'
 
-            embed = discord.Embed(colour=ctx.config.colour)
+            embed = discord.Embed(colour=ctx.colour)
             embed.set_author(name=f'Mentioned by {ctx.author}',
                              icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
             embed.description = f'{message.content}'
@@ -228,7 +228,7 @@ class Events(commands.Cog):
         time = f'`Time:` {datetime.strftime(ctx.message.created_at, "%A %d %B %Y at %H:%M:%S")}'
         info = f'`Message content:` {ctx.message.content}\n{guild}\n{channel}\n{author}\n{time}'
 
-        embed = discord.Embed(colour=ctx.config.colour, description=f'Error in command `{ctx.command}`')
+        embed = discord.Embed(colour=ctx.colour, description=f'Error in command `{ctx.command}`')
         embed.set_author(name=ctx.author, icon_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png')))
         embed.add_field(name='Info:', value=info)
         await self.bot.error_channel.send(embed=embed)

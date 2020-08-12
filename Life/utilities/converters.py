@@ -17,8 +17,7 @@ import discord
 import yarl
 from discord.ext import commands
 
-from cogs.utilities import exceptions
-from utilities import context
+from utilities import context, exceptions
 
 
 class User(commands.UserConverter):
