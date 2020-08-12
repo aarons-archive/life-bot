@@ -4,7 +4,7 @@ import json
 import weakref
 from urllib.parse import quote
 
-from cogs.utilities import exceptions
+from utilities import exceptions
 
 
 class Route:

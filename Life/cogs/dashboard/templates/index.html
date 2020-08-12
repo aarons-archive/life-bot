@@ -36,10 +36,13 @@
                         <li class="nav-item"><a class="nav-link" href="{{ bot.source_url }}">Github</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ bot.support_url }}">Discord server</a></li>
                         {% if user is None %}
-                            <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                            <li class="nav-item"><!--suppress HtmlUnknownTarget -->
+                                <a class="nav-link" href="/login">Login</a></li>
                         {% else %}
-                            <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/profile">{{ user.name }}</a></li>
+                            <li class="nav-item"><!--suppress HtmlUnknownTarget -->
+                                <a class="nav-link" href="/logout">Logout</a></li>
+                            <li class="nav-item"><!--suppress HtmlUnknownTarget -->
+                                <a class="nav-link" href="/profile">{{ user.name }}</a></li>
                         {% end %}
                     </ul>
                 </div>

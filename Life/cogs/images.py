@@ -17,7 +17,7 @@ import typing
 
 from discord.ext import commands
 
-from cogs.utilities import converters, exceptions, imaging
+from utilities import converters, exceptions, imaging
 from utilities import context
 
 

@@ -24,7 +24,7 @@ import pkg_resources
 import setproctitle
 from discord.ext import commands
 
-from cogs.utilities import exceptions
+from utilities import exceptions
 from utilities import context
 
 
@@ -176,7 +176,7 @@ class Dev(commands.Cog):
     @dev_blacklist.command(name='reload', hidden=True)
     async def dev_blacklist_reload(self, ctx: context.Context):
         """
-        Reload the bot's blacklist.
+        Reload the bots blacklist.
         """
 
         await self.load()

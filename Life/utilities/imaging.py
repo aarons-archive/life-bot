@@ -8,7 +8,7 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
 
@@ -23,8 +23,8 @@ from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
 
-from cogs.utilities.exceptions import ArgumentError, LifeImageError
 from utilities import context
+from utilities.exceptions import ArgumentError, LifeImageError
 
 
 def edge(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
@@ -275,7 +275,7 @@ class Imaging:
                 raise LifeImageError('The image produced was over 20mb.')
             post = await response.json()
 
-        embed = discord.Embed(colour=ctx.config.colour)
+        embed = discord.Embed(colour=ctx.colour)
         embed.set_footer(text=image_text)
         embed.set_image(url=post.get('url'))
         return embed

@@ -129,7 +129,7 @@ class HelpCommand(commands.HelpCommand):
 
         title = f'{command.name} {command.signature if command.signature else ""}'
         description = f'{aliases if command.aliases else ""}{command_help}'
-        embed = discord.Embed(colour=ctx.config.colour, title=title, description=description)
+        embed = discord.Embed(colour=ctx.colour, title=title, description=description)
 
         await ctx.send(embed=embed)
 

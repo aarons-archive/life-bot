@@ -8,7 +8,7 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with Life.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
 
@@ -19,7 +19,7 @@ import discord
 
 class BasePaginator:
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
 
         self.kwargs = kwargs
 
@@ -120,7 +120,7 @@ class BasePaginator:
 
 class Paginator(BasePaginator):
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.header = kwargs.get('header', '')
@@ -168,7 +168,7 @@ class Paginator(BasePaginator):
 
 class EmbedPaginator(BasePaginator):
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.header = kwargs.get('header', '')
@@ -176,7 +176,7 @@ class EmbedPaginator(BasePaginator):
 
         self.title = kwargs.get('title', '')
 
-        self.colour = kwargs.get('colour', self.ctx.config.colour)
+        self.colour = kwargs.get('colour', self.ctx.colour)
         self.image = kwargs.get('image', None)
         self.thumbnail = kwargs.get('thumbnail', None)
 
