@@ -252,7 +252,7 @@ class Information(commands.Cog):
         """
 
         if command is None:
-            return await ctx.send(f'<https://github.com/iDevision/Life>')
+            return await ctx.send(f'<{self.bot.source_url}>')
 
         command = self.bot.get_command(command)
         if command is None:
@@ -269,7 +269,7 @@ class Information(commands.Cog):
         lines, first_line = inspect.getsourcelines(command_obj)
         last_line = first_line + (len(lines) - 1)
 
-        link = f'<https://github.com/iDevision/Life/blob/master/Life/{file_path}#L{first_line}-L{last_line}>'
+        link = f'<{self.bot.source_url}/blob/master/Life/{file_path}#L{first_line}-L{last_line}>'
         return await ctx.send(link)
 
     @commands.command(name='icon')
