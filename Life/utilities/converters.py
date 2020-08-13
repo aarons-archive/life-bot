@@ -55,8 +55,8 @@ class TagName(commands.clean_content):
             raise exceptions.ArgumentError('Your tag name can not start with a tag subcommand.')
         if '`' in argument:
             raise exceptions.ArgumentError('Your tag name can not contain backtick characters.')
-        if len(argument) > 50:
-            raise exceptions.ArgumentError('Your tag name can not be more than 50 characters.')
+        if len(argument) < 3 or len(argument) > 50:
+            raise exceptions.ArgumentError('Your tag name must be between 3 and 50 characters long.')
 
         return argument
 
