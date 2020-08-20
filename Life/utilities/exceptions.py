@@ -22,25 +22,21 @@ class ArgumentError(LifeError):
     pass
 
 
-class LifeImageError(LifeError):
+class ImageError(LifeError):
     pass
 
 
-class LifeVoiceError(LifeError):
+class VoiceError(LifeError):
     pass
 
 
-class LifePlaylistError(LifeError):
+class HTTPError(LifeError):
     pass
 
 
-class LifeHTTPError(LifeError):
+class HTTPForbidden(LifeError):
     pass
 
 
-class LifeHTTPForbidden(LifeError):
-    pass
-
-
-class LifeHTTPNotFound(LifeError):
+class HTTPNotFound(LifeError):
     pass

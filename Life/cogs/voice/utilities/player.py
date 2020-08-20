@@ -19,7 +19,7 @@ import discord
 import spotify
 
 from utilities import exceptions
-from cogs.voice.utilities import objects, queue
+from cogs.voice.utilities import objects
 
 
 class Player(diorite.Player):
