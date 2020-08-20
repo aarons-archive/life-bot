@@ -54,6 +54,7 @@ class Life(commands.AutoShardedBot):
 
         self.time_format = '%A %d %B %Y at %H:%M'
 
+        self.lavalink = None
         self.redis = None
         self.db = None
 
@@ -97,6 +98,9 @@ class Life(commands.AutoShardedBot):
             return commands.when_mentioned_or(self.config.prefix)(self, message)
 
         return commands.when_mentioned_or(self.config.prefix, *guild_config.prefixes)(self, message)
+
+    async def is_owner(self, user: discord.User) -> bool:
+        return user.id in self.config.owner_ids
 
     async def start(self, *args, **kwargs) -> None:
 

@@ -54,7 +54,7 @@ class Events(commands.Cog):
 
         if self.bot.log_channel:
 
-            embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
+            embed = discord.Embed(colour=discord.Colour.gold())
             embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png')))
             embed.title = f'Joined a guild'
             time = datetime.strftime(guild.me.joined_at, "%A %d %B %Y at %H:%M:%S")
@@ -71,7 +71,7 @@ class Events(commands.Cog):
 
         if self.bot.log_channel:
 
-            embed = discord.Embed(colour=self.bot.utils.guild_config(guild).colour)
+            embed = discord.Embed(colour=discord.Colour.gold())
             embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() is True else 'png')))
             embed.title = f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild'
             embed.description = f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}'
@@ -189,9 +189,8 @@ class Events(commands.Cog):
 
         error_messages = {
             exceptions.ArgumentError: f'{error}',
-            exceptions.LifeImageError: f'{error}',
-            exceptions.LifePlaylistError: f'{error}',
-            exceptions.LifeVoiceError: f'{error}',
+            exceptions.ImageError: f'{error}',
+            exceptions.VoiceError: f'{error}',
             commands.CheckFailure: f'{error}',
             diorite.NodesNotAvailable: f'There are no nodes available.',
             commands.TooManyArguments: f'You used too many parameters for the command `{ctx.command}`. Use `{self.bot.config.prefix}help {ctx.command}` for '
