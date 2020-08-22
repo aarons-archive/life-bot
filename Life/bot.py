@@ -149,10 +149,6 @@ class Life(commands.AutoShardedBot):
 
         print("\n[BOT] Closing bot down.")
 
-        music = self.get_cog('Music')
-        if music:
-            await music.unload()
-
         print("[DB] Closing database connection.")
         await self.db.close()
 
