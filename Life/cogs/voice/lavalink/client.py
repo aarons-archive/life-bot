@@ -1,3 +1,16 @@
+"""
+Life
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import random
 import typing
 
@@ -52,14 +65,6 @@ class Client:
             return random.choice([node for node in nodes.values()])
 
         return nodes.get(identifier, None)
-
-    async def destroy_node(self, *, identifier: str) -> None:
-
-        node = self.get_node(identifier=identifier)
-        if not node:
-            raise NodeNotFound(f'Node with identifier \'{identifier}\' was not found.')
-
-        await node.destroy()
 
     async def connect(self, *, channel: discord.VoiceChannel):
 
