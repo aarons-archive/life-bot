@@ -1,11 +1,23 @@
+"""
+Life
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import re
 import typing
-import yarl
 from urllib import parse
 
 import aiohttp
 import spotify
+import yarl
 
 from cogs.voice.lavalink import objects
 from cogs.voice.lavalink.exceptions import *
@@ -139,7 +151,7 @@ class Node:
                 else:
                     continue
 
-    async def send(self, *, data: dict) -> None:
+    async def send(self, **data) -> None:
 
         if not self.is_connected:
             raise NodeConnectionError(f'Node \'{self.identifier}\' is not connected.')
@@ -227,8 +239,9 @@ class Node:
         tracks = []
         for track in spotify_tracks:
 
-            info = {'identifier': track.id, 'is_seekable': False, 'author': ', '.join([artist.name for artist in track.artists]), 'length': track.duration,
-                    'is_stream': False, 'position': 0, 'title': track.name, 'uri': track.url, 'thumbnail': track.images[0].url if track.images else None
+            info = {'identifier': track.id, 'isSeekable': False, 'author': ', '.join([artist.name for artist in track.artists]), 'length': track.duration,
+                    'isStream': False, 'position': 0, 'title': track.name, 'uri': track.url if track.url else 'spotify',
+                    'thumbnail': track.images[0].url if track.images else None
                     }
             tracks.append(objects.Track(track_id='', info=info, ctx=ctx))
 
