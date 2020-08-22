@@ -19,7 +19,7 @@ from tornado.web import decode_signed_value
 
 from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseWebsocketHandler
-from cogs.voice.utilities.player import Player
+from cogs.voice.lavalink.player import Player
 
 
 # noinspection PyAttributeOutsideInit
