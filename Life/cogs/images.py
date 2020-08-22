@@ -17,8 +17,7 @@ import typing
 
 from discord.ext import commands
 
-from utilities import converters, exceptions, imaging
-from utilities import context
+from utilities import context, converters, exceptions, imaging
 
 
 class Images(commands.Cog):

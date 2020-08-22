@@ -24,7 +24,7 @@ from wand.image import Image
 from wand.sequence import SingleImage
 
 from utilities import context
-from utilities.exceptions import ArgumentError, LifeImageError
+from utilities.exceptions import ArgumentError, ImageError
 
 
 def edge(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
@@ -216,7 +216,7 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
         image_edited.close()
 
     except MissingDelegateError:
-        child_pipe.send(LifeImageError())
+        child_pipe.send(ImageError())
 
 
 class Imaging:
@@ -242,10 +242,10 @@ class Imaging:
             content_length = response.headers.get('Content-Length')
 
             if content_type not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
-                raise LifeImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
+                raise ImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
             if content_length and int(content_length) > 15728640:
-                raise LifeImageError('That file is over 15mb.')
+                raise ImageError('That file is over 15mb.')
 
         parent_pipe, child_pipe = multiprocessing.Pipe()
         args = (image_operations[edit_type], image_bytes, child_pipe)
@@ -254,9 +254,9 @@ class Imaging:
         process.start()
 
         data = await self.bot.loop.run_in_executor(None, parent_pipe.recv)
-        if isinstance(data, LifeImageError):
+        if isinstance(data, ImageError):
             process.terminate()
-            raise LifeImageError('Something went wrong while trying to process that image.')
+            raise ImageError('Something went wrong while trying to process that image.')
 
         process.join()
         process.close()
@@ -272,7 +272,7 @@ class Imaging:
 
         async with self.bot.session.post(url, data=upload_data, headers=headers) as response:
             if response.status == 413:
-                raise LifeImageError('The image produced was over 20mb.')
+                raise ImageError('The image produced was over 20mb.')
             post = await response.json()
 
         embed = discord.Embed(colour=ctx.colour)
