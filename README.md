@@ -28,7 +28,6 @@ mv config_example.py config.py
 * [aiohttp](https://github.com/aio-libs/aiohttp)
 * [aredis](https://github.com/NoneGG/aredis)
 * [asyncpg](https://github.com/MagicStack/asyncpg)
-* [diorite](https://github.com/iDevision/diorite)
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [humanize](https://github.com/jmoiron/humanize)
 * [jishaku](https://github.com/Gorialis/jishaku)
