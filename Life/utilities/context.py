@@ -55,3 +55,6 @@ class Context(commands.Context):
     
     async def paginate_embed(self, **kwargs) -> None:
         await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
+
+    async def paginate_embeds(self, **kwargs) -> None:
+        await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()

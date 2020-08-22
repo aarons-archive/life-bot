@@ -239,3 +239,119 @@ class EmbedPaginator(BasePaginator):
         self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
         self.embed.set_footer(text=self.embed_footer)
         await self.message.edit(embed=self.embed)
+
+
+class EmbedsPaginator:
+
+    def __init__(self, **kwargs) -> None:
+
+        self.kwargs = kwargs
+
+        self.ctx = kwargs.get('ctx')
+        self.entries = kwargs.get('entries')
+
+        self.delete_when_done = kwargs.get('delete_when_done', True)
+        self.bot = kwargs.get('bot', self.ctx.bot)
+        self.timeout = kwargs.get('timeout', 300)
+
+        self.message = None
+        self.looping = True
+        self.page = 0
+
+        self.buttons = {
+            ':first:737826967910481931': self.first,
+            ':backward:737826960885153800': self.backward,
+            ':stop:737826951980646491': self.stop,
+            ':forward:737826943193448513': self.forward,
+            ':last:737826943520473198': self.last
+        }
+
+    def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
+
+        if payload.message_id != self.message.id:
+            return False
+
+        if payload.user_id not in (self.bot.owner_id, self.ctx.author.id):
+            return False
+
+        return str(payload.emoji).strip('<>') in self.buttons.keys()
+
+    async def react(self) -> None:
+
+        if len(self.entries) == 1:
+            await self.message.add_reaction(':stop:737826951980646491')
+        else:
+            for emote in self.buttons.keys():
+                if emote in (':start:737826967910481931', ':end:737826943520473198') and len(self.entries) < 5:
+                    continue
+                await self.message.add_reaction(emote)
+
+    async def loop(self) -> None:
+
+        await self.react()
+
+        while self.looping is True:
+
+            try:
+                tasks = [
+                    asyncio.ensure_future(self.bot.wait_for('raw_reaction_add', check=self.check_reaction)),
+                    asyncio.ensure_future(self.bot.wait_for('raw_reaction_remove', check=self.check_reaction))
+                ]
+                done, pending = await asyncio.wait(tasks, timeout=self.timeout, return_when=asyncio.FIRST_COMPLETED)
+
+                for task in pending:
+                    task.cancel()
+
+                if len(done) == 0:
+                    raise asyncio.TimeoutError()
+
+                await self.buttons[str(done.pop().result().emoji).strip('<>')]()
+
+            except asyncio.TimeoutError:
+                self.looping = False
+
+        if not self.message:
+            return
+
+        if self.delete_when_done:
+            return await self.message.delete()
+
+        for reaction in self.buttons.keys():
+            await self.message.remove_reaction(reaction, self.bot.user)
+
+    async def paginate(self) -> None:
+
+        self.message = await self.ctx.send(embed=self.entries[self.page])
+        asyncio.create_task(self.loop())
+
+    async def first(self) -> None:
+
+        self.page = 0
+        await self.message.edit(embed=self.entries[self.page])
+
+    async def backward(self) -> None:
+
+        if self.page <= 0:
+            return
+        self.page -= 1
+
+        await self.message.edit(embed=self.entries[self.page])
+
+    async def stop(self) -> None:
+
+        self.looping = False
+        self.message = await self.message.delete()
+
+    async def forward(self) -> None:
+
+        if self.page >= len(self.entries) - 1:
+            return
+        self.page += 1
+
+        await self.message.edit(embed=self.entries[self.page])
+
+    async def last(self) -> None:
+
+        self.page = len(self.entries) - 1
+        await self.message.edit(embed=self.entries[self.page])
+
