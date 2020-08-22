@@ -41,7 +41,7 @@ class LifeConfig:
             'db': 0,
         }
 
-        self.ip = f''
+        self.ip = ''
         self.port = 00000
 
         self.endpoints = [main, dashboard, metrics, websocket]
@@ -50,6 +50,6 @@ class LifeConfig:
         self.client_secret = ''
 
         self.login_redirect_uri = ''
-        self.redirect_uri = f''
+        self.redirect_uri = ''
 
-        self.cookie_secret = f''
+        self.cookie_secret = ''
