@@ -1,5 +1,16 @@
-import asyncio
-import collections
+"""
+Life
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import random
 import typing
 
@@ -16,13 +27,6 @@ class Queue:
         self.queue_history = []
         self.looping = False
 
-        self._getters = collections.deque()
-        self._putters = collections.deque()
-
-        self._finished = asyncio.Event()
-        self._finished.set()
-        self._unfinished_tasks = 0
-
     def __repr__(self) -> str:
         return f'<LavaLinkQueue length={len(self)}>'
 
@@ -38,22 +42,6 @@ class Queue:
     def __len__(self) -> int:
         return len(self.queue)
 
-    def _task_done(self) -> None:
-
-        if self._unfinished_tasks <= 0:
-            raise ValueError('task_done() called too many times')
-        self._unfinished_tasks -= 1
-        if self._unfinished_tasks == 0:
-            self._finished.set()
-
-    def _wakeup_next(self, waiters: collections.deque) -> None:
-
-        while waiters:
-            waiter = waiters.popleft()
-            if not waiter.done():
-                waiter.set_result(None)
-                break
-
     @property
     def is_empty(self) -> bool:
         return True if not self.queue else False
@@ -62,44 +50,74 @@ class Queue:
     def is_looping(self) -> bool:
         return True if self.looping is True else False
 
-    async def get(self, *, position: int = 0) -> objects.Track:
+    @property
+    def history(self) -> typing.Generator:
 
-        while self.is_empty:
-            _getter = self.player.bot.loop.create_future()
-            self._getters.append(_getter)
-            try:
-                await _getter
-            except Exception:
-                _getter.cancel()
-                try:
-                    self._getters.remove(_getter)
-                except ValueError:
-                    pass
-                if not self.is_empty and not _getter.cancelled():
-                    self._wakeup_next(self._getters)
-                raise
-        self._wakeup_next(self._putters)
+        for item in self.queue_history[1:]:
+            yield item
 
-        item = self.queue.pop(position)
-        self.queue_history.append(item)
+    async def get(self, *, position: int = 0, history: bool = True) -> typing.Optional[objects.Track]:
+
+        try:
+            item = self.queue.pop(position)
+        except IndexError:
+            return None
+
+        if history is True:
+            self.put_history(tracks=item, position=position)
+
         return item
 
-    def put(self, *, item: objects.Track, position: int = None) -> objects.Track:
+    def get_history(self, *, position: int = 0) -> typing.Optional[objects.Track]:
+
+        history = list(reversed(self.queue_history))
+
+        try:
+            item = history[position]
+        except IndexError:
+            return None
+
+        return item
+
+    def put(self, *, tracks: typing.Union[objects.Track, typing.List[objects.Track]], position: int = None) -> None:
 
         if position is None:
-            self.queue.append(item)
-            self.player.wait_queue_add.set()
-            return item
+            if isinstance(tracks, objects.Track):
+                self.queue.append(tracks)
+            else:
+                self.queue.extend(tracks)
+        else:
+            if isinstance(tracks, objects.Track):
+                self.queue.insert(position, tracks)
+            else:
+                for index, track, in enumerate(tracks):
+                    self.queue.insert(position + index, track)
 
-        self.queue.insert(position, item)
         self.player.wait_queue_add.set()
-        return item
+        self.player.wait_queue_add.clear()
 
-    def extend(self, *, items: typing.List[objects.Track]) -> typing.List[objects.Track]:
+    def put_history(self, *, tracks: typing.Union[objects.Track, typing.List[objects.Track]], position: int = None) -> None:
 
-        self.queue.extend(items)
-        self.player.wait_queue_add.set()
-        return items
+        if position is None:
+            if isinstance(tracks, objects.Track):
+                self.queue_history.append(tracks)
+            else:
+                self.queue_history.extend(tracks)
+        else:
+            if isinstance(tracks, objects.Track):
+                self.queue_history.insert(position, tracks)
+            else:
+                for index, track, in enumerate(tracks):
+                    self.queue_history.insert(position + index, track)
+
+    def sort(self, method: str = 'title', reverse: bool = False) -> None:
+
+        if method == 'title':
+            self.queue.sort(key=lambda track: track.title, reverse=reverse)
+        elif method == 'author':
+            self.queue.sort(key=lambda track: track.author, reverse=reverse)
+        elif method == 'length':
+            self.queue.sort(key=lambda track: track.length, reverse=reverse)
 
     def shuffle(self) -> None:
         random.shuffle(self.queue)
@@ -109,19 +127,6 @@ class Queue:
 
     def clear(self) -> None:
         self.queue.clear()
-
-
-    def get_previous(self) -> typing.Optional:
-
-        if not self.queue_history:
-            return None
-
-        return self.queue_history[-1]
-
-    def history(self) -> typing.Generator:
-
-        for item in reversed(self.queue_history):
-            yield item
 
     def clear_history(self) -> None:
         self.queue_history.clear()
