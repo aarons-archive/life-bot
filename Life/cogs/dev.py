@@ -11,7 +11,6 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import asyncio
 import collections
 import sys
@@ -24,8 +23,7 @@ import pkg_resources
 import setproctitle
 from discord.ext import commands
 
-from utilities import exceptions
-from utilities import context
+from utilities import context, exceptions
 
 
 class Dev(commands.Cog):

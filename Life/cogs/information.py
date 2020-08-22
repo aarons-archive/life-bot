@@ -13,11 +13,11 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import codecs
 import collections
-import typing
 import inspect
 import os
 import pathlib
 import time
+import typing
 from datetime import datetime
 
 import discord
@@ -26,8 +26,7 @@ import psutil
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
-from utilities import converters, exceptions
-from utilities import context
+from utilities import context, converters, exceptions
 
 
 class Information(commands.Cog):
@@ -247,7 +246,7 @@ class Information(commands.Cog):
         """
         Get a github link to the source of a command.
 
-        `command`: The command to get the source of.
+        `command`: The command to get the source for.
         """
 
         if command is None:
