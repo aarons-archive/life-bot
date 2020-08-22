@@ -14,13 +14,12 @@ You should have received a copy of the GNU Affero General Public License along w
 import collections
 from datetime import datetime
 
-import diorite
 import discord
 import prettify_exceptions
 from discord.ext import commands
 
-from utilities import exceptions
-from utilities import context
+from utilities import context, exceptions
+from cogs.voice.lavalink.exceptions import NodeNotFound
 
 
 class Events(commands.Cog):
@@ -188,11 +187,12 @@ class Events(commands.Cog):
                                   f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.')
 
         error_messages = {
+
             exceptions.ArgumentError: f'{error}',
             exceptions.ImageError: f'{error}',
             exceptions.VoiceError: f'{error}',
             commands.CheckFailure: f'{error}',
-            diorite.NodesNotAvailable: f'There are no nodes available.',
+            NodeNotFound: f'There are no lavalink nodes available right now.',
             commands.TooManyArguments: f'You used too many parameters for the command `{ctx.command}`. Use `{self.bot.config.prefix}help {ctx.command}` for '
                                        f'more information on what parameters to use.',
             commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
