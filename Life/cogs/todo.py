@@ -17,8 +17,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from utilities import exceptions
-from utilities import context
+from utilities import context, exceptions
 
 
 class Todo(commands.Cog):
@@ -27,32 +26,32 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
-    async def todo(self, ctx: context.Context):
+    async def todo(self, ctx: context.Context) -> None:
         """
-        Display a list of your current todos.
+        Display a list of your todos.
         """
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            return await ctx.send('You do not have any todos.')
+            raise exceptions.ArgumentError('You do not have any todos.')
 
         entries = []
         for index, todo in enumerate(todos):
             entries.append(f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}')
 
-        return await ctx.paginate_embed(entries=entries, per_page=10, title=f'{ctx.author}\'s todo list.')
+        await ctx.paginate_embed(entries=entries, per_page=10, title=f'{ctx.author}\'s todo list.')
 
     @todo.command(name='add', aliases=['make', 'create'])
-    async def todo_add(self, ctx: context.Context, *, content: commands.clean_content):
+    async def todo_add(self, ctx: context.Context, *, content: commands.clean_content) -> None:
         """
         Creates a todo.
 
-        `content`: The content of your todo. Can not be more than 200 characters.
+        `content`: The content of your todo. Can not be more than 180 characters.
         """
         content = str(content)
 
-        if len(content) > 100:
-            raise exceptions.ArgumentError('Your todo can not be more than 100 characters long.')
+        if len(content) > 180:
+            raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
         if todo_count['c'] > 100:
@@ -63,10 +62,10 @@ class Todo(commands.Cog):
 
         embed = discord.Embed(title='Your todo was created.', colour=ctx.colour)
         embed.add_field(name='Content:', value=content)
-        return await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @todo.command(name='delete', aliases=['remove'])
-    async def todo_delete(self, ctx: context.Context, *, todo_ids: str):
+    async def todo_delete(self, ctx: context.Context, *, todo_ids: str) -> None:
         """
         Deletes a todo.
 
@@ -80,8 +79,7 @@ class Todo(commands.Cog):
         todos = {index + 1: todo for index, todo in enumerate(todos)}
         todos_to_remove = []
 
-        todo_ids = todo_ids.split(' ')
-        for todo_id in todo_ids:
+        for todo_id in todo_ids.split(' '):
 
             try:
                 todo_id = int(todo_id)
@@ -103,10 +101,10 @@ class Todo(commands.Cog):
         contents = '\n'.join([f'{todo_id}. {todos[todo_id]["todo"]}' for todo_id in todos_to_remove])
         embed = discord.Embed(title=f'Deleted {len(todos_to_remove)} todo(s).', colour=ctx.colour)
         embed.add_field(name='Contents:', value=contents)
-        return await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @todo.command(name='clear')
-    async def todo_clear(self, ctx: context.Context):
+    async def todo_clear(self, ctx: context.Context) -> None:
         """
         Clears your todo list.
         """
@@ -118,15 +116,15 @@ class Todo(commands.Cog):
         await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
 
         embed = discord.Embed(title=f'Cleared your todo list of {len(todos)} todo(s).', colour=ctx.colour)
-        return await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @todo.command(name='edit')
-    async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content):
+    async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content) -> None:
         """
         Edits the todo with the given id.
 
-        `todo_id`: The id of the todo to edit.
-        `content`: The content of which to change the todo to.
+        `todo_id`: The id of the todo.
+        `content`: The content of the new todo.
         """
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
@@ -134,9 +132,8 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError('You do not have any todos.')
 
         content = str(content)
-
-        if len(content) > 100:
-            return await ctx.send('Your todo can not be more than 100 characters long.')
+        if len(content) > 180:
+            raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         todos = {index + 1: todo for index, todo in enumerate(todos)}
 
@@ -158,7 +155,7 @@ class Todo(commands.Cog):
         embed = discord.Embed(title=f'Updated your todo.', colour=ctx.colour)
         embed.add_field(name='Old content:', value=todo['todo'], inline=False)
         embed.add_field(name='New content:', value=content, inline=False)
-        return await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
