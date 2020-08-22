@@ -26,7 +26,7 @@ from bot import Life
 @contextlib.contextmanager
 def logger():
 
-    logs = {'discord': None, 'diorite': None, 'bot': None}
+    logs = {'discord': None, 'bot': None}
 
     for log_name in logs.keys():
 
@@ -40,7 +40,6 @@ def logger():
         logs[log_name] = log
 
     logs['discord'].setLevel(logging.INFO)
-    logs['diorite'].setLevel(logging.DEBUG)
     logs['bot'].setLevel(logging.INFO)
 
     try:

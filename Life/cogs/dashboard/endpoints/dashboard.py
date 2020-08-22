@@ -15,7 +15,7 @@ from abc import ABC
 
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
 
-from cogs.voice.utilities.player import Player
+from cogs.voice.lavalink.player import Player
 
 
 # noinspection PyAsyncCall

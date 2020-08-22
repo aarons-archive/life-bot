@@ -16,7 +16,6 @@ import typing
 from discord.ext import commands
 import discord
 
-from cogs.voice.utilities.player import Player
 from utilities import objects, paginators
 
 
@@ -45,10 +44,6 @@ class Context(commands.Context):
             return self.guild_config.colour
 
         return self.user_config.colour
-
-    @property
-    def player(self) -> Player:
-        return self.bot.diorite.get_player(self.guild, cls=Player, text_channel=self.channel)
 
     async def paginate(self, **kwargs) -> None:
         await paginators.Paginator(ctx=self, **kwargs).paginate()
