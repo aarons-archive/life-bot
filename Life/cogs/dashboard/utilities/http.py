@@ -107,7 +107,7 @@ class HTTPClient:
 
                     if response.status == 429:
                         if not response.headers.get('Via'):
-                            raise exceptions.LifeHTTPError(response, data)
+                            raise exceptions.HTTPError(response, data)
 
                         retry_after = data['retry_after'] / 1000.0
 
@@ -127,10 +127,10 @@ class HTTPClient:
                         continue
 
                     if response.status == 403:
-                        raise exceptions.LifeHTTPForbidden(response, data)
+                        raise exceptions.HTTPForbidden(response, data)
                     elif response.status == 404:
-                        raise exceptions.LifeHTTPNotFound(response, data)
+                        raise exceptions.HTTPNotFound(response, data)
                     else:
-                        raise exceptions.LifeHTTPError(response, data)
+                        raise exceptions.HTTPError(response, data)
 
-            raise exceptions.LifeHTTPError(response, data)
+            raise exceptions.HTTPError(response, data)

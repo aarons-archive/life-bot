@@ -155,7 +155,6 @@ class Information(commands.Cog):
                             else:
                                 docstring = False
                         if docstring is True:
-                            print(line)
                             continue
 
                         if line.startswith('#'):

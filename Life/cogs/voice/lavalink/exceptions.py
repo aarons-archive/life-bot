@@ -11,32 +11,27 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from discord.ext import commands
 
-
-class LifeError(commands.CommandError):
+class LavaLinkException(Exception):
     pass
 
 
-class ArgumentError(LifeError):
+class NodeException(LavaLinkException):
     pass
 
 
-class ImageError(LifeError):
+class NodeCreationError(NodeException):
     pass
 
 
-class VoiceError(LifeError):
+class NodeConnectionError(NodeException):
     pass
 
 
-class HTTPError(LifeError):
+class NodeNotFound(NodeException):
     pass
 
 
-class HTTPForbidden(LifeError):
+class NodesNotFound(NodeException):
     pass
 
-
-class HTTPNotFound(LifeError):
-    pass
