@@ -132,6 +132,9 @@ class Music(commands.Cog):
 
             search = await ctx.guild.voice_client.node.search(query=query, ctx=ctx)
 
+            if search.source == 'HTTP' and ctx.author.id not in self.bot.config.owner_ids:
+                raise exceptions.VoiceError('You are unable to play HTTP links.')
+
             if search.source == 'spotify':
 
                 if search.source_type == 'track':
