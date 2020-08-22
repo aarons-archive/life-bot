@@ -124,7 +124,7 @@ def swirl(image: typing.Union[Image, SingleImage], degree: float):
 def wave(image: typing.Union[Image, SingleImage]):
 
     image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
-    return image, f''
+    return image, ''
 
 
 def flip(image: typing.Union[Image, SingleImage]):
