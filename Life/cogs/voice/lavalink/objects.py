@@ -1,6 +1,21 @@
-from utilities import context
+"""
+Life
+Copyright (C) 2020 MrRandom#9258
+
+Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+
+Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import typing
+
 import spotify
+
+from utilities import context
 
 
 class Stats:
@@ -65,20 +80,29 @@ class Track:
     @property
     def source(self) -> str:
 
+        if not self.uri:
+            return 'Unknown'
+
         for source in ['youtube', 'vimeo', 'bandcamp', 'soundcloud', 'spotify']:
             if source in self.uri:
-                return source
+                return source.title()
 
-        return 'http'
+        return 'HTTP'
 
     @property
     def thumbnail(self) -> str:
 
-        if self.source == 'youtube':
-            return f'https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg'
-        if self.source == 'spotify':
-            return self.info.get('thumbnail')
-        return f'https://dummyimage.com/1280x720/000/fff.png&text=+'
+        thumbnail = None
+
+        if self.source == 'Youtube':
+            thumbnail = f'https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg'
+        if self.source == 'Spotify':
+            thumbnail = self.info.get('thumbnail')
+
+        if thumbnail is None:
+            thumbnail = f'https://dummyimage.com/1280x720/000/fff.png&text=+'
+
+        return thumbnail
 
 
 class Playlist:
