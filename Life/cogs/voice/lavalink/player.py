@@ -213,7 +213,6 @@ class Player(VoiceProtocol, ABC):
 
         embed.add_field(name='Player info:',
                         value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`')
-        #embed.add_field(name='\u200B', value='\u200B')
         embed.add_field(name='Track info:',
                         value=f'Time: `{self.bot.utils.format_time(round(self.position) / 1000)} / {self.bot.utils.format_time(round(self.current.length) / 1000)}`\n'
                               f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}')
