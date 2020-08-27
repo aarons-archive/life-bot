@@ -12,17 +12,17 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import asyncio
-import typing
 
 import discord
 from discord.ext import commands
 
 from utilities import checks, context, converters, exceptions, objects
+from bot import Life
 
 
 class Config(commands.Cog):
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
         self.load_task = asyncio.create_task(self.load())
@@ -46,39 +46,6 @@ class Config(commands.Cog):
             self.bot.user_configs[user_config['user_id']] = objects.UserConfig(data=dict(user_config))
 
         print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
-
-    async def set_guild_config(self, ctx: context.Context, attribute: str, value: typing.Any, operation: str = 'add') -> None:
-
-        if isinstance(ctx.guild_config, objects.DefaultGuildConfig):
-            query = 'INSERT INTO guild_configs (guild_id) values ($1) ON CONFLICT (guild_id) DO UPDATE SET guild_id = excluded.guild_id RETURNING *'
-            data = await self.bot.db.fetchrow(query, ctx.guild.id)
-            self.bot.guild_configs[ctx.guild.id] = objects.GuildConfig(data=dict(data))
-
-        if attribute == 'prefix':
-            query = 'UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
-            if operation == 'remove':
-                query = 'UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
-            if operation == 'clear':
-                query = 'UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes'
-            data = await self.bot.db.fetchrow(query, value, ctx.guild.id)
-            ctx.guild_config.prefixes = data['prefixes']
-
-        elif attribute == 'colour':
-            query = 'UPDATE guild_configs SET colour = $1 WHERE guild_id = $2 RETURNING *'
-            data = await self.bot.db.fetchrow(query, value, ctx.guild.id)
-            ctx.guild_config.colour = discord.Colour(int(data['colour'], 16))
-
-    async def set_user_config(self, ctx: context.Context, attribute: str, value: typing.Any, operation: str = 'add') -> None:
-
-        if isinstance(ctx.user_config, objects.DefaultUserConfig):
-            query = 'INSERT INTO user_configs (user_id) values ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *'
-            data = await self.bot.db.fetchrow(query, ctx.author.id)
-            self.bot.user_configs[ctx.author.id] = objects.UserConfig(data=dict(data))
-
-        elif attribute == 'colour':
-            query = 'UPDATE user_configs SET colour = $1 WHERE user_id = $2 RETURNING *'
-            data = await self.bot.db.fetchrow(query, value, ctx.author.id)
-            ctx.user_config.colour = discord.Colour(int(data['colour'], 16))
 
     @commands.group(name='config', aliases=['conf'], invoke_without_command=True)
     async def config(self, ctx: context.Context) -> None:
@@ -112,7 +79,7 @@ class Config(commands.Cog):
         """
 
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'Before: {str(ctx.guild_config.colour).upper()}'))
-        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{str(colour).strip("#")}')
+        await self.bot.set_guild_config(guild=ctx.guild, attribute='colour', value=f'0x{str(colour).strip("#")}')
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'After: {str(ctx.guild_config.colour).upper()}'))
 
     @config_colour.command(name='clear', aliases=['revert', 'default', 'delete', 'remove'])
@@ -125,7 +92,7 @@ class Config(commands.Cog):
         """
 
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'Before: {str(ctx.guild_config.colour).upper()}'))
-        await self.set_guild_config(ctx=ctx, attribute='colour', value=f'0x{str(discord.Colour.gold()).strip("#")}')
+        await self.bot.set_guild_config(guild=ctx.guild, attribute='colour', value=f'0x{str(discord.Colour.gold()).strip("#")}')
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'After: {str(ctx.guild_config.colour).upper()}'))
 
     #
@@ -159,7 +126,7 @@ class Config(commands.Cog):
         if prefix in ctx.guild_config.prefixes:
             raise exceptions.ArgumentError(f'This server already has the `{prefix}` prefix.')
 
-        await self.set_guild_config(ctx=ctx, attribute='prefix', value=prefix)
+        await self.bot.set_guild_config(guild=ctx.guild, attribute='prefix', value=prefix)
         await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
     @config_prefix.command(name='delete', aliases=['remove'])
@@ -178,7 +145,7 @@ class Config(commands.Cog):
         if prefix not in ctx.guild_config.prefixes:
             raise exceptions.ArgumentError(f'This server does not have the `{prefix}` prefix.')
 
-        await self.set_guild_config(ctx=ctx, attribute='prefix', value=prefix, operation='remove')
+        await self.bot.set_guild_config(guild=ctx.guild, attribute='prefix', value=prefix, operation='remove')
         await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
 
     @config_prefix.command(name='clear', aliases=['revert', 'default'])
@@ -193,7 +160,7 @@ class Config(commands.Cog):
         if not ctx.guild_config.prefixes:
             raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
 
-        await self.set_guild_config(ctx=ctx, attribute='prefix', value=[], operation='clear')
+        await self.bot.set_guild_config(guild=ctx.guild, attribute='prefix', value=[], operation='clear')
         await ctx.send(f'Cleared this servers prefixes.')
 
 

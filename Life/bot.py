@@ -58,11 +58,46 @@ class Life(commands.AutoShardedBot):
         self.redis = None
         self.db = None
 
-    def get_user_config(self, user: typing.Union[discord.User, discord.Member]) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
+    def get_user_config(self, *, user: typing.Union[discord.User, discord.Member]) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
         return self.user_configs.get(user.id, self.default_user_config)
 
-    def get_guild_config(self, guild: discord.Guild) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    async def set_user_config(self, *, user: typing.Union[discord.User, discord.Member], attribute: str, value: typing.Any, operation: str = 'add') -> None:
+
+        user_config = self.get_user_config(user=user)
+        if isinstance(user_config, objects.DefaultUserConfig):
+            query = 'INSERT INTO user_configs (user_id) values ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *'
+            data = await self.db.fetchrow(query, user.id)
+            self.user_configs[user.id] = objects.UserConfig(data=dict(data))
+
+        elif attribute == 'colour':
+            query = 'UPDATE user_configs SET colour = $1 WHERE user_id = $2 RETURNING *'
+            data = await self.db.fetchrow(query, value, user.id)
+            user_config.colour = discord.Colour(int(data['colour'], 16))
+
+    def get_guild_config(self, *, guild: discord.Guild) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.guild_configs.get(guild.id, self.default_guild_config)
+
+    async def set_guild_config(self, *, guild: discord.Guild, attribute: str, value: typing.Any, operation: str = 'add') -> None:
+
+        guild_config = self.get_guild_config(guild=guild)
+        if isinstance(guild_config, objects.DefaultGuildConfig):
+            query = 'INSERT INTO guild_configs (guild_id) values ($1) ON CONFLICT (guild_id) DO UPDATE SET guild_id = excluded.guild_id RETURNING *'
+            data = await self.db.fetchrow(query, guild.id)
+            self.guild_configs[guild.id] = objects.GuildConfig(data=dict(data))
+
+        if attribute == 'prefix':
+            query = 'UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
+            if operation == 'remove':
+                query = 'UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
+            if operation == 'clear':
+                query = 'UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes'
+            data = await self.db.fetchrow(query, value, guild.id)
+            guild_config.prefixes = data['prefixes']
+
+        elif attribute == 'colour':
+            query = 'UPDATE guild_configs SET colour = $1 WHERE guild_id = $2 RETURNING *'
+            data = await self.db.fetchrow(query, value, guild.id)
+            guild_config.colour = discord.Colour(int(data['colour'], 16))
 
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
