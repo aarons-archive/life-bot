@@ -29,6 +29,7 @@ mv config_example.py config.py
 * [aredis](https://github.com/NoneGG/aredis)
 * [asyncpg](https://github.com/MagicStack/asyncpg)
 * [discord.py](https://github.com/Rapptz/discord.py)
+* [discord-ext-alternatives](https://github.com/Ext-Creators/discord-ext-alternatives)
 * [humanize](https://github.com/jmoiron/humanize)
 * [jishaku](https://github.com/Gorialis/jishaku)
 * [psutil](https://github.com/giampaolo/psutil)
