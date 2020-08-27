@@ -17,7 +17,7 @@ import os
 from discord.ext import commands
 from tornado import httpserver, web
 
-from cogs.dashboard.utilities import http, utils
+from cogs.dashboard.utilities import http
 
 
 class Dashboard(commands.Cog):
@@ -29,7 +29,7 @@ class Dashboard(commands.Cog):
         self.application = web.Application([endpoint for endpoints in self.endpoints for endpoint in endpoints],
                                            static_path=os.path.join(os.path.dirname(__file__), 'static/'),
                                            template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
-                                           default_host='0.0.0.0', ui_methods=utils, cookie_secret=self.bot.config.cookie_secret)
+                                           default_host='0.0.0.0', cookie_secret=self.bot.config.cookie_secret)
 
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)
         self.bot.http_client = http.HTTPClient(bot=self.bot)
