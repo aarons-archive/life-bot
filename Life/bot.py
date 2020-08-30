@@ -16,6 +16,7 @@ import time
 import typing
 
 import aiohttp
+import collections
 import aredis
 import asyncpg
 import discord
@@ -39,8 +40,13 @@ class Life(commands.AutoShardedBot):
         self.start_time = time.time()
 
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.socket_stats = collections.Counter()
         self.config = config.Config(bot=self)
         self.utils = utils.Utils(bot=self)
+
+        self.mentions_dms_webhook = discord.Webhook.from_url(self.config.mentions_dms_url, adapter=discord.AsyncWebhookAdapter(self.session))
+        self.logging_webhook = discord.Webhook.from_url(self.config.logging_url, adapter=discord.AsyncWebhookAdapter(self.session))
+        self.errors_webhook = discord.Webhook.from_url(self.config.errors_url, adapter=discord.AsyncWebhookAdapter(self.session))
 
         self.commands_not_allowed_dms = {}
 
