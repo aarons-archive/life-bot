@@ -18,6 +18,7 @@ import logging.handlers
 import os
 import sys
 
+import prettify_exceptions
 import setproctitle
 
 from bot import Life
@@ -52,9 +53,10 @@ if __name__ == '__main__':
 
     os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
     os.environ['JISHAKU_HIDE'] = 'True'
-
     os.environ['PY_PRETTIFY_EXC'] = 'True'
+
     setproctitle.setproctitle('Life')
+    prettify_exceptions.hook()
 
     try:
         import uvloop
