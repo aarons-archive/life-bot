@@ -54,7 +54,8 @@ class Prometheus(commands.Cog):
             12: 'GUILD_SYNC',
         }
 
-        self.stats.start()
+        self.stats_five_minutes.start()
+        self.stats_thirty_seconds.start()
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict) -> None:
@@ -87,7 +88,7 @@ class Prometheus(commands.Cog):
             self.guild_stats.labels(guild_id=str(guild.id), count='online').set(statuses[discord.Status.online])
             self.guild_stats.labels(guild_id=str(guild.id), count='offline').set(statuses[discord.Status.offline])
             self.guild_stats.labels(guild_id=str(guild.id), count='idle').set(statuses[discord.Status.idle])
-            self.guild_stats.labels(guild_id=str(guild.id), count='dnd').set(statuses[discord.Status.do_not_disturb])
+            self.guild_stats.labels(guild_id=str(guild.id), count='dnd').set(statuses[discord.Status.dnd])
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:
@@ -144,7 +145,7 @@ class Prometheus(commands.Cog):
         self.counters.labels(stat='commands_errored').inc()
 
     @tasks.loop(seconds=30)
-    async def stats(self) -> None:
+    async def stats_thirty_seconds(self) -> None:
 
         await self.bot.wait_until_ready()
 
@@ -158,7 +159,6 @@ class Prometheus(commands.Cog):
             self.gauges.labels(count='virtual_memory').set(memory_info.vms)
             self.gauges.labels(count='unique_memory').set(memory_info.uss)
 
-
         payload = {
             "metrics": {event: count for event, count in self.bot.socket_stats.items()},
             "usercount": len(self.bot.users),
@@ -168,6 +168,17 @@ class Prometheus(commands.Cog):
         }
         async with self.bot.session.post('https://idevision.net/api/bots/updates', json=payload, headers={"Authorization": self.bot.config.idevision_key}):
             pass
+
+    @tasks.loop(minutes=5)
+    async def stats_five_minutes(self) -> None:
+
+        for guild in self.bot.guilds:
+            statuses = collections.Counter([member.status for member in guild.members])
+
+            self.guild_stats.labels(guild_id=str(guild.id), count='online').set(statuses[discord.Status.online])
+            self.guild_stats.labels(guild_id=str(guild.id), count='offline').set(statuses[discord.Status.offline])
+            self.guild_stats.labels(guild_id=str(guild.id), count='idle').set(statuses[discord.Status.idle])
+            self.guild_stats.labels(guild_id=str(guild.id), count='dnd').set(statuses[discord.Status.dnd])
 
 
 def setup(bot):
