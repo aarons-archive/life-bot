@@ -60,6 +60,8 @@ class Life(commands.AutoShardedBot):
 
         self.time_format = '%A %d %B %Y at %H:%M'
 
+        self.http_client = None
+        self.http_server = None
         self.lavalink = None
         self.redis = None
         self.db = None
@@ -75,7 +77,7 @@ class Life(commands.AutoShardedBot):
             data = await self.db.fetchrow(query, user.id)
             self.user_configs[user.id] = objects.UserConfig(data=dict(data))
 
-        elif attribute == 'colour':
+        if attribute == 'colour':
             query = 'UPDATE user_configs SET colour = $1 WHERE user_id = $2 RETURNING *'
             data = await self.db.fetchrow(query, value, user.id)
             user_config.colour = discord.Colour(int(data['colour'], 16))
