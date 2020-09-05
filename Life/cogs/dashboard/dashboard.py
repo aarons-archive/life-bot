@@ -17,19 +17,23 @@ import os
 from discord.ext import commands
 from tornado import httpserver, web
 
+from bot import Life
+from cogs.dashboard.endpoints import dashboard, main, metrics, websocket
 from cogs.dashboard.utilities import http
 
 
 class Dashboard(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot: Life):
         self.bot = bot
 
-        self.endpoints = [endpoint.setup(bot=self.bot) for endpoint in self.bot.config.endpoints]
-        self.application = web.Application([endpoint for endpoints in self.endpoints for endpoint in endpoints],
-                                           static_path=os.path.join(os.path.dirname(__file__), 'static/'),
-                                           template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
-                                           default_host='0.0.0.0', cookie_secret=self.bot.config.cookie_secret)
+        self.endpoints = [main, dashboard, metrics, websocket]
+
+        self.application = web.Application(
+            [endpoint for endpoints in [endpoint.setup(bot=self.bot) for endpoint in self.endpoints] for endpoint in endpoints],
+            static_path=os.path.join(os.path.dirname(__file__), 'static/'), template_path=os.path.join(os.path.dirname(__file__), 'templates/'),
+            cookie_secret=self.bot.config.cookie_secret, default_host='0.0.0.0', debug=True
+        )
 
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)
         self.bot.http_client = http.HTTPClient(bot=self.bot)

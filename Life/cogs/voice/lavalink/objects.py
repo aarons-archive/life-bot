@@ -10,7 +10,7 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import json
 import typing
 
 import spotify
@@ -78,18 +78,6 @@ class Track:
         return f'<LavaLinkTrack title=\'{self.title}\' uri=\'<{self.uri}>\' source=\'{self.source}\' length={self.length}>'
 
     @property
-    def source(self) -> str:
-
-        if not self.uri:
-            return 'Unknown'
-
-        for source in ['youtube', 'vimeo', 'bandcamp', 'soundcloud', 'spotify']:
-            if source in self.uri:
-                return source.title()
-
-        return 'HTTP'
-
-    @property
     def thumbnail(self) -> str:
 
         thumbnail = None
@@ -103,6 +91,28 @@ class Track:
             thumbnail = f'https://dummyimage.com/1280x720/000/fff.png&text=+'
 
         return thumbnail
+
+    @property
+    def source(self) -> str:
+
+        if not self.uri:
+            return 'Unknown'
+
+        for source in ['youtube', 'vimeo', 'bandcamp', 'soundcloud', 'spotify']:
+            if source in self.uri:
+                return source.title()
+
+        return 'HTTP'
+
+    @property
+    def json(self) -> str:
+
+        data = self.info.copy()
+        data['track_id'] = self.track_id
+        data['thumbnail'] = self.thumbnail
+        data['requester_id'] = self.requester.id
+        data['requester_name'] = self.requester.name
+        return json.dumps(data)
 
 
 class Playlist:
@@ -213,6 +223,38 @@ class TrackStuckEvent:
 
     def __repr__(self) -> str:
         return f'<LavaLinkTrackStuckEvent player={self.player!r} track={self.track} threshold_ms={self.threshold_ms}'
+
+
+class PlayerConnectedEvent:
+
+    __slots__ = ('data', 'player', 'track', 'threshold_ms')
+
+    def __init__(self, *, data: dict) -> None:
+
+        self.data = data
+        self.player = data.get('player')
+
+    def __str__(self) -> str:
+        return 'lavalink_player_connected'
+
+    def __repr__(self) -> str:
+        return f'<LavaLinkPlayerConnectedEvent player={self.player!r}'
+
+
+class PlayerDisconnectedEvent:
+
+    __slots__ = ('data', 'player')
+
+    def __init__(self, *, data: dict) -> None:
+
+        self.data = data
+        self.player = data.get('player')
+
+    def __str__(self) -> str:
+        return 'lavalink_player_disconnected'
+
+    def __repr__(self) -> str:
+        return f'<LavaLinkPlayerDisconnectedEvent player={self.player!r}'
 
 
 class WebSocketClosedEvent:

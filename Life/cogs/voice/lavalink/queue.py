@@ -10,7 +10,7 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import json
 import random
 import typing
 
@@ -49,6 +49,16 @@ class Queue:
     @property
     def is_looping(self) -> bool:
         return True if self.looping is True else False
+
+    @property
+    def json(self) -> str:
+
+        data = {
+            'queue': [item.json for item in self.queue],
+            'queue_history': [item.json for item in self.queue_history],
+            'is_looping': self.is_looping,
+        }
+        return json.dumps(data)
 
     @property
     def history(self) -> typing.Generator:
