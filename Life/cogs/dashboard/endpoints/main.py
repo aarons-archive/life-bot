@@ -12,11 +12,13 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import binascii
+import json
 import os
 from abc import ABC
 
 from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
+from utilities import exceptions
 
 
 # noinspection PyAsyncCall
@@ -26,6 +28,7 @@ class Index(BaseHTTPHandler, ABC):
         self.render('index.html', bot=self.bot, user=await self.get_user())
 
 
+# noinspection PyAsyncCall
 class Login(BaseHTTPHandler, ABC):
 
     async def get(self):
@@ -54,24 +57,25 @@ class Login(BaseHTTPHandler, ABC):
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         data = {
             'client_secret': self.bot.config.client_secret,
-            'redirect_uri': self.bot.config.redirect_uri,
             'client_id': self.bot.config.client_id,
+            'redirect_uri': self.bot.config.redirect_uri,
+            'code': code,
             'grant_type': 'authorization_code',
             'scope': 'identify guilds',
-            'code': code
         }
 
         async with self.bot.session.post(url, data=data, headers=headers) as response:
+            if 200 < response.status > 206:
+                raise exceptions.HTTPError(json.dumps(await response.json()))
+
             data = await response.json()
 
-        error = data.get('error')
-        if error is not None:
-            self.set_status(400)
-            return await self.finish({'error': error})
+        if data.get('error'):
+            raise exceptions.HTTPError(json.dumps(data))
 
         token_response = objects.TokenResponse(data=data)
-
         await self.bot.redis.hset('tokens', identifier, token_response.json)
+
         return self.redirect(f'/profile')
 
 
@@ -79,7 +83,13 @@ class Login(BaseHTTPHandler, ABC):
 class Profile(BaseHTTPHandler, ABC):
 
     async def get(self):
-        self.render('profile.html', bot=self.bot, user=await self.get_user(), guilds=await self.fetch_guilds())
+
+        user = await self.get_user()
+        if not user:
+            self.set_status(401)
+            return await self.finish({'error': 'you need to login to view this page.'})
+
+        self.render('profile.html', bot=self.bot, user=user, guilds=await self.fetch_guilds())
 
 
 def setup(**kwargs):

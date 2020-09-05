@@ -14,29 +14,38 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import json
 import time
+import typing
 
-from discord import Permissions
+import discord
 
 
 class TokenResponse:
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict) -> None:
         self.data = data
 
-        self.refresh_token = self.data.get('refresh_token')
-        self.access_token = self.data.get('access_token')
-        self.token_type = self.data.get('token_type')
-        self.expires_in = self.data.get('expires_in')
-        self.scope = self.data.get('scope')
-
-        self.fetch_time = self.data.get('fetch_time') or time.time()
+        self.access_token: str  = data.get('access_token')
+        self.token_type: str    = data.get('token_type')
+        self.expires_in: int    = data.get('expires_in')
+        self.refresh_token: str = data.get('refresh_token')
+        self.scope: str         = data.get('scope')
 
     @property
-    def has_expired(self):
+    def fetch_time(self) -> float:
+
+        fetch_time = self.data.get('fetch_time')
+        if fetch_time:
+            return fetch_time
+
+        return time.time()
+
+    @property
+    def has_expired(self) -> bool:
         return (time.time() - self.fetch_time) > self.expires_in
     
     @property
-    def json(self):
+    def json(self) -> str:
+
         data = self.data.copy()
         data['fetch_time'] = self.fetch_time
         return json.dumps(data)
@@ -44,40 +53,49 @@ class TokenResponse:
 
 class User:
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict) -> None:
         self.data = data
 
-        self.id = data.get('id')
-        self.username = data.get('username')
-        self.discriminator = data.get('discriminator')
-        self.avatar_hash = data.get('avatar')
-        self.bot = data.get('bot')
-        self.system = data.get('system')
-        self.mfa_enabled = data.get('mfa_enabled')
-        self.locale = data.get('locale')
-        self.flags = data.get('flags')
-        self.premium_type = data.get('premium_type')
-        self.public_flags = data.get('public_flags')
-
-        self.fetch_time = self.data.get('fetch_time') or time.time()
+        self.id: int                           = data.get('id')
+        self.username: str                     = data.get('username')
+        self.discriminator: str                = data.get('discriminator')
+        self.avatar_hash: typing.Optional[str] = data.get('avatar')
+        self.bot: bool                         = data.get('bot')
+        self.system: bool                      = data.get('system')
+        self.mfa_enabled: bool                 = data.get('mfa_enabled')
+        self.locale: str                       = data.get('locale')
+        self.flags: int                        = data.get('flags')
+        self.premium_type: int                 = data.get('premium_type')
+        self.public_flags: int                 = data.get('public_flags')
 
     @property
-    def avatar(self):
+    def avatar(self) -> typing.Optional[str]:
+
         if not self.avatar_hash:
             return None
-        avatar_format = '.gif' if self.avatar_hash.startswith('a_') else '.png'
-        return f'https://cdn.discordapp.com/avatars/{self.id}/{self.avatar_hash}{avatar_format}?size=512'
+
+        return f'https://cdn.discordapp.com/avatars/{self.id}/{self.avatar_hash}{".gif" if self.avatar_hash.startswith("a_") else ".png"}?size=512'
 
     @property
-    def name(self):
+    def name(self) -> str:
         return f'{self.username}#{self.discriminator}'
 
     @property
-    def has_expired(self):
+    def fetch_time(self) -> float:
+
+        fetch_time = self.data.get('fetch_time')
+        if fetch_time:
+            return fetch_time
+
+        return time.time()
+
+    @property
+    def has_expired(self) -> bool:
         return (time.time() - self.fetch_time) > 20
 
     @property
-    def json(self):
+    def json(self) -> str:
+
         data = self.data.copy()
         data['fetch_time'] = self.fetch_time
         return json.dumps(data)
@@ -85,31 +103,40 @@ class User:
 
 class Guild:
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict) -> None:
         self.data = data
 
-        self.id = data.get('id')
-        self.name = data.get('name')
-        self.icon_hash = data.get('icon')
-        self.owner = data.get('owner')
-        self.permissions = Permissions(data.get('permissions'))
-        self.features = data.get('features')
-
-        self.fetch_time = self.data.get('fetch_time') or time.time()
+        self.id: int                          = data.get('id')
+        self.name: str                        = data.get('name')
+        self.icon_hash: typing.Optional[str]  = data.get('icon')
+        self.owner: bool                      = data.get('owner')
+        self.permissions: discord.Permissions = discord.Permissions(int(data.get('permissions_new')))
+        self.features: typing.List[str]       = data.get('features')
 
     @property
-    def icon(self):
+    def icon(self) -> typing.Optional[str]:
+
         if not self.icon_hash:
             return None
-        icon_format = '.gif' if self.icon_hash.startswith('a_') else '.png'
-        return f'https://cdn.discordapp.com/icons/{self.id}/{self.icon_hash}{icon_format}?size=512'
+
+        return f'https://cdn.discordapp.com/icons/{self.id}/{self.icon_hash}{".gif" if self.icon_hash.startswith("a_") else ".png"}?size=512'
 
     @property
-    def has_expired(self):
-        return (time.time() - self.fetch_time) > 10
+    def fetch_time(self) -> float:
+
+        fetch_time = self.data.get('fetch_time')
+        if fetch_time:
+            return fetch_time
+
+        return time.time()
 
     @property
-    def json(self):
+    def has_expired(self) -> bool:
+        return (time.time() - self.fetch_time) > 20
+
+    @property
+    def json(self) -> str:
+
         data = self.data.copy()
         data['fetch_time'] = self.fetch_time
         return json.dumps(data)

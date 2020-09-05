@@ -15,8 +15,6 @@ from abc import ABC
 
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
 
-from cogs.voice.lavalink.player import Player
-
 
 # noinspection PyAsyncCall
 class Dashboard(BaseHTTPHandler, ABC):
@@ -30,14 +28,15 @@ class Dashboard(BaseHTTPHandler, ABC):
 
         guild = self.bot.get_guild(int(guild_id))
         if not guild:
-            return self.set_status(403)
+            self.set_status(400)
+            return await self.finish({'error': 'i am not in that guild.'})
 
         member = guild.get_member(int(user.id))
         if not member:
-            return self.set_status(403)
+            self.set_status(403)
+            return await self.finish({'error': 'you are not in that guild.'})
 
-        player = self.bot.diorite.get_player(guild, cls=Player)
-        self.render('dashboard.html', bot=self.bot, user=user, guild=guild, player=player)
+        self.render('dashboard.html', bot=self.bot, user=user, guild=guild, player=guild.voice_client)
 
 
 def setup(**kwargs):

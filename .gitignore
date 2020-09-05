@@ -9,3 +9,4 @@ venv/
 Life/config/config.py
 package-lock.json
 .stylelintrc.json
+package.json

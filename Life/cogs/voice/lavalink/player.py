@@ -133,12 +133,16 @@ class Player(VoiceProtocol, ABC):
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True)
         self.task = self.bot.loop.create_task(self.loop())
 
+        await self.dispatch_event(data={'type': 'PlayerConnectedEvent', 'player': self})
+
     async def disconnect(self, *, force: bool = True) -> None:
 
         await self.guild.change_voice_state(channel=None)
         self.cleanup()
 
         self.channel = None
+
+        await self.dispatch_event(data={'type': 'PlayerDisconnectedEvent', 'player': self})
 
     async def stop(self) -> None:
 
@@ -192,7 +196,6 @@ class Player(VoiceProtocol, ABC):
 
         await self.node.send(op='pause', guildId=str(self.guild.id), pause=pause)
         self.paused = pause
-
 
     async def send(self, *, message: str = None, embed: discord.Embed = None) -> None:
 
