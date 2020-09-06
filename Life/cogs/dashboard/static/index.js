@@ -114,6 +114,7 @@ websocket.onmessage = function(event) {
             for (let index = 0; index < 8; index++) {
                 reset_queue(index)
             }
+        }
 
         if (event_data.event === 'TRACK_START') {
             set_current_track(JSON.parse(event_data.data.current))
