@@ -138,7 +138,7 @@ class Node:
                         message['track'] = track
 
                     message['player'] = player
-                    await player.dispatch_event(data=message)
+                    player.dispatch_event(data=message)
 
                 elif op == 'playerUpdate':
 
@@ -223,7 +223,7 @@ class Node:
                 spotify_tracks = [result]
             elif spotify_type == 'album':
                 result = await self.client.bot.spotify.get_album(spotify_id)
-                spotify_tracks = await result.get_all_tracks()
+                spotify_tracks = await result.get_tracks(limit=100)
             elif spotify_type == 'playlist':
                 result = spotify.Playlist(self.client.bot.spotify, await self.client.bot.spotify_http.get_playlist(spotify_id))
                 spotify_tracks = await result.get_all_tracks()
