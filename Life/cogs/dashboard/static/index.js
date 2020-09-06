@@ -110,8 +110,10 @@ websocket.onmessage = function(event) {
 
         if (event_data.event === 'DISCONNECTED') {
             reset_current_track()
-            reset_queue()
-        }
+            reset_position()
+            for (let index = 0; index < 8; index++) {
+                reset_queue(index)
+            }
 
         if (event_data.event === 'TRACK_START') {
             set_current_track(JSON.parse(event_data.data.current))
@@ -130,7 +132,6 @@ websocket.onmessage = function(event) {
         }
 
         if (event_data.event === 'QUEUE_UPDATE') {
-
             const queue_data = JSON.parse(event_data.data.queue)
             if (queue_data.queue !== null) {
                 for (let index = 0; index < 8; index++) {
@@ -145,7 +146,6 @@ websocket.onmessage = function(event) {
                     reset_queue(index)
                 }
             }
-
         }
 
     }
