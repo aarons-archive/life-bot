@@ -13,14 +13,13 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import asyncio
 import json
-import typing
 from abc import ABC
 
 from tornado.web import decode_signed_value
 
 from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseWebsocketHandler
-from cogs.voice.lavalink.objects import PlayerConnectedEvent, PlayerDisconnectedEvent, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent
+from cogs.voice.lavalink.objects import PlayerConnectedEvent, PlayerDisconnectedEvent, TrackEndEvent, TrackStartEvent, PlayerQueueUpdate
 from utilities import exceptions
 
 
@@ -102,6 +101,7 @@ class Websocket(BaseWebsocketHandler, ABC):
             self.bot.add_listener(self.handle_event, 'on_lavalink_track_stuck')
             self.bot.add_listener(self.handle_event, 'on_lavalink_player_connected')
             self.bot.add_listener(self.handle_event, 'on_lavalink_player_disconnected')
+            self.bot.add_listener(self.handle_event, 'on_lavalink_player_queue_update')
 
         elif self.authenticated is False:
             return self.close(code=4006, reason='not authorized.')
@@ -119,6 +119,8 @@ class Websocket(BaseWebsocketHandler, ABC):
             return await self.send_track_start()
         elif isinstance(event, TrackEndEvent):
             return await self.send_track_end()
+        elif isinstance(event, PlayerQueueUpdate):
+            return await self.send_queue_update()
 
     async def send_ready(self) -> None:
 
@@ -176,6 +178,13 @@ class Websocket(BaseWebsocketHandler, ABC):
 
     async def send_track_end(self) -> None:
         await self.write_message({'op': 0, 'event': 'TRACK_END'})
+
+    async def send_queue_update(self) -> None:
+
+        data = {
+            'queue': self.guild.voice_client.queue.json
+        }
+        await self.write_message({'op': 0, 'event': 'QUEUE_UPDATE', 'data': data})
 
     async def send_position(self) -> None:
 

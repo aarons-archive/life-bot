@@ -79,15 +79,6 @@ class Player(VoiceProtocol, ABC):
         if {'sessionId', 'event'} == self.voice_state.keys():
             await self.node.send(op='voiceUpdate', guildId=str(self.guild.id), **self.voice_state)
 
-    async def dispatch_event(self, *, data: dict) -> None:
-
-        event = getattr(objects, data.pop('type'), None)
-        if not event:
-            return
-
-        event = event(data=data)
-        self.bot.dispatch(str(event), event)
-
     async def update_state(self, *, data: dict) -> None:
 
         player_state = data.get('state')
@@ -95,6 +86,15 @@ class Player(VoiceProtocol, ABC):
         self.last_position = player_state.get('position', 0)
         self.last_time = player_state.get('time', 0)
         self.last_update = time.time() * 1000
+
+    def dispatch_event(self, *, data: dict) -> None:
+
+        event = getattr(objects, data.pop('type'), None)
+        if not event:
+            return
+
+        event = event(data=data)
+        self.bot.dispatch(str(event), event)
 
     @property
     def is_connected(self) -> bool:
@@ -133,7 +133,7 @@ class Player(VoiceProtocol, ABC):
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True)
         self.task = self.bot.loop.create_task(self.loop())
 
-        await self.dispatch_event(data={'type': 'PlayerConnectedEvent', 'player': self})
+        self.dispatch_event(data={'type': 'PlayerConnectedEvent', 'player': self})
 
     async def disconnect(self, *, force: bool = True) -> None:
 
@@ -142,7 +142,7 @@ class Player(VoiceProtocol, ABC):
 
         self.channel = None
 
-        await self.dispatch_event(data={'type': 'PlayerDisconnectedEvent', 'player': self})
+        self.dispatch_event(data={'type': 'PlayerDisconnectedEvent', 'player': self})
 
     async def stop(self) -> None:
 

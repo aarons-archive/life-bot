@@ -15,6 +15,7 @@ import random
 import typing
 
 from cogs.voice.lavalink import objects
+from utilities import exceptions
 
 
 class Queue:
@@ -76,6 +77,7 @@ class Queue:
         if history is True:
             self.put_history(tracks=item, position=position)
 
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
         return item
 
     def get_history(self, *, position: int = 0) -> typing.Optional[objects.Track]:
@@ -105,6 +107,7 @@ class Queue:
 
         self.player.wait_queue_add.set()
         self.player.wait_queue_add.clear()
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
 
     def put_history(self, *, tracks: typing.Union[objects.Track, typing.List[objects.Track]], position: int = None) -> None:
 
@@ -128,15 +131,25 @@ class Queue:
             self.queue.sort(key=lambda track: track.author, reverse=reverse)
         elif method == 'length':
             self.queue.sort(key=lambda track: track.length, reverse=reverse)
+        else:
+            raise exceptions.VoiceError('That was not a valid queue sort operation. Please choose either `title`, `length` or `author`')
+
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
 
     def shuffle(self) -> None:
+
         random.shuffle(self.queue)
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
 
     def reverse(self) -> None:
+
         self.queue.reverse()
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
 
     def clear(self) -> None:
+
         self.queue.clear()
+        self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})
 
     def clear_history(self) -> None:
         self.queue_history.clear()

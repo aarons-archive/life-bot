@@ -86,17 +86,26 @@ websocket.onmessage = function(event) {
         if (event_data.event === 'CONNECTED' || event_data.event === "READY") {
 
             const current_data = JSON.parse(event_data.data.current)
-            if (current_data !== null) { set_current_track(current_data) }
-            else { reset_current_track() }
+            if (current_data !== null) {
+                set_current_track(current_data)
+            } else {
+                reset_current_track()
+            }
 
             const queue_data = JSON.parse(event_data.data.queue)
             if (queue_data.queue !== null) {
-                for (let index = 0; index < queue_data.queue.length; index++) {
-                    set_queue(index, JSON.parse(queue_data.queue[index]))
-                    if (index === 8) { break }
+                for (let index = 0; index < 8; index++) {
+                    if (queue_data.queue[index] === undefined) {
+                        reset_queue(index)
+                    } else {
+                        set_queue(index, JSON.parse(queue_data.queue[index]))
+                    }
+                }
+            } else {
+                for (let index = 0; index < 8; index++) {
+                    reset_queue(index)
                 }
             }
-            else { reset_queue() }
         }
 
         if (event_data.event === 'DISCONNECTED') {
@@ -113,8 +122,30 @@ websocket.onmessage = function(event) {
         }
 
         if (event_data.event === 'POSITION') {
-            if (event_data.data.position !== 0) { set_position(event_data.data) }
-            else { reset_position() }
+            if (event_data.data.position !== 0) {
+                set_position(event_data.data)
+            } else {
+                reset_position()
+            }
+        }
+
+        if (event_data.event === 'QUEUE_UPDATE') {
+
+            const queue_data = JSON.parse(event_data.data.queue)
+            if (queue_data.queue !== null) {
+                for (let index = 0; index < 8; index++) {
+                    if (queue_data.queue[index] === undefined) {
+                        reset_queue(index)
+                    } else {
+                        set_queue(index, JSON.parse(queue_data.queue[index]))
+                    }
+                }
+            } else {
+                for (let index = 0; index < 8; index++) {
+                    reset_queue(index)
+                }
+            }
+
         }
 
     }

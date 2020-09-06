@@ -257,6 +257,22 @@ class PlayerDisconnectedEvent:
         return f'<LavaLinkPlayerDisconnectedEvent player={self.player!r}'
 
 
+class PlayerQueueUpdate:
+
+    __slots__ = ('data', 'player')
+
+    def __init__(self, *, data: dict) -> None:
+
+        self.data = data
+        self.player = data.get('player')
+
+    def __str__(self) -> str:
+        return 'lavalink_player_queue_update'
+
+    def __repr__(self) -> str:
+        return f'<LavaLinkPlayerQueueUpdateEvent player={self.player!r}'
+
+
 class WebSocketClosedEvent:
 
     __slots__ = ('data', 'player', 'track', 'code', 'reason', 'by_remote')
