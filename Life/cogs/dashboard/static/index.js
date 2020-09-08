@@ -1,3 +1,5 @@
+'use strict';
+
 function getCookie(cookie) {
     const name = cookie + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
@@ -103,7 +105,7 @@ websocket.onmessage = function(event) {
                     }
                 }
             } else {
-                for (let index = 0; index < 8; index++) {
+                for (let index = 0; index < 4; index++) {
                     reset_queue(index)
                 }
             }
@@ -112,7 +114,7 @@ websocket.onmessage = function(event) {
         if (data.event === 'DISCONNECTED') {
             reset_current_track()
             reset_position()
-            for (let index = 0; index < 8; index++) {
+            for (let index = 0; index < 4; index++) {
                 reset_queue(index)
             }
         }
@@ -131,7 +133,7 @@ websocket.onmessage = function(event) {
         if (data.event === 'QUEUE_UPDATE') {
             const queue = JSON.parse(event_data.queue)
             if (queue.queue !== null) {
-                for (let index = 0; index < 8; index++) {
+                for (let index = 0; index < 4; index++) {
                     if (queue.queue[index] !== undefined) {
                         set_queue(index, JSON.parse(queue.queue[index]))
                     } else {
@@ -139,7 +141,7 @@ websocket.onmessage = function(event) {
                     }
                 }
             } else {
-                for (let index = 0; index < 8; index++) {
+                for (let index = 0; index < 4; index++) {
                     reset_queue(index)
                 }
             }
