@@ -97,7 +97,7 @@ websocket.onmessage = function(event) {
 
             const queue = JSON.parse(event_data.queue)
             if (queue.queue !== null) {
-                for (let index = 0; index < 8; index++) {
+                for (let index = 0; index < 4; index++) {
                     if (queue.queue[index] !== undefined) {
                         set_queue(index, JSON.parse(queue.queue[index]))
                     } else {
