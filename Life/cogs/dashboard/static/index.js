@@ -24,17 +24,11 @@ function getWebsocketUrl() {
 
 function set_current_track(track_data) {
     document.getElementById('CurrentThumbnail').src = track_data.thumbnail
-    document.getElementById('CurrentTitle').href = track_data.uri
     document.getElementById('CurrentTitle').innerHTML = track_data.title
+    document.getElementById('CurrentTitle').href = track_data.uri
     document.getElementById('CurrentAuthor').innerHTML = `Author: ${track_data.author}`
     document.getElementById('CurrentLength').innerHTML = `Length: ${parseTime(track_data.length)}`
     document.getElementById('CurrentRequester').innerHTML = `Requester: ${track_data.requester_name}`
-}
-
-function set_position(position_data) {
-    document.getElementById('CurrentPosition').innerHTML = `Position: ${parseTime(position_data.position)}`
-    document.getElementById('CurrentProgress').style.width = `${(100 / (Math.round(position_data.length) / 1000)) * (Math.round(position_data.position) / 1000)}%`
-    document.getElementById('CurrentProgressBar').classList.remove('invisible')
 }
 
 function reset_current_track() {
@@ -46,6 +40,12 @@ function reset_current_track() {
     document.getElementById('CurrentRequester').innerHTML = ''
 }
 
+function set_position(position_data) {
+    document.getElementById('CurrentPosition').innerHTML = `Position: ${parseTime(position_data.position)}`
+    document.getElementById('CurrentProgress').style.width = `${(100 / (Math.round(position_data.length) / 1000)) * (Math.round(position_data.position) / 1000)}%`
+    document.getElementById('CurrentProgressBar').classList.remove('invisible')
+}
+
 function reset_position() {
     document.getElementById('CurrentPosition').innerHTML = ''
     document.getElementById('CurrentProgress').style.width = '0'
@@ -54,8 +54,8 @@ function reset_position() {
 
 function set_queue(position, track_data) {
     document.getElementById(`QueueThumbnail${position}`).src = track_data.thumbnail
-    document.getElementById(`QueueTitle${position}`).href = track_data.uri
     document.getElementById(`QueueTitle${position}`).innerHTML = track_data.title
+    document.getElementById(`QueueTitle${position}`).href = track_data.uri
     document.getElementById(`QueueAuthor${position}`).innerHTML = `Author: ${track_data.author}`
     document.getElementById(`QueueLength${position}`).innerHTML = `Length: ${parseTime(track_data.length)}`
     document.getElementById(`QueueRequester${position}`).innerHTML = `Requester: ${track_data.requester_name}`
@@ -74,31 +74,32 @@ function reset_queue(position) {
 const websocket = new WebSocket(getWebsocketUrl())
 
 websocket.onmessage = function(event) {
-    const event_data = JSON.parse(event.data)
+    const data = JSON.parse(event.data)
 
-    if (event_data.op === 1) {
+    if (data.op === 1) {
         let guild_id = window.location.pathname.replace('/dashboard/', '')
         websocket.send(JSON.stringify({op: 2, data: {guild_id: guild_id, identifier: getCookie('identifier')}}))
     }
 
-    if (event_data.op === 0) {
+    if (data.op === 0) {
+        const event_data = data.data
 
-        if (event_data.event === 'CONNECTED' || event_data.event === "READY") {
+        if (data.event === 'CONNECTED' || data.event === "READY") {
 
-            const current_data = JSON.parse(event_data.data.current)
-            if (current_data !== null) {
-                set_current_track(current_data)
+            const current = JSON.parse(event_data.current)
+            if (current !== null) {
+                set_current_track(current)
             } else {
                 reset_current_track()
             }
 
-            const queue_data = JSON.parse(event_data.data.queue)
-            if (queue_data.queue !== null) {
+            const queue = JSON.parse(event_data.queue)
+            if (queue.queue !== null) {
                 for (let index = 0; index < 8; index++) {
-                    if (queue_data.queue[index] === undefined) {
-                        reset_queue(index)
+                    if (queue.queue[index] !== undefined) {
+                        set_queue(index, JSON.parse(queue.queue[index]))
                     } else {
-                        set_queue(index, JSON.parse(queue_data.queue[index]))
+                        reset_queue(index)
                     }
                 }
             } else {
@@ -108,7 +109,7 @@ websocket.onmessage = function(event) {
             }
         }
 
-        if (event_data.event === 'DISCONNECTED') {
+        if (data.event === 'DISCONNECTED') {
             reset_current_track()
             reset_position()
             for (let index = 0; index < 8; index++) {
@@ -116,30 +117,25 @@ websocket.onmessage = function(event) {
             }
         }
 
-        if (event_data.event === 'TRACK_START') {
-            set_current_track(JSON.parse(event_data.data.current))
-        }
+        if (data.event === 'TRACK_START') { set_current_track(JSON.parse(event_data.current)) }
+        if (data.event === 'TRACK_END') { reset_current_track() }
 
-        if (event_data.event === 'TRACK_END') {
-            reset_current_track()
-        }
-
-        if (event_data.event === 'POSITION') {
-            if (event_data.data.position !== 0) {
-                set_position(event_data.data)
+        if (data.event === 'POSITION') {
+            if (event_data.position !== 0) {
+                set_position(event_data)
             } else {
                 reset_position()
             }
         }
 
-        if (event_data.event === 'QUEUE_UPDATE') {
-            const queue_data = JSON.parse(event_data.data.queue)
-            if (queue_data.queue !== null) {
+        if (data.event === 'QUEUE_UPDATE') {
+            const queue = JSON.parse(event_data.queue)
+            if (queue.queue !== null) {
                 for (let index = 0; index < 8; index++) {
-                    if (queue_data.queue[index] === undefined) {
-                        reset_queue(index)
+                    if (queue.queue[index] !== undefined) {
+                        set_queue(index, JSON.parse(queue.queue[index]))
                     } else {
-                        set_queue(index, JSON.parse(queue_data.queue[index]))
+                        reset_queue(index)
                     }
                 }
             } else {
