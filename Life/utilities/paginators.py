@@ -36,6 +36,7 @@ class BasePaginator:
 
         self.pages = ['\n'.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)]
 
+        self.task_loop = None
         self.message = None
         self.looping = True
         self.page = 0
@@ -49,6 +50,9 @@ class BasePaginator:
         }
 
     def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
+
+        if self.message is None:
+            return False
 
         if payload.message_id != self.message.id:
             return False
@@ -131,7 +135,7 @@ class Paginator(BasePaginator):
     async def paginate(self) -> None:
 
         self.message = await self.ctx.send(f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
-        asyncio.create_task(self.loop())
+        self.task_loop = asyncio.create_task(self.loop())
 
     async def first(self) -> None:
 
@@ -148,6 +152,7 @@ class Paginator(BasePaginator):
 
     async def stop(self) -> None:
 
+        self.task_loop.cancel()
         self.looping = False
         self.message = await self.message.delete()
 
@@ -189,14 +194,15 @@ class EmbedPaginator(BasePaginator):
 
     @property
     def embed_footer(self) -> str:
-        return self.kwargs.get('embed_footer', f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}')
+        additional_footer = f'| {self.kwargs.get("embed_add_footer")}' if self.kwargs.get('embed_add_footer') else ''
+        return self.kwargs.get('embed_footer', f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)} {additional_footer}')
 
     async def paginate(self) -> None:
 
         self.embed.description = f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}'
         self.message = await self.ctx.send(embed=self.embed)
 
-        asyncio.create_task(self.loop())
+        self.task_loop = asyncio.create_task(self.loop())
 
     async def first(self) -> None:
 
@@ -218,6 +224,7 @@ class EmbedPaginator(BasePaginator):
 
     async def stop(self) -> None:
 
+        self.task_loop.cancel()
         self.looping = False
         self.message = await self.message.delete()
 
@@ -253,6 +260,7 @@ class EmbedsPaginator:
         self.bot = kwargs.get('bot', self.ctx.bot)
         self.timeout = kwargs.get('timeout', 300)
 
+        self.task_loop = None
         self.message = None
         self.looping = True
         self.page = 0
@@ -266,6 +274,9 @@ class EmbedsPaginator:
         }
 
     def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
+
+        if self.message is None:
+            return False
 
         if payload.message_id != self.message.id:
             return False
@@ -321,7 +332,7 @@ class EmbedsPaginator:
     async def paginate(self) -> None:
 
         self.message = await self.ctx.send(embed=self.entries[self.page])
-        asyncio.create_task(self.loop())
+        self.task_loop = asyncio.create_task(self.loop())
 
     async def first(self) -> None:
 
@@ -338,6 +349,7 @@ class EmbedsPaginator:
 
     async def stop(self) -> None:
 
+        self.task_loop.cancel()
         self.looping = False
         self.message = await self.message.delete()
 
