@@ -39,6 +39,7 @@ class Life(commands.AutoShardedBot):
         self.log = logging.getLogger('bot')
         self.start_time = time.time()
 
+        self.clean_content = commands.clean_content()
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.socket_stats = collections.Counter()
         self.config = config.Config(bot=self)
@@ -63,6 +64,7 @@ class Life(commands.AutoShardedBot):
         self.http_client = None
         self.http_server = None
         self.lavalink = None
+        self.ksoft = None
         self.redis = None
         self.db = None
 
