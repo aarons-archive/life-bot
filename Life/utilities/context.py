@@ -45,11 +45,17 @@ class Context(commands.Context):
 
         return self.user_config.colour
 
-    async def paginate(self, **kwargs) -> None:
-        await paginators.Paginator(ctx=self, **kwargs).paginate()
-    
-    async def paginate_embed(self, **kwargs) -> None:
-        await paginators.EmbedPaginator(ctx=self, **kwargs).paginate()
+    async def paginate(self, **kwargs) -> paginators.Paginator:
+        paginator = paginators.Paginator(ctx=self, **kwargs)
+        await paginator.paginate()
+        return paginator
 
-    async def paginate_embeds(self, **kwargs) -> None:
-        await paginators.EmbedsPaginator(ctx=self, **kwargs).paginate()
+    async def paginate_embed(self, **kwargs) -> paginators.EmbedPaginator:
+        paginator = paginators.EmbedPaginator(ctx=self, **kwargs)
+        await paginator.paginate()
+        return paginator
+
+    async def paginate_embeds(self, **kwargs) -> paginators.EmbedsPaginator:
+        paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
+        await paginator.paginate()
+        return paginator
