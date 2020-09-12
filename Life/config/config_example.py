@@ -5,14 +5,14 @@ class LifeConfig:
 
     def __init__(self):
 
-        self.token = ''
-        self.prefix = ''
+        self.token = 'NzQ3MDQzMDM2MjUyMzQwMjM1.X0JICw.-kkhfzvSx0KWsX3z3WstRdom1pA'
+        self.prefix = '-'
 
         self.idevision_key = ''
-        self.spotify_app_id = ''
-        self.spotify_secret = ''
+        self.spotify_app_id = '9ec5ff63926240ef90a6266c9a18112f'
+        self.spotify_secret = '3ba8e5bc20c148468d4eb3dfdd3578da'
 
-        self.owner_ids = {}
+        self.owner_ids = {522714407969488896}
 
         self.extensions = [
             'jishaku', 'cogs.dev', 'cogs.todo', 'cogs.tags', 'cogs.images', 'cogs.config', 'cogs.events', 'cogs.information', 'cogs.voice.music',
@@ -28,17 +28,17 @@ class LifeConfig:
         }
 
         self.postgresql = {
-            'host': '',
-            'user': '',
-            'database': '',
-            'password': '',
+            'host': 'ec2-54-247-103-43.eu-west-1.compute.amazonaws.com',
+            'user': 'lqkvopxounxtap',
+            'database': 'dfuf4b4t6q8n38',
+            'password': 'b601ae4959b8adc77f0221e5c2d9dd287cab0a37f4d5cd4ef57db84b1a70887b',
         }
 
         self.redis = {
-            'host': '',
-            'port': 00000,
-            'password': '',
-            'db': 0,
+            'host': 'ec2-54-155-29-250.eu-west-1.compute.amazonaws.com',
+            'port': 14179,
+            'password': 'p6baba6058ea3a90a8efb7a8005e379462c838936f2826f43bc7737e6f5180a9d',
+            'db': h,
         }
 
         self.ip = ''
