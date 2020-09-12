@@ -18,6 +18,7 @@ import humanize
 import spotify
 from discord.ext import commands
 
+import ksoftapi
 from bot import Life
 from cogs.voice.lavalink import client, objects
 from cogs.voice.lavalink.exceptions import *
@@ -32,6 +33,7 @@ class Music(commands.Cog):
         self.bot.lavalink = client.Client(bot=self.bot, session=self.bot.session)
         self.bot.spotify = spotify.Client(client_id=self.bot.config.spotify_app_id, client_secret=self.bot.config.spotify_secret)
         self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_app_id, client_secret=self.bot.config.spotify_secret)
+        self.bot.ksoft = ksoftapi.Client(self.bot.config.ksoft_token)
 
         self.load_task = asyncio.create_task(self.load())
 
@@ -624,6 +626,63 @@ class Music(commands.Cog):
             embed.add_field(name=f'Node: {node.identifier}', value=f'`Players:` {len(node.players)}\n`Active players:` {active_players}')
 
         await ctx.send(embed=embed)
+
+    @commands.command(nane='lyrics', aliases=['lyric'])
+    async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
+
+        if query is None:
+            if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+                raise exceptions.VoiceError('I am not connected to any voice channels.')
+            if not ctx.guild.voice_client.is_playing:
+                raise exceptions.VoiceError(f'There are no tracks playing.')
+            query = f'{ctx.guild.voice_client.current.title} - {ctx.guild.voice_client.current.requester}'
+
+        try:
+            results = await self.bot.ksoft.music.lyrics(query=query, limit=20)
+        except ksoftapi.NoResults:
+            raise exceptions.ArgumentError(f'No lyrics were found for the query `{query}`.')
+        except ksoftapi.APIError:
+            raise exceptions.VoiceError('Lyric API is currently down.')
+
+        paginator = await ctx.paginate_embed(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
+                                             header='Please choose the number of the track you would like lyrics for:\n')
+
+        def check(msg):
+            return msg.author == ctx.author and msg.channel == ctx.channel
+
+        try:
+            response = await self.bot.wait_for('message', check=check, timeout=30.0)
+        except asyncio.TimeoutError:
+            raise exceptions.ArgumentError('You took too long to respond.')
+
+        response = await self.bot.clean_content.convert(ctx, response.content)
+        try:
+            response = int(response) - 1
+        except ValueError:
+            raise exceptions.ArgumentError('That was not a valid number.')
+        if response < 0 or response >= len(results):
+            raise exceptions.ArgumentError('That was not one of the available tracks.')
+
+        await paginator.stop()
+
+        result = results[response]
+
+        entries = []
+        for line in result.lyrics.split('\n'):
+
+            if len(entries) == 0:
+                entries.append(line)
+                continue
+
+            last_entry = entries[len(entries) - 1]
+            if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
+                entries.append(line)
+                continue
+
+            entries[len(entries) - 1] += f'\n{line}'
+
+        await ctx.paginate_embed(entries=entries, header=f'Lyrics for `{result.name}` by `{result.artist}`:\n\n',
+                                 embed_add_footer='Lyrics provided by KSoft.Si API', per_page=1)
 
 
 def setup(bot):
