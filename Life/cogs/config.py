@@ -16,8 +16,8 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from utilities import checks, context, converters, exceptions, objects
 from bot import Life
+from utilities import checks, context, converters, exceptions, objects
 
 
 class Config(commands.Cog):
@@ -47,27 +47,33 @@ class Config(commands.Cog):
 
         print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
 
-    @commands.group(name='config', aliases=['conf'], invoke_without_command=True)
-    async def config(self, ctx: context.Context) -> None:
+    @commands.group(name='settings', invoke_without_command=True)
+    async def settings(self, ctx: context.Context) -> None:
         """
-        Display the current server config.
+        Display the current server settings.
         """
 
-        embed = discord.Embed(colour=ctx.guild_config.colour, title=f'Current configuration:')
+        prefixes = await self.bot.get_prefix(ctx.message)
+        prefixes.pop(1)
+
+        clean_prefixes = [prefixes.pop(0)]
+        clean_prefixes.extend([f'`{prefix}`' for prefix in prefixes])
+
+        embed = discord.Embed(colour=ctx.guild_config.colour, title=f'Current settings:', description=f'`Prefixes:` {", ".join(clean_prefixes)}')
         embed.add_field(name='Embed colour:', value=f'`<---` `{str(ctx.guild_config.colour).upper()}`')
         await ctx.send(embed=embed)
 
     #
 
-    @config.group(name='colour', aliases=['color'], invoke_without_command=True)
-    async def config_colour(self, ctx: context.Context) -> None:
+    @settings.group(name='colour', aliases=['color'], invoke_without_command=True)
+    async def settings_colour(self, ctx: context.Context) -> None:
         """
         Display the embed colour for this server.
         """
 
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'{str(ctx.guild_config.colour).upper()}'))
 
-    @config_colour.command(name='set', aliases=['change'])
+    @settings_colour.command(name='set')
     @checks.has_guild_permissions(manage_guild=True)
     async def config_colour_set(self, ctx: context.Context, *, colour: commands.ColourConverter) -> None:
         """
@@ -82,7 +88,7 @@ class Config(commands.Cog):
         await self.bot.set_guild_config(guild=ctx.guild, attribute='colour', value=f'0x{str(colour).strip("#")}')
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'After: {str(ctx.guild_config.colour).upper()}'))
 
-    @config_colour.command(name='clear', aliases=['revert', 'default', 'delete', 'remove'])
+    @settings_colour.command(name='clear', aliases=['default'])
     @checks.has_guild_permissions(manage_guild=True)
     async def config_colour_clear(self, ctx: context.Context) -> None:
         """
@@ -97,8 +103,8 @@ class Config(commands.Cog):
 
     #
 
-    @config.group(name='prefix', aliases=['pre'], invoke_without_command=True)
-    async def config_prefix(self, ctx: context.Context) -> None:
+    @settings.group(name='prefix', invoke_without_command=True)
+    async def settings_prefix(self, ctx: context.Context) -> None:
         """
         Display a list of available prefixes.
         """
@@ -109,7 +115,7 @@ class Config(commands.Cog):
         entries.extend(f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:]))
         await ctx.paginate_embed(entries=entries, per_page=10, title=f'List of usable prefixes in {ctx.guild if ctx.guild else ctx.channel}.')
 
-    @config_prefix.command(name='add')
+    @settings_prefix.command(name='add')
     @checks.has_guild_permissions(manage_guild=True)
     async def config_prefix_add(self, ctx: context.Context, prefix: converters.Prefix) -> None:
         """
@@ -129,7 +135,7 @@ class Config(commands.Cog):
         await self.bot.set_guild_config(guild=ctx.guild, attribute='prefix', value=prefix)
         await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
-    @config_prefix.command(name='delete', aliases=['remove'])
+    @settings_prefix.command(name='remove')
     @checks.has_guild_permissions(manage_guild=True)
     async def config_prefix_delete(self, ctx: context.Context, prefix: converters.Prefix) -> None:
         """
@@ -148,7 +154,7 @@ class Config(commands.Cog):
         await self.bot.set_guild_config(guild=ctx.guild, attribute='prefix', value=prefix, operation='remove')
         await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
 
-    @config_prefix.command(name='clear', aliases=['revert', 'default'])
+    @settings_prefix.command(name='clear', aliases=['default'])
     @checks.has_guild_permissions(manage_guild=True)
     async def config_prefix_clear(self, ctx: context.Context) -> None:
         """
