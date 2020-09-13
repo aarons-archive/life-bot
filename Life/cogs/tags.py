@@ -16,12 +16,13 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
+from bot import Life
 from utilities import context, converters, exceptions
 
 
 class Tags(commands.Cog):
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
     @commands.group(name='tag', aliases=['tags'], invoke_without_command=True)
@@ -274,7 +275,7 @@ class Tags(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{tag["name"]}')
         embed.description = f'`Owner:` {owner.mention if owner else "None"} ({tag["owner_id"]})\n`Claimable:` {owner is None}\n`Alias:` {tag["alias"]}'
-        embed.set_footer(text=f'Created on {datetime.strftime(tag["created_at"], self.bot.time_format)}')
+        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(time=tag["created_at"])}')
         await ctx.send(embed=embed)
 
 

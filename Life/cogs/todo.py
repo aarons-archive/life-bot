@@ -16,12 +16,13 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
+from bot import Life
 from utilities import context, exceptions
 
 
 class Todo(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot: Life):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)

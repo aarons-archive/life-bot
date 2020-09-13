@@ -16,15 +16,15 @@ import typing
 
 from discord.ext import commands
 
+from bot import Life
 from utilities import context, converters, exceptions, imaging
 
 
 class Images(commands.Cog):
     
-    def __init__(self, bot):
+    def __init__(self, bot: Life):
         self.bot = bot
 
-        self.bot.member_converter = commands.MemberConverter()
         self.bot.imaging = imaging.Imaging(self.bot)
 
     @commands.cooldown(1, 20, commands.cooldowns.BucketType.user)

@@ -23,12 +23,13 @@ import pkg_resources
 import setproctitle
 from discord.ext import commands
 
+from bot import Life
 from utilities import context, exceptions
 
 
 class Dev(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot: Life):
         self.bot = bot
 
         self.load_task = asyncio.create_task(self.load())
