@@ -15,10 +15,10 @@ import asyncio
 
 import discord
 import humanize
+import ksoftapi
 import spotify
 from discord.ext import commands
 
-import ksoftapi
 from bot import Life
 from cogs.voice.lavalink import client, objects
 from cogs.voice.lavalink.exceptions import *
@@ -286,7 +286,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The current track is not seekable.')
 
         if not seconds and not seconds == 0:
-            await ctx.send(f'The players position is `{self.bot.utils.format_time(ctx.guild.voice_client.position / 1000)}`')
+            await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.guild.voice_client.position / 1000)}`')
             return
 
         milliseconds = seconds * 1000
@@ -294,7 +294,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.guild.voice_client.current.length / 1000)}`.')
 
         await ctx.guild.voice_client.set_position(position=milliseconds)
-        await ctx.send(f'The players position is now `{self.bot.utils.format_time(milliseconds / 1000)}`.')
+        await ctx.send(f'The players position is now `{self.bot.utils.format_seconds(seconds=milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
     async def volume(self, ctx: context.Context, volume: int = None) -> None:
@@ -346,13 +346,14 @@ class Music(commands.Cog):
         if ctx.guild.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        time = self.bot.utils.format_time(seconds=round(sum([track.length for track in ctx.guild.voice_client.queue])) / 1000, friendly=True)
+        time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in ctx.guild.voice_client.queue])) / 1000, friendly=True)
         header = f'Showing `{min([10, len(ctx.guild.voice_client.queue)])}` out of `{len(ctx.guild.voice_client.queue)}` track(s) in the queue. ' \
                  f'Total queue time is `{time}`.\n\n'
 
         entries = []
         for index, track in enumerate(ctx.guild.voice_client.queue):
-            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_time(round(track.length) / 1000)}` | {track.requester.mention}')
+            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
+                           f'{track.requester.mention}')
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue:', header=header)
 
@@ -392,7 +393,7 @@ class Music(commands.Cog):
             embed.set_image(url=track.thumbnail)
             embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(ctx.guild.voice_client.queue)}` in the queue.\n\n' \
                                 f'[{track.title}]({track.uri})\n\nAuthor: `{track.author}`\nSource: `{track.source}`\n' \
-                                f'Length: `{self.bot.utils.format_time(round(track.length) / 1000, friendly=True)}`\n' \
+                                f'Length: `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}`\n' \
                                 f'Is seekable: `{track.is_seekable}`\nIs stream: `{track.is_stream}`\nRequester: {track.requester.mention}'
             entries.append(embed)
 
@@ -411,12 +412,13 @@ class Music(commands.Cog):
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
-        time = self.bot.utils.format_time(seconds=round(sum([track.length for track in history])) / 1000, friendly=True)
+        time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in history])) / 1000, friendly=True)
         header = f'Showing `{min([10, len(history)])}` out of `{len(history)}` track(s) in the queues history. Total queue history time is `{time}`.\n\n'
 
         entries = []
         for index, track in enumerate(history):
-            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_time(round(track.length) / 1000)}` | {track.requester.mention}')
+            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
+                           f'{track.requester.mention}')
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue history:', header=header)
 
@@ -459,7 +461,7 @@ class Music(commands.Cog):
             embed.set_image(url=track.thumbnail)
             embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(history)}` in the queue history.\n\n' \
                                 f'[{track.title}]({track.uri})\n\nAuthor: `{track.author}`\nSource: `{track.source}`\n' \
-                                f'Length: `{self.bot.utils.format_time(round(track.length) / 1000, friendly=True)}`\n' \
+                                f'Length: `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}`\n' \
                                 f'Is seekable: `{track.is_seekable}`\nIs stream: `{track.is_stream}`\nRequester: {track.requester.mention}'
             entries.append(embed)
 
@@ -605,25 +607,22 @@ class Music(commands.Cog):
         Display stats about the bots lavalink connection.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        uptime = self.bot.utils.format_time(round(ctx.guild.voice_client.node.stats.uptime / 1000), friendly=True)
-        reservable = humanize.naturalsize(ctx.guild.voice_client.node.stats.memory_reservable)
-        allocated = humanize.naturalsize(ctx.guild.voice_client.node.stats.memory_allocated)
-        used = humanize.naturalsize(ctx.guild.voice_client.node.stats.memory_used)
-        free = humanize.naturalsize(ctx.guild.voice_client.node.stats.memory_free)
-        cpu_cores = ctx.guild.voice_client.node.stats.cpu_cores
-
         embed = discord.Embed(colour=ctx.colour)
-        embed.add_field(name='LavaLink info:', value=f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n`Memory used:` {used}\n`Memory free:` {free}\n'
-                                                     f'`CPU Cores:` {cpu_cores}\n`Uptime:` {uptime}')
-        embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name='Lavalink stats:', value=f'`Players:` {len(self.bot.lavalink.players)}\n`Nodes:` {len(self.bot.lavalink.nodes)}')
+        embed.add_field(name='Lavalink stats:', value=f'`Players:` {len(self.bot.lavalink.players)}\n`Nodes:` {len(self.bot.lavalink.nodes)}', inline=False)
 
         for node in self.bot.lavalink.nodes.values():
+
             active_players = len([player for player in node.players.values() if player.is_connected])
-            embed.add_field(name=f'Node: {node.identifier}', value=f'`Players:` {len(node.players)}\n`Active players:` {active_players}')
+            uptime = self.bot.utils.format_seconds(seconds=round(node.stats.uptime / 1000), friendly=True)
+            reservable = humanize.naturalsize(node.stats.memory_reservable)
+            allocated = humanize.naturalsize(node.stats.memory_allocated)
+            used = humanize.naturalsize(node.stats.memory_used)
+            free = humanize.naturalsize(node.stats.memory_free)
+            cpu_cores = node.stats.cpu_cores
+
+            embed.add_field(name=f'Node: {node.identifier}', value=f'`Players:` {len(node.players)}\n`Active players:` {active_players}\n'
+                                                                   f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n'
+                                                                   f'`Memory used:` {used}\n`Memory free:` {free}\n`CPU Cores:` {cpu_cores}\n`Uptime:` {uptime}')
 
         await ctx.send(embed=embed)
 
@@ -631,7 +630,7 @@ class Music(commands.Cog):
     async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
 
         if query is None:
-            if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+            if not ctx.guild or not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
             if not ctx.guild.voice_client.is_playing:
                 raise exceptions.VoiceError(f'There are no tracks playing.')
