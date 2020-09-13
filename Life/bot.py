@@ -20,6 +20,7 @@ import aiohttp
 import aredis
 import asyncpg
 import discord
+import psutil
 from discord.ext import commands
 
 from config import config
@@ -32,16 +33,11 @@ class Life(commands.AutoShardedBot):
         super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
                          activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/mrrandoooom'))
 
-        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True,
-                                                    read_message_history=True, external_emojis=True, add_reactions=True)
-        self.voice_permissions = discord.Permissions(connect=True, speak=True)
+        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
+                                                    add_reactions=True, external_emojis=True)
+        self.voice_permissions = discord.Permissions(connect=True, speak=True, use_voice_activation=True)
 
-        self.log = logging.getLogger('bot')
-        self.start_time = time.time()
-
-        self.clean_content = commands.clean_content()
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.socket_stats = collections.Counter()
         self.config = config.Config(bot=self)
         self.utils = utils.Utils(bot=self)
 
@@ -49,21 +45,41 @@ class Life(commands.AutoShardedBot):
         self.logging_webhook = discord.Webhook.from_url(self.config.logging_url, adapter=discord.AsyncWebhookAdapter(self.session))
         self.errors_webhook = discord.Webhook.from_url(self.config.errors_url, adapter=discord.AsyncWebhookAdapter(self.session))
 
-        self.commands_not_allowed_dms = {}
-
-        self.guild_blacklist = {}
         self.default_guild_config = objects.DefaultGuildConfig()
         self.guild_configs = {}
+        self.guild_blacklist = {}
 
-        self.user_blacklist = {}
         self.default_user_config = objects.DefaultUserConfig()
         self.user_configs = {}
+        self.user_blacklist = {}
 
-        self.time_format = '%A %d %B %Y at %H:%M'
+        self.member_converter = commands.MemberConverter()
+        self.clean_content = commands.clean_content()
+
+        self.socket_stats = collections.Counter()
+        self.log = logging.getLogger('bot')
+        self.process = psutil.Process()
+        self.start_time = time.time()
+
+        self.invite = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=37080128'
+        self.github = f'https://github.com/MyNameBeMrRandom/Life'
+        self.support = f'https://discord.gg/xP8xsHr'
+
+        self.commands_not_allowed_dms = {
+            'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'queue detailed', 'queue loop', 'queue sort', 'queue shuffle',
+            'queue remove', 'queue history', 'queue history detailed', 'queue history clear', 'queue clear', 'queue reverse', 'queue move', 'lavalink',
+
+            'icon', 'banner', 'splash', 'server', 'channels', 'member',
+
+            'tag', 'tag alias', 'tag list', 'tag edit', 'tag create', 'tag transfer', 'tag all', 'prefix search', 'tag delete', 'tag info', 'tag claim', 'tag raw',
+
+            'settings prefix add', 'settings prefix remove', 'settings prefix clear', 'settings colour set', 'settings colour clear'
+        }
 
         self.http_client = None
         self.http_server = None
         self.lavalink = None
+        self.imaging = None
         self.ksoft = None
         self.redis = None
         self.db = None
@@ -123,7 +139,7 @@ class Life(commands.AutoShardedBot):
         needed_perms = {perm: value for perm, value in dict(self.text_permissions).items() if value is True}
         current_perms = dict(ctx.channel.permissions_for(ctx.guild.me)) if ctx.guild else dict(ctx.channel.me.permissions_in(ctx.channel))
 
-        if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and ctx.author.voice is not None:
+        if ctx.command.cog and ctx.command.cog == self.get_cog('Music') and hasattr(ctx.author, 'voice') and ctx.author.voice is not None:
             needed_perms.update({perm: value for perm, value in dict(self.voice_permissions).items() if value is True})
             current_perms.update({perm: value for perm, value in getattr(ctx.author.voice, 'channel', None).permissions_for(ctx.guild.me) if value is True})
 
@@ -176,18 +192,7 @@ class Life(commands.AutoShardedBot):
             except commands.ExtensionFailed as error:
                 print(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
 
-        self.commands_not_allowed_dms = {
-            'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'shuffle', 'clear', 'reverse', 'loop', 'remove', 'move',
-            'musicinfo',
-
-            'tag', 'tag raw', 'tag create', 'tag edit', 'tag claim', 'tag alias', 'tag transfer', 'prefix delete', 'tag search', 'tag list', 'tag all', 'tag info',
-            'icon', 'server', 'channels', 'member'
-
-            'prefix add', 'prefix delete', 'prefix clear', 'config colour set', 'config colour clear'
-        }
-
         self.add_check(self.can_run_commands)
-
         await super().start(*args, **kwargs)
 
     async def close(self) -> None:
