@@ -11,6 +11,7 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import datetime
 import typing
 
 import discord
@@ -21,30 +22,99 @@ class Utils:
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    def format_time(self, seconds: int, friendly: bool = False) -> str:
+        self.channel_emojis = {
+            'text': '<:text:739399497200697465>',
+            'text_locked': '<:text_locked:739399496953364511>',
+            'text_nsfw': '<:text_nsfw:739399497251160115>',
+            'news': '<:news:739399496936718337>',
+            'news_locked': '<:news_locked:739399497062416435>',
+            'voice': '<:voice:739399497221931058>',
+            'voice_locked': '<:voice_locked:739399496924135476>',
+            'category': '<:category:738960756233601097>'
+        }
+
+        self.badge_emojis = {
+            'staff': '<:staff:738961032109752441>',
+            'partner': '<:partner:738961058613559398>',
+            'hypesquad': '<:hypesquad:738960840375664691>',
+            'bug_hunter': '<:bug_hunter:738961014275571723>',
+            'bug_hunter_level_2': '<:bug_hunter_level_2:739390267949580290>',
+            'hypesquad_bravery': '<:hypesquad_bravery:738960831596855448>',
+            'hypesquad_brilliance': '<:hypesquad_brilliance:738960824327995483>',
+            'hypesquad_balance': '<:hypesquad_balance:738960813460684871>',
+            'early_supporter': '<:early_supporter:738961113219203102>',
+            'system': '<:system_1:738960703284576378><:system_2:738960703288770650>',
+            'verified_bot': '<:verified_bot_1:738960728022581258><:verified_bot_2:738960728102273084>',
+            'verified_bot_developer': '<:verified_bot_developer:738961212250914897>',
+        }
+
+        self.colours = {
+            discord.Status.online: 0x008000,
+            discord.Status.idle: 0xFF8000,
+            discord.Status.dnd: 0xFF0000,
+            discord.Status.offline: 0x808080,
+            discord.Status.invisible: 0x808080,
+        }
+
+        self.mfa_levels = {
+            0: 'Not required',
+            1: 'Required'
+        }
+
+        self.verification_levels = {
+            discord.VerificationLevel.none: 'None - No criteria set.',
+            discord.VerificationLevel.low: 'Low - Must have a verified email.',
+            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
+            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more '
+                                            'then 10 minutes.',
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for '
+                                               'more then 10 minutes and a have a verified phone number.'
+        }
+
+        self.content_filter_levels = {
+            discord.ContentFilter.disabled: 'None',
+            discord.ContentFilter.no_role: 'No roles',
+            discord.ContentFilter.all_members: 'All members',
+        }
+
+        self.features = {
+            'VIP_REGIONS': 'Has VIP voice regions',
+            'VANITY_URL': 'Can have vanity invite',
+            'INVITE_SPLASH': 'Can have invite splash',
+            'VERIFIED': 'Is verified server',
+            'PARTNERED': 'Is partnered server',
+            'MORE_EMOJI': 'Can have 50+ emoji',
+            'DISCOVERABLE': 'Is discoverable',
+            'FEATURABLE': 'Is featurable',
+            'COMMERCE': 'Can have store channels',
+            'PUBLIC': 'Is public',
+            'NEWS': 'Can have news channels',
+            'BANNER': 'Can have banner',
+            'ANIMATED_ICON': 'Can have animated icon',
+            'PUBLIC_DISABLED': 'Can not be public',
+            'WELCOME_SCREEN_ENABLED': 'Can have welcome screen'
+        }
+
+    def ordinal(self, *, day: int) -> str:
+        return f'{day}{"tsnrhtdd"[(day // 10 % 10 != 1) * (day % 10 < 4) * day % 10::4]}'
+
+    def format_datetime(self, *, time: datetime.datetime) -> str:
+        return time.strftime('%A {ordinal} %B %Y at %H:%M').format(ordinal=self.ordinal(day=time.day))
+
+    def format_seconds(self, *, seconds: int, friendly: bool = False) -> str:
 
         minute, second = divmod(seconds, 60)
         hour, minute = divmod(minute, 60)
         day, hour = divmod(hour, 24)
 
-        days, hours, minutes, seconds, = round(day), round(hour), round(minute), round(second)
+        days, hours, minutes, seconds = round(day), round(hour), round(minute), round(second)
 
         if friendly is True:
-            formatted = f'{minutes}m {seconds}s'
-            if not hours == 0:
-                formatted = f'{hours}h {formatted}'
-            if not days == 0:
-                formatted = f'{days}d {formatted}'
-        else:
-            formatted = f'{minutes:02d}:{seconds:02d}'
-            if not hours == 0:
-                formatted = f'{hours:02d}:{formatted}'
-            if not days == 0:
-                formatted = f'{days:02d}:{formatted}'
+            return f'{f"{days}d " if not days == 0 else ""}{f"{hours}h " if not hours == 0 or not days == 0 else ""}{minutes}m {seconds}s'
 
-        return formatted
+        return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
 
-    def activities(self, person: discord.Member) -> str:
+    def activities(self, *, person: discord.Member) -> str:
 
         if not person.activities:
             return 'N/A'
@@ -89,50 +159,44 @@ class Utils:
 
         return message
 
-    def badges(self, person: typing.Union[discord.User, discord.Member]) -> str:
+    def badges(self, *, person: typing.Union[discord.User, discord.Member]) -> str:
 
-        badges = [badge for name, badge in self.bot.badges.items() if dict(person.public_flags)[name] is True]
+        badges = [badge for name, badge in self.badge_emojis.items() if dict(person.public_flags)[name] is True]
         if dict(person.public_flags)['verified_bot'] is False and person.bot:
             badges.append('<:bot:738979752244674674>')
-        if self.bot.utils.has_nitro(person=person):
-            badges.append('<:nitro:738961134958149662>')
+
         if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
             badges.append('<:booster_level_4:738961099310760036>')
 
-        return ' '.join(badges) if badges else 'N/A'
+        if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
+            badges.append('<:nitro:738961134958149662>')
 
-    def has_nitro(self, person: typing.Union[discord.User, discord.Member]) -> bool:
-
-        if person.is_avatar_animated():
-            return True
-
-        if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
-            return True
-
-        if member := discord.utils.get(self.bot.get_all_members(), id=person.id):
+        elif member := discord.utils.get(self.bot.get_all_members(), id=person.id):
             if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
                 if activity.emoji and activity.emoji.is_custom_emoji():
-                    return True
+                    badges.append('<:nitro:738961134958149662>')
 
-    def channel_emoji(self, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]) -> str:
+        return ' '.join(badges) if badges else 'N/A'
+
+    def channel_emoji(self, *, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]) -> str:
 
         if isinstance(channel, discord.VoiceChannel):
             if channel.overwrites_for(channel.guild.default_role).read_messages is False:
-                emoji = self.bot.channel_emojis['voice_locked']
+                emoji = self.channel_emojis['voice_locked']
             else:
-                emoji = self.bot.channel_emojis['voice']
+                emoji = self.channel_emojis['voice']
         else:
             if channel.overwrites_for(channel.guild.default_role).read_messages is False:
                 if channel.is_news():
-                    emoji = self.bot.channel_emojis['news_locked']
+                    emoji = self.channel_emojis['news_locked']
                 else:
-                    emoji = self.bot.channel_emojis['text_locked']
+                    emoji = self.channel_emojis['text_locked']
             else:
                 if channel.is_news():
-                    emoji = self.bot.channel_emojis['news']
+                    emoji = self.channel_emojis['news']
                 else:
-                    emoji = self.bot.channel_emojis['text']
+                    emoji = self.channel_emojis['text']
             if channel.is_nsfw():
-                emoji = self.bot.channel_emojis['text_nsfw']
+                emoji = self.channel_emojis['text_nsfw']
 
         return emoji
