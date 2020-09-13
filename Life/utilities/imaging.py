@@ -276,5 +276,5 @@ class Imaging:
 
         embed = discord.Embed(colour=ctx.colour)
         embed.set_footer(text=image_text)
-        embed.set_image(url=post.get('url'))
+        embed.set_image(url=post.get('sike_heres_the_real_url'))
         return embed
