@@ -179,6 +179,7 @@ class EmbedPaginator(BasePaginator):
         self.footer = kwargs.get('footer', '')
 
         self.title = kwargs.get('title', '')
+        self.url = kwargs.get('url', '')
 
         self.colour = kwargs.get('colour', self.ctx.colour)
         self.image = kwargs.get('image', None)
@@ -191,6 +192,8 @@ class EmbedPaginator(BasePaginator):
             self.embed.set_image(url=self.image)
         if self.thumbnail:
             self.embed.set_thumbnail(url=self.thumbnail)
+        if self.url:
+            self.embed.url = self.url
 
     @property
     def embed_footer(self) -> str:
