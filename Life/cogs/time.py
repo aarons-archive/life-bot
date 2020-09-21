@@ -53,7 +53,7 @@ class Time(commands.Cog):
         """
         Sets your timezone to the one specified.
 
-        See https://dashboard.mrrandom.xyz/timezones/ for a full list of avaiable timezones.
+        See https://dashboard.mrrandom.xyz/timezones/ for a full list of available timezones.
 
         `timezone`: The timezone to use.
         """
