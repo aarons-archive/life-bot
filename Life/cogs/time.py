@@ -30,8 +30,9 @@ class Time(commands.Cog):
         """
 
         if not timezone:
-            member = None
+            member = ctx.author
             timezone = ctx.user_config.pytz
+
         else:
             try:
                 member = None
