@@ -15,6 +15,7 @@ from datetime import datetime
 
 import discord
 import prettify_exceptions
+import pytz
 from discord.ext import commands
 
 from bot import Life
@@ -42,7 +43,7 @@ class Events(commands.Cog):
 
         self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(time=datetime.now())
+        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
@@ -56,7 +57,7 @@ class Events(commands.Cog):
 
         self.bot.log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(time=datetime.now())
+        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
@@ -72,7 +73,7 @@ class Events(commands.Cog):
 
         if message.guild is None:
 
-            time = self.bot.utils.format_datetime(time=datetime.now())
+            time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
             guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
             info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -83,7 +84,7 @@ class Events(commands.Cog):
 
         if self.bot.user in message.mentions:
 
-            time = self.bot.utils.format_datetime(time=datetime.now())
+            time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
             guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
             info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -193,7 +194,7 @@ class Events(commands.Cog):
         formatter.theme['_ansi_enabled'] = True
         print(f'\n{"".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
 
-        time = self.bot.utils.format_datetime(time=datetime.now())
+        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
         guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
         info = f'Error in command `{ctx.command}`\n\n{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 

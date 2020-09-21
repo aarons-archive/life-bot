@@ -93,7 +93,7 @@ class Tags(commands.Cog):
         if len(str(content)) > 1024:
             raise exceptions.ArgumentError('Your tag content can not be more than 1024 characters.')
 
-        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, name, content, None, datetime.now())
+        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, name, content, None, datetime.now(pytz.UTC))
 
         embed = discord.Embed(colour=ctx.colour, title='Tag created:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
@@ -163,7 +163,7 @@ class Tags(commands.Cog):
         if not original_tag:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{original}`.')
 
-        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, alias, None, original, datetime.now())
+        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, alias, None, original, datetime.now(pytz.UTC))
 
         embed = discord.Embed(colour=ctx.colour, title='Tag alias created:')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
@@ -275,7 +275,7 @@ class Tags(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{tag["name"]}')
         embed.description = f'`Owner:` {owner.mention if owner else "None"} ({tag["owner_id"]})\n`Claimable:` {owner is None}\n`Alias:` {tag["alias"]}'
-        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(time=tag["created_at"])}')
+        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=tag["created_at"])}')
         await ctx.send(embed=embed)
 
 

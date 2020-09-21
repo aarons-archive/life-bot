@@ -654,7 +654,7 @@ class Music(commands.Cog):
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
 
-        response = await self.bot.clean_content.convert(ctx, response.content)
+        response = await self.bot.clean_content_converter.convert(ctx, response.content)
         try:
             response = int(response) - 1
         except ValueError:
