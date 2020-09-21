@@ -11,10 +11,17 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime
+import datetime as dt
 import typing
 
+import ctparse
+import ctparse.types
+import dateparser.search
 import discord
+import humanize
+import pytz
+
+from utilities import exceptions
 
 
 class Utils:
@@ -48,17 +55,36 @@ class Utils:
             'verified_bot_developer': '<:verified_bot_developer:738961212250914897>',
         }
 
+        self.features = {
+            'VERIFIED': 'Is verified server',
+            'PARTNERED': 'Is partnered server',
+            'MORE_EMOJI': 'Can have 50+ emoji',
+            'DISCOVERABLE': 'Is discoverable',
+            'FEATURABLE': 'Is featurable',
+            'PUBLIC': 'Is public',
+            'VIP_REGIONS': 'Can have VIP voice regions',
+            'VANITY_URL': 'Can have vanity invite',
+            'INVITE_SPLASH': 'Can have invite splash',
+            'COMMERCE': 'Can have store channels',
+            'NEWS': 'Can have news channels',
+            'BANNER': 'Can have banner',
+            'ANIMATED_ICON': 'Can have animated icon',
+            'PUBLIC_DISABLED': 'Can not be public',
+            'WELCOME_SCREEN_ENABLED': 'Can have welcome screen',
+            'MEMBER_VERIFICATION_GATE_ENABLED': 'Has member verify gate'
+        }
+
+        self.mfa_levels = {
+            0: 'Not required',
+            1: 'Required'
+        }
+
         self.colours = {
             discord.Status.online: 0x008000,
             discord.Status.idle: 0xFF8000,
             discord.Status.dnd: 0xFF0000,
             discord.Status.offline: 0x808080,
             discord.Status.invisible: 0x808080,
-        }
-
-        self.mfa_levels = {
-            0: 'Not required',
-            1: 'Required'
         }
 
         self.verification_levels = {
@@ -77,29 +103,17 @@ class Utils:
             discord.ContentFilter.all_members: 'All members',
         }
 
-        self.features = {
-            'VIP_REGIONS': 'Has VIP voice regions',
-            'VANITY_URL': 'Can have vanity invite',
-            'INVITE_SPLASH': 'Can have invite splash',
-            'VERIFIED': 'Is verified server',
-            'PARTNERED': 'Is partnered server',
-            'MORE_EMOJI': 'Can have 50+ emoji',
-            'DISCOVERABLE': 'Is discoverable',
-            'FEATURABLE': 'Is featurable',
-            'COMMERCE': 'Can have store channels',
-            'PUBLIC': 'Is public',
-            'NEWS': 'Can have news channels',
-            'BANNER': 'Can have banner',
-            'ANIMATED_ICON': 'Can have animated icon',
-            'PUBLIC_DISABLED': 'Can not be public',
-            'WELCOME_SCREEN_ENABLED': 'Can have welcome screen'
+        self.dateparser_settings = {
+            'PREFER_DATES_FROM': 'future',
+            'PREFER_DAY_OF_MONTH': 'first',
+            'PARSERS': ['relative-time', 'absolute-time', 'timestamp', 'base-formats'],
+            'PREFER_LANGUAGE_DATE_ORDER': False,
+            'RETURN_AS_TIMEZONE_AWARE': True,
+            'DATE_ORDER': 'DMY',
         }
 
     def ordinal(self, *, day: int) -> str:
         return f'{day}{"tsnrhtdd"[(day // 10 % 10 != 1) * (day % 10 < 4) * day % 10::4]}'
-
-    def format_datetime(self, *, time: datetime.datetime) -> str:
-        return time.strftime('%A {ordinal} %B %Y at %H:%M').format(ordinal=self.ordinal(day=time.day))
 
     def format_seconds(self, *, seconds: int, friendly: bool = False) -> str:
 
@@ -113,6 +127,40 @@ class Utils:
             return f'{f"{days}d " if not days == 0 else ""}{f"{hours}h " if not hours == 0 or not days == 0 else ""}{minutes}m {seconds}s'
 
         return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
+
+    def format_datetime(self, *, datetime: dt.datetime) -> str:
+        return datetime.strftime(f'%A {self.ordinal(day=datetime.day)} %B %Y at %H:%M%p %Z (%z)')
+
+    def format_time_difference(self, *, datetime: dt.datetime, suppress: typing.List[str] = None) -> str:
+
+        if suppress is None:
+            suppress = ['minutes', 'seconds']
+
+        return humanize.precisedelta(datetime.now(tz=pytz.UTC) - datetime, format='%0.0f', suppress=suppress)
+
+    def parse_to_datetime(self, *, datetime_string: str, timezone=pytz.UTC) -> typing.Tuple[str, dt.datetime]:
+
+        settings = self.dateparser_settings.copy()
+        if not timezone.zone == 'UTC':
+            settings['TO_TIMEZONE'] = timezone.zone
+
+        search = dateparser.search.search_dates(datetime_string, languages=['en'], settings=settings)
+
+        if not search:
+
+            search = ctparse.ctparse(datetime_string)
+
+            if not search or not isinstance(search.resolution, ctparse.types.Time):
+                raise exceptions.ArgumentError('I was not able to find a valid datetime within that query.')
+
+            return datetime_string, timezone.localize(search.resolution.dt)
+
+        if len(search) > 1:
+            raise exceptions.ArgumentError('Two or more datetimes were detected within that query.')
+
+        return search[0][0], search[0][1]
+
+
 
     def activities(self, *, person: discord.Member) -> str:
 
@@ -177,26 +225,3 @@ class Utils:
                     badges.append('<:nitro:738961134958149662>')
 
         return ' '.join(badges) if badges else 'N/A'
-
-    def channel_emoji(self, *, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]) -> str:
-
-        if isinstance(channel, discord.VoiceChannel):
-            if channel.overwrites_for(channel.guild.default_role).read_messages is False:
-                emoji = self.channel_emojis['voice_locked']
-            else:
-                emoji = self.channel_emojis['voice']
-        else:
-            if channel.overwrites_for(channel.guild.default_role).read_messages is False:
-                if channel.is_news():
-                    emoji = self.channel_emojis['news_locked']
-                else:
-                    emoji = self.channel_emojis['text_locked']
-            else:
-                if channel.is_news():
-                    emoji = self.channel_emojis['news']
-                else:
-                    emoji = self.channel_emojis['text']
-            if channel.is_nsfw():
-                emoji = self.channel_emojis['text_nsfw']
-
-        return emoji
