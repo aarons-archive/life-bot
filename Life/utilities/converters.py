@@ -11,18 +11,68 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import datetime as dt
+import typing
 from abc import ABC
 
 import discord
+import fuzzywuzzy.process
+import pytz
 import yarl
 from discord.ext import commands
 
 from utilities import context, exceptions
 
 
-class User(commands.UserConverter):
+class ChannelEmoji(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, channel: discord.abc.GuildChannel) -> str:
+
+        if isinstance(channel, discord.VoiceChannel):
+            emoji = 'voice'
+            if channel.overwrites_for(channel.guild.default_role).connect is False:
+                emoji = 'voice_locked'
+
+        else:
+            if channel.is_news():
+                emoji = 'news'
+                if channel.overwrites_for(channel.guild.default_role).read_messages is False:
+                    emoji = 'news_locked'
+            else:
+                emoji = 'text'
+                if channel.is_nsfw():
+                    emoji = 'text_nsfw'
+                elif channel.overwrites_for(channel.guild.default_role).read_messages is False:
+                    emoji = 'text_locked'
+
+        return ctx.bot.utils.channel_emojis[emoji]
+
+
+class TimezoneConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, argument: str):
+
+        timezones = [timezone.lower() for timezone in pytz.all_timezones]
+        if argument.lower() not in timezones:
+            print(argument.lower())
+            print(timezones)
+            matches = fuzzywuzzy.process.extract(query=argument.lower(), choices=pytz.all_timezones, limit=5)
+            extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
+            raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
+
+        return pytz.timezone(argument)
+
+
+class DatetimeParser(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, argument: str) -> typing.Tuple[str, dt.datetime]:
+        return ctx.bot.utils.parse_to_datetime(datetime_string=argument, timezone=ctx.user_config.pytz)
+
+
+
+class User(commands.UserConverter):
+
+    async def convert(self, ctx: context.Context, argument: str) -> discord.User:
         user = None
         try:
             user = await super().convert(ctx, argument)
@@ -42,7 +92,7 @@ class User(commands.UserConverter):
 
 class TagName(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str) -> str:
 
         argument = await super().convert(ctx, argument)
         argument = discord.utils.escape_markdown(argument)
@@ -63,7 +113,7 @@ class TagName(commands.clean_content):
 
 class Prefix(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str) -> str:
 
         argument = await super().convert(ctx, argument)
         argument = discord.utils.escape_markdown(argument)
@@ -75,12 +125,13 @@ class Prefix(commands.clean_content):
             raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
         if len(argument) > 15:
             raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
+
         return argument
 
 
 class ImageConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str) -> str:
 
         url = None
 
@@ -97,3 +148,5 @@ class ImageConverter(commands.Converter, ABC):
                 url = argument
 
         return url
+
+
