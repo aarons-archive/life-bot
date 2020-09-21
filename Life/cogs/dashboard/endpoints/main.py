@@ -16,6 +16,8 @@ import json
 import os
 from abc import ABC
 
+import pytz
+
 from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
 from utilities import exceptions
@@ -92,5 +94,12 @@ class Profile(BaseHTTPHandler, ABC):
         self.render('profile.html', bot=self.bot, user=user, guilds=await self.fetch_guilds())
 
 
+# noinspection PyAsyncCall
+class Timezones(BaseHTTPHandler, ABC):
+
+    async def get(self):
+        self.render('timezones.html', bot=self.bot, timezones=pytz.all_timezones, user=await self.get_user())
+
+
 def setup(**kwargs):
-    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/profile', Profile, kwargs)]
+    return [('/', Index, kwargs), ('/login', Login, kwargs), ('/profile', Profile, kwargs), ('/timezones', Timezones, kwargs)]
