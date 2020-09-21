@@ -24,17 +24,17 @@ class Time(commands.Cog):
     @commands.group(name='time', invoke_without_command=True)
     async def time(self, ctx: context.Context, *, timezone: str = None) -> None:
         """
-        Displays the time of the member or timezone provided.
+        Displays the time of the member or the timezone provided.
 
         `timezone`: The timezone or members name, id or mention that you want to get.
         """
 
         if not timezone:
-            member = ctx.author
+            member = None
             timezone = ctx.user_config.pytz
         else:
             try:
-                member = ctx.author
+                member = None
                 timezone = await self.bot.timezone_converter.convert(ctx=ctx, argument=timezone)
             except exceptions.ArgumentError as error:
                 try:
