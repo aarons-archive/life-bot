@@ -9,8 +9,12 @@ prometheus_client>=0.8.0
 psutil>=5.7.2
 setproctitle>=1.1.10
 tornado>=6.0.4
-wand>=0.6.2
+wand>=0.6.3
 yarl>=1.5.1
+dateparser>=0.7.6
+ctparse>=0.2.1
+pytz>=2020.1
+fuzzywuzzy>=0.18.0
 
 git+git://github.com/MyNameBeMrRandom/spotify.py.git#egg=spotify.py
 git+git://github.com/MyNameBeMrRandom/ksoftapi.py.git#egg=ksoftapi.py
