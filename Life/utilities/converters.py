@@ -54,8 +54,6 @@ class TimezoneConverter(commands.Converter, ABC):
 
         timezones = [timezone.lower() for timezone in pytz.all_timezones]
         if argument.lower() not in timezones:
-            print(argument.lower())
-            print(timezones)
             matches = fuzzywuzzy.process.extract(query=argument.lower(), choices=pytz.all_timezones, limit=5)
             extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
             raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
