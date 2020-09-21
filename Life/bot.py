@@ -24,7 +24,7 @@ import psutil
 from discord.ext import commands
 
 from config import config
-from utilities import context, help, objects, utils
+from utilities import context, help, objects, utils, converters
 
 
 class Life(commands.AutoShardedBot):
@@ -54,7 +54,10 @@ class Life(commands.AutoShardedBot):
         self.user_blacklist = {}
 
         self.member_converter = commands.MemberConverter()
-        self.clean_content = commands.clean_content()
+        self.clean_content_converter = commands.clean_content()
+        self.channel_emoji_converter = converters.ChannelEmoji()
+        self.timezone_converter = converters.TimezoneConverter()
+        self.datetime_parser_converter = converters.DatetimeParser()
 
         self.socket_stats = collections.Counter()
         self.log = logging.getLogger('bot')
@@ -64,6 +67,7 @@ class Life(commands.AutoShardedBot):
         self.invite = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=37080128'
         self.github = f'https://github.com/MyNameBeMrRandom/Life'
         self.support = f'https://discord.gg/xP8xsHr'
+        self.dashboard = f'https://dashboard.mrrandom.xyz/'
 
         self.commands_not_allowed_dms = {
             'join', 'play', 'leave', 'skip', 'pause', 'unpause', 'seek', 'volume', 'now_playing', 'queue', 'queue detailed', 'queue loop', 'queue sort', 'queue shuffle',
@@ -100,6 +104,11 @@ class Life(commands.AutoShardedBot):
             data = await self.db.fetchrow(query, value, user.id)
             user_config.colour = discord.Colour(int(data['colour'], 16))
 
+        elif attribute == 'timezone':
+            query = 'UPDATE user_configs SET timezone = $1 WHERE user_id = $2 RETURNING *'
+            data = await self.db.fetchrow(query, value, user.id)
+            user_config.timezone = data['timezone']
+
     def get_guild_config(self, *, guild: discord.Guild) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.guild_configs.get(guild.id, self.default_guild_config)
 
@@ -117,6 +126,7 @@ class Life(commands.AutoShardedBot):
                 query = 'UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE guild_id = $2 RETURNING prefixes'
             if operation == 'clear':
                 query = 'UPDATE guild_configs SET prefixes = $1 WHERE guild_id = $2 RETURNING prefixes'
+
             data = await self.db.fetchrow(query, value, guild.id)
             guild_config.prefixes = data['prefixes']
 
