@@ -1,24 +1,53 @@
-.bg-yellow {
-    background: rgb(241, 196, 15);
+:root {
+    --bg-yellow: rgb(241, 196, 15);
+    --bg-white: var(--bs-white);
+
+    --bg-black: #000000;
+    --bg-light_black: #202225;
+
+    --bg-gray: #36393f;
 }
 
-.bg-white {
-    background: rgb(248, 249, 250);
+body {
+    background-color: var(--bg-gray);
+    color: var(--bg-white)
 }
 
-.bg-black {
-    background: #000000;
+.jumbotron {
+    background: var(--bg-yellow);
+    color: var(--bg-black)
 }
 
-.bg-lblack {
-    background: #36393f;
+.navbar {
+    background: var(--bg-yellow);
+    color: var(--bg-black)
 }
 
-.bg-gray {
-    background: #2f3136;
+.btn {
+    background-color: var(--bg-light_black);
+}
+
+.form-control,
+.form-control:active,
+.form-control:focus,
+.form-control:focus:active {
+    background: var(--bg-light_black);
+    color: var(--bg-white);
+    border: none;
+}
+
+.card {
+    background: var(--bg-light_black);
+    color: var(--bg-white)
+}
+
+.progress {
+    background: var(--bg-gray);
 }
 
 .progress-bar {
+    background: var(--bg-yellow);
     transition: width 2s;
     transition-timing-function: linear;
 }
+
