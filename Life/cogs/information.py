@@ -22,6 +22,7 @@ import typing
 
 import discord
 import psutil
+import pytz
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
@@ -102,7 +103,7 @@ class Information(commands.Cog):
                         value=f'[Invite me]({self.bot.invite}) | [Support server]({self.bot.support}) | '
                               f'[Source code]({self.bot.github})')
 
-        embed.set_footer(text=f'Created on {dt.datetime.strftime(self.bot.user.created_at, "%A %d %B %Y at %H:%M")}')
+        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=self.bot.user.created_at.replace(tzinfo=pytz.UTC))}')
         return await ctx.send(embed=embed)
 
     @commands.command(name='system', aliases=['sys'])
@@ -280,8 +281,8 @@ class Information(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s information.")
         embed.description = f'`Owner:` {guild.owner}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=guild.created_at)}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=guild.created_at)} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=guild.created_at.replace(tzinfo=pytz.UTC))}\n' \
+                            f'`Created:` {self.bot.utils.format_time_difference(datetime=guild.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
                             f'`Members:` {guild.member_count} | ' \
                             f'<:online:737824551471284356>{statuses[discord.Status.online]} | <:away:627627415119724554>{statuses[discord.Status.idle]} | ' \
                             f'<:dnd:627627404784828416>{statuses[discord.Status.dnd]} | <:offline:627627415144890389>{statuses[discord.Status.offline]}\n' \
@@ -365,8 +366,8 @@ class Information(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{user}\'s information:')
         embed.description = f'`Discord name:` {user}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=user.created_at)}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=user.created_at)} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=user.created_at.replace(tzinfo=pytz.UTC))}\n' \
+                            f'`Created:` {self.bot.utils.format_time_difference(datetime=user.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
                             f'`Badges:` {self.bot.utils.badges(person=user)}\n' \
                             f'`Bot:` {str(user.bot).replace("True", "Yes").replace("False", "No")}'
         embed.set_thumbnail(url=str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png')))
@@ -386,8 +387,8 @@ class Information(commands.Cog):
 
         embed = discord.Embed(colour=self.bot.utils.colours[member.status], title=f'{member}\'s information.')
         embed.description = f'`Discord Name:` {member} {"<:owner:738961071729278987>" if member.id == member.guild.owner.id else ""}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=member.created_at)}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=member.created_at)} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=member.created_at.replace(tzinfo=pytz.UTC))}\n' \
+                            f'`Created:` {self.bot.utils.format_time_difference(datetime=member.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
                             f'`Badges:` {self.bot.utils.badges(person=member)}\n' \
                             f'`Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}' \
                             f'{"<:phone:738961150343118958>" if member.is_on_mobile() else ""}\n' \
@@ -396,8 +397,8 @@ class Information(commands.Cog):
 
         embed.add_field(name='Server related information:',
                         value=f'`Server nickname:` {member.nick}\n'
-                              f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at)}\n'
-                              f'`Joined:` {self.bot.utils.format_time_difference(datetime=member.joined_at)} ago\n'
+                              f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at.replace(tzinfo=pytz.UTC))}\n'
+                              f'`Joined:` {self.bot.utils.format_time_difference(datetime=member.joined_at.replace(tzinfo=pytz.UTC))} ago\n'
                               f'`Top role:` {member.top_role.mention}\n'
                               f'`Role count:` {len(member.roles) - 1}', inline=False)
 
