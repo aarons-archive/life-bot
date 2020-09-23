@@ -24,17 +24,19 @@ import psutil
 from discord.ext import commands
 
 from config import config
-from utilities import context, help, objects, utils, converters
+from utilities import context, converters, help, objects, utils
 
 
 class Life(commands.AutoShardedBot):
 
     def __init__(self, loop) -> None:
         super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
-                         activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/mrrandoooom'))
+                         activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/mrrandoooom'),
+                         intents=discord.Intents(guilds=True, members=True, bans=False, emojis=False, integrations=False, webhooks=False, invites=False,
+                                                 voice_states=True, presences=True, messages=True, reactions=True, typing=False))
 
-        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True,
-                                                    add_reactions=True, external_emojis=True)
+        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True,
+                                                    read_message_history=True, add_reactions=True, external_emojis=True)
         self.voice_permissions = discord.Permissions(connect=True, speak=True, use_voice_activation=True)
 
         self.session = aiohttp.ClientSession(loop=self.loop)
