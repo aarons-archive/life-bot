@@ -26,28 +26,28 @@
         <link rel="stylesheet" href="{{ static_url('index.css') }}">
         <!-- Javascript links -->
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="{{ static_url('timezones.js') }}"></script>
     </head>
 
-    <body class="bg-lblack text-light">
+    <body>
 
-        <nav class="navbar navbar-expand-md navbar-light font-weight-bold bg-yellow">
-            <div class="container">
+        <nav class="navbar navbar-light navbar-expand-md font-weight-bold">
+            <div class="container px-4">
 
-                <a class="navbar-brand" href="/"><img class="img-fluid" src="{{ static_url('resources/LifeBlack50x26.png') }}" alt="Life logo"></a>
-                <button class="navbar-toggler btn btn-lg bg-black" type="button" data-toggle="collapse" data-target="#LifeNavBar" aria-controls="LifeNavBar" aria-expanded="false" aria-label="Toggle navigation bar"></button>
+                <a class="navbar-brand p-0 m-0" href="/"><img class="img-fluid" src="{{ static_url('resources/LifeBlack50x26.png') }}" alt="Life logo"></a>
+                <button class="navbar-toggler btn" type="button" data-toggle="collapse" data-target="#NavBar"></button>
 
-                <div class="collapse navbar-collapse justify-content-end" id="LifeNavBar">
+                <div class="collapse navbar-collapse justify-content-end" id="NavBar">
                     <ul class="navbar-nav">
                         <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link active" href="/timezones">Timezones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ bot.github }}">Github</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ bot.support }}">Discord server</a></li>
-                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link active" href="/timezones">Timezones</a></li>
-
                         {% if user is None %}
                             <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/login">Login</a></li>
                         {% else %}
-                            <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/logout">Logout</a></li>
                             <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/profile">{{ user.name }}</a></li>
+                            <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/logout">Logout</a></li>
                         {% end %}
                     </ul>
                 </div>
@@ -57,11 +57,25 @@
 
         <div class="container">
 
-            <ul class="list-group bg-lblack py-3">
+            <form class="px-2 pb-3" autocomplete="off">
+                <div>
+                    <label for="timezoneSearch"></label><input type="search" id="timezoneSearch" class="form-control" onkeydown="timezoneSearchFunction()">
+                </div>
+            </form>
+
+            <div class="row g-0" id="timezoneList">
                 {% for timezone in timezones %}
-                    <li class="list-group-item bg-gray">{{ timezone }}</li>
+
+                    <div class="col-6 col-sm-6 col-md-4 col-lg-3 col-xl-3 p-2">
+                        <div class="card border-0">
+                            <div class="card-body">
+                                <p class="card-text">{{ timezone }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                 {% end %}
-            </ul>
+            </div>
 
         </div>
 

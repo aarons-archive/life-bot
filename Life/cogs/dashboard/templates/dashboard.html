@@ -32,22 +32,22 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment-with-locales.min.js" crossorigin="anonymous"></script>
     </head>
 
-    <body class="bg-lblack text-light">
+    <body>
 
-        <nav class="navbar navbar-expand-md navbar-light font-weight-bold bg-yellow">
-            <div class="container">
+        <nav class="navbar navbar-light navbar-expand-md font-weight-bold">
+            <div class="container px-4">
 
-                <a class="navbar-brand" href="/"><img class="img-fluid" src="{{ static_url('resources/LifeBlack50x26.png') }}" alt="Life logo"></a>
-                <button class="navbar-toggler btn btn-lg bg-black" type="button" data-toggle="collapse" data-target="#LifeNavBar" aria-controls="LifeNavBar" aria-expanded="false" aria-label="Toggle navigation bar"></button>
+                <a class="navbar-brand p-0 m-0" href="/"><img class="img-fluid" src="{{ static_url('resources/LifeBlack50x26.png') }}" alt="Life logo"></a>
+                <button class="navbar-toggler btn" type="button" data-toggle="collapse" data-target="#NavBar"></button>
 
-                <div class="collapse navbar-collapse justify-content-end" id="LifeNavBar">
+                <div class="collapse navbar-collapse justify-content-end" id="NavBar">
                     <ul class="navbar-nav">
                         <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/timezones">Timezones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ bot.github }}">Github</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ bot.support }}">Discord server</a></li>
-                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/timezones">Timezones</a></li>
-                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/logout">Logout</a></li>
                         <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/profile">{{ user.name }}</a></li>
+                        <li class="nav-item"> <!--suppress HtmlUnknownTarget --> <a class="nav-link" href="/logout">Logout</a></li>
                     </ul>
                 </div>
 
@@ -55,38 +55,38 @@
         </nav>
 
         <div class="container sticky-top">
-            <div class="card bg-gray text-center border-0">
+            <div class="card text-center border-0">
                 <div class="card-body p-2">
-                    <div class="btn-group" role="group" aria-label="Basic example">
-                        <button type="button" class="btn">
+                    <div class="btn-group" role="group">
+                        <button class="btn" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-arrow-repeat" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                   <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"></path>
                                   <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"></path>
                             </svg>
                         </button>
-                        <button type="button" class="btn">
+                        <button class="btn" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-skip-start-fill" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" d="M4.5 3.5A.5.5 0 0 0 4 4v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5z"></path>
                                 <path d="M4.903 8.697l6.364 3.692c.54.313 1.232-.066 1.232-.697V4.308c0-.63-.692-1.01-1.232-.696L4.903 7.304a.802.802 0 0 0 0 1.393z"></path>
                             </svg>
                         </button>
-                        <button type="button" class="btn d-none">
+                        <button class="btn d-none" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"></path>
                             </svg>
                         </button>
-                        <button type="button" class="btn">
+                        <button class="btn" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-pause-fill" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"></path>
                             </svg>
                         </button>
-                        <button type="button" class="btn">
+                        <button class="btn" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-skip-end-fill" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                   <path fill-rule="evenodd" d="M12 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"></path>
                                   <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"></path>
                             </svg>
                         </button>
-                        <button type="button" class="btn">
+                        <button class="btn" type="button">
                             <svg width="2.5em" height="2.5em" viewBox="0 0 16 16" class="bi bi-shuffle" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5z"></path>
                                 <path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z"></path>
@@ -101,7 +101,7 @@
 
             <div class="row g-0 mt-3">
 
-                <div class="card bg-gray border-0 p-3">
+                <div class="card border-0 p-3">
                     <div class="row g-0">
 
                         <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-4 col-xxl-3">
@@ -134,7 +134,7 @@
                 {% for i in range(0, 4) %}
 
                     <div class="col-12 col-sm-6 col-md-6 col-lg-3 col-xl-3 col-xxl-3">
-                        <div class="card bg-gray border-0 m-1 p-2">
+                        <div class="card border-0 m-1 p-2">
 
                             <div class="card-body p-2">
                                 <img class="card-img rounded pb-2" id="QueueThumbnail{{ i }}" src="https://media.mrrandom.xyz/no_image320x180.png" alt="No track image">
