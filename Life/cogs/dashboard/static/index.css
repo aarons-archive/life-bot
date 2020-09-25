@@ -1,53 +1,88 @@
+/* Colour vars */
 :root {
-    --bg-yellow: rgb(241, 196, 15);
-    --bg-white: var(--bs-white);
+    --light-yellow: #F1DA0F;
+    --yellow: #F1C40F;
+    --dark-yellow: #C7A006;
 
-    --bg-black: #000000;
-    --bg-light_black: #202225;
+    --black: #000000;
+    --white: var(--bs-white);
 
-    --bg-gray: #36393f;
+    --light-background: #40444B;
+    --background: #36393F;
+    --dark-background: #2F3136;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dark-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--yellow);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-yellow);
 }
 
 body {
-    background-color: var(--bg-gray);
-    color: var(--bg-white)
+    background-color: var(--background);
+    color: var(--white);
+
+    scrollbar-width: thick;
+    scrollbar-color: var(--light-yellow) var(--dark-background);
 }
 
-.jumbotron {
-    background: var(--bg-yellow);
-    color: var(--bg-black)
-}
-
+/* Boostrap navbars */
 .navbar {
-    background: var(--bg-yellow);
-    color: var(--bg-black)
+    background: var(--yellow);
+    color: var(--black)
 }
 
+/* Boostrap jumbotrons */
+.jumbotron {
+    background: var(--yellow);
+    color: var(--black)
+}
+
+/* Boostrap buttons */
 .btn {
-    background-color: var(--bg-light_black);
+    background-color: var(--light-background);
+    color: var(--white)
 }
 
-.form-control,
+/* Boostrap forms */
+.form-control {
+    background: var(--light-background);
+    color: var(--white);
+    border: 1px solid var(--dark-background);
+    transition: background 0.3s;
+}
+
 .form-control:active,
 .form-control:focus,
 .form-control:focus:active {
-    background: var(--bg-light_black);
-    color: var(--bg-white);
-    border: none;
+    background: var(--dark-background);
+    color: var(--white);
+    border: 1px solid var(--dark-background);
+    transition: background 0.3s;
 }
 
+/* Boostrap cards */
 .card {
-    background: var(--bg-light_black);
-    color: var(--bg-white)
+    background: var(--light-background);
+    color: var(--white)
 }
 
+/* Boostrap progress bars */
 .progress {
-    background: var(--bg-gray);
-}
+    background: var(--dark-background);
+    color: var(--white);
 
+}
 .progress-bar {
-    background: var(--bg-yellow);
-    transition: width 2s;
-    transition-timing-function: linear;
+    background: var(--yellow);
+    color: var(--white);
 }
 
