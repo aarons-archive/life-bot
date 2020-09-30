@@ -154,7 +154,7 @@ class Dev(commands.Cog):
                        f'{events_total} socket events observed at a rate of {events_per_second} per second.\n']
 
         for event, count in event_stats.items():
-            description.append(f'{event:28} | {count}')
+            description.append(f'{event:29} | {count}')
 
         description.append('```')
 
