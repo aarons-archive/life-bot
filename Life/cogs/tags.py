@@ -78,7 +78,7 @@ class Tags(commands.Cog):
 
         await ctx.send(discord.utils.escape_markdown(tags[0]['content']))
 
-    @tag.command(name='create', aliases=['make'])
+    @tag.command(name='create', aliases=['make', 'add'])
     async def tag_create(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content) -> None:
         """
         Create a tag.
