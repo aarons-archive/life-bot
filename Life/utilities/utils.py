@@ -12,16 +12,13 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import datetime as dt
+import functools
 import typing
 
-import ctparse
-import ctparse.types
-import dateparser.search
 import discord
 import humanize
-import pytz
-
-from utilities import exceptions
+import pendulum
+import pendulum.exceptions
 
 
 class Utils:
@@ -103,18 +100,6 @@ class Utils:
             discord.ContentFilter.all_members: 'All members',
         }
 
-        self.dateparser_settings = {
-            'PREFER_DATES_FROM': 'future',
-            'PREFER_DAY_OF_MONTH': 'first',
-            'PARSERS': ['relative-time', 'absolute-time', 'timestamp', 'base-formats'],
-            'PREFER_LANGUAGE_DATE_ORDER': False,
-            'RETURN_AS_TIMEZONE_AWARE': True,
-            'DATE_ORDER': 'DMY',
-        }
-
-    def ordinal(self, *, day: int) -> str:
-        return f'{day}{"tsnrhtdd"[(day // 10 % 10 != 1) * (day % 10 < 4) * day % 10::4]}'
-
     def format_seconds(self, *, seconds: int, friendly: bool = False) -> str:
 
         minute, second = divmod(seconds, 60)
@@ -128,38 +113,80 @@ class Utils:
 
         return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
 
-    def format_datetime(self, *, datetime: dt.datetime) -> str:
-        return datetime.strftime(f'%A {self.ordinal(day=datetime.day)} %B %Y at %H:%M%p %Z (%z)')
+    def convert_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> pendulum.datetime:
 
-    def format_time_difference(self, *, datetime: dt.datetime, suppress: typing.List[str] = None) -> str:
+        if isinstance(datetime, dt.datetime):
+            datetime = pendulum.instance(datetime)
+
+        return datetime
+
+    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> str:
+        return self.convert_datetime(datetime=datetime).format('dddd Do [of] MMMM YYYY [at] HH:mm A (zzZZ)')
+
+    def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
 
         if suppress is None:
-            suppress = ['minutes', 'seconds']
+            suppress = ['seconds']
 
-        return humanize.precisedelta(datetime.now(tz=pytz.UTC) - datetime, format='%0.0f', suppress=suppress)
+        return humanize.precisedelta(pendulum.now(tz='Europe/London').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
 
-    def parse_to_datetime(self, *, datetime_string: str, timezone=pytz.UTC) -> typing.Tuple[str, dt.datetime]:
+    async def parse_to_datetime(self, *, string: str, timezone=pendulum.timezone('UTC')) -> typing.Optional[dict]:
 
-        settings = self.dateparser_settings.copy()
-        if not timezone.zone == 'UTC':
-            settings['TO_TIMEZONE'] = timezone.zone
+        input_interpretation = None
+        utc_datetime = None
+        localised_datetime = None
 
-        search = dateparser.search.search_dates(datetime_string, languages=['en'], settings=settings)
+        params = [('podstate', 'UnitConversion__More'), ('podstate', 'UnitConversion__Exact forms')]
+        response = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.wolframalpha.query, string, params=params))
 
-        if not search:
+        if response["@success"] == 'true':
 
-            search = ctparse.ctparse(datetime_string)
+            pods = list(response.pods)
+            for index, pod in enumerate(pods):
 
-            if not search or not isinstance(search.resolution, ctparse.types.Time):
-                raise exceptions.ArgumentError('I was not able to find a valid datetime within that query.')
+                if pod['@id'] == 'Input' and index == 0:
+                    input_interpretation = pod['subpod']['plaintext']
 
-            return datetime_string, timezone.localize(search.resolution.dt)
+                if pod['@id'] in ('Result', 'SingleDateFormats'):
 
-        if len(search) > 1:
-            raise exceptions.ArgumentError('Two or more datetimes were detected within that query.')
+                    if 'UnitConversion' in [pod['@id'] for pod in pods]:
+                        continue
 
-        return search[0][0], search[0][1]
+                    try:
+                        utc_datetime = pendulum.parse(pod['subpod']['plaintext'].replace(' | ', ' '), strict=False)
+                    except pendulum.exceptions.ParserError:
+                        print(3)
+                        return None  # TODO Return something better
+                    else:
+                        localised_datetime = utc_datetime.in_timezone(timezone)
 
+                elif pod['@id'] == 'UnitConversion':
+
+                    subpods = pod['subpod']
+                    if pod['@numsubpods'] == '1':
+                        subpods = [pod['subpod']]
+
+                    seconds = [subpod['plaintext'].strip() for subpod in subpods if 'seconds' in subpod['plaintext'].strip()]
+                    if not seconds:
+                        print(2)
+                        return None  # TODO return something better
+
+                    utc_datetime = pendulum.now(tz='UTC').add(seconds=int(seconds[0].strip(' seconds')))
+                    localised_datetime = utc_datetime.in_timezone(timezone)
+
+            if not input_interpretation or not utc_datetime or not localised_datetime:
+                print(1)
+                return None
+
+        data = {
+            'input': string,
+            'input_interpretation': input_interpretation,
+            'results': {
+                'utc_datetime': utc_datetime,
+                'localised_datetime': localised_datetime
+            }
+        }
+        return data
 
 
     def activities(self, *, person: discord.Member) -> str:
