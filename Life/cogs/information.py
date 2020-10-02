@@ -384,7 +384,8 @@ class Information(commands.Cog):
 
         if member is None:
             member = ctx.author
-
+        join_position = sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1
+        
         embed = discord.Embed(colour=self.bot.utils.colours[member.status], title=f'{member}\'s information.')
         embed.description = f'`Discord Name:` {member} {"<:owner:738961071729278987>" if member.id == member.guild.owner.id else ""}\n' \
                             f'`Created on:` {self.bot.utils.format_datetime(datetime=member.created_at.replace(tzinfo=pytz.UTC))}\n' \
@@ -399,6 +400,7 @@ class Information(commands.Cog):
                         value=f'`Server nickname:` {member.nick}\n'
                               f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at.replace(tzinfo=pytz.UTC))}\n'
                               f'`Joined:` {self.bot.utils.format_time_difference(datetime=member.joined_at.replace(tzinfo=pytz.UTC))} ago\n'
+                              f'`Join Position:` {join_position}\n'
                               f'`Top role:` {member.top_role.mention}\n'
                               f'`Role count:` {len(member.roles) - 1}', inline=False)
 
