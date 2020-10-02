@@ -646,11 +646,8 @@ class Music(commands.Cog):
         paginator = await ctx.paginate_embed(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
                                              header='Please choose the number of the track you would like lyrics for:\n')
 
-        def check(msg):
-            return msg.author == ctx.author and msg.channel == ctx.channel
-
         try:
-            response = await self.bot.wait_for('message', check=check, timeout=30.0)
+            response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
 
