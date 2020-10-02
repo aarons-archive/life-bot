@@ -17,48 +17,53 @@ import pytz
 
 class DefaultGuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'starboard_channel', 'starboard_threshold')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason')
 
     def __init__(self) -> None:
 
         self.colour = discord.Colour.gold()
         self.prefixes = []
-        self.starboard_channel = None
-        self.starboard_threshold = 3
+
+        self.blacklisted = False
+        self.blacklisted_reason = 'None'
 
     def __repr__(self) -> str:
-        return f'<DefaultGuildConfig colour={self.colour} prefixes={self.prefixes} >'
+        return f'<DefaultGuildConfig colour=\'{self.colour}\' prefixes={self.prefixes}>'
 
 
 class GuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'starboard_channel', 'starboard_threshold')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason')
 
     def __init__(self, data: dict) -> None:
 
         self.colour = discord.Colour(int(data.get('colour'), 16))
         self.prefixes = data.get('prefixes')
-        self.starboard_channel = data.get('starboard_channel')
-        self.starboard_threshold = data.get('starboard_threshold')
+
+        self.blacklisted = data.get('blacklisted')
+        self.blacklisted_reason = data.get('blacklisted_reason')
 
     def __repr__(self) -> str:
-        return f'<GuildConfig colour={self.colour} prefixes={self.prefixes} >'
+        return f'<GuildConfig colour=\'{self.colour}\' prefixes={self.prefixes}>'
 
 
 class DefaultUserConfig:
 
-    __slots__ = ('colour', 'money', 'timezone', 'timezone_private')
+    __slots__ = ('colour', 'money', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason')
 
     def __init__(self) -> None:
 
         self.colour = discord.Colour.gold()
         self.money = 0
+
         self.timezone = 'UTC'
         self.timezone_private = False
 
+        self.blacklisted = False
+        self.blacklisted_reason = 'None'
+
     def __repr__(self) -> str:
-        timezone = f'timezone=\'{self.timezone}\'' if self.timezone_private is False else ''
-        return f'<DefaultUserConfig colour=\'{self.colour}\' money={self.money} timezone_private={self.timezone_private} {timezone}>'
+        return f'<DefaultUserConfig colour=\'{self.colour}\' money={self.money}>'
 
     @property
     def pytz(self):
@@ -67,18 +72,21 @@ class DefaultUserConfig:
 
 class UserConfig:
 
-    __slots__ = ('colour', 'money', 'timezone', 'timezone_private')
+    __slots__ = ('colour', 'money', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason')
 
     def __init__(self, data: dict) -> None:
 
         self.colour = discord.Colour(int(data.get('colour'), 16))
         self.money = data.get('money')
+
         self.timezone = data.get('timezone')
         self.timezone_private = data.get('timezone_private')
 
+        self.blacklisted = data.get('blacklisted')
+        self.blacklisted_reason = data.get('blacklisted_reason')
+
     def __repr__(self) -> str:
-        timezone = f'timezone=\'{self.timezone}\'' if self.timezone_private is False else ''
-        return f'<UserConfig colour=\'{self.colour}\' money={self.money} timezone_private={self.timezone_private} {timezone}>'
+        return f'<UserConfig colour=\'{self.colour}\' money={self.money}>'
 
     @property
     def pytz(self):

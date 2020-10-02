@@ -11,12 +11,12 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime as dt
 import typing
 from abc import ABC
 
 import discord
 import fuzzywuzzy.process
+import pendulum
 import pytz
 import yarl
 from discord.ext import commands
@@ -24,7 +24,7 @@ from discord.ext import commands
 from utilities import context, exceptions
 
 
-class ChannelEmoji(commands.Converter, ABC):
+class ChannelEmojiConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, channel: discord.abc.GuildChannel) -> str:
 
@@ -50,7 +50,7 @@ class ChannelEmoji(commands.Converter, ABC):
 
 class TimezoneConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str) -> typing.Any:
 
         timezones = [timezone.lower() for timezone in pytz.all_timezones]
         if argument.lower() not in timezones:
@@ -63,8 +63,13 @@ class TimezoneConverter(commands.Converter, ABC):
 
 class DatetimeParser(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str) -> typing.Tuple[str, dt.datetime]:
-        return ctx.bot.utils.parse_to_datetime(datetime_string=argument, timezone=ctx.user_config.pytz)
+    async def convert(self, ctx: context.Context, argument: str) -> typing.Tuple[str, pendulum.datetime, pendulum.datetime]:
+
+        result = await ctx.bot.utils.parse_to_datetime(string=argument, timezone=ctx.user_config.pytz)
+        if not result:
+            raise exceptions.ArgumentError('I was unable to detect a datetime within that query.')
+
+        return result
 
 
 

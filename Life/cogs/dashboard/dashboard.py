@@ -11,7 +11,6 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import os
 
 from discord.ext import commands
@@ -38,9 +37,7 @@ class Dashboard(commands.Cog):
         self.bot.http_server = httpserver.HTTPServer(self.application, xheaders=True)
         self.bot.http_client = http.HTTPClient(bot=self.bot)
 
-        asyncio.create_task(self.initialize())
-
-    async def initialize(self):
+    async def load(self):
 
         self.bot.http_server.bind(self.bot.config.port, '0.0.0.0')
         self.bot.http_server.start()

@@ -11,41 +11,17 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
-
 import discord
 from discord.ext import commands
 
 from bot import Life
-from utilities import checks, context, converters, exceptions, objects
+from utilities import checks, context, converters, exceptions
 
 
 class Config(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
         self.bot = bot
-
-        self.load_task = asyncio.create_task(self.load())
-
-    async def load(self) -> None:
-
-        await self.bot.wait_until_ready()
-
-        guild_configs = await self.bot.db.fetch('SELECT * FROM guild_configs')
-        for guild_config in guild_configs:
-            if self.bot.guild_configs.get(guild_config['guild_id']) is not None:
-                continue
-            self.bot.guild_configs[guild_config['guild_id']] = objects.GuildConfig(data=dict(guild_config))
-
-        print(f'[POSTGRESQL] Loaded guild configs. [{len(guild_configs)} guild(s)]')
-
-        user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
-        for user_config in user_configs:
-            if self.bot.user_configs.get(user_config['user_id']) is not None:
-                continue
-            self.bot.user_configs[user_config['user_id']] = objects.UserConfig(data=dict(user_config))
-
-        print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
 
     @commands.group(name='settings', invoke_without_command=True)
     async def settings(self, ctx: context.Context) -> None:

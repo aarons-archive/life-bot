@@ -35,8 +35,6 @@ class Music(commands.Cog):
         self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_app_id, client_secret=self.bot.config.spotify_secret)
         self.bot.ksoft = ksoftapi.Client(self.bot.config.ksoft_token)
 
-        self.load_task = asyncio.create_task(self.load())
-
     async def load(self) -> None:
 
         for node in self.bot.config.nodes:
@@ -654,7 +652,7 @@ class Music(commands.Cog):
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
 
-        response = await self.bot.clean_content_converter.convert(ctx, response.content)
+        response = await commands.clean_content().convert(ctx=ctx, argument=response.content)
         try:
             response = int(response) - 1
         except ValueError:
