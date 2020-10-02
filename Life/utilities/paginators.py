@@ -99,11 +99,11 @@ class BasePaginator:
         if not self.message:
             return
 
-        if self.delete_when_done:
-            return await self.message.delete()
+        if self.delete_when_done is False:
+            for reaction in self.buttons.keys():
+                await self.message.remove_reaction(reaction, self.bot.user)
 
-        for reaction in self.buttons.keys():
-            await self.message.remove_reaction(reaction, self.bot.user)
+        return await self.stop(delete=self.delete_when_done)
 
     async def first(self) -> None:
         pass
@@ -111,7 +111,7 @@ class BasePaginator:
     async def backward(self) -> None:
         pass
 
-    async def stop(self) -> None:
+    async def stop(self, delete: bool = True) -> None:
         pass
 
     async def forward(self) -> None:
@@ -150,11 +150,13 @@ class Paginator(BasePaginator):
         self.page -= 1
         await self.message.edit(content=f'{self.codeblock_start}{self.header}{self.pages[self.page]}{self.footer}{self.codeblock_end}')
 
-    async def stop(self) -> None:
+    async def stop(self, delete: bool = True) -> None:
 
         self.task_loop.cancel()
         self.looping = False
-        self.message = await self.message.delete()
+
+        if delete is True:
+            self.message = await self.message.delete()
 
     async def forward(self) -> None:
 
@@ -225,11 +227,13 @@ class EmbedPaginator(BasePaginator):
         self.embed.set_footer(text=self.embed_footer)
         await self.message.edit(embed=self.embed)
 
-    async def stop(self) -> None:
+    async def stop(self, delete: bool = True) -> None:
 
         self.task_loop.cancel()
         self.looping = False
-        self.message = await self.message.delete()
+
+        if delete is True:
+            self.message = await self.message.delete()
 
     async def forward(self) -> None:
 
@@ -326,11 +330,11 @@ class EmbedsPaginator:
         if not self.message:
             return
 
-        if self.delete_when_done:
-            return await self.message.delete()
+        if self.delete_when_done is False:
+            for reaction in self.buttons.keys():
+                await self.message.remove_reaction(reaction, self.bot.user)
 
-        for reaction in self.buttons.keys():
-            await self.message.remove_reaction(reaction, self.bot.user)
+        return await self.stop(delete=self.delete_when_done)
 
     async def paginate(self) -> None:
 
@@ -350,11 +354,13 @@ class EmbedsPaginator:
 
         await self.message.edit(embed=self.entries[self.page])
 
-    async def stop(self) -> None:
+    async def stop(self, delete: bool = True) -> None:
 
         self.task_loop.cancel()
         self.looping = False
-        self.message = await self.message.delete()
+
+        if delete is True:
+            self.message = await self.message.delete()
 
     async def forward(self) -> None:
 
