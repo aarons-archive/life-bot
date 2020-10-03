@@ -37,23 +37,41 @@ class UserConfigManager:
     def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
         return self.configs.get(user_id, self.default_user_config)
 
+    async def create_user_config(self, *, user_id: int) -> objects.UserConfig:
 
+        data = await self.bot.db.fetchrow('INSERT INTO user_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
+        self.configs[user_id] = objects.UserConfig(data=dict(data))
 
+        return self.get_user_config(user_id=user_id)
 
-    async def set_user_config(self, *, user: typing.Union[discord.User, discord.Member], attribute: str, value: typing.Any, operation: str = 'add') -> None:
+    async def edit_user_config(self, *, user_id: int, attribute: str, value: typing.Any = None, operation: str = 'set') -> objects.UserConfig:
 
-        user_config = self.get_user_config(user=user)
+        user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
-            query = 'INSERT INTO user_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *'
-            data = await self.db.fetchrow(query, user.id)
-            self.user_configs[user.id] = objects.UserConfig(data=dict(data))
+            user_config = await self.create_user_config(user_id=user_id)
 
         if attribute == 'colour':
-            query = 'UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING *'
-            data = await self.db.fetchrow(query, value, user.id)
+            data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', value, user_id)
             user_config.colour = discord.Colour(int(data['colour'], 16))
 
         elif attribute == 'timezone':
-            query = 'UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING *'
-            data = await self.db.fetchrow(query, value, user.id)
+            data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id)
             user_config.timezone = data['timezone']
+
+        elif attribute == 'timezone_private':
+            data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', value, user_id)
+            user_config.timezone_private = data['timezone_private']
+
+        elif attribute == 'blacklist':
+
+            if operation == 'set':
+                query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
+                data = await self.bot.db.fetchrow(query, True, value, user_id)
+            else:
+                query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
+                data = await self.bot.db.fetchrow(query, False, 'None', user_id)
+
+            user_config.blacklisted = data['blacklisted']
+            user_config.blacklisted_reason = data['blacklisted_reason']
+
+        return user_config
