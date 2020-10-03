@@ -14,8 +14,9 @@ You should have received a copy of the GNU Affero General Public License along w
 import typing
 
 import discord
+import pendulum
 
-from utilities import objects
+from utilities import exceptions, objects
 
 
 class UserConfigManager:
@@ -44,22 +45,49 @@ class UserConfigManager:
 
         return self.get_user_config(user_id=user_id)
 
-    async def edit_user_config(self, *, user_id: int, attribute: str, value: typing.Any = None, operation: str = 'set') -> objects.UserConfig:
+    async def edit_user_config(self, *, user_id: int, attribute: str, operation: str = 'set', value: typing.Any = None) -> objects.UserConfig:
 
         user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.create_user_config(user_id=user_id)
 
         if attribute == 'colour':
-            data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', value, user_id)
+
+            query = 'UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour'
+
+            if operation == 'set':
+                data = await self.bot.db.fetchrow(query, value, user_id)
+            elif operation == 'reset':
+                data = await self.bot.db.fetchrow(query, f'0x{str(discord.Colour.gold()).strip("#")}', user_id)
+            else:
+                raise exceptions.LifeError('Invalid operation code.')
+
             user_config.colour = discord.Colour(int(data['colour'], 16))
 
         elif attribute == 'timezone':
-            data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id)
-            user_config.timezone = data['timezone']
+
+            query = 'UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone'
+
+            if operation == 'set':
+                data = await self.bot.db.fetchrow(query, value, user_id)
+            elif operation == 'reset':
+                data = await self.bot.db.fetchrow(query, 'UTC', user_id)
+            else:
+                raise exceptions.LifeError('Invalid operation code.')
+
+            user_config.timezone = pendulum.timezone(data['timezone'])
 
         elif attribute == 'timezone_private':
-            data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', value, user_id)
+
+            query = 'UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private'
+
+            if operation == 'set':
+                data = await self.bot.db.fetchrow(query, True, user_id)
+            elif operation == 'reset':
+                data = await self.bot.db.fetchrow(query, False, user_id)
+            else:
+                raise exceptions.LifeError('Invalid operation code.')
+
             user_config.timezone_private = data['timezone_private']
 
         elif attribute == 'blacklist':
@@ -67,9 +95,11 @@ class UserConfigManager:
             if operation == 'set':
                 query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
                 data = await self.bot.db.fetchrow(query, True, value, user_id)
-            else:
+            elif operation == 'reset':
                 query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
                 data = await self.bot.db.fetchrow(query, False, 'None', user_id)
+            else:
+                raise exceptions.LifeError('Invalid operation code.')
 
             user_config.blacklisted = data['blacklisted']
             user_config.blacklisted_reason = data['blacklisted_reason']
