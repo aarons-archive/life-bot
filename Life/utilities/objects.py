@@ -12,8 +12,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import discord
-import pytz
-
+import pendulum
 
 class DefaultGuildConfig:
 
@@ -56,7 +55,7 @@ class DefaultUserConfig:
         self.colour = discord.Colour.gold()
         self.money = 0
 
-        self.timezone = 'UTC'
+        self.timezone = pendulum.timezone('UTC')
         self.timezone_private = False
 
         self.blacklisted = False
@@ -64,10 +63,6 @@ class DefaultUserConfig:
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig colour=\'{self.colour}\' money={self.money}>'
-
-    @property
-    def pytz(self):
-        return pytz.timezone(self.timezone)
 
 
 class UserConfig:
@@ -79,7 +74,7 @@ class UserConfig:
         self.colour = discord.Colour(int(data.get('colour'), 16))
         self.money = data.get('money')
 
-        self.timezone = data.get('timezone')
+        self.timezone = pendulum.timezone(data.get('timezone'))
         self.timezone_private = data.get('timezone_private')
 
         self.blacklisted = data.get('blacklisted')
@@ -87,7 +82,3 @@ class UserConfig:
 
     def __repr__(self) -> str:
         return f'<UserConfig colour=\'{self.colour}\' money={self.money}>'
-
-    @property
-    def pytz(self):
-        return pytz.timezone(self.timezone)
