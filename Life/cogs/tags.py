@@ -11,10 +11,8 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import datetime
-
 import discord
-import pytz
+import pendulum
 from discord.ext import commands
 
 from bot import Life
@@ -94,7 +92,8 @@ class Tags(commands.Cog):
         if len(str(content)) > 1024:
             raise exceptions.ArgumentError('Your tag content can not be more than 1024 characters.')
 
-        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, name, content, None, datetime.now(pytz.UTC))
+        query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
+        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name, content, None, pendulum.now(tz=pendulum.timezone("UTC")))
 
         embed = discord.Embed(colour=ctx.colour, title='Tag created:')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
@@ -164,7 +163,8 @@ class Tags(commands.Cog):
         if not original_tag:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{original}`.')
 
-        await self.bot.db.execute('INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)', ctx.author.id, ctx.guild.id, alias, None, original, datetime.now(pytz.UTC))
+        query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
+        await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, pendulum.now(tz=pendulum.timezone('UTC')))
 
         embed = discord.Embed(colour=ctx.colour, title='Tag alias created:')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
