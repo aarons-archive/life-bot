@@ -12,7 +12,6 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import datetime as dt
-import functools
 import typing
 
 import discord
@@ -128,65 +127,7 @@ class Utils:
         if suppress is None:
             suppress = ['seconds']
 
-        return humanize.precisedelta(pendulum.now(tz='Europe/London').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
-
-    async def parse_to_datetime(self, *, string: str, timezone=pendulum.timezone('UTC')) -> typing.Optional[dict]:
-
-        input_interpretation = None
-        utc_datetime = None
-        localised_datetime = None
-
-        params = [('podstate', 'UnitConversion__More'), ('podstate', 'UnitConversion__Exact forms')]
-        response = await self.bot.loop.run_in_executor(None, functools.partial(self.bot.wolframalpha.query, string, params=params))
-
-        if response["@success"] == 'true':
-
-            pods = list(response.pods)
-            for index, pod in enumerate(pods):
-
-                if pod['@id'] == 'Input' and index == 0:
-                    input_interpretation = pod['subpod']['plaintext']
-
-                if pod['@id'] in ('Result', 'SingleDateFormats'):
-
-                    if 'UnitConversion' in [pod['@id'] for pod in pods]:
-                        continue
-
-                    try:
-                        utc_datetime = pendulum.parse(pod['subpod']['plaintext'].replace(' | ', ' '), strict=False)
-                    except pendulum.exceptions.ParserError:
-                        print(3)
-                        return None  # TODO Return something better
-                    else:
-                        localised_datetime = utc_datetime.in_timezone(timezone)
-
-                elif pod['@id'] == 'UnitConversion':
-
-                    subpods = pod['subpod']
-                    if pod['@numsubpods'] == '1':
-                        subpods = [pod['subpod']]
-
-                    seconds = [subpod['plaintext'].strip() for subpod in subpods if 'seconds' in subpod['plaintext'].strip()]
-                    if not seconds:
-                        print(2)
-                        return None  # TODO return something better
-
-                    utc_datetime = pendulum.now(tz='UTC').add(seconds=int(seconds[0].strip(' seconds')))
-                    localised_datetime = utc_datetime.in_timezone(timezone)
-
-            if not input_interpretation or not utc_datetime or not localised_datetime:
-                print(1)
-                return None
-
-        data = {
-            'input': string,
-            'input_interpretation': input_interpretation,
-            'results': {
-                'utc_datetime': utc_datetime,
-                'localised_datetime': localised_datetime
-            }
-        }
-        return data
+        return humanize.precisedelta(pendulum.now(tz='UTC').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
 
 
     def activities(self, *, person: discord.Member) -> str:

@@ -61,18 +61,6 @@ class TimezoneConverter(commands.Converter, ABC):
         return pendulum.timezone(argument)
 
 
-class DatetimeParser(commands.Converter, ABC):
-
-    async def convert(self, ctx: context.Context, argument: str) -> typing.Tuple[str, pendulum.datetime, pendulum.datetime]:
-
-        result = await ctx.bot.utils.parse_to_datetime(string=argument, timezone=ctx.user_config.pytz)
-        if not result:
-            raise exceptions.ArgumentError('I was unable to detect a datetime within that query.')
-
-        return result
-
-
-
 class User(commands.UserConverter):
 
     async def convert(self, ctx: context.Context, argument: str) -> discord.User:
