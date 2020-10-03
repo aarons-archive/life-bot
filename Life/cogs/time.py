@@ -14,7 +14,6 @@ import asyncio
 
 import discord
 import pendulum
-import pytz
 import wolframalpha
 from discord.ext import commands
 
@@ -35,7 +34,7 @@ class Time(commands.Cog):
         Displays a list of timezones that can be used with the bot.
         """
 
-        await ctx.paginate_embed(entries=pytz.all_timezones, per_page=20, title='Available timezones:', url=f'{self.bot.dashboard}timezones')
+        await ctx.paginate_embed(entries=pendulum.timezones, per_page=20, title='Available timezones:', url=f'{self.bot.dashboard}timezones')
 
     @commands.group(name='time', invoke_without_command=True)
     async def time(self, ctx: context.Context, *, timezone: str = None) -> None:
@@ -47,16 +46,15 @@ class Time(commands.Cog):
 
         if not timezone:
             member = ctx.author
-            timezone = ctx.user_config.pytz
-
+            timezone = ctx.user_config.timezone
         else:
             try:
                 member = None
-                timezone = await self.bot.timezone_converter.convert(ctx=ctx, argument=timezone)
+                timezone = await converters.TimezoneConverter().convert(ctx=ctx, argument=timezone)
             except exceptions.ArgumentError as error:
                 try:
-                    member = await self.bot.member_converter.convert(ctx=ctx, argument=timezone)
-                    timezone = self.bot.get_user_config(user=member).pytz
+                    member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
+                    timezone = self.bot.user_manager.get_user_config(user_id=member.id).timezone
                 except commands.BadArgument:
                     raise exceptions.ArgumentError(str(error))
 
@@ -75,8 +73,8 @@ class Time(commands.Cog):
         `timezone`: The timezone to use.
         """
 
-        await self.bot.set_user_config(user=ctx.author, attribute='timezone', value=timezone.zone)
-        await ctx.send(f'Your timezone has been set to `{timezone.zone}`.')
+        await self.bot.user_manager.set_user_config(user_id=ctx.author.id, attribute='timezone', value=timezone.name)
+        await ctx.send(f'Your timezone has been set to `{timezone.name}`.')
 
     @time.command(name='clear')
     async def time_clear(self, ctx: context.Context) -> None:
@@ -84,7 +82,7 @@ class Time(commands.Cog):
         Resets your timezone back to the default (UTC).
         """
 
-        await self.bot.set_user_config(user=ctx.author, attribute='timezone', value='UTC')
+        await self.bot.user_manager.set_user_config(user_id=ctx.author.id, attribute='timezone', value='UTC')
         await ctx.send(f'Your timezone has been reset back to the default of `UTC`.')
 
     @commands.group(name='remind', aliases=['reminders'])
