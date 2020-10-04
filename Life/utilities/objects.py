@@ -14,6 +14,7 @@ You should have received a copy of the GNU Affero General Public License along w
 import discord
 import pendulum
 
+
 class DefaultGuildConfig:
 
     __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason')
@@ -70,7 +71,6 @@ class UserConfig:
     __slots__ = ('colour', 'money', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason')
 
     def __init__(self, data: dict) -> None:
-
         self.colour = discord.Colour(int(data.get('colour'), 16))
         self.money = data.get('money')
 
