@@ -10,7 +10,6 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-import asyncio
 
 import discord
 import pendulum
@@ -65,7 +64,7 @@ class Time(commands.Cog):
 
         datetime = self.bot.utils.format_datetime(datetime=pendulum.now(tz=timezone))
 
-        embed = discord.Embed(colour=ctx.user_config.colour, title=f'Time in {timezone.name} {f"({member})" if member else ""}', description=f'```py\n{datetime}\n```')
+        embed = discord.Embed(colour=ctx.colour, title=f'Time in {timezone.name} {f"({member})" if member else ""}', description=f'```py\n{datetime}\n```')
         await ctx.send(embed=embed)
 
     @time.command(name='set')
