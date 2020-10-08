@@ -11,11 +11,9 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import datetime
-
 import discord
+import pendulum
 import prettify_exceptions
-import pytz
 from discord.ext import commands
 
 from bot import Life
@@ -34,22 +32,19 @@ class Events(commands.Cog):
         print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
         self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
-        for guild in self.bot.guilds:
-            if guild.id in self.bot.guild_blacklist:
-                await guild.leave()
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
 
         self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
+        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
-        if guild.id in self.bot.guild_blacklist.keys():
+        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild.id)
+        if guild_config.blacklisted:
             await guild.leave()
 
     @commands.Cog.listener()
@@ -57,8 +52,10 @@ class Events(commands.Cog):
 
         self.bot.log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
-        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a {"blacklisted " if guild.id in self.bot.guild_blacklist.keys() else ""}guild',
+        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild.id)
+
+        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a {"blacklisted " if guild_config.blacklisted else ""}guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
@@ -73,7 +70,7 @@ class Events(commands.Cog):
 
         if message.guild is None:
 
-            time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
+            time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
             info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -84,7 +81,7 @@ class Events(commands.Cog):
 
         if self.bot.user in message.mentions:
 
-            time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
+            time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
             info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -158,29 +155,67 @@ class Events(commands.Cog):
             return
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{ctx.command}`. '
-                           f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.')
+            await ctx.send(f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.')
+            return
+        elif isinstance(error, commands.BadUnionArgument):
+            await ctx.send(f'I was unable to convert the `{error.param}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments '
+                           f'to use.')
             return
 
-        error_messages = {
-            exceptions.ArgumentError: f'{error}',
-            exceptions.ImageError: f'{error}',
-            exceptions.VoiceError: f'{error}',
-            commands.CheckFailure: f'{error}',
-            NodeNotFound: f'There are no lavalink nodes available right now.',
-            commands.TooManyArguments: f'You used too many parameters for the command `{ctx.command}`. Use `{self.bot.config.prefix}help {ctx.command}` for '
-                                       f'more information on what parameters to use.',
-            commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
-                                  f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
-            commands.BadUnionArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
-                                       f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
-            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be ran in a NSFW channel.',
-            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
-            commands.ExpectedClosingQuoteError: f'You missed a closing quote in the parameters passed to the `{ctx.command}` command.',
-            commands.UnexpectedQuoteError: f'There was an unexpected quote in the parameters passed to the `{ctx.command}` command.'
-        }
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send(f'The role `{error.missing_role}` is required to run this command.')
+            return
+        elif isinstance(error, commands.BotMissingRole):
+            await ctx.send(f'The bot requires the role `{error.missing_role}` to run this command.')
+            return
+        elif isinstance(error, commands.MissingAnyRole):
+            await ctx.send(f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.')
+            return
+        elif isinstance(error, commands.BotMissingAnyRole):
+            await ctx.send(f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.',)
+            return
+
+        if isinstance(error, commands.BadArgument):
+            error_messages = {
+                commands.MessageNotFound: f'A message for the argument `{error.argument}` was not found.',
+                commands.MemberNotFound: f'A member for the argument `{error.argument}` was not found.',
+                commands.UserNotFound: f'A user for the argument `{error.argument}` was not found.',
+                commands.ChannelNotFound: f'A channel for the argument `{error.argument}` was not found.',
+                commands.RoleNotFound: f'A role for the argument `{error.argument}` was not found.',
+                commands.EmojiNotFound: f'An emoji for the argument `{error.argument}` was not found.',
+
+                commands.ChannelNotReadable: f'I do not have permission to read the channel `{error.argument}`',
+                commands.BadInviteArgument: f'The invite for the argument `{error.argument}` was not valid or is expired.',
+
+                commands.BadBoolArgument: f'The argument `{error.argument}` was not a valid True/False value.',
+                commands.BadColourArgument: f'The argument `{error.argument}` was not a valid colour.',
+                commands.PartialEmojiConversionFailure: f'The argument `{error.argument}` did not match the partial emoji format.',
+            }
+
+        else:
+            error_messages = {
+                exceptions.ArgumentError: f'{error}',
+                exceptions.ImageError: f'{error}',
+                exceptions.VoiceError: f'{error}',
+                NodeNotFound: f'There are no lavalink nodes available right now.',
+
+                commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what argument to use.',
+
+                commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+                commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
+                commands.ExpectedClosingQuoteError: f'There is a missing quote character in the argument you passed.',
+
+                commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
+                                      f'arguments to use.',
+
+                commands.CheckFailure: f'{error}',
+                commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
+                commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
+                commands.NotOwner: f'The command `{ctx.command}` is owner only.',
+                commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
+
+                commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+            }
 
         error_message = error_messages.get(type(error), None)
         if error_message is not None:
@@ -194,7 +229,7 @@ class Events(commands.Cog):
         formatter.theme['_ansi_enabled'] = True
         print(f'\n{"".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
 
-        time = self.bot.utils.format_datetime(datetime=datetime.now(pytz.UTC))
+        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
         info = f'Error in command `{ctx.command}`\n\n{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 

@@ -25,17 +25,17 @@ class Context(commands.Context):
     def user_config(self) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
 
         if not self.author:
-            return self.bot.default_user_config
+            return self.bot.user_manager.default_user_config
 
-        return self.bot.get_user_config(user=self.author)
+        return self.bot.user_manager.get_user_config(user_id=self.author.id)
 
     @property
     def guild_config(self) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
 
         if not self.guild:
-            return self.bot.default_guild_config
+            return self.bot.guild_manager.default_guild_config
 
-        return self.bot.get_guild_config(guild=self.guild)
+        return self.bot.guild_manager.get_guild_config(guild_id=self.guild.id)
 
     @property
     def colour(self) -> discord.Colour:

@@ -11,12 +11,10 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import collections
 import sys
 import time
 
-import asyncpg
 import discord
 import humanize
 import pkg_resources
@@ -24,38 +22,17 @@ import setproctitle
 from discord.ext import commands
 
 from bot import Life
-from utilities import context, exceptions
+from utilities import context, converters, exceptions
 
 
 class Dev(commands.Cog):
 
-    def __init__(self, bot: Life):
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.load_task = asyncio.create_task(self.load())
-
-    async def load(self):
-
-        await self.bot.wait_until_ready()
-
-        blacklisted_guilds = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
-        for guild in blacklisted_guilds:
-            self.bot.guild_blacklist[guild['id']] = guild['reason']
-        print(f'[POSTGRESQL] Loaded guild blacklist. [{len(blacklisted_guilds)} guild(s)]')
-
-        blacklisted_users = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
-        for user in blacklisted_users:
-            self.bot.user_blacklist[user['id']] = user['reason']
-        print(f'[POSTGRESQL] Loaded user blacklist. [{len(blacklisted_users)} user(s)]')
-
-    def cog_check(self, ctx: context.Context):
-
-        if ctx.author.id not in self.bot.config.owner_ids:
-            return False
-        return True
-
+    @commands.is_owner()
     @commands.group(name='dev', hidden=True, invoke_without_command=True)
-    async def dev(self, ctx: context.Context):
+    async def dev(self, ctx: context.Context) -> None:
         """
         Base command for bot developer commands.
 
@@ -69,17 +46,14 @@ class Dev(commands.Cog):
         process_id = self.bot.process.pid
         thread_count = self.bot.process.num_threads()
 
-        description = [f'I am running on the python version **{python_version}** on the OS **{platform}** '
-                       f'using the discord.py version **{discordpy_version}**. '
-                       f'The process is running as **{process_name}** on PID **{process_id}** and is using '
-                       f'**{thread_count}** threads.']
+        description = [f'I am running on the python version **{python_version}** on the OS **{platform}** using the discord.py version **{discordpy_version}**. '
+                       f'The process is running as **{process_name}** on PID **{process_id}** and is using **{thread_count}** threads.']
 
         if isinstance(self.bot, commands.AutoShardedBot):
-            description.append(f'The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can '
-                               f'see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.')
-        else:
-            description.append(f'The bot is not sharded and can see **{len(self.bot.guilds)}** guilds and '
+            description.append(f'The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see **{len(self.bot.guilds)}** guilds and '
                                f'**{len(self.bot.users)}** users.')
+        else:
+            description.append(f'The bot is not sharded and can see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.')
 
         with self.bot.process.oneshot():
 
@@ -89,17 +63,17 @@ class Dev(commands.Cog):
             unique_memory = humanize.naturalsize(memory_info.uss)
             cpu_usage = self.bot.process.cpu_percent(interval=None)
 
-            description.append(f'The process is using **{physical_memory}** of physical memory, **{virtual_memory}** '
-                               f'of virtual memory and **{unique_memory}** of memory that is unique to the process. '
-                               f'It is also using **{cpu_usage}%** of CPU.')
+            description.append(f'The process is using **{physical_memory}** of physical memory, **{virtual_memory}** of virtual memory and **{unique_memory}** of memory '
+                               f'that is unique to the process. It is also using **{cpu_usage}%** of CPU.')
 
         embed = discord.Embed(title=f'{self.bot.user.name} bot information page.', colour=0xF5F5F5)
         embed.description = '\n\n'.join(description)
 
-        return await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
+    @commands.is_owner()
     @dev.command(name='cleanup', aliases=['clean'], hidden=True)
-    async def dev_cleanup(self, ctx: context.Context, limit: int = 50):
+    async def dev_cleanup(self, ctx: context.Context, limit: int = 50) -> None:
         """
         Cleans up the bots messages.
 
@@ -109,39 +83,38 @@ class Dev(commands.Cog):
         prefix = self.bot.config.prefix
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            messages = await ctx.channel.purge(check=lambda m: m.author == ctx.me or m.content.startswith(prefix),
-                                               bulk=True, limit=limit)
+            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me or message.content.startswith(prefix), bulk=True, limit=limit)
         else:
-            messages = await ctx.channel.purge(check=lambda m: m.author == ctx.me, bulk=False, limit=limit)
+            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
-        return await ctx.send(f'I found and deleted `{len(messages)}` of my '
-                              f'message(s) out of the last `{limit}` message(s).', delete_after=3)
+        await ctx.send(f'Found and deleted `{len(messages)}` of my message(s) out of the last `{limit}` message(s).', delete_after=3)
 
-    @dev.command(name='guilds', hidden=True)
-    async def dev_guilds(self, ctx: context.Context, guilds: int = 20):
+    @commands.is_owner()
+    @dev.command(name='guilds', aliases=['guildlist', 'gl'], hidden=True)
+    async def dev_guilds(self, ctx: context.Context, guilds: int = 20) -> None:
         """
-        A list of guilds with the ratio of bots to members.
+        Displays a list of guilds the bot is in.
 
         `guilds`: The amount of guilds to show per page.
         """
 
         entries = []
 
-        for guild in sorted(self.bot.guilds, reverse=True,
-                            key=lambda g: (sum(1 for m in g.members if m.bot) / len(g.members)) * 100):
+        for guild in sorted(self.bot.guilds, reverse=True, key=lambda _guild: (sum(1 for member in _guild.members if member.bot) / len(_guild.members)) * 100):
 
             total = len(guild.members)
             members = sum(1 for m in guild.members if not m.bot)
             bots = sum(1 for m in guild.members if m.bot)
             percent_bots = f'{round((bots / total) * 100, 2)}%'
 
-            entries.append(f'{guild.id:<18} |{total:<9}|{members:<9}|{bots:<9}|{percent_bots:9}|{guild.name}')
+            entries.append(f'{guild.id:<19} |{total:<10}|{members:<10}|{bots:<10}|{percent_bots:10}|{guild.name}')
 
-        header = 'Guild id           |Total    |Members  |Bots     |Percent  |Name\n'
-        return await ctx.paginate(entries=entries, per_page=guilds, header=header, codeblock=True)
+        header = 'Guild id            |Total     |Members   |Bots      |Percent   |Name\n'
+        await ctx.paginate(entries=entries, per_page=guilds, header=header, codeblock=True)
 
+    @commands.is_owner()
     @dev.command(name='socketstats', aliases=['ss'], hidden=True)
-    async def dev_socket_stats(self, ctx: context.Context):
+    async def dev_socket_stats(self, ctx: context.Context) -> None:
         """
         Displays a list of socket event counts since startup.
         """
@@ -150,170 +123,155 @@ class Dev(commands.Cog):
         events_total = sum(event_stats.values())
         events_per_second = round(events_total / round(time.time() - self.bot.start_time))
 
-        description = [f'```py\n'
-                       f'{events_total} socket events observed at a rate of {events_per_second} per second.\n']
+        description = [f'```py\n{events_total} socket events observed at a rate of {events_per_second} per second.\n']
 
         for event, count in event_stats.items():
             description.append(f'{event:29} | {count}')
 
         description.append('```')
 
-        embed = discord.Embed(title=f'{self.bot.user.name} bot socket-stats.', colour=0xF5F5F5)
-        embed.description = '\n'.join(description)
-
-        return await ctx.send(embed=embed)
+        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=ctx.colour, description='\n'.join(description))
+        await ctx.send(embed=embed)
 
     @dev.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
-    async def dev_blacklist(self, ctx: context.Context):
+    async def dev_blacklist(self, ctx: context.Context) -> None:
         """
         Base command for blacklisting.
         """
 
-        return await ctx.send(f'Please choose a valid subcommand. Use `{self.bot.config.prefix}help dev blacklist` '
-                              f'for more information.')
-
-    @dev_blacklist.command(name='reload', hidden=True)
-    async def dev_blacklist_reload(self, ctx: context.Context):
-        """
-        Reload the bots blacklist.
-        """
-
-        await self.load()
-        return await ctx.send('Reloaded the blacklists.')
+        await ctx.send(f'Choose a valid subcommand. Use `{self.bot.config.prefix}help dev blacklist` for more information.')
 
     @dev_blacklist.group(name='user', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_user(self, ctx: context.Context):
+    async def dev_blacklist_user(self, ctx: context.Context) -> None:
         """
-        Display a list of all blacklisted users.
+        Display a list of blacklisted users.
         """
 
+        blacklist = {user_id: user_config for user_id, user_config in self.bot.user_manager.configs.items() if user_config.blacklisted is True}
         blacklisted = []
-        blacklist = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'user')
 
         if not blacklist:
-            return await ctx.send('No blacklisted users.')
+            raise exceptions.ArgumentError('There are no blacklisted users.')
 
-        for entry in blacklist:
+        for user_id, user_config in blacklist.items():
             try:
-                user = await self.bot.fetch_user(entry['id'])
+                user = await self.bot.fetch_user(user_id)
+                blacklisted.append(f'{user.id:<19} |{user.name:<32} |{user_config.blacklisted_reason}')
             except discord.NotFound:
-                blacklisted.append(f'{entry["id"]:<18} | {"Not found":<32} | {entry["reason"]}')
-            else:
-                blacklisted.append(f'{user.id:<18} |{user.name:<32} |{entry["reason"]}')
+                blacklisted.append(f'{user_id:<19} |{"Not found":<32} |{user_config.blacklisted_reason}')
 
-        header = 'User id            |Name                             |Reason\n'
-        return await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
+        header = 'User id             |Name                             |Reason\n'
+        await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_user.command(name='add', hidden=True)
-    async def dev_blacklist_user_add(self, ctx: context.Context, user_id: int, *, reason: str = None):
+    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.User, *, reason: str = None) -> None:
         """
-        Add a user to the blacklist.
+        Blacklist a user.
 
-        `user_id`: The users id.
-        `reason`: Why the user is blacklisted.
+        `user`: The user to add to the blacklist.
+        `reason`: Reason why the user is being blacklisted.
         """
-
-        try:
-            user = await self.bot.fetch_user(user_id)
-        except discord.NotFound:
-            raise exceptions.ArgumentError(f'User with id `{user_id}` was not found.')
 
         if not reason:
             reason = user.name
 
-        try:
-            self.bot.user_blacklist[user.id] = reason
-            await self.bot.db.execute('INSERT INTO blacklist VALUES ($1, $2, $3)', user.id, 'user', reason)
-            return await ctx.send(f'User: `{user.name} - {user.id}` has been blacklisted with reason `{reason}`')
+        user_config = self.bot.user_manager.get_user_config(user_id=user.id)
+        if user_config.blacklisted is True:
+            raise exceptions.ArgumentError(f'`{user} - {user.id}` is already blacklisted.')
 
-        except asyncpg.UniqueViolationError:
-            raise exceptions.ArgumentError(f'User with id `{user.id}` is already blacklisted.')
+        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='set', value=reason)
+        await ctx.send(f'`{user} - {user.id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_user.command(name='remove', hidden=True)
-    async def dev_blacklist_user_remove(self, ctx: context.Context, user_id: int):
+    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.User) -> None:
         """
-        Remove a user from the blacklist.
+        Unblacklist a user.
 
-        `user_id`: The users id.
+        `user`: The user to remove from the blacklist.
         """
 
-        if user_id not in self.bot.user_blacklist:
-            raise exceptions.ArgumentError(f'User with id `{user_id}` is not blacklisted.')
+        user_config = self.bot.user_manager.get_user_config(user_id=user.id)
+        if user_config.blacklisted is False:
+            raise exceptions.ArgumentError(f'`{user} - {user.id}` is not blacklisted.')
 
-        del self.bot.user_blacklist[user_id]
-        await self.bot.db.execute('DELETE FROM blacklist WHERE id = $1', user_id)
-
-        try:
-            user = await self.bot.fetch_user(user_id)
-        except discord.NotFound:
-            message = f'User: `{user_id}` has been un-blacklisted'
-        else:
-            message = f'User: `{user.name} - {user.id}` has been un-blacklisted'
-
-        return await ctx.send(message)
+        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='reset')
+        await ctx.send(f'`{user} - {user.id}` is now unblacklisted.')
 
     @dev_blacklist.group(name='guild', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_guild(self, ctx: context.Context):
+    async def dev_blacklist_guild(self, ctx: context.Context) -> None:
         """
-        Display a list of all blacklisted guilds.
+        Display a list of blacklisted guilds.
         """
 
+        blacklist = {guild_id: guild_config for guild_id, guild_config in self.bot.guild_manager.configs.items() if guild_config.blacklisted is True}
         blacklisted = []
-        blacklist = await self.bot.db.fetch('SELECT * FROM blacklist WHERE type = $1', 'guild')
 
         if not blacklist:
-            return await ctx.send('No blacklisted guilds.')
+            raise exceptions.ArgumentError('There are no blacklisted guilds.')
 
-        for entry in blacklist:
-            blacklisted.append(f'{entry["id"]:<18} |{entry["reason"]}')
+        for guild_id, guild_config in blacklist.items():
+            guild = self.bot.get_guild(guild_id)
+            if guild is not None:
+                blacklisted.append(f'{guild.id:<19} |{guild.name:<32} |{guild_config.blacklisted_reason}')
+            else:
+                blacklisted.append(f'{guild_id:<19} |{"Not found":<32} |{guild_config.blacklisted_reason}')
 
-        header = 'Guild id           |Reason\n'
-        return await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
+        header = 'Guild id            |Name                             |Reason\n'
+        await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_guild.command(name='add', hidden=True)
-    async def dev_blacklist_guild_add(self, ctx: context.Context, guild_id: int, *, reason: str = None):
+    async def dev_blacklist_guild_add(self, ctx: context.Context, guild_id: int, *, reason: str = None) -> None:
         """
         Add a guild to the blacklist.
 
-        `guild_id`: The guilds id.
-        `reason`: Why the guild is blacklisted.
+        `guild`: The guild to add to the blacklist.
+        `reason`: Reason why the guild is being blacklisted.
         """
 
-        try:
-            guild = await self.bot.fetch_guild(guild_id)
-        except discord.Forbidden:
-            pass
-        else:
+        if 17 > guild_id > 20:
+            raise exceptions.ArgumentError('That is not a valid guild id.')
+
+        guild = self.bot.get_guild(guild_id)
+
+        if guild:
+            guild_name = guild.name
             if not reason:
                 reason = f'{guild.name}'
-            await guild.leave()
+        else:
+            guild_name = 'Not found'
+            if not reason:
+                reason = 'No reason'
 
-        if not reason:
-            reason = 'No reason'
+        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
+        if guild_config.blacklisted is True:
+            raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is already blacklisted.')
 
-        try:
-            self.bot.guild_blacklist[guild_id] = reason
-            await self.bot.db.execute('INSERT INTO blacklist VALUES ($1, $2, $3)', guild_id, 'guild', reason)
-            return await ctx.send(f'Guild: `{guild_id}` has been blacklisted with reason `{reason}`')
-
-        except asyncpg.UniqueViolationError:
-            raise exceptions.ArgumentError(f'Guild with id `{guild_id}` is already blacklisted.')
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='set', value=reason)
+        await ctx.send(f'The guild `{guild_name} - {guild_id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_guild.command(name='remove', hidden=True)
-    async def dev_blacklist_guild_remove(self, ctx: context.Context, guild_id: int):
+    async def dev_blacklist_guild_remove(self, ctx: context.Context, guild_id: int) -> None:
         """
-        Remove a guild from the blacklist.
+        Unblacklist a guild.
 
-        `guild_id`: The guilds id.
+        `guild`: The guild to remove from the blacklist.
         """
 
-        if guild_id not in self.bot.guild_blacklist:
-            raise exceptions.ArgumentError(f'Guild with id `{guild_id}` is not blacklisted.')
+        if 17 > guild_id > 20:
+            raise exceptions.ArgumentError('That is not a valid guild id.')
 
-        del self.bot.guild_blacklist[guild_id]
-        await self.bot.db.execute('DELETE FROM blacklist WHERE id = $1', guild_id)
+        guild = self.bot.get_guild(guild_id)
+        if guild:
+            guild_name = guild.name
+        else:
+            guild_name = 'Not found'
 
-        return await ctx.send(f'Guild: `{guild_id}` has been un-blacklisted.')
+        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
+        if guild_config.blacklisted is False:
+            raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is not blacklisted.')
+
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='reset')
+        await ctx.send(f'The guild `{guild_name} - {guild_id}` is now unblacklisted.')
 
 
 def setup(bot):

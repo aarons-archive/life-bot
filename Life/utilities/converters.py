@@ -11,20 +11,19 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime as dt
 import typing
 from abc import ABC
 
 import discord
 import fuzzywuzzy.process
-import pytz
+import pendulum
 import yarl
 from discord.ext import commands
 
 from utilities import context, exceptions
 
 
-class ChannelEmoji(commands.Converter, ABC):
+class ChannelEmojiConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, channel: discord.abc.GuildChannel) -> str:
 
@@ -50,21 +49,36 @@ class ChannelEmoji(commands.Converter, ABC):
 
 class TimezoneConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str):
+    async def convert(self, ctx: context.Context, argument: str) -> typing.Any:
 
-        timezones = [timezone.lower() for timezone in pytz.all_timezones]
+        timezones = [timezone.lower() for timezone in pendulum.timezones]
+
         if argument.lower() not in timezones:
-            matches = fuzzywuzzy.process.extract(query=argument.lower(), choices=pytz.all_timezones, limit=5)
+            matches = fuzzywuzzy.process.extract(query=argument.lower(), choices=pendulum.timezones, limit=5)
             extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
             raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
 
-        return pytz.timezone(argument)
+        return pendulum.timezone(argument)
 
 
-class DatetimeParser(commands.Converter, ABC):
+class Prefix(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str) -> typing.Tuple[str, dt.datetime]:
-        return ctx.bot.utils.parse_to_datetime(datetime_string=argument, timezone=ctx.user_config.pytz)
+    async def convert(self, ctx: context.Context, argument: str) -> str:
+
+        argument = await super().convert(ctx, argument)
+        argument = discord.utils.escape_markdown(argument)
+
+        if not argument:
+            raise commands.BadArgument
+
+        if '`' in argument:
+            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
+        if len(argument) > 15:
+            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
+
+        return argument
+
+
 
 
 
@@ -105,24 +119,6 @@ class TagName(commands.clean_content):
             raise exceptions.ArgumentError('Your tag name can not contain backtick characters.')
         if len(argument) < 3 or len(argument) > 50:
             raise exceptions.ArgumentError('Your tag name must be between 3 and 50 characters long.')
-
-        return argument
-
-
-class Prefix(commands.clean_content):
-
-    async def convert(self, ctx: context.Context, argument: str) -> str:
-
-        argument = await super().convert(ctx, argument)
-        argument = discord.utils.escape_markdown(argument)
-
-        if not argument:
-            raise commands.BadArgument
-
-        if '`' in argument:
-            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
-        if len(argument) > 15:
-            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
 
         return argument
 

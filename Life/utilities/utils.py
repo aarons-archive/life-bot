@@ -14,14 +14,10 @@ You should have received a copy of the GNU Affero General Public License along w
 import datetime as dt
 import typing
 
-import ctparse
-import ctparse.types
-import dateparser.search
 import discord
 import humanize
-import pytz
-
-from utilities import exceptions
+import pendulum
+import pendulum.exceptions
 
 
 class Utils:
@@ -103,18 +99,6 @@ class Utils:
             discord.ContentFilter.all_members: 'All members',
         }
 
-        self.dateparser_settings = {
-            'PREFER_DATES_FROM': 'future',
-            'PREFER_DAY_OF_MONTH': 'first',
-            'PARSERS': ['relative-time', 'absolute-time', 'timestamp', 'base-formats'],
-            'PREFER_LANGUAGE_DATE_ORDER': False,
-            'RETURN_AS_TIMEZONE_AWARE': True,
-            'DATE_ORDER': 'DMY',
-        }
-
-    def ordinal(self, *, day: int) -> str:
-        return f'{day}{"tsnrhtdd"[(day // 10 % 10 != 1) * (day % 10 < 4) * day % 10::4]}'
-
     def format_seconds(self, *, seconds: int, friendly: bool = False) -> str:
 
         minute, second = divmod(seconds, 60)
@@ -128,38 +112,22 @@ class Utils:
 
         return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
 
-    def format_datetime(self, *, datetime: dt.datetime) -> str:
-        return datetime.strftime(f'%A {self.ordinal(day=datetime.day)} %B %Y at %H:%M%p %Z (%z)')
+    def convert_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> pendulum.datetime:
 
-    def format_time_difference(self, *, datetime: dt.datetime, suppress: typing.List[str] = None) -> str:
+        if isinstance(datetime, dt.datetime):
+            datetime = pendulum.instance(datetime)
+
+        return datetime
+
+    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> str:
+        return self.convert_datetime(datetime=datetime).format('dddd Do [of] MMMM YYYY [at] HH:mm A (zzZZ)')
+
+    def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
 
         if suppress is None:
-            suppress = ['minutes', 'seconds']
+            suppress = ['seconds']
 
-        return humanize.precisedelta(datetime.now(tz=pytz.UTC) - datetime, format='%0.0f', suppress=suppress)
-
-    def parse_to_datetime(self, *, datetime_string: str, timezone=pytz.UTC) -> typing.Tuple[str, dt.datetime]:
-
-        settings = self.dateparser_settings.copy()
-        if not timezone.zone == 'UTC':
-            settings['TO_TIMEZONE'] = timezone.zone
-
-        search = dateparser.search.search_dates(datetime_string, languages=['en'], settings=settings)
-
-        if not search:
-
-            search = ctparse.ctparse(datetime_string)
-
-            if not search or not isinstance(search.resolution, ctparse.types.Time):
-                raise exceptions.ArgumentError('I was not able to find a valid datetime within that query.')
-
-            return datetime_string, timezone.localize(search.resolution.dt)
-
-        if len(search) > 1:
-            raise exceptions.ArgumentError('Two or more datetimes were detected within that query.')
-
-        return search[0][0], search[0][1]
-
+        return humanize.precisedelta(pendulum.now(tz='UTC').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
 
 
     def activities(self, *, person: discord.Member) -> str:
