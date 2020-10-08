@@ -61,6 +61,27 @@ class TimezoneConverter(commands.Converter, ABC):
         return pendulum.timezone(argument)
 
 
+class Prefix(commands.clean_content):
+
+    async def convert(self, ctx: context.Context, argument: str) -> str:
+
+        argument = await super().convert(ctx, argument)
+        argument = discord.utils.escape_markdown(argument)
+
+        if not argument:
+            raise commands.BadArgument
+
+        if '`' in argument:
+            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
+        if len(argument) > 15:
+            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
+
+        return argument
+
+
+
+
+
 class User(commands.UserConverter):
 
     async def convert(self, ctx: context.Context, argument: str) -> discord.User:
@@ -98,24 +119,6 @@ class TagName(commands.clean_content):
             raise exceptions.ArgumentError('Your tag name can not contain backtick characters.')
         if len(argument) < 3 or len(argument) > 50:
             raise exceptions.ArgumentError('Your tag name must be between 3 and 50 characters long.')
-
-        return argument
-
-
-class Prefix(commands.clean_content):
-
-    async def convert(self, ctx: context.Context, argument: str) -> str:
-
-        argument = await super().convert(ctx, argument)
-        argument = discord.utils.escape_markdown(argument)
-
-        if not argument:
-            raise commands.BadArgument
-
-        if '`' in argument:
-            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
-        if len(argument) > 15:
-            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
 
         return argument
 
