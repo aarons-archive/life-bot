@@ -396,7 +396,7 @@ class Information(commands.Cog):
         embed.add_field(name='Server related information:',
                         value=f'`Server nickname:` {member.nick}\n'
                               f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at)}\n'
-                              f'`Joined:` {self.bot.utils.format_time_difference(datetime=member.joined_at)} ago\n'
+                              f'`Joined:` {self.bot.utils.format_difference(datetime=member.joined_at)} ago\n'
                               f'`Join Position:` {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}\n'
                               f'`Top role:` {member.top_role.mention}\n'
                               f'`Role count:` {len(member.roles) - 1}', inline=False)
