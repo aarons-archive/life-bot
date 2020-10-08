@@ -11,10 +11,8 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import datetime
-
 import discord
-import pytz
+import pendulum
 from discord.ext import commands
 
 from bot import Life
@@ -59,7 +57,7 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError(f'You have too many todos, try doing some of them before adding more.')
 
         query = 'INSERT INTO todos VALUES ($1, $2, $3, $4)'
-        await self.bot.db.execute(query, ctx.author.id, datetime.now(pytz.UTC), content, ctx.message.jump_url)
+        await self.bot.db.execute(query, ctx.author.id, pendulum.now(tz=pendulum.timezone('UTC')), content, ctx.message.jump_url)
 
         embed = discord.Embed(title='Your todo was created.', colour=ctx.colour)
         embed.add_field(name='Content:', value=content)

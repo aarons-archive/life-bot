@@ -13,7 +13,6 @@ You should have received a copy of the GNU Affero General Public License along w
 
 import codecs
 import collections
-import datetime as dt
 import inspect
 import os
 import pathlib
@@ -22,7 +21,6 @@ import typing
 
 import discord
 import psutil
-import pytz
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
@@ -103,7 +101,7 @@ class Information(commands.Cog):
                         value=f'[Invite me]({self.bot.invite}) | [Support server]({self.bot.support}) | '
                               f'[Source code]({self.bot.github})')
 
-        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=self.bot.user.created_at.replace(tzinfo=pytz.UTC))}')
+        embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=self.bot.user.created_at)}')
         return await ctx.send(embed=embed)
 
     @commands.command(name='system', aliases=['sys'])
@@ -281,8 +279,8 @@ class Information(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f"{guild.name}'s information.")
         embed.description = f'`Owner:` {guild.owner}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=guild.created_at.replace(tzinfo=pytz.UTC))}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=guild.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=guild.created_at)}\n' \
+                            f'`Created:` {self.bot.utils.format_difference(datetime=guild.created_at)} ago\n' \
                             f'`Members:` {guild.member_count} | ' \
                             f'<:online:737824551471284356>{statuses[discord.Status.online]} | <:away:627627415119724554>{statuses[discord.Status.idle]} | ' \
                             f'<:dnd:627627404784828416>{statuses[discord.Status.dnd]} | <:offline:627627415144890389>{statuses[discord.Status.offline]}\n' \
@@ -322,13 +320,13 @@ class Information(commands.Cog):
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
         for channel in sorted(channels, key=lambda channel: channel.position):
-            entries.append(f'{await self.bot.channel_emoji_converter.convert(ctx=ctx, channel=channel)}{channel}')
+            entries.append(f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
 
         for category in sorted(categories, key=lambda category: category.position):
             entries.append(f'<:category:738960756233601097> **{category}**')
             for channel in category.channels:
                 space = '\u200b ' * 4
-                entries.append(f'{space}{await self.bot.channel_emoji_converter.convert(ctx=ctx, channel=channel)}{channel}')
+                entries.append(f'{space}{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
 
         return await ctx.paginate_embed(entries=entries, per_page=30, title='List of channels, categories and voice channels.')
 
@@ -366,8 +364,8 @@ class Information(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{user}\'s information:')
         embed.description = f'`Discord name:` {user}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=user.created_at.replace(tzinfo=pytz.UTC))}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=user.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=user.created_at)}\n' \
+                            f'`Created:` {self.bot.utils.format_difference(datetime=user.created_at)} ago\n' \
                             f'`Badges:` {self.bot.utils.badges(person=user)}\n' \
                             f'`Bot:` {str(user.bot).replace("True", "Yes").replace("False", "No")}'
         embed.set_thumbnail(url=str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png')))
@@ -384,12 +382,11 @@ class Information(commands.Cog):
 
         if member is None:
             member = ctx.author
-        join_position = sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1
         
         embed = discord.Embed(colour=self.bot.utils.colours[member.status], title=f'{member}\'s information.')
         embed.description = f'`Discord Name:` {member} {"<:owner:738961071729278987>" if member.id == member.guild.owner.id else ""}\n' \
-                            f'`Created on:` {self.bot.utils.format_datetime(datetime=member.created_at.replace(tzinfo=pytz.UTC))}\n' \
-                            f'`Created:` {self.bot.utils.format_time_difference(datetime=member.created_at.replace(tzinfo=pytz.UTC))} ago\n' \
+                            f'`Created on:` {self.bot.utils.format_datetime(datetime=member.created_at)}\n' \
+                            f'`Created:` {self.bot.utils.format_difference(datetime=member.created_at)} ago\n' \
                             f'`Badges:` {self.bot.utils.badges(person=member)}\n' \
                             f'`Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}' \
                             f'{"<:phone:738961150343118958>" if member.is_on_mobile() else ""}\n' \
@@ -398,9 +395,9 @@ class Information(commands.Cog):
 
         embed.add_field(name='Server related information:',
                         value=f'`Server nickname:` {member.nick}\n'
-                              f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at.replace(tzinfo=pytz.UTC))}\n'
-                              f'`Joined:` {self.bot.utils.format_time_difference(datetime=member.joined_at.replace(tzinfo=pytz.UTC))} ago\n'
-                              f'`Join Position:` {join_position}\n'
+                              f'`Joined on:` {self.bot.utils.format_datetime(datetime=member.joined_at)}\n'
+                              f'`Joined:` {self.bot.utils.format_difference(datetime=member.joined_at)} ago\n'
+                              f'`Join Position:` {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}\n'
                               f'`Top role:` {member.top_role.mention}\n'
                               f'`Role count:` {len(member.roles) - 1}', inline=False)
 
