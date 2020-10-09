@@ -16,7 +16,7 @@ import json
 import os
 from abc import ABC
 
-import pytz
+import pendulum
 
 from cogs.dashboard.utilities import objects
 from cogs.dashboard.utilities.bases import BaseHTTPHandler
@@ -98,7 +98,7 @@ class Profile(BaseHTTPHandler, ABC):
 class Timezones(BaseHTTPHandler, ABC):
 
     async def get(self):
-        self.render('timezones.html', bot=self.bot, timezones=pytz.all_timezones, user=await self.get_user())
+        self.render('timezones.html', bot=self.bot, timezones=pendulum.timezones, user=await self.get_user())
 
 
 def setup(**kwargs):

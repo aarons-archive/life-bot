@@ -155,29 +155,67 @@ class Events(commands.Cog):
             return
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f'You missed the `{error.param.name}` parameter for the command `{ctx.command}`. '
-                           f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.')
+            await ctx.send(f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.')
+            return
+        elif isinstance(error, commands.BadUnionArgument):
+            await ctx.send(f'I was unable to convert the `{error.param}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments '
+                           f'to use.')
             return
 
-        error_messages = {
-            exceptions.ArgumentError: f'{error}',
-            exceptions.ImageError: f'{error}',
-            exceptions.VoiceError: f'{error}',
-            commands.CheckFailure: f'{error}',
-            NodeNotFound: f'There are no lavalink nodes available right now.',
-            commands.TooManyArguments: f'You used too many parameters for the command `{ctx.command}`. Use `{self.bot.config.prefix}help {ctx.command}` for '
-                                       f'more information on what parameters to use.',
-            commands.BadArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
-                                  f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
-            commands.BadUnionArgument: f'I was unable to understand a parameter that you used for the command `{ctx.command}`. '
-                                       f'Use `{self.bot.config.prefix}help {ctx.command}` for more information on what parameters to use.',
-            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be ran in a NSFW channel.',
-            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
-            commands.ExpectedClosingQuoteError: f'You missed a closing quote in the parameters passed to the `{ctx.command}` command.',
-            commands.UnexpectedQuoteError: f'There was an unexpected quote in the parameters passed to the `{ctx.command}` command.'
-        }
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send(f'The role `{error.missing_role}` is required to run this command.')
+            return
+        elif isinstance(error, commands.BotMissingRole):
+            await ctx.send(f'The bot requires the role `{error.missing_role}` to run this command.')
+            return
+        elif isinstance(error, commands.MissingAnyRole):
+            await ctx.send(f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.')
+            return
+        elif isinstance(error, commands.BotMissingAnyRole):
+            await ctx.send(f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.',)
+            return
+
+        if isinstance(error, commands.BadArgument):
+            error_messages = {
+                commands.MessageNotFound: f'A message for the argument `{error.argument}` was not found.',
+                commands.MemberNotFound: f'A member for the argument `{error.argument}` was not found.',
+                commands.UserNotFound: f'A user for the argument `{error.argument}` was not found.',
+                commands.ChannelNotFound: f'A channel for the argument `{error.argument}` was not found.',
+                commands.RoleNotFound: f'A role for the argument `{error.argument}` was not found.',
+                commands.EmojiNotFound: f'An emoji for the argument `{error.argument}` was not found.',
+
+                commands.ChannelNotReadable: f'I do not have permission to read the channel `{error.argument}`',
+                commands.BadInviteArgument: f'The invite for the argument `{error.argument}` was not valid or is expired.',
+
+                commands.BadBoolArgument: f'The argument `{error.argument}` was not a valid True/False value.',
+                commands.BadColourArgument: f'The argument `{error.argument}` was not a valid colour.',
+                commands.PartialEmojiConversionFailure: f'The argument `{error.argument}` did not match the partial emoji format.',
+            }
+
+        else:
+            error_messages = {
+                exceptions.ArgumentError: f'{error}',
+                exceptions.ImageError: f'{error}',
+                exceptions.VoiceError: f'{error}',
+                NodeNotFound: f'There are no lavalink nodes available right now.',
+
+                commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what argument to use.',
+
+                commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+                commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
+                commands.ExpectedClosingQuoteError: f'There is a missing quote character in the argument you passed.',
+
+                commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
+                                      f'arguments to use.',
+
+                commands.CheckFailure: f'{error}',
+                commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
+                commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
+                commands.NotOwner: f'The command `{ctx.command}` is owner only.',
+                commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
+
+                commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+            }
 
         error_message = error_messages.get(type(error), None)
         if error_message is not None:
