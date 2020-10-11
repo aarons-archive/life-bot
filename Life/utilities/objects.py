@@ -65,6 +65,10 @@ class DefaultUserConfig:
     def __repr__(self) -> str:
         return f'<DefaultUserConfig colour=\'{self.colour}\' money={self.money}>'
 
+    @property
+    def time(self) -> pendulum.datetime:
+        return pendulum.now(tz=self.timezone)
+
 
 class UserConfig:
 
@@ -82,3 +86,7 @@ class UserConfig:
 
     def __repr__(self) -> str:
         return f'<UserConfig colour=\'{self.colour}\' money={self.money}>'
+
+    @property
+    def time(self) -> pendulum.datetime:
+        return pendulum.now(tz=self.timezone)
