@@ -13,6 +13,7 @@ yarl>=1.6.0
 fuzzywuzzy>=0.18.0
 wolframalpha>=4.0.0
 pendulum>=2.1.2
+pillow>=7.2.0
 
 git+git://github.com/Rapptz/discord.py#egg=discord.py
 git+git://github.com/MyNameBeMrRandom/spotify.py.git#egg=spotify.py

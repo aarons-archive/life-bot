@@ -15,11 +15,7 @@ import typing
 
 import discord
 
-<<<<<<< HEAD
-from utilities import objects
-=======
 from utilities import exceptions, objects
->>>>>>> master
 
 
 class GuildConfigManager:
@@ -41,32 +37,6 @@ class GuildConfigManager:
     def get_guild_config(self, *, guild_id: int) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.configs.get(guild_id, self.default_guild_config)
 
-<<<<<<< HEAD
-
-
-    async def set_guild_config(self, *, guild: discord.Guild, attribute: str, value: typing.Any, operation: str = 'add') -> None:
-
-        guild_config = self.get_guild_config(guild=guild)
-        if isinstance(guild_config, objects.DefaultGuildConfig):
-            query = 'INSERT INTO guild_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *'
-            data = await self.db.fetchrow(query, guild.id)
-            self.guild_configs[guild.id] = objects.GuildConfig(data=dict(data))
-
-        if attribute == 'prefix':
-            query = 'UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes'
-            if operation == 'remove':
-                query = 'UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes'
-            if operation == 'clear':
-                query = 'UPDATE guild_configs SET prefixes = $1 WHERE id = $2 RETURNING prefixes'
-
-            data = await self.db.fetchrow(query, value, guild.id)
-            guild_config.prefixes = data['prefixes']
-
-        elif attribute == 'colour':
-            query = 'UPDATE guild_configs SET colour = $1 WHERE id = $2 RETURNING *'
-            data = await self.db.fetchrow(query, value, guild.id)
-            guild_config.colour = discord.Colour(int(data['colour'], 16))
-=======
     async def create_guild_config(self, *, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO guild_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', guild_id)
@@ -121,4 +91,3 @@ class GuildConfigManager:
             guild_config.blacklisted_reason = data['blacklisted_reason']
 
         return guild_config
->>>>>>> master

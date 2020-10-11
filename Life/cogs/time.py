@@ -102,6 +102,16 @@ class Time(commands.Cog):
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='timezone_private', operation='reset')
             await ctx.send('Your timezone is now public.')
 
+    @commands.command(name='timecard')
+    async def timecard(self, ctx: context.Context) -> None:
+        """
+        Creates an image with the timezones of all the servers members.
+        """
+
+        async with ctx.typing():
+            buffer = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
+            await ctx.send(file=discord.File(fp=buffer, filename='timecard.png'))
+
 
 def setup(bot):
     bot.add_cog(Time(bot))
