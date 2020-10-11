@@ -10,11 +10,14 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import io
+import math
+import os
 import typing
 
 import discord
 import pendulum
+from PIL import Image, ImageDraw, ImageFont
 
 from utilities import exceptions, objects
 
@@ -105,3 +108,77 @@ class UserConfigManager:
             user_config.blacklisted_reason = data['blacklisted_reason']
 
         return user_config
+
+    async def create_timecard(self, *, guild_id: int) -> io.BytesIO:
+
+        guild = self.bot.get_guild(guild_id)
+
+        configs = sorted(self.configs.items(), key=lambda kv: kv[1].time.offset_hours)
+        timezone_users = {}
+
+        for user_id, config in configs:
+
+            if config.timezone_private:
+                continue
+
+            user = guild.get_member(user_id)
+            if not user:
+                continue
+
+            if timezone_users.get(config.time.format('HH:mm (ZZ)')) is None:
+                timezone_users[config.time.format('HH:mm (ZZ)')] = [io.BytesIO(await user.avatar_url_as(format='png', size=256).read())]
+
+            else:
+                timezone_users[config.time.format('HH:mm (ZZ)')].append(io.BytesIO(await user.avatar_url_as(format='png', size=256).read()))
+
+        if not timezone_users:
+            raise exceptions.ArgumentError('There are no users with timezones set in this server.')
+
+        buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_users)
+        return buffer
+
+    def create_timecard_image(self, timezone_users: dict) -> io.BytesIO:
+
+        width_x = (1600 * (len(timezone_users.keys()) if len(timezone_users.keys()) < 5 else 5)) + 100
+        height_y = (1800 * math.ceil(len(timezone_users.keys()) / 5)) + 100
+
+        image = Image.new('RGBA', (width_x, height_y), color='#f1c30f')
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype(os.path.join(os.path.dirname(__file__), 'arial.ttf'), 120)
+
+        x = 100
+        y = 100
+
+        for timezone, users in timezone_users.items():
+
+            draw.text((x, y), timezone, font=font, fill='#1b1a1c')
+
+            user_x = x
+            user_y = y + 200
+
+            for user in users[:36]:
+
+                avatar = Image.open(user)
+                avatar = avatar.resize((250, 250))
+
+                image.paste(avatar, (user_x, user_y))
+
+                if user_x < x + 1200:
+                    user_x += 250
+                else:
+                    user_y += 250
+                    user_x = x
+
+            if x > 6400:
+                y += 1800
+                x = 100
+            else:
+                x += 1600
+
+        buffer = io.BytesIO()
+        image.save(buffer, 'png')
+        buffer.seek(0)
+
+        return buffer
+
+
