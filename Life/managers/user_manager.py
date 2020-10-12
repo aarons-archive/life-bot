@@ -180,5 +180,3 @@ class UserConfigManager:
         buffer.seek(0)
 
         return buffer
-
-
