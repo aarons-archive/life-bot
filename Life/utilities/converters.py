@@ -51,10 +51,10 @@ class TimezoneConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> typing.Any:
 
-        timezones = [timezone.lower() for timezone in pendulum.timezones]
+        timezones = [timezone for timezone in pendulum.timezones]
 
-        if argument.lower() not in timezones:
-            matches = fuzzywuzzy.process.extract(query=argument.lower(), choices=pendulum.timezones, limit=5)
+        if argument not in timezones:
+            matches = fuzzywuzzy.process.extract(query=argument, choices=pendulum.timezones, limit=5)
             extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
             raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
 
