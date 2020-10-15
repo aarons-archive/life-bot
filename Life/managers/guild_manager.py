@@ -34,15 +34,15 @@ class GuildConfigManager:
 
         print(f'[POSTGRESQL] Loaded guild configs. [{len(guild_configs)} guild(s)]')
 
-    def get_guild_config(self, *, guild_id: int) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
-        return self.configs.get(guild_id, self.default_guild_config)
-
     async def create_guild_config(self, *, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO guild_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', guild_id)
         self.configs[guild_id] = objects.GuildConfig(data=dict(data))
 
         return self.configs[guild_id]
+
+    def get_guild_config(self, *, guild_id: int) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+        return self.configs.get(guild_id, self.default_guild_config)
 
     async def edit_guild_config(self, *, guild_id: int, attribute: str, operation: str = 'set', value: typing.Any = None) -> objects.GuildConfig:
 

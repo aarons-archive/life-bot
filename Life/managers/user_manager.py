@@ -18,6 +18,7 @@ import typing
 import discord
 import pendulum
 from PIL import Image, ImageDraw, ImageFont
+from discord.ext import tasks
 
 from utilities import exceptions, objects
 
@@ -30,6 +31,26 @@ class UserConfigManager:
         self.default_user_config = objects.DefaultUserConfig()
         self.configs = {}
 
+        self.update_database.start()
+
+    @tasks.loop(minutes=2)
+    async def update_database(self) -> None:
+
+        if not self.configs:
+            return
+
+        need_updating = {user_id: config for user_id, config in self.configs.items() if config.requires_db_update is True}
+
+        async with self.bot.db.acquire(timeout=300) as db:
+            for user_id, user_config in need_updating.items():
+                await db.execute('UPDATE user_configs SET xp = $2 WHERE id = $1', user_id, user_config.xp)
+
+    @update_database.before_loop
+    async def before_update_database(self) -> None:
+        await self.bot.wait_until_ready()
+
+    #
+
     async def load(self) -> None:
 
         user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
@@ -38,15 +59,15 @@ class UserConfigManager:
 
         print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
 
-    def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
-        return self.configs.get(user_id, self.default_user_config)
-
     async def create_user_config(self, *, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO user_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
         self.configs[user_id] = objects.UserConfig(data=dict(data))
 
         return self.get_user_config(user_id=user_id)
+
+    def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
+        return self.configs.get(user_id, self.default_user_config)
 
     async def edit_user_config(self, *, user_id: int, attribute: str, operation: str = 'set', value: typing.Any = None) -> objects.UserConfig:
 
@@ -56,12 +77,10 @@ class UserConfigManager:
 
         if attribute == 'colour':
 
-            query = 'UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour'
-
             if operation == 'set':
-                data = await self.bot.db.fetchrow(query, value, user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', value, user_id)
             elif operation == 'reset':
-                data = await self.bot.db.fetchrow(query, f'0x{str(discord.Colour.gold()).strip("#")}', user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id)
             else:
                 raise exceptions.LifeError('Invalid operation code.')
 
@@ -69,12 +88,10 @@ class UserConfigManager:
 
         elif attribute == 'timezone':
 
-            query = 'UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone'
-
             if operation == 'set':
-                data = await self.bot.db.fetchrow(query, value, user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id)
             elif operation == 'reset':
-                data = await self.bot.db.fetchrow(query, 'UTC', user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
             else:
                 raise exceptions.LifeError('Invalid operation code.')
 
@@ -82,12 +99,10 @@ class UserConfigManager:
 
         elif attribute == 'timezone_private':
 
-            query = 'UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private'
-
             if operation == 'set':
-                data = await self.bot.db.fetchrow(query, True, user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id)
             elif operation == 'reset':
-                data = await self.bot.db.fetchrow(query, False, user_id)
+                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
             else:
                 raise exceptions.LifeError('Invalid operation code.')
 
@@ -107,18 +122,35 @@ class UserConfigManager:
             user_config.blacklisted = data['blacklisted']
             user_config.blacklisted_reason = data['blacklisted_reason']
 
+        elif attribute == 'xp':
+
+            if operation == 'set':
+                user_config.xp = value
+            elif operation == 'add':
+                user_config.xp += value
+            elif operation == 'minus':
+                user_config.xp -= value
+            else:
+                raise exceptions.LifeError('Invalid operation code.')
+
+            user_config.requires_db_update = True
+
         return user_config
+
+    #
 
     async def create_timecard(self, *, guild_id: int) -> io.BytesIO:
 
         guild = self.bot.get_guild(guild_id)
+        if not guild:
+            raise exceptions.ArgumentError('Guild with that id not found.')
 
         configs = sorted(self.configs.items(), key=lambda kv: kv[1].time.offset_hours)
         timezone_users = {}
 
         for user_id, config in configs:
 
-            if config.timezone_private:
+            if config.timezone_private or config.timezone == pendulum.timezone('UTC'):
                 continue
 
             user = guild.get_member(user_id)
@@ -180,3 +212,28 @@ class UserConfigManager:
         buffer.seek(0)
 
         return buffer
+
+    #
+
+    def rank(self, *, guild_id: int, user_id: int) -> int:
+
+        guild = self.bot.get_guild(guild_id)
+        if not guild:
+            raise exceptions.ArgumentError('Guild with that id not found.')
+
+        member = guild.get_member(user_id)
+        if not member:
+            raise exceptions.ArgumentError('Member with that id not found in guild.')
+
+        member_ids = [member.id for member in guild.members]
+        configs = sorted({user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items(), key=lambda kv: kv[1].level, reverse=True)
+        return [config[0] for config in configs].index(member.id) + 1
+
+    def leaderboard(self, *, guild_id: int, leaderboard_type: str) -> typing.List[objects.UserConfig]:
+
+        guild = self.bot.get_guild(guild_id)
+        if not guild:
+            raise exceptions.ArgumentError('Guild with that id not found.')
+
+        configs = {user_id: config for user_id, config in self.configs.items() if user_id in [member.id for member in guild.members]}.items()
+        return sorted(configs, key=lambda kv: getattr(kv[1], leaderboard_type), reverse=True)
