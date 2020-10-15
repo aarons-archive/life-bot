@@ -627,12 +627,26 @@ class Music(commands.Cog):
     @commands.command(nane='lyrics', aliases=['lyric'])
     async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
 
-        if query is None:
+        if query == 'spotify':
+
+            spotify_activity = discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)
+            if not spotify_activity:
+                raise exceptions.VoiceError('You are not listening to anything on spotify.')
+
+            query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
+
+        if query == 'bot':
+
             if not ctx.guild or not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
             if not ctx.guild.voice_client.is_playing:
                 raise exceptions.VoiceError(f'There are no tracks playing.')
+
             query = f'{ctx.guild.voice_client.current.title} - {ctx.guild.voice_client.current.requester}'
+
+        if not query:
+            raise exceptions.VoiceError('You must provide a valid query to find lyrics for. You can use `bot` to find lyrics for the track the bot is currently playing, or '
+                                        'you can use `spotify` for the track you are listening to on spotify.')
 
         try:
             results = await self.bot.ksoft.music.lyrics(query=query, limit=20)
