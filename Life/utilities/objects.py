@@ -10,7 +10,6 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-import math
 
 import discord
 import pendulum
@@ -75,7 +74,7 @@ class DefaultUserConfig:
 
     @property
     def level(self) -> int:
-        return round(((self.xp / 100) ** (1. / 1.5)) / 2.5)
+        return round(((self.xp / 100) ** (1.0 / 1.5)) / 3)
 
 
 class UserConfig:
@@ -104,5 +103,4 @@ class UserConfig:
 
     @property
     def level(self) -> int:
-        return round(((self.xp / 100) ** (1. / 1.5)) / 2.5)
-
+        return round(((self.xp / 100) ** (1.0 / 1.5)) / 3)
