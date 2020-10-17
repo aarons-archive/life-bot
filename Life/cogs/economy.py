@@ -1,6 +1,6 @@
 """
 Life
-Copyright (C) 2020 MrRandom#9258
+Copyright (C) 2020 Axel#3456
 
 Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -31,11 +31,6 @@ class Economy(commands.Cog):
 
         if ctx.author.bot:
             return
-
-        if isinstance(ctx.user_config, objects.DefaultUserConfig):
-            await self.bot.user_manager.create_user_config(user_id=ctx.author.id)
-
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='xp', operation='add', value=random.randint(10, 30))
 
     @commands.command(name='coins', aliases=['money', 'cash'])
     async def coins(self, ctx: context.Context, member: discord.Member = None) -> None:

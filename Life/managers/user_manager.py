@@ -1,6 +1,6 @@
 """
 Life
-Copyright (C) 2020 MrRandom#9258
+Copyright (C) 2020 Axel#3456
 
 Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -13,6 +13,7 @@ You should have received a copy of the GNU Affero General Public License along w
 import io
 import math
 import os
+import random
 import typing
 
 import discord
@@ -49,7 +50,7 @@ class UserConfigManager:
     async def before_update_database(self) -> None:
         await self.bot.wait_until_ready()
 
-    #
+
 
     async def load(self) -> None:
 
@@ -214,6 +215,24 @@ class UserConfigManager:
         return buffer
 
     #
+
+    async def add_xp(self, *, user_id: int) -> None:
+
+        if await self.bot.redis.exists(f'{user_id}_xp_gain') is True:
+            return
+
+        user_config = self.get_user_config(user_id=user_id)
+        if isinstance(user_config, objects.DefaultUserConfig):
+            user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
+
+        xp = random.randint(10, 30)
+
+        await self.edit_user_config(user_id=user_id, attribute='xp', operation='add', value=xp)
+        await self.bot.redis.setex(name=f'{user_id}_xp_gain', time=60, value=None)
+
+        if xp >= user_config.next_level_xp:
+            self.bot.dispatch('xp_level_up', user_config)
+
 
     def rank(self, *, guild_id: int, user_id: int) -> int:
 
