@@ -1,23 +1,25 @@
-aiohttp>=3.6.2
+aiohttp>=3.6.3
 aredis>=1.1.8
 asyncpg>=0.21.0
-discord-ext-alternatives>=2020.7.30
+discord-ext-alternatives>=2020.10.11
 humanize>=3.0.1
-jishaku>=1.19.1.200
+jishaku>=1.19.2.202
 prometheus_client>=0.8.0
 psutil>=5.7.2
 setproctitle>=1.1.10
 tornado>=6.0.4
 wand>=0.6.3
-yarl>=1.6.0
+yarl>=1.6.2
 fuzzywuzzy>=0.18.0
 wolframalpha>=4.0.0
 pendulum>=2.1.2
-pillow>=7.2.0
+pillow>=8.0.0
+python-levenshtein>=0.12.0
+
 
 git+git://github.com/Rapptz/discord.py#egg=discord.py
-git+git://github.com/MyNameBeMrRandom/spotify.py.git#egg=spotify.py
-git+git://github.com/MyNameBeMrRandom/ksoftapi.py.git#egg=ksoftapi.py
+git+git://github.com/Axelancerr/spotify.py.git#egg=spotify.py
+git+git://github.com/Axelancerr/ksoftapi.py.git#egg=ksoftapi.py
 git+git://github.com/ShineyDev/prettify.py#egg=prettify.py
 
 
