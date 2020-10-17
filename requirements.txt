@@ -18,8 +18,8 @@ python-levenshtein>=0.12.0
 
 
 git+git://github.com/Rapptz/discord.py#egg=discord.py
-git+git://github.com/MyNameBeMrRandom/spotify.py.git#egg=spotify.py
-git+git://github.com/MyNameBeMrRandom/ksoftapi.py.git#egg=ksoftapi.py
+git+git://github.com/Axelancerr/spotify.py.git#egg=spotify.py
+git+git://github.com/Axelancerr/ksoftapi.py.git#egg=ksoftapi.py
 git+git://github.com/ShineyDev/prettify.py#egg=prettify.py
 
 
