@@ -1,6 +1,6 @@
 """
 Life
-Copyright (C) 2020 MrRandom#9258
+Copyright (C) 2020 Axel#3456
 
 Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -32,7 +32,7 @@ class Life(commands.AutoShardedBot):
 
     def __init__(self, loop) -> None:
         super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(), loop=loop,
-                         activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/mrrandoooom'),
+                         activity=discord.Streaming(name=f'{config.Config(bot=self).prefix}help', url='https://www.twitch.tv/axelancerr'),
                          intents=discord.Intents(guilds=True, members=True, bans=False, emojis=False, integrations=False, webhooks=False, invites=False, voice_states=True,
                                                  presences=True, messages=True, reactions=True, typing=False)
                          )
@@ -58,7 +58,7 @@ class Life(commands.AutoShardedBot):
         self.errors_webhook = discord.Webhook.from_url(url=self.config.errors_url, adapter=discord.AsyncWebhookAdapter(self.session))
 
         self.invite = f'https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=37080128'
-        self.github = f'https://github.com/MyNameBeMrRandom/Life'
+        self.github = f'https://github.com/Axelancerr/Life'
         self.dashboard = f'https://dashboard.mrrandom.xyz/'
         self.support = f'https://discord.gg/xP8xsHr'
 
