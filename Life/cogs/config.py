@@ -12,6 +12,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import discord
+import typing
 from discord.ext import commands
 
 from bot import Life
@@ -36,7 +37,7 @@ class Config(commands.Cog):
         await ctx.send(embed=embed)
 
     @config.command(name='colour', aliases=['color'])
-    async def config_colour(self, ctx: context.Context, operation: str = None, *, value: commands.ColourConverter = None) -> None:
+    async def config_colour(self, ctx: context.Context, operation: typing.Literal['set', 'reset'] = None, *, value: commands.ColourConverter = None) -> None:
         """
         Manage this server's colour settings.
 
@@ -44,8 +45,8 @@ class Config(commands.Cog):
 
         If operation and value are not provided it will display the current colour.
 
-        `operation`: The operation to perform, `set` to set the colour, `reset` to set it back to default and None for displaying the current colour.
-        `value`: The colour to set it too. Can be in the format `0x<hex>`, `#<hex>`, `0x#<hex>` or a colour such as red, green, blue.
+        `operation`: The operation to perform, `set` to set the colour, `reset` to set it back to default and `None` for displaying the current colour.
+        `value`: The colour to set it too. Can be in the format `0x<hex>`, `#<hex>`, `0x#<hex>` or a colour such as `red`, `green`, `blue`.
         """
 
         if not operation:
@@ -56,9 +57,6 @@ class Config(commands.Cog):
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
         old_colour = ctx.guild_config.colour
-
-        if operation not in ['set', 'reset']:
-            raise exceptions.ArgumentError(f'That was not a valid operation. Use `set` or `reset`.')
 
         if operation == 'reset':
             await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='colour', operation='reset')
@@ -74,7 +72,7 @@ class Config(commands.Cog):
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
 
     @config.command(name='prefix')
-    async def config_prefix(self, ctx: context.Context, operation: str = None, value: converters.Prefix = None) -> None:
+    async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.Prefix = None) -> None:
 
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
@@ -84,9 +82,6 @@ class Config(commands.Cog):
 
         if await self.bot.is_owner(person=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
-
-        if operation not in ['add', 'remove', 'clear']:
-            raise exceptions.ArgumentError(f'That was not a valid operation. Use `add`, `remove`, `reset`, `clear`.')
 
         if operation == 'add':
 

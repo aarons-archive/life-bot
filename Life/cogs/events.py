@@ -19,6 +19,7 @@ from discord.ext import commands
 from bot import Life
 from cogs.voice.lavalink.exceptions import NodeNotFound
 from utilities import context, exceptions
+from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 
 class Events(commands.Cog):
@@ -110,17 +111,16 @@ class Events(commands.Cog):
             return
 
         elif isinstance(error, commands.CommandOnCooldown):
-
-            cooldowns = {
+            cooldown_types = {
                 commands.BucketType.default: f'for the whole bot.',
                 commands.BucketType.user: f'for you.',
+                commands.BucketType.member: f'for you.',
+                commands.BucketType.role: f'for your role.',
                 commands.BucketType.guild: f'for this server.',
                 commands.BucketType.channel: f'for this channel.',
-                commands.BucketType.member: f'cooldown for you.',
-                commands.BucketType.category: f'for this channel category.',
-                commands.BucketType.role: f'for your role.'
+                commands.BucketType.category: f'for this channel category.'
             }
-            await ctx.send(f'The command `{ctx.command}` is on cooldown {cooldowns[error.cooldown.type]} You can retry in '
+            await ctx.send(f'The command `{ctx.command}` is on cooldown {cooldown_types.get(error.cooldown.type, "for you.")} You can retry in '
                            f'`{self.bot.utils.format_seconds(seconds=error.retry_after, friendly=True)}`')
             return
 
@@ -128,13 +128,13 @@ class Events(commands.Cog):
             cooldowns = {
                 commands.BucketType.default: f'.',
                 commands.BucketType.user: f' per user.',
+                commands.BucketType.member: f' per member.',
+                commands.BucketType.role: f' per role.',
                 commands.BucketType.guild: f' per server.',
                 commands.BucketType.channel: f' per channel.',
-                commands.BucketType.member: f' per member.',
                 commands.BucketType.category: f' per channel category.',
-                commands.BucketType.role: f' per role.'
             }
-            await ctx.send(f'The command `{ctx.command}` is already being ran at its maximum of {error.number} time(s){cooldowns[error.per]} Retry a bit later.')
+            await ctx.send(f'The command `{ctx.command}` is being ran at its maximum of {error.number} time(s){cooldowns.get(error.per, ".")} Retry a bit later.')
             return
 
         elif isinstance(error, commands.BotMissingPermissions):
@@ -146,7 +146,7 @@ class Events(commands.Cog):
                 try:
                     await ctx.author.send(message)
                 except discord.Forbidden:
-                    pass
+                    return
             return
 
         elif isinstance(error, commands.MissingPermissions):
@@ -157,6 +157,7 @@ class Events(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.')
             return
+
         elif isinstance(error, commands.BadUnionArgument):
             await ctx.send(f'I was unable to convert the `{error.param}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments '
                            f'to use.')
@@ -165,34 +166,49 @@ class Events(commands.Cog):
         elif isinstance(error, commands.MissingRole):
             await ctx.send(f'The role `{error.missing_role}` is required to run this command.')
             return
+
         elif isinstance(error, commands.BotMissingRole):
             await ctx.send(f'The bot requires the role `{error.missing_role}` to run this command.')
             return
+
         elif isinstance(error, commands.MissingAnyRole):
             await ctx.send(f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.')
             return
+
         elif isinstance(error, commands.BotMissingAnyRole):
-            await ctx.send(f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.',)
+            await ctx.send(f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.')
             return
 
-        if isinstance(error, commands.BadArgument):
-            error_messages = {
-                commands.MessageNotFound: f'A message for the argument `{error.argument}` was not found.',
-                commands.MemberNotFound: f'A member for the argument `{error.argument}` was not found.',
-                commands.UserNotFound: f'A user for the argument `{error.argument}` was not found.',
-                commands.ChannelNotFound: f'A channel for the argument `{error.argument}` was not found.',
-                commands.RoleNotFound: f'A role for the argument `{error.argument}` was not found.',
-                commands.EmojiNotFound: f'An emoji for the argument `{error.argument}` was not found.',
+        elif isinstance(error, commands.BadArgument):
 
-                commands.ChannelNotReadable: f'I do not have permission to read the channel `{error.argument}`',
-                commands.BadInviteArgument: f'The invite for the argument `{error.argument}` was not valid or is expired.',
-
-                commands.BadBoolArgument: f'The argument `{error.argument}` was not a valid True/False value.',
-                commands.BadColourArgument: f'The argument `{error.argument}` was not a valid colour.',
-                commands.PartialEmojiConversionFailure: f'The argument `{error.argument}` did not match the partial emoji format.',
-            }
+            if isinstance(error, commands.MessageNotFound):
+                await ctx.send(f'A message for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.MemberNotFound):
+                await ctx.send(f'A member for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.UserNotFound):
+                await ctx.send(f'A user for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.ChannelNotFound):
+                await ctx.send(f'A channel for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.RoleNotFound):
+                await ctx.send(f'A role for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.EmojiNotFound):
+                await ctx.send(f'An emoji for the argument `{error.argument}` was not found.')
+            elif isinstance(error, commands.ChannelNotReadable):
+                await ctx.send(f'I do not have permission to read the channel `{error.argument}`')
+            elif isinstance(error, commands.PartialEmojiConversionFailure):
+                await ctx.send(f'The argument `{error.argument}` did not match the partial emoji format.')
+            elif isinstance(error, commands.BadInviteArgument):
+                await ctx.send(f'The invite that matched that argument was not valid or is expired.')
+            elif isinstance(error, commands.BadBoolArgument):
+                await ctx.send(f'The argument `{error.argument}` was not a valid True/False value.')
+            elif isinstance(error, commands.BadColourArgument):
+                await ctx.send(f'The argument `{error.argument}` was not a valid colour.')
+            elif isinstance(error, BadLiteralArgument):
+                await ctx.send(f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.')
+            return
 
         else:
+
             error_messages = {
                 exceptions.ArgumentError: f'{error}',
                 exceptions.ImageError: f'{error}',
@@ -217,9 +233,10 @@ class Events(commands.Cog):
                 commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
             }
 
-        error_message = error_messages.get(type(error), None)
-        if error_message is not None:
-            await ctx.send(error_message)
+            error_message = error_messages.get(type(error), None)
+            if error_message is not None:
+                await ctx.send(error_message)
+
             return
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
