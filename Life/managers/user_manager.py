@@ -34,6 +34,16 @@ class UserConfigManager:
 
         self.update_database.start()
 
+    async def load(self) -> None:
+
+        user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
+        for user_config in user_configs:
+            self.configs[user_config['id']] = objects.UserConfig(data=dict(user_config))
+
+        print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
+
+    #
+
     @tasks.loop(minutes=2)
     async def update_database(self) -> None:
 
@@ -50,15 +60,7 @@ class UserConfigManager:
     async def before_update_database(self) -> None:
         await self.bot.wait_until_ready()
 
-
-
-    async def load(self) -> None:
-
-        user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
-        for user_config in user_configs:
-            self.configs[user_config['id']] = objects.UserConfig(data=dict(user_config))
-
-        print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
+    #
 
     async def create_user_config(self, *, user_id: int) -> objects.UserConfig:
 
@@ -140,6 +142,25 @@ class UserConfigManager:
 
     #
 
+    async def add_xp(self, *, user_id: int) -> None:
+
+        if await self.bot.redis.exists(f'{user_id}_xp_gain') is True:
+            return
+
+        user_config = self.get_user_config(user_id=user_id)
+        if isinstance(user_config, objects.DefaultUserConfig):
+            user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
+
+        xp = random.randint(10, 20)
+
+        if xp >= user_config.next_level_xp:
+            self.bot.dispatch('xp_level_up', user_id, user_config)
+
+        await self.edit_user_config(user_id=user_id, attribute='xp', operation='add', value=xp)
+        await self.bot.redis.setex(name=f'{user_id}_xp_gain', time=60, value=None)
+
+    #
+
     async def create_timecard(self, *, guild_id: int) -> io.BytesIO:
 
         guild = self.bot.get_guild(guild_id)
@@ -216,24 +237,6 @@ class UserConfigManager:
 
     #
 
-    async def add_xp(self, *, user_id: int) -> None:
-
-        if await self.bot.redis.exists(f'{user_id}_xp_gain') is True:
-            return
-
-        user_config = self.get_user_config(user_id=user_id)
-        if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
-
-        xp = random.randint(10, 30)
-
-        await self.edit_user_config(user_id=user_id, attribute='xp', operation='add', value=xp)
-        await self.bot.redis.setex(name=f'{user_id}_xp_gain', time=60, value=None)
-
-        if xp >= user_config.next_level_xp:
-            self.bot.dispatch('xp_level_up', user_config)
-
-
     def rank(self, *, guild_id: int, user_id: int) -> int:
 
         guild = self.bot.get_guild(guild_id)
@@ -254,5 +257,6 @@ class UserConfigManager:
         if not guild:
             raise exceptions.ArgumentError('Guild with that id not found.')
 
-        configs = {user_id: config for user_id, config in self.configs.items() if user_id in [member.id for member in guild.members]}.items()
+        member_ids = [member.id for member in guild.members]
+        configs = {user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items()
         return sorted(configs, key=lambda kv: getattr(kv[1], leaderboard_type), reverse=True)

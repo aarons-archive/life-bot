@@ -10,6 +10,7 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
+import math
 
 import discord
 import pendulum
@@ -49,7 +50,7 @@ class GuildConfig:
 
 class DefaultUserConfig:
 
-    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
+    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update', 'level_up_notifications')
 
     def __init__(self) -> None:
 
@@ -63,6 +64,8 @@ class DefaultUserConfig:
         self.blacklisted = False
         self.blacklisted_reason = 'None'
 
+        self.level_up_notifications = False
+
         self.requires_db_update = False
 
     def __repr__(self) -> str:
@@ -74,16 +77,16 @@ class DefaultUserConfig:
 
     @property
     def level(self) -> int:
-        return round(((self.xp / 100) ** (1.0 / 1.5)) / 3)
+        return math.floor((((self.xp / 100) ** (1.0 / 1.5)) / 3))
 
     @property
     def next_level_xp(self) -> int:
-        return round(((self.level * 3) ** 1.5) * 100)
+        return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
 
 
 class UserConfig:
 
-    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
+    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update', 'level_up_notifications')
 
     def __init__(self, data: dict) -> None:
         self.colour = discord.Colour(int(data.get('colour'), 16))
@@ -96,6 +99,8 @@ class UserConfig:
         self.blacklisted = data.get('blacklisted')
         self.blacklisted_reason = data.get('blacklisted_reason')
 
+        self.level_up_notifications = data.get('level_up_notifications')
+
         self.requires_db_update = False
 
     def __repr__(self) -> str:
@@ -107,8 +112,8 @@ class UserConfig:
 
     @property
     def level(self) -> int:
-        return round(((self.xp / 100) ** (1.0 / 1.5)) / 3)
+        return math.floor((((self.xp / 100) ** (1.0 / 1.5)) / 3))
 
     @property
     def next_level_xp(self) -> int:
-        return round(((self.level * 3) ** 1.5) * 100)
+        return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))

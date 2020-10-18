@@ -27,10 +27,24 @@ class Economy(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
-        ctx = await self.bot.get_context(message)
-
-        if ctx.author.bot:
+        if message.author.bot:
             return
+
+        await self.bot.user_manager.add_xp(user_id=message.author.id)
+
+    @commands.Cog.listener()
+    async def on_xp_level_up(self, user_id: int, user_config: objects.UserConfig) -> None:
+
+        if user_config.level_up_notifications is False:
+            return
+
+        user = self.bot.get_user(id=user_id)
+        try:
+            await user.send(f'Congrats, you are now level `{user_config.level}`!')
+        except discord.Forbidden:
+            return
+
+    #
 
     @commands.command(name='coins', aliases=['money', 'cash'])
     async def coins(self, ctx: context.Context, member: discord.Member = None) -> None:
@@ -72,7 +86,7 @@ class Economy(commands.Cog):
     async def leaderboard(self, ctx: context.Context, leaderboard_type: str = 'xp') -> None:
 
         if leaderboard_type not in ['level', 'xp', 'coins']:
-            raise exceptions.ArgumentError('Leaderboard type must be one of `level`, `xp` or `coins`')
+            raise exceptions.ArgumentError('Leaderboard type must be `level`, `xp` or `coins`')
 
         leaderboard = self.bot.user_manager.leaderboard(guild_id=ctx.guild.id, leaderboard_type=leaderboard_type)
         if not leaderboard:
