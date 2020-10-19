@@ -237,26 +237,36 @@ class UserConfigManager:
 
     #
 
-    def rank(self, *, guild_id: int, user_id: int) -> int:
+    def rank(self, *, user_id: int, guild_id: int = None) -> int:
 
-        guild = self.bot.get_guild(guild_id)
-        if not guild:
-            raise exceptions.ArgumentError('Guild with that id not found.')
+        if not guild_id:
 
-        member = guild.get_member(user_id)
-        if not member:
-            raise exceptions.ArgumentError('Member with that id not found in guild.')
+            configs = sorted(self.configs.items(), key=lambda kv: kv[1].xp, reverse=True)
 
-        member_ids = [member.id for member in guild.members]
-        configs = sorted({user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items(), key=lambda kv: kv[1].level, reverse=True)
-        return [config[0] for config in configs].index(member.id) + 1
+        else:
 
-    def leaderboard(self, *, guild_id: int, leaderboard_type: str) -> typing.List[objects.UserConfig]:
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                raise exceptions.ArgumentError('Guild with that id not found.')
 
-        guild = self.bot.get_guild(guild_id)
-        if not guild:
-            raise exceptions.ArgumentError('Guild with that id not found.')
+            user_ids = [member.id for member in guild.members]
+            configs = sorted({user_id: user_config for user_id, user_config in self.configs.items() if user_id in user_ids}.items(), key=lambda kv: kv[1].xp, reverse=True)
 
-        member_ids = [member.id for member in guild.members]
-        configs = {user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items()
+        return [config[0] for config in configs].index(user_id) + 1
+
+    def leaderboard(self, *, leaderboard_type: typing.Literal['level', 'xp', 'coins'], guild_id: int = None) -> typing.List[objects.UserConfig]:
+
+        if not guild_id:
+
+            configs = {user_id: config for user_id, config in self.configs.items() if self.bot.get_user(user_id) is not None}.items()
+
+        else:
+
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                raise exceptions.ArgumentError('Guild with that id not found.')
+
+            member_ids = [member.id for member in guild.members]
+            configs = {user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items()
+
         return sorted(configs, key=lambda kv: getattr(kv[1], leaderboard_type), reverse=True)

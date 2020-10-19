@@ -10,9 +10,9 @@ PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
 """
-import random
 
 import discord
+import typing
 from discord.ext import commands
 
 from bot import Life
@@ -46,14 +46,68 @@ class Economy(commands.Cog):
 
     #
 
+    @commands.command(name='profile')
+    async def profile(self, ctx: context.Context, member: discord.Member = None) -> None:
+
+        if not member:
+            member = ctx.author
+
+        user_config = self.bot.user_manager.get_user_config(user_id=member.id)
+
+        embed = discord.Embed(colour=user_config.colour,
+                              title=f'{member}\'s profile',
+                              description=f'`Total xp:` {user_config.xp}\n'
+                                          f'`Level:` {user_config.level}\n'
+                                          f'`Coins:` {user_config.coins}\n'
+                                          f'`Rank (server):` {self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)}\n'
+                                          f'`Rank (global):` {self.bot.user_manager.rank(user_id=member.id)}')
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name='leaderboard')
+    async def leaderboard(self, ctx: context.Context, leaderboard_type: typing.Literal['xp', 'level', 'coins'] = 'xp', global_leaderboard: bool = False) -> None:
+
+        if global_leaderboard is True:
+            title = f'Leaderboard for `{leaderboard_type.title()}` across the whole bot.'
+            leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type)
+        else:
+            title = f'Leaderboard for `{leaderboard_type.title()}` in `{ctx.guild}`'
+            leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type, guild_id=ctx.guild.id)
+
+        if not leaderboard:
+            raise exceptions.ArgumentError(f'There are no leaderboard stats.')
+
+        entries = []
+        for index, (user_id, user_config) in enumerate(leaderboard):
+
+            user = ctx.bot.get_user(user_id)
+            entries.append(f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{user}')
+
+        header = f'Rank   |{leaderboard_type.title():<10} |Name\n'
+        await ctx.paginate_embed(entries=entries, per_page=10, header=header, title=title, codeblock=True)
+
+    @commands.command(name='rank')
+    async def rank(self, ctx: context.Context, member: typing.Optional[discord.Member], global_rank: bool = False) -> None:
+
+        if not member:
+            member = ctx.author
+
+        if global_rank is True:
+            rank = self.bot.user_manager.rank(user_id=member.id)
+            await ctx.send(f'{member} is rank `{rank}` across the whole bot.')
+        else:
+            rank = self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)
+            await ctx.send(f'{member} is rank `{rank}` in this server.')
+
+    #
+
     @commands.command(name='coins', aliases=['money', 'cash'])
     async def coins(self, ctx: context.Context, member: discord.Member = None) -> None:
 
         if not member:
             member = ctx.author
 
-        embed = discord.Embed(colour=ctx.colour, description=f'{member.mention} has `{self.bot.user_manager.get_user_config(user_id=member.id).coins}` coins.')
-        await ctx.send(embed=embed)
+        await ctx.send(f'{member} has `{self.bot.user_manager.get_user_config(user_id=member.id).coins}` coins.')
 
     @commands.command(name='xp')
     async def xp(self, ctx: context.Context, member: discord.Member = None) -> None:
@@ -61,8 +115,7 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        embed = discord.Embed(colour=ctx.colour, description=f'{member.mention} has `{self.bot.user_manager.get_user_config(user_id=member.id).xp}` xp.')
-        await ctx.send(embed=embed)
+        await ctx.send(f'{member} has `{self.bot.user_manager.get_user_config(user_id=member.id).xp}` xp.')
 
     @commands.command(name='level')
     async def level(self, ctx: context.Context, member: discord.Member = None) -> None:
@@ -70,37 +123,7 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        embed = discord.Embed(colour=ctx.colour, description=f'{member.mention} is level `{self.bot.user_manager.get_user_config(user_id=member.id).level}`.')
-        await ctx.send(embed=embed)
-
-    @commands.command(name='rank')
-    async def rank(self, ctx: context.Context, member: discord.Member = None) -> None:
-
-        if not member:
-            member = ctx.author
-
-        embed = discord.Embed(colour=ctx.colour, description=f'{member.mention} is rank `{self.bot.user_manager.rank(guild_id=ctx.guild.id, user_id=ctx.author.id)}`.')
-        await ctx.send(embed=embed)
-
-    @commands.command(name='leaderboard')
-    async def leaderboard(self, ctx: context.Context, leaderboard_type: str = 'xp') -> None:
-
-        if leaderboard_type not in ['level', 'xp', 'coins']:
-            raise exceptions.ArgumentError('Leaderboard type must be `level`, `xp` or `coins`')
-
-        leaderboard = self.bot.user_manager.leaderboard(guild_id=ctx.guild.id, leaderboard_type=leaderboard_type)
-        if not leaderboard:
-            raise exceptions.ArgumentError(f'There are no stats for `{leaderboard_type}` in `{ctx.guild}`.')
-
-        entries = []
-        for index, (user_id, user_config) in enumerate(leaderboard):
-
-            member = ctx.guild.get_member(user_id)
-            entries.append(f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{str(member)}')
-
-        title = f'Leaderboard for `{leaderboard_type.title()}` in `{ctx.guild}`'
-        header = f'Rank   |{leaderboard_type.title():<10} |Name\n'
-        await ctx.paginate_embed(entries=entries, per_page=10, header=header, title=title, codeblock=True)
+        await ctx.send(f'{member} is level `{self.bot.user_manager.get_user_config(user_id=member.id).level}`.')
 
 
 def setup(bot):
