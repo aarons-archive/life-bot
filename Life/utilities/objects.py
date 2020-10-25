@@ -18,7 +18,7 @@ import pendulum
 
 class DefaultGuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
 
     def __init__(self) -> None:
 
@@ -28,13 +28,15 @@ class DefaultGuildConfig:
         self.blacklisted = False
         self.blacklisted_reason = 'None'
 
+        self.requires_db_update = []
+
     def __repr__(self) -> str:
         return f'<DefaultGuildConfig colour=\'{self.colour}\' prefixes={self.prefixes}>'
 
 
 class GuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
 
     def __init__(self, data: dict) -> None:
 
@@ -44,29 +46,32 @@ class GuildConfig:
         self.blacklisted = data.get('blacklisted')
         self.blacklisted_reason = data.get('blacklisted_reason')
 
+        self.requires_db_update = []
+
     def __repr__(self) -> str:
         return f'<GuildConfig colour=\'{self.colour}\' prefixes={self.prefixes}>'
 
 
 class DefaultUserConfig:
 
-    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update', 'level_up_notifications')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update')
 
     def __init__(self) -> None:
 
         self.colour = discord.Colour.gold()
-        self.coins = 0
-        self.xp = 0
-
-        self.timezone = pendulum.timezone('UTC')
-        self.timezone_private = False
 
         self.blacklisted = False
         self.blacklisted_reason = 'None'
 
+        self.timezone = pendulum.timezone('UTC')
+        self.timezone_private = False
+
+        self.xp = 0
+        self.coins = 0
+
         self.level_up_notifications = False
 
-        self.requires_db_update = False
+        self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig colour=\'{self.colour}\' coins={self.coins}>'
@@ -86,22 +91,24 @@ class DefaultUserConfig:
 
 class UserConfig:
 
-    __slots__ = ('colour', 'coins', 'xp', 'timezone', 'timezone_private', 'blacklisted', 'blacklisted_reason', 'requires_db_update', 'level_up_notifications')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update')
 
     def __init__(self, data: dict) -> None:
-        self.colour = discord.Colour(int(data.get('colour'), 16))
-        self.coins = data.get('coins')
-        self.xp = data.get('xp')
 
-        self.timezone = pendulum.timezone(data.get('timezone'))
-        self.timezone_private = data.get('timezone_private')
+        self.colour = discord.Colour(int(data.get('colour'), 16))
 
         self.blacklisted = data.get('blacklisted')
         self.blacklisted_reason = data.get('blacklisted_reason')
 
+        self.timezone = pendulum.timezone(data.get('timezone'))
+        self.timezone_private = data.get('timezone_private')
+
+        self.xp = data.get('xp')
+        self.coins = data.get('coins')
+
         self.level_up_notifications = data.get('level_up_notifications')
 
-        self.requires_db_update = False
+        self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<UserConfig colour=\'{self.colour}\' coins={self.coins}>'

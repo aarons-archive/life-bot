@@ -15,7 +15,8 @@ import typing
 
 import discord
 
-from utilities import exceptions, objects
+from utilities import objects
+from utilities.enums import Editables, Operations
 
 
 class GuildConfigManager:
@@ -44,49 +45,43 @@ class GuildConfigManager:
     def get_guild_config(self, *, guild_id: int) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.configs.get(guild_id, self.default_guild_config)
 
-    async def edit_guild_config(self, *, guild_id: int, attribute: str, operation: str = 'set', value: typing.Any = None) -> objects.GuildConfig:
+    async def edit_guild_config(self, *, guild_id: int, editable: Editables, operation: Operations, value: typing.Any = None) -> objects.GuildConfig:
 
         guild_config = self.get_guild_config(guild_id=guild_id)
         if isinstance(guild_config, objects.DefaultGuildConfig):
             guild_config = await self.create_guild_config(guild_id=guild_id)
 
-        if attribute == 'colour':
+        if editable == Editables.colour:
 
-            query = 'UPDATE guild_configs SET colour = $1 WHERE id = $2 RETURNING colour'
+            operations = {
+                Operations.set.value: ('UPDATE guild_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', guild_id),
+                Operations.reset.value: ('UPDATE guild_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', guild_id),
+            }
 
-            if operation == 'set':
-                data = await self.bot.db.fetchrow(query, value, guild_id)
-            elif operation == 'reset':
-                data = await self.bot.db.fetchrow(query, f'0x{str(discord.Colour.gold()).strip("#")}', guild_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
-
+            data = await self.bot.db.fetchrow(*operations[operation.value])
             guild_config.colour = discord.Colour(int(data['colour'], 16))
 
-        elif attribute == 'prefix':
+        elif editable == Editables.prefixes:
 
-            if operation == 'add':
-                data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id)
-            elif operation == 'remove':
-                data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id)
-            elif operation == 'reset':
-                data = await self.bot.db.fetchrow('UPDATE guild_configs SET prefixes = $1 WHERE id = $2 RETURNING prefixes', [], guild_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
+            operations = {
+                Operations.add.value: ('UPDATE guild_configs SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id),
+                Operations.remove.value: ('UPDATE guild_configs SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id),
+                Operations.reset.value: ('UPDATE guild_configs SET prefixes = $1 WHERE id = $2 RETURNING prefixes', [], guild_id)
+            }
 
+            data = await self.bot.db.fetchrow(*operations[operation.value])
             guild_config.prefixes = data['prefixes']
 
-        elif attribute == 'blacklist':
+        elif editable == Editables.blacklist:
 
-            if operation == 'set':
-                query = 'UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
-                data = await self.bot.db.fetchrow(query, True, value, guild_id)
-            elif operation == 'reset':
-                query = 'UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
-                data = await self.bot.db.fetchrow(query, False, 'None', guild_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
+            operations = {
+                Operations.set.value:
+                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', True, value, guild_id),
+                Operations.reset.value:
+                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', False, None, guild_id)
+            }
 
+            data = await self.bot.db.fetchrow(*operations[operation.value])
             guild_config.blacklisted = data['blacklisted']
             guild_config.blacklisted_reason = data['blacklisted_reason']
 

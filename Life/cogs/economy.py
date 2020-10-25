@@ -57,6 +57,7 @@ class Economy(commands.Cog):
         embed = discord.Embed(colour=user_config.colour,
                               title=f'{member}\'s profile',
                               description=f'`Total xp:` {user_config.xp}\n'
+                                          f'`Next level xp:` {user_config.next_level_xp}'
                                           f'`Level:` {user_config.level}\n'
                                           f'`Coins:` {user_config.coins}\n'
                                           f'`Rank (server):` {self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)}\n'
@@ -68,20 +69,18 @@ class Economy(commands.Cog):
     async def leaderboard(self, ctx: context.Context, leaderboard_type: typing.Literal['xp', 'level', 'coins'] = 'xp', global_leaderboard: bool = False) -> None:
 
         if global_leaderboard is True:
-            title = f'Leaderboard for `{leaderboard_type.title()}` across the whole bot.'
             leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type)
+            title = f'`{leaderboard_type.title()}` leaderboard across the whole bot.'
         else:
-            title = f'Leaderboard for `{leaderboard_type.title()}` in `{ctx.guild}`'
             leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type, guild_id=ctx.guild.id)
+            title = f'`{leaderboard_type.title()}` leaderboard in `{ctx.guild}`'
 
         if not leaderboard:
             raise exceptions.ArgumentError(f'There are no leaderboard stats.')
 
         entries = []
         for index, (user_id, user_config) in enumerate(leaderboard):
-
-            user = ctx.bot.get_user(user_id)
-            entries.append(f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{user}')
+            entries.append(f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{ctx.bot.get_user(user_id)}')
 
         header = f'Rank   |{leaderboard_type.title():<10} |Name\n'
         await ctx.paginate_embed(entries=entries, per_page=10, header=header, title=title, codeblock=True)
@@ -94,10 +93,12 @@ class Economy(commands.Cog):
 
         if global_rank is True:
             rank = self.bot.user_manager.rank(user_id=member.id)
-            await ctx.send(f'{member} is rank `{rank}` across the whole bot.')
+            message = f'{member} is rank `{rank}` across the whole bot.'
         else:
             rank = self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)
-            await ctx.send(f'{member} is rank `{rank}` in this server.')
+            message = f'{member} is rank `{rank}` in this server.'
+
+        await ctx.send(message)
 
     #
 

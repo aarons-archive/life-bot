@@ -22,6 +22,7 @@ from PIL import Image, ImageDraw, ImageFont
 from discord.ext import tasks
 
 from utilities import exceptions, objects
+from utilities.enums import Editables, Operations
 
 
 class UserConfigManager:
@@ -44,17 +45,21 @@ class UserConfigManager:
 
     #
 
-    @tasks.loop(minutes=2)
+    @tasks.loop(seconds=60)
     async def update_database(self) -> None:
 
         if not self.configs:
             return
 
-        need_updating = {user_id: config for user_id, config in self.configs.items() if config.requires_db_update is True}
+        need_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config.requires_db_update) >= 1}
 
         async with self.bot.db.acquire(timeout=300) as db:
             for user_id, user_config in need_updating.items():
-                await db.execute('UPDATE user_configs SET xp = $2 WHERE id = $1', user_id, user_config.xp)
+                query = ','.join([f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update)])
+                values = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
+                await db.execute(f'UPDATE user_configs SET {query} WHERE id = $1', user_id, *values)
+
+                user_config.requires_db_update = []
 
     @update_database.before_loop
     async def before_update_database(self) -> None:
@@ -72,71 +77,86 @@ class UserConfigManager:
     def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
         return self.configs.get(user_id, self.default_user_config)
 
-    async def edit_user_config(self, *, user_id: int, attribute: str, operation: str = 'set', value: typing.Any = None) -> objects.UserConfig:
+    async def edit_user_config(self, *, user_id: int, editable: Editables, operation: Operations, value: typing.Any = None) -> objects.UserConfig:
 
         user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.create_user_config(user_id=user_id)
 
-        if attribute == 'colour':
+        if editable == Editables.colour:
 
-            if operation == 'set':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', value, user_id)
-            elif operation == 'reset':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', user_id),
+                Operations.reset.value: ('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id),
+            }
 
+            data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.colour = discord.Colour(int(data['colour'], 16))
 
-        elif attribute == 'timezone':
+        elif editable == Editables.blacklist:
 
-            if operation == 'set':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id)
-            elif operation == 'reset':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
+            operations = {
+                Operations.set.value:
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
+                Operations.reset.value:
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
+            }
 
-            user_config.timezone = pendulum.timezone(data['timezone'])
-
-        elif attribute == 'timezone_private':
-
-            if operation == 'set':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id)
-            elif operation == 'reset':
-                data = await self.bot.db.fetchrow('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
-
-            user_config.timezone_private = data['timezone_private']
-
-        elif attribute == 'blacklist':
-
-            if operation == 'set':
-                query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
-                data = await self.bot.db.fetchrow(query, True, value, user_id)
-            elif operation == 'reset':
-                query = 'UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
-                data = await self.bot.db.fetchrow(query, False, 'None', user_id)
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
-
+            data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.blacklisted = data['blacklisted']
             user_config.blacklisted_reason = data['blacklisted_reason']
 
-        elif attribute == 'xp':
+        elif editable == Editables.timezone:
 
-            if operation == 'set':
-                user_config.xp = value
-            elif operation == 'add':
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.timezone = pendulum.timezone(data['timezone'])
+
+        elif editable == Editables.timezone_private:
+
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.timezone_private = data['timezone_private']
+
+        elif editable == Editables.xp:
+
+            if operation.value == 'add':
                 user_config.xp += value
-            elif operation == 'minus':
+            elif operation.value == 'minus':
                 user_config.xp -= value
-            else:
-                raise exceptions.LifeError('Invalid operation code.')
+            if operation.value == 'set':
+                user_config.xp = value
 
-            user_config.requires_db_update = True
+            user_config.requires_db_update.append(Editables.xp)
+
+        elif editable == Editables.coins:
+
+            if operation.value == 'add':
+                user_config.coins += value
+            elif operation.value == 'minus':
+                user_config.coins -= value
+            if operation.value == 'set':
+                user_config.coins = value
+
+            user_config.requires_db_update.append(Editables.coins)
+
+        elif editable == Editables.level_up_notifications:
+
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', False, user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.level_up_notifications = data['level_up_notifications']
 
         return user_config
 
@@ -151,12 +171,12 @@ class UserConfigManager:
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
 
-        xp = random.randint(10, 20)
+        xp = random.randint(10, 25)
 
         if xp >= user_config.next_level_xp:
             self.bot.dispatch('xp_level_up', user_id, user_config)
 
-        await self.edit_user_config(user_id=user_id, attribute='xp', operation='add', value=xp)
+        await self.edit_user_config(user_id=user_id, editable=Editables.xp, operation=Operations.add, value=xp)
         await self.bot.redis.setex(name=f'{user_id}_xp_gain', time=60, value=None)
 
     #

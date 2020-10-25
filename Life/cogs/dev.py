@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from bot import Life
 from utilities import context, converters, exceptions
+from utilities.enums import Editables, Operations
 
 
 class Dev(commands.Cog):
@@ -179,7 +180,7 @@ class Dev(commands.Cog):
         if user_config.blacklisted is True:
             raise exceptions.ArgumentError(f'`{user} - {user.id}` is already blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='set', value=reason)
+        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.set, value=reason)
         await ctx.send(f'`{user} - {user.id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_user.command(name='remove', hidden=True)
@@ -194,7 +195,7 @@ class Dev(commands.Cog):
         if user_config.blacklisted is False:
             raise exceptions.ArgumentError(f'`{user} - {user.id}` is not blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='reset')
+        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.reset)
         await ctx.send(f'`{user} - {user.id}` is now unblacklisted.')
 
     @dev_blacklist.group(name='guild', hidden=True, invoke_without_command=True)
@@ -246,7 +247,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is True:
             raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is already blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='set', value=reason)
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.set, value=reason)
         await ctx.send(f'The guild `{guild_name} - {guild_id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_guild.command(name='remove', hidden=True)
@@ -270,7 +271,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is False:
             raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is not blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='reset')
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.reset)
         await ctx.send(f'The guild `{guild_name} - {guild_id}` is now unblacklisted.')
 
 

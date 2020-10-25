@@ -18,6 +18,7 @@ from discord.ext import commands
 
 from bot import Life
 from utilities import context, converters, exceptions
+from utilities.enums import Editables, Operations
 
 
 class Time(commands.Cog):
@@ -77,7 +78,7 @@ class Time(commands.Cog):
         `timezone`: The timezone to use.
         """
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='timezone', operation='set', value=timezone.name)
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.set, value=timezone.name)
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @time.command(name='reset', aliases=['clear', 'default'])
@@ -86,7 +87,7 @@ class Time(commands.Cog):
         Sets your timezone back to the default (UTC)
         """
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='timezone', operation='reset')
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.reset)
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @time.command(name='private')
@@ -96,10 +97,10 @@ class Time(commands.Cog):
         """
 
         if ctx.user_config.timezone_private is False:
-            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='timezone_private', operation='set')
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.set)
             await ctx.send('Your timezone is now private.')
         else:
-            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, attribute='timezone_private', operation='reset')
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.reset)
             await ctx.send('Your timezone is now public.')
 
     @commands.command(name='timecard')

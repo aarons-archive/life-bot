@@ -17,6 +17,7 @@ from discord.ext import commands
 
 from bot import Life
 from utilities import context, converters, exceptions
+from utilities.enums import Editables, Operations
 
 
 class Config(commands.Cog):
@@ -59,19 +60,19 @@ class Config(commands.Cog):
         old_colour = ctx.guild_config.colour
 
         if operation == 'reset':
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='colour', operation='reset')
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.colour, operation=Operations.reset)
 
         elif operation == 'set':
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a valid colour argument. They can be `0x<hex>`, `#<hex>`, `0x#<hex>` or a colour such as red or green.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='colour', operation='set', value=f'0x{str(value).strip("#")}')
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.colour, operation=Operations.set, value=value)
 
         await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
 
-    @config.command(name='prefix')
+    @config.command(name='prefix', aliases=['prefixes'])
     async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.Prefix = None) -> None:
 
         if not operation:
@@ -93,7 +94,7 @@ class Config(commands.Cog):
             elif value in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{value}`.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='add', value=value)
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.add, value=value)
             await ctx.send(f'Added `{value}` to this servers prefixes.')
 
         elif operation == 'remove':
@@ -104,7 +105,7 @@ class Config(commands.Cog):
             if value not in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{value}`.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='remove', value=value)
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.remove, value=value)
             await ctx.send(f'Removed `{value}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
@@ -112,7 +113,7 @@ class Config(commands.Cog):
             if not ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='reset')
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.clear)
             await ctx.send(f'Cleared this servers prefixes.')
 
 
