@@ -164,7 +164,7 @@ class Prometheus(commands.Cog):
             "usercount": len(self.bot.users),
             "guildcount": len(self.bot.guilds),
             "ramusage": round(memory_info.rss / 1048576),
-            "latency": round(self.bot.latency * 1000)
+            "latency": round(self.bot.latency * 1000) if self.bot.latency > 0 else 1
         }
         async with self.bot.session.post('https://idevision.net/api/bots/updates', json=payload, headers={"Authorization": self.bot.config.idevision_key}):
             pass
