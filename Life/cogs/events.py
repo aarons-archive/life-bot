@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import discord
 import pendulum
@@ -205,38 +204,36 @@ class Events(commands.Cog):
                 await ctx.send(f'The argument `{error.argument}` was not a valid colour.')
             elif isinstance(error, BadLiteralArgument):
                 await ctx.send(f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.')
+
             return
 
-        else:
+        error_messages = {
+            exceptions.ArgumentError: f'{error}',
+            exceptions.ImageError: f'{error}',
+            exceptions.VoiceError: f'{error}',
+            NodeNotFound: f'There are no lavalink nodes available right now.',
 
-            error_messages = {
-                exceptions.ArgumentError: f'{error}',
-                exceptions.ImageError: f'{error}',
-                exceptions.VoiceError: f'{error}',
-                NodeNotFound: f'There are no lavalink nodes available right now.',
+            commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what argument to use.',
 
-                commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what argument to use.',
+            commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+            commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
+            commands.ExpectedClosingQuoteError: f'There is a missing quote character in the argument you passed.',
 
-                commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
-                commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
-                commands.ExpectedClosingQuoteError: f'There is a missing quote character in the argument you passed.',
+            commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
+                                  f'arguments to use.',
 
-                commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
-                                      f'arguments to use.',
+            commands.CheckFailure: f'{error}',
+            commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
+            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
+            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
+            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
 
-                commands.CheckFailure: f'{error}',
-                commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
-                commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-                commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-                commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
+            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+        }
 
-                commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
-            }
-
-            error_message = error_messages.get(type(error), None)
-            if error_message is not None:
-                await ctx.send(error_message)
-
+        error_message = error_messages.get(type(error), None)
+        if error_message is not None:
+            await ctx.send(error_message)
             return
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')

@@ -1,15 +1,15 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
 import math
 
 import discord
@@ -54,7 +54,8 @@ class GuildConfig:
 
 class DefaultUserConfig:
 
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
+                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak')
 
     def __init__(self) -> None:
 
@@ -70,6 +71,14 @@ class DefaultUserConfig:
         self.coins = 0
 
         self.level_up_notifications = False
+
+        self.daily_collected = pendulum.now(tz='UTC')
+        self.weekly_collected = pendulum.now(tz='UTC')
+        self.monthly_collected = pendulum.now(tz='UTC')
+
+        self.daily_streak = 0
+        self.weekly_streak = 0
+        self.monthly_streak = 0
 
         self.requires_db_update = []
 
@@ -91,7 +100,8 @@ class DefaultUserConfig:
 
 class UserConfig:
 
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
+                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak')
 
     def __init__(self, data: dict) -> None:
 
@@ -107,6 +117,14 @@ class UserConfig:
         self.coins = data.get('coins')
 
         self.level_up_notifications = data.get('level_up_notifications')
+
+        self.daily_collected = data.get('daily_collected')
+        self.weekly_collected = data.get('weekly_collected')
+        self.monthly_collected = data.get('monthly_collected')
+
+        self.daily_streak = data.get('daily_streak')
+        self.weekly_streak = data.get('weekly_streak')
+        self.monthly_streak = data.get('monthly_streak')
 
         self.requires_db_update = []
 

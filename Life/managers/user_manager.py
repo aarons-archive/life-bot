@@ -1,15 +1,15 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
 import io
 import math
 import os
@@ -55,6 +55,7 @@ class UserConfigManager:
 
         async with self.bot.db.acquire(timeout=300) as db:
             for user_id, user_config in need_updating.items():
+
                 query = ','.join([f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update)])
                 values = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
                 await db.execute(f'UPDATE user_configs SET {query} WHERE id = $1', user_id, *values)
@@ -158,6 +159,16 @@ class UserConfigManager:
             data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.level_up_notifications = data['level_up_notifications']
 
+        elif editable == Editables.daily_collected:
+
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET daily_collected = $1 WHERE id = $2 RETURNING daily_collected', value, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET daily_collected = $1 WHERE id = $2 RETURNING daily_collected', pendulum.now(tz='UTC'), user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.daily_collected = pendulum.instance(data['daily_collected'], tz='UTC')
+
         return user_config
 
     #
@@ -169,7 +180,7 @@ class UserConfigManager:
 
         user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
+            user_config = await self.create_user_config(user_id=user_id)
 
         xp = random.randint(10, 25)
 
@@ -218,7 +229,7 @@ class UserConfigManager:
 
         image = Image.new('RGBA', (width_x, height_y), color='#f1c30f')
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(os.path.join(os.path.dirname(__file__), 'arial.ttf'), 120)
+        font = ImageFont.truetype(os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/arial.ttf')), 120)
 
         x = 100
         y = 100

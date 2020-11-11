@@ -1,22 +1,24 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+import typing
 
 import discord
-import typing
+import pendulum
 from discord.ext import commands
 
 from bot import Life
 from utilities import context, exceptions, objects
+from utilities.enums import Editables, Operations
 
 
 class Economy(commands.Cog):
@@ -46,6 +48,22 @@ class Economy(commands.Cog):
 
     #
 
+    @commands.command(name='daily')
+    async def daily(self, ctx: context.Context) -> None:
+
+        user_config = self.bot.user_manager.get_user_config(user_id=ctx.author.id)
+        if isinstance(user_config, objects.DefaultUserConfig):
+            user_config = await self.bot.user_manager.create_user_config(user_id=ctx.author.id)
+
+        now = pendulum.now(tz='UTC')
+        if now < user_config.daily_collected.add(days=1):
+            time_until_reset = self.bot.utils.format_difference(datetime=user_config.daily_collected.add(hours=24), suppress=[])
+            raise exceptions.ArgumentError(f'Your daily is currently on cooldown. Retry the command in `{time_until_reset}`')
+
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=200)
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.daily_collected, operation=Operations.set, value=pendulum.now(tz='UTC'))
+        await ctx.send('You collected your daily `200` credits.')
+
     @commands.command(name='profile')
     async def profile(self, ctx: context.Context, member: discord.Member = None) -> None:
 
@@ -57,7 +75,7 @@ class Economy(commands.Cog):
         embed = discord.Embed(colour=user_config.colour,
                               title=f'{member}\'s profile',
                               description=f'`Total xp:` {user_config.xp}\n'
-                                          f'`Next level xp:` {user_config.next_level_xp}'
+                                          f'`Next level xp:` {user_config.next_level_xp}\n'
                                           f'`Level:` {user_config.level}\n'
                                           f'`Coins:` {user_config.coins}\n'
                                           f'`Rank (server):` {self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)}\n'

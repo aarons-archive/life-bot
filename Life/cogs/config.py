@@ -1,18 +1,18 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+import typing
 
 import discord
-import typing
 from discord.ext import commands
 
 from bot import Life
@@ -59,10 +59,10 @@ class Config(commands.Cog):
 
         old_colour = ctx.guild_config.colour
 
-        if operation == 'reset':
+        if operation in {'reset'}:
             await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.colour, operation=Operations.reset)
 
-        elif operation == 'set':
+        elif operation in {'set'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a valid colour argument. They can be `0x<hex>`, `#<hex>`, `0x#<hex>` or a colour such as red or green.')
@@ -84,7 +84,7 @@ class Config(commands.Cog):
         if await self.bot.is_owner(person=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
-        if operation == 'add':
+        if operation in {'add'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less then 15 characters and contain no backtick (`) characters.')
@@ -97,7 +97,7 @@ class Config(commands.Cog):
             await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.add, value=value)
             await ctx.send(f'Added `{value}` to this servers prefixes.')
 
-        elif operation == 'remove':
+        elif operation in {'remove'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less then 15 characters and contain no backtick (`) characters.')
