@@ -24,8 +24,8 @@ from utilities import exceptions
 
 class Player(VoiceProtocol, ABC):
 
-    def __init__(self, bot, channel: discord.VoiceChannel, client) -> None:
-        super().__init__(client, channel)
+    def __init__(self, bot, channel: discord.VoiceChannel) -> None:
+        super().__init__(bot, channel)
 
         self.bot = self.client = bot
         self.channel = channel
