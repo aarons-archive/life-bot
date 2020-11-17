@@ -28,7 +28,7 @@ class Prometheus(commands.Cog):
         self.bot = bot
 
         self.process = psutil.Process()
-        self.ready = False
+        self.first_ready = True
 
         self.guild_stats = prometheus_client.Gauge('counts', documentation='Guild counts', namespace='guild', labelnames=['guild_id', 'count'])
 
@@ -74,10 +74,11 @@ class Prometheus(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self) -> None:
 
-        if self.ready is True:
+        if self.first_ready is False:
             return
 
-        self.ready = True
+        self.first_ready = False
+
         self.gauges.labels(count='members').set(sum([len(guild.members) for guild in self.bot.guilds]))
         self.gauges.labels(count='users').set(len(self.bot.users))
         self.gauges.labels(count='guilds').set(len(self.bot.guilds))
@@ -159,18 +160,10 @@ class Prometheus(commands.Cog):
             self.gauges.labels(count='virtual_memory').set(memory_info.vms)
             self.gauges.labels(count='unique_memory').set(memory_info.uss)
 
-        payload = {
-            "metrics": {event: count for event, count in self.bot.socket_stats.items()},
-            "usercount": len(self.bot.users),
-            "guildcount": len(self.bot.guilds),
-            "ramusage": round(memory_info.rss / 1048576),
-            "latency": round(self.bot.latency * 1000) if self.bot.latency > 0 else 1
-        }
-        async with self.bot.session.post('https://idevision.net/api/bots/updates', json=payload, headers={"Authorization": self.bot.config.idevision_key}):
-            pass
-
     @tasks.loop(minutes=5)
     async def stats_five_minutes(self) -> None:
+
+        await self.bot.wait_until_ready()
 
         for guild in self.bot.guilds:
             statuses = collections.Counter([member.status for member in guild.members])
