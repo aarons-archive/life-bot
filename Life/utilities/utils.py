@@ -128,6 +128,25 @@ class Utils:
 
         return humanize.precisedelta(pendulum.now(tz='UTC').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
 
+    def badges(self, *, person: typing.Union[discord.User, discord.Member]) -> str:
+
+        badges = [badge for name, badge in self.badge_emojis.items() if dict(person.public_flags)[name] is True]
+        if dict(person.public_flags)['verified_bot'] is False and person.bot:
+            badges.append('<:bot:738979752244674674>')
+
+        if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
+            badges.append('<:booster_level_4:738961099310760036>')
+
+        if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
+            badges.append('<:nitro:738961134958149662>')
+
+        elif member := discord.utils.get(self.bot.get_all_members(), id=person.id):
+            if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
+                if activity.emoji and activity.emoji.is_custom_emoji():
+                    badges.append('<:nitro:738961134958149662>')
+
+        return ' '.join(badges) if badges else 'N/A'
+
     def activities(self, *, person: discord.Member) -> str:
 
         if not person.activities:
@@ -172,22 +191,3 @@ class Utils:
                     message += f'• Listening to **{activity.name}**\n'
 
         return message
-
-    def badges(self, *, person: typing.Union[discord.User, discord.Member]) -> str:
-
-        badges = [badge for name, badge in self.badge_emojis.items() if dict(person.public_flags)[name] is True]
-        if dict(person.public_flags)['verified_bot'] is False and person.bot:
-            badges.append('<:bot:738979752244674674>')
-
-        if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
-            badges.append('<:booster_level_4:738961099310760036>')
-
-        if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
-            badges.append('<:nitro:738961134958149662>')
-
-        elif member := discord.utils.get(self.bot.get_all_members(), id=person.id):
-            if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
-                if activity.emoji and activity.emoji.is_custom_emoji():
-                    badges.append('<:nitro:738961134958149662>')
-
-        return ' '.join(badges) if badges else 'N/A'
