@@ -56,8 +56,8 @@ class Economy(commands.Cog):
             user_config = await self.bot.user_manager.create_user_config(user_id=ctx.author.id)
 
         now = pendulum.now(tz='UTC')
-        if now < user_config.daily_collected.add(days=1):
-            time_until_reset = self.bot.utils.format_difference(datetime=user_config.daily_collected.add(hours=24), suppress=[])
+        if now < self.bot.utils.convert_datetime(datetime=user_config.daily_collected).add(days=1):
+            time_until_reset = self.bot.utils.format_difference(datetime=self.bot.utils.convert_datetime(datetime=user_config.daily_collected).add(hours=24), suppress=[])
             raise exceptions.ArgumentError(f'Your daily is currently on cooldown. Retry the command in `{time_until_reset}`')
 
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=200)
@@ -83,7 +83,7 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name='leaderboard')
+    @commands.command(name='leaderboard', aliases=['lb'])
     async def leaderboard(self, ctx: context.Context, leaderboard_type: typing.Literal['xp', 'level', 'coins'] = 'xp', global_leaderboard: bool = False) -> None:
 
         if global_leaderboard is True:
