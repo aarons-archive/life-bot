@@ -12,7 +12,6 @@
 
 import discord
 import pendulum
-import wolframalpha
 from discord.ext import commands
 
 from bot import Life
@@ -25,15 +24,13 @@ class Time(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.bot.wolframalpha = wolframalpha.Client(self.bot.config.wolframalpha_token)
-
     @commands.command(name='timezones', aliases=['tzs'])
     async def timezones(self, ctx: context.Context) -> None:
         """
         Displays a list of timezones that can be used with the bot.
         """
 
-        await ctx.paginate_embed(entries=pendulum.timezones, per_page=20, title='Available timezones:', url=f'{self.bot.dashboard}timezones')
+        await ctx.paginate_embed(entries=pendulum.timezones, per_page=20, title='Available timezones:')
 
     @commands.group(name='time', invoke_without_command=True)
     async def time(self, ctx: context.Context, *, timezone: str = None) -> None:
