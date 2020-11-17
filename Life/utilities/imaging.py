@@ -263,17 +263,17 @@ class Imaging:
         image_format = data['format']
         image_text = data['text']
 
-        url = 'https://idevision.net/api/media/post'
-        headers = {"Authorization": self.bot.config.idevision_key}
+        url = 'https://media.mrrandom.xyz/api/media'
         upload_data = aiohttp.FormData()
         upload_data.add_field('file', image, filename=f'image.{image_format.lower()}')
 
-        async with self.bot.session.post(url, data=upload_data, headers=headers) as response:
+        async with self.bot.session.post(url, data=upload_data, headers={"Authorization": self.bot.config.axelweb_token}) as response:
             if response.status == 413:
-                raise ImageError('The image produced was over 20mb.')
+                raise ImageError('The image produced was over 100mb.')
+
             post = await response.json()
 
         embed = discord.Embed(colour=ctx.colour)
         embed.set_footer(text=image_text)
-        embed.set_image(url=post.get('sike_heres_the_real_url'))
+        embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
         return embed
