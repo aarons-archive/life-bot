@@ -26,13 +26,13 @@ from bot import Life
 @contextlib.contextmanager
 def logger():
 
-    logs = {'discord': None, 'bot': None}
+    logs = {'discord': None, 'bot': None, 'cogs': None, 'managers': None, 'utilities': None}
 
     for log_name in logs.keys():
 
         log = logging.getLogger(log_name)
         handler = logging.handlers.RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
-        handler.setFormatter(logging.Formatter('%(asctime)s %(name)s: %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S'))
+        handler.setFormatter(logging.Formatter(f'%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p'))
         if os.path.isfile(f'logs/{log_name}.log'):
             handler.doRollover()
         log.addHandler(handler)
@@ -40,7 +40,10 @@ def logger():
         logs[log_name] = log
 
     logs['discord'].setLevel(logging.INFO)
-    logs['bot'].setLevel(logging.INFO)
+    logs['bot'].setLevel(logging.DEBUG)
+    logs['cogs'].setLevel(logging.DEBUG)
+    logs['managers'].setLevel(logging.DEBUG)
+    logs['utilities'].setLevel(logging.DEBUG)
 
     try:
         yield
@@ -69,5 +72,5 @@ if __name__ == '__main__':
         del uvloop
 
     with logger():
-        bot = Life(loop=asyncio.get_event_loop())
+        bot = Life()
         bot.run(bot.config.token)
