@@ -11,6 +11,7 @@
 #
 
 import io
+import logging
 import math
 import os
 import random
@@ -23,6 +24,8 @@ from discord.ext import tasks
 
 from utilities import exceptions, objects
 from utilities.enums import Editables, Operations
+
+log = logging.getLogger(__name__)
 
 
 class UserConfigManager:
@@ -41,7 +44,8 @@ class UserConfigManager:
         for user_config in user_configs:
             self.configs[user_config['id']] = objects.UserConfig(data=dict(user_config))
 
-        print(f'[POSTGRESQL] Loaded user configs. [{len(user_configs)} users(s)]')
+        log.info(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
+        print(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
 
     #
 
@@ -64,6 +68,7 @@ class UserConfigManager:
 
     @update_database.before_loop
     async def before_update_database(self) -> None:
+
         await self.bot.wait_until_ready()
 
     #
@@ -73,7 +78,8 @@ class UserConfigManager:
         data = await self.bot.db.fetchrow('INSERT INTO user_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
         self.configs[user_id] = objects.UserConfig(data=dict(data))
 
-        return self.get_user_config(user_id=user_id)
+        log.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
+        return self.configs[user_id]
 
     def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
         return self.configs.get(user_id, self.default_user_config)
@@ -83,6 +89,8 @@ class UserConfigManager:
         user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.create_user_config(user_id=user_id)
+
+        log.info(f'[USER MANAGERS] Edited user config for user with id \'{user_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
 
         if editable == Editables.colour:
 
@@ -98,9 +106,9 @@ class UserConfigManager:
 
             operations = {
                 Operations.set.value:
-                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
                 Operations.reset.value:
-                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -159,15 +167,27 @@ class UserConfigManager:
             data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.level_up_notifications = data['level_up_notifications']
 
-        elif editable == Editables.daily_collected:
+        elif editable in {Editables.daily_collected, Editables.weekly_collected, Editables.monthly_collected}:
 
             operations = {
-                Operations.set.value: ('UPDATE user_configs SET daily_collected = $1 WHERE id = $2 RETURNING daily_collected', value, user_id),
-                Operations.reset.value: ('UPDATE user_configs SET daily_collected = $1 WHERE id = $2 RETURNING daily_collected', pendulum.now(tz='UTC'), user_id)
+                Operations.set.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value, user_id),
+                Operations.reset.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', pendulum.now(tz='UTC'), user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.daily_collected = pendulum.instance(data['daily_collected'], tz='UTC')
+            setattr(user_config, editable.value, pendulum.instance(data[editable.value], tz='UTC'))
+
+        elif editable in {Editables.daily_streak, Editables.weekly_streak, Editables.monthly_streak}:
+
+            value = getattr(user_config, editable.value)
+
+            operations = {
+                Operations.add.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value + 1, user_id),
+                Operations.reset.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', 0, user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            setattr(user_config, editable.value, data[editable.value])
 
         return user_config
 

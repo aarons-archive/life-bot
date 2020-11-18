@@ -118,9 +118,9 @@ class UserConfig:
 
         self.level_up_notifications = data.get('level_up_notifications')
 
-        self.daily_collected = data.get('daily_collected')
-        self.weekly_collected = data.get('weekly_collected')
-        self.monthly_collected = data.get('monthly_collected')
+        self.daily_collected = pendulum.instance(data.get('daily_collected'), tz='UTC')
+        self.weekly_collected = pendulum.instance(data.get('weekly_collected'), tz='UTC')
+        self.monthly_collected = pendulum.instance(data.get('monthly_collected'), tz='UTC')
 
         self.daily_streak = data.get('daily_streak')
         self.weekly_streak = data.get('weekly_streak')

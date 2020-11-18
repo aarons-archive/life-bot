@@ -9,13 +9,15 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
-
+import logging
 import typing
 
 import discord
 
 from utilities import objects
 from utilities.enums import Editables, Operations
+
+log = logging.getLogger(__name__)
 
 
 class GuildConfigManager:
@@ -32,13 +34,17 @@ class GuildConfigManager:
         for guild_config in guild_configs:
             self.configs[guild_config['id']] = objects.GuildConfig(data=dict(guild_config))
 
-        print(f'[POSTGRESQL] Loaded guild configs. [{len(guild_configs)} guild(s)]')
+        log.info(f'[GUILD MANAGER] Loaded guild configs. [{len(guild_configs)} guilds]')
+        print(f'[GUILD MANAGER] Loaded guild configs. [{len(guild_configs)} guilds]')
+
+    #
 
     async def create_guild_config(self, *, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO guild_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', guild_id)
         self.configs[guild_id] = objects.GuildConfig(data=dict(data))
 
+        log.info(f'[GUILD MANAGER] Created config for guild with id \'{guild_id}\'')
         return self.configs[guild_id]
 
     def get_guild_config(self, *, guild_id: int) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
@@ -49,6 +55,8 @@ class GuildConfigManager:
         guild_config = self.get_guild_config(guild_id=guild_id)
         if isinstance(guild_config, objects.DefaultGuildConfig):
             guild_config = await self.create_guild_config(guild_id=guild_id)
+
+        log.info(f'[GUILD MANAGERS] Edited guild config for guild with id \'{guild_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
 
         if editable == Editables.colour:
 

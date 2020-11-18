@@ -26,6 +26,42 @@ class Economy(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
+        self.claim_types = {
+            'daily':   Editables.daily_collected,
+            'weekly':  Editables.weekly_collected,
+            'monthly': Editables.monthly_collected
+        }
+
+        self.claim_type_times = {
+            'daily':   (1, 2),
+            'weekly':  (7, 14),
+            'monthly': (30, 60)
+        }
+
+        self.claim_type_coins = {
+            'daily':   200,
+            'weekly':  2000,
+            'monthly': 20000
+        }
+
+        self.claim_type_streaks = {
+            'daily':   Editables.daily_streak,
+            'weekly':  Editables.weekly_streak,
+            'monthly': Editables.monthly_streak
+        }
+
+        self.claim_type_streak_thresholds = {
+            'daily':   7,
+            'weekly':  4,
+            'monthly': 3
+        }
+
+        self.claim_type_streak_bonuses = {
+            'daily':   500,
+            'weekly':  5000,
+            'monthly': 50000
+        }
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
@@ -48,21 +84,36 @@ class Economy(commands.Cog):
 
     #
 
-    @commands.command(name='daily')
-    async def daily(self, ctx: context.Context) -> None:
+    @commands.command(name='claim')
+    async def claim(self, ctx: context.Context, claim: typing.Literal['daily', 'weekly', 'monthly'] = 'daily') -> None:
 
         user_config = self.bot.user_manager.get_user_config(user_id=ctx.author.id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.bot.user_manager.create_user_config(user_id=ctx.author.id)
 
         now = pendulum.now(tz='UTC')
-        if now < self.bot.utils.convert_datetime(datetime=user_config.daily_collected).add(days=1):
-            time_until_reset = self.bot.utils.format_difference(datetime=self.bot.utils.convert_datetime(datetime=user_config.daily_collected).add(hours=24), suppress=[])
-            raise exceptions.ArgumentError(f'Your daily is currently on cooldown. Retry the command in `{time_until_reset}`')
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=200)
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.daily_collected, operation=Operations.set, value=pendulum.now(tz='UTC'))
-        await ctx.send('You collected your daily `200` credits.')
+        if now < getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][0]):
+            time_until_reset = self.bot.utils.format_difference(datetime=getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][0]), suppress=[])
+            raise exceptions.ArgumentError(f'Your `{claim}` is currently on cooldown. Retry the command in `{time_until_reset}`')
+
+        coins = self.claim_type_coins[claim]
+
+        if now < getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][1]):
+
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.add)
+
+            if getattr(user_config, self.claim_type_streaks[claim].name) >= self.claim_type_streak_thresholds[claim]:
+                coins += self.claim_type_streak_bonuses[claim]
+                await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
+
+        else:
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
+
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=coins)
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_types[claim], operation=Operations.reset)
+
+        await ctx.send(f'You collected your {claim} `{coins}` credits.')
 
     @commands.command(name='profile')
     async def profile(self, ctx: context.Context, member: discord.Member = None) -> None:

@@ -1,4 +1,4 @@
-#  Life
+#  Lif
 #  Copyright (C) 2020 Axel#3456
 #
 #  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
@@ -42,5 +42,14 @@ class Editables(enum.Enum):
     xp = 'xp'
 
     level_up_notifications = 'level_up_notifications'
+
     daily_collected = 'daily_collected'
+    daily_streak = 'daily_streak'
+
+    weekly_collected = 'weekly_collected'
+    weekly_streak = 'weekly_streak'
+
+    monthly_collected = 'monthly_collected'
+    monthly_streak = 'monthly_streak'
+
 
