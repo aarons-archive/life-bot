@@ -144,7 +144,8 @@ class UserConfigManager:
             if operation.value == 'set':
                 user_config.xp = value
 
-            user_config.requires_db_update.append(Editables.xp)
+            if Editables.xp not in user_config.requires_db_update:
+                user_config.requires_db_update.append(Editables.xp)
 
         elif editable == Editables.coins:
 
@@ -155,7 +156,8 @@ class UserConfigManager:
             if operation.value == 'set':
                 user_config.coins = value
 
-            user_config.requires_db_update.append(Editables.coins)
+            if Editables.coins not in user_config.requires_db_update:
+                user_config.requires_db_update.append(Editables.coins)
 
         elif editable == Editables.level_up_notifications:
 
