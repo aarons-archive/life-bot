@@ -86,37 +86,61 @@ class Economy(commands.Cog):
 
     @commands.command(name='claim')
     async def claim(self, ctx: context.Context, claim: typing.Literal['daily', 'weekly', 'monthly'] = 'daily') -> None:
+        """
+        Claims a daily, weekly or monthly coin bundle.
+
+        `claim`: The type of bundle to claim, can be `daily`, `weekly` or `monthly`.
+        """
 
         user_config = self.bot.user_manager.get_user_config(user_id=ctx.author.id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.bot.user_manager.create_user_config(user_id=ctx.author.id)
 
         now = pendulum.now(tz='UTC')
+        time_when_claimable = getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][0])
 
-        if now < getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][0]):
-            time_until_reset = self.bot.utils.format_difference(datetime=getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][0]), suppress=[])
-            raise exceptions.ArgumentError(f'Your `{claim}` is currently on cooldown. Retry the command in `{time_until_reset}`')
+        if now > time_when_claimable:
+            time_difference = self.bot.utils.format_difference(datetime=time_when_claimable, suppress=[])
+            raise exceptions.ArgumentError(f'Your `{claim}` bundle is currently on cooldown. Retry the command in `{time_difference}`')
 
         coins = self.claim_type_coins[claim]
+        time_when_streak_expires = getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][1])
 
-        if now < getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][1]):
+        embed = discord.Embed(colour=ctx.colour, title=f'{claim.title()} bundle claim:',
+                              description=f'__**{claim.title()} bundle**__:\n'
+                                          f'You gained `{coins}` coins for claiming your `{claim.title()}` bundle.\n\n'
+                                          f'__**{claim.title()} bundle streak**__:\n')
+
+        if now < time_when_streak_expires:
 
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.add)
+            embed.description += f'You are currently on a `{getattr(user_config, self.claim_type_streaks[claim].name)}` out of `{self.claim_type_streak_thresholds[claim]}` ' \
+                                 f'`{claim}` streak.\n\n'
 
             if getattr(user_config, self.claim_type_streaks[claim].name) >= self.claim_type_streak_thresholds[claim]:
+
                 coins += self.claim_type_streak_bonuses[claim]
                 await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
+                embed.description += f'You were awarded an extra `{self.claim_type_streak_bonuses[claim]}` coins for maintaining your `{claim}` streak.'
 
         else:
+
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
 
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=coins)
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_types[claim], operation=Operations.reset)
 
-        await ctx.send(f'You collected your {claim} `{coins}` credits.')
+        await ctx.send(embed=embed)
+
+    #
 
     @commands.command(name='profile')
     async def profile(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        Displays information about yours, or someone else's profile.
+
+        `member`: The member to the get the profile for, can be their name, id or mention. If left empty it will default to you.
+        """
 
         if not member:
             member = ctx.author
@@ -136,6 +160,12 @@ class Economy(commands.Cog):
 
     @commands.command(name='leaderboard', aliases=['lb'])
     async def leaderboard(self, ctx: context.Context, leaderboard_type: typing.Literal['xp', 'level', 'coins'] = 'xp', global_leaderboard: bool = False) -> None:
+        """
+        Displays the leaderboard for xp, coins or level in the current server.
+
+        `leaderboard_type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
+        `global_leaderboard`: Whether or not to show the global leaderboard. Should be a True or False value.
+        """
 
         if global_leaderboard is True:
             leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type)
@@ -156,6 +186,12 @@ class Economy(commands.Cog):
 
     @commands.command(name='rank')
     async def rank(self, ctx: context.Context, member: typing.Optional[discord.Member], global_rank: bool = False) -> None:
+        """
+        Displays yours, or someone else's rank in the current server.
+
+        `member`: The member to the get the rank for, can be their name, id or mention. If left empty it will default to you.
+        `global_rank`: Whether or not to show the members global rank (rank across the whole bot), should be a True or False value.
+        """
 
         if not member:
             member = ctx.author
@@ -173,6 +209,11 @@ class Economy(commands.Cog):
 
     @commands.command(name='coins', aliases=['money', 'cash'])
     async def coins(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        Display how many coins you or someone else has.
+
+        `member`: The member to get the amount of coins for, can be their name, id or mention. If left empty it will default to you.
+        """
 
         if not member:
             member = ctx.author
@@ -181,6 +222,11 @@ class Economy(commands.Cog):
 
     @commands.command(name='xp')
     async def xp(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        Display how much xp you or someone else has.
+
+        `member`: The member to get the amount of xp for, can be their name, id or mention. If left empty it will default to you.
+        """
 
         if not member:
             member = ctx.author
@@ -189,6 +235,11 @@ class Economy(commands.Cog):
 
     @commands.command(name='level')
     async def level(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        Display yours, or someone else's level.
+
+        `member`: The member to get the level for, can be their name, id or mention. If left empty it will default to you.
+        """
 
         if not member:
             member = ctx.author
