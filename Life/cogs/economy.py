@@ -108,10 +108,10 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{claim.title()} bundle claim:',
                               description=f'__**{claim.title()} bundle**__:\n'
-                                          f'You gained `{coins}` coins for claiming your `{claim.title()}` bundle.\n\n'
-                                          f'__**{claim.title()} bundle streak**__:\n')
+                                          f'You gained `{coins}` coins for claiming your `{claim.title()}` bundle.\n\n')
 
         if now < time_when_streak_expires:
+            embed.description += f'__**{claim.title()} bundle streak**__:\n'
 
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.add)
             embed.description += f'You are currently on a `{getattr(user_config, self.claim_type_streaks[claim].name)}` out of `{self.claim_type_streak_thresholds[claim]}` ' \
