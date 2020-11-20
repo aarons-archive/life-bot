@@ -108,24 +108,26 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, title=f'{claim.title()} bundle claim:',
                               description=f'__**{claim.title()} bundle**__:\n'
-                                          f'You gained `{coins}` coins for claiming your `{claim.title()}` bundle.\n\n')
+                                          f'You gained `{coins}` coins for claiming your `{claim.title()}` bundle.\n\n'
+                                          f'__**{claim.title()} bundle streak**__:\n'
+                                          f'You are currently on a `{getattr(user_config, self.claim_type_streaks[claim].name) + 1}` out of '
+                                          f'`{self.claim_type_streak_thresholds[claim]}` `{claim.title()}` streak.\n\n')
 
         if now < time_when_streak_expires:
-            embed.description += f'__**{claim.title()} bundle streak**__:\n'
 
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.add)
-            embed.description += f'You are currently on a `{getattr(user_config, self.claim_type_streaks[claim].name)}` out of `{self.claim_type_streak_thresholds[claim]}` ' \
-                                 f'`{claim}` streak.\n\n'
+            embed.description += f'You claimed another `{claim.title()}` bundle and increased your streak!\n\n'
 
             if getattr(user_config, self.claim_type_streaks[claim].name) >= self.claim_type_streak_thresholds[claim]:
 
                 coins += self.claim_type_streak_bonuses[claim]
                 await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
-                embed.description += f'You were awarded an extra `{self.claim_type_streak_bonuses[claim]}` coins for maintaining your `{claim}` streak.'
+                embed.description += f'You were awarded an extra `{self.claim_type_streak_bonuses[claim]}` coins for maintaining your `{claim.title()}` streak.'
 
         else:
 
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_type_streaks[claim], operation=Operations.reset)
+            embed.description += f'Your `{claim.title()}` streak is over because you didnt claim your bundle within one day, week or month of the last claim.'
 
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.coins, operation=Operations.add, value=coins)
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=self.claim_types[claim], operation=Operations.reset)
