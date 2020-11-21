@@ -79,7 +79,7 @@ class Prometheus(commands.Cog):
 
         self.first_ready = False
 
-        self.gauges.labels(count='members').set(sum([len(guild.members) for guild in self.bot.guilds]))
+        self.gauges.labels(count='members').set(sum(len(guild.members) for guild in self.bot.guilds))
         self.gauges.labels(count='users').set(len(self.bot.users))
         self.gauges.labels(count='guilds').set(len(self.bot.guilds))
 
@@ -106,7 +106,7 @@ class Prometheus(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
 
-        if not before.status == after.status:
+        if before.status != after.status:
             self.guild_stats.labels(guild_id=str(after.guild.id), count=str(before.status)).dec()
             self.guild_stats.labels(guild_id=str(after.guild.id), count=str(after.status)).inc()
 

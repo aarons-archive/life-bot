@@ -53,7 +53,7 @@ class Time(commands.Cog):
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
                     user_config = self.bot.user_manager.get_user_config(user_id=member.id)
-                    if user_config.timezone_private is True and not member.id == ctx.author.id:
+                    if user_config.timezone_private is True and member.id != ctx.author.id:
                         raise exceptions.ArgumentError('That users timezone is private.')
                     timezone = user_config.timezone
                 except commands.BadArgument:

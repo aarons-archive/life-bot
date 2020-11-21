@@ -184,7 +184,7 @@ class Utils:
                 if isinstance(activity, discord.Spotify):
                     url = f'https://open.spotify.com/track/{activity.track_id}'
                     message += f'• Listening to **[{activity.title}]({url})** by **{", ".join(activity.artists)}** '
-                    if activity.album and not activity.album == activity.title:
+                    if activity.album and activity.album != activity.title:
                         message += f'from the album **{activity.album}** '
                     message += '\n'
                 else:

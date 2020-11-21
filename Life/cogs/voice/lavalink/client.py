@@ -16,7 +16,7 @@ import typing
 import aiohttp
 import discord
 
-from cogs.voice.lavalink.exceptions import *
+from cogs.voice.lavalink.exceptions import NodeCreationError, NodeNotFound
 from cogs.voice.lavalink.node import Node
 from cogs.voice.lavalink.player import Player
 

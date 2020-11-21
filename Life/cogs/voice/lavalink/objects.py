@@ -82,10 +82,11 @@ class Track:
 
         thumbnail = None
 
-        if self.source == 'Youtube':
-            thumbnail = f'https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg'
         if self.source == 'Spotify':
             thumbnail = self.info.get('thumbnail')
+
+        elif self.source == 'Youtube':
+            thumbnail = f'https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg'
 
         if thumbnail is None:
             thumbnail = f'https://dummyimage.com/1280x720/000/fff.png&text=+'

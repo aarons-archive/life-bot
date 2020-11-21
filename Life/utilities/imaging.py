@@ -195,12 +195,11 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
                     for old_frame in old_image.sequence:
                         new_frame, image_text = edit_function(old_frame, **kwargs)
                         new_image.sequence.append(new_frame)
-                    image_format = new_image.format
-                    new_image.save(file=image_edited)
                 else:
                     new_image, image_text = edit_function(old_image, **kwargs)
-                    image_format = new_image.format
-                    new_image.save(file=image_edited)
+
+                image_format = new_image.format
+                new_image.save(file=image_edited)
 
         image_edited.seek(0)
 

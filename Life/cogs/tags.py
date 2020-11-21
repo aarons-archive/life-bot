@@ -35,7 +35,7 @@ class Tags(commands.Cog):
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
 
-        if not tags[0]['name'] == name:
+        if tags[0]['name'] != name:
 
             extra_msg = ''
             if len(tags) > 0:
@@ -61,7 +61,7 @@ class Tags(commands.Cog):
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
 
-        if not tags[0]['name'] == name:
+        if tags[0]['name'] != name:
 
             extra_msg = ''
             if len(tags) > 0:

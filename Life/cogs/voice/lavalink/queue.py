@@ -35,7 +35,7 @@ class Queue:
         return self.queue.__iter__()
 
     def __contains__(self, item: objects.Track) -> bool:
-        return True if item in self.queue else False
+        return item in self.queue
 
     def __getitem__(self, key):
         return self.queue[key]
@@ -45,11 +45,11 @@ class Queue:
 
     @property
     def is_empty(self) -> bool:
-        return True if not self.queue else False
+        return not self.queue
 
     @property
     def is_looping(self) -> bool:
-        return True if self.looping is True else False
+        return self.looping is True
 
     @property
     def json(self) -> str:
@@ -63,9 +63,7 @@ class Queue:
 
     @property
     def history(self) -> typing.Generator:
-
-        for item in self.queue_history[1:]:
-            yield item
+        yield from self.queue_history[1:]
 
     async def get(self, *, position: int = 0, history: bool = True) -> typing.Optional[objects.Track]:
 
@@ -74,7 +72,7 @@ class Queue:
         except IndexError:
             return None
 
-        if history is True:
+        if history:
             self.put_history(tracks=item, position=position)
 
         self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})

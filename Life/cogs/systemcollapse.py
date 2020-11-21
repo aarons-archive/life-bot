@@ -42,7 +42,7 @@ class SystemCollapse(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
 
-        if not payload.guild_id == self.guild_id:
+        if payload.guild_id != self.guild_id:
             return
 
         guild = self.bot.get_guild(payload.guild_id)
@@ -65,7 +65,7 @@ class SystemCollapse(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
 
-        if not payload.guild_id == self.guild_id:
+        if payload.guild_id != self.guild_id:
             return
 
         guild = self.bot.get_guild(payload.guild_id)

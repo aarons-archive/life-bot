@@ -19,7 +19,7 @@ import spotify
 import yarl
 
 from cogs.voice.lavalink import objects
-from cogs.voice.lavalink.exceptions import *
+from cogs.voice.lavalink.exceptions import NodeConnectionError, NodeCreationError
 from cogs.voice.lavalink.player import Player
 from utilities import context, exceptions
 
@@ -162,7 +162,7 @@ class Node:
         async with self.client.session.get(f'{self.rest_url}/decodetrack?', headers={'Authorization': self.password}, params={'track': track_id}) as response:
             data = await response.json()
 
-            if not response.status == 200:
+            if response.status != 200:
                 raise exceptions.VoiceError('Track id was not valid.')
 
         return objects.Track(track_id=track_id, info=data, ctx=ctx)
@@ -189,7 +189,7 @@ class Node:
         async with self.client.session.get(url=f'{self.rest_url}/loadtracks?identifier={parse.quote(query)}', headers={'Authorization': self.password}) as response:
             data = await response.json()
 
-        if raw is True:
+        if raw:
             return data
 
         load_type = data.pop('loadType')
@@ -205,7 +205,7 @@ class Node:
             playlist = objects.Playlist(playlist_info=data.get('playlistInfo'), raw_tracks=data.get('tracks'), ctx=ctx)
             return objects.Search(source=playlist.tracks[0].source, source_type='playlist', tracks=playlist.tracks, result=playlist)
 
-        elif load_type == 'SEARCH_RESULT' or load_type == 'TRACK_LOADED':
+        elif load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
 
             raw_tracks = data.get('tracks')
             if not raw_tracks:

@@ -28,7 +28,7 @@ def logger():
 
     logs = {'discord': None, 'bot': None, 'cogs': None, 'managers': None, 'utilities': None}
 
-    for log_name in logs.keys():
+    for log_name in logs:
 
         log = logging.getLogger(log_name)
         handler = logging.handlers.RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)

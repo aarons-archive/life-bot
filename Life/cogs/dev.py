@@ -261,10 +261,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('That is not a valid guild id.')
 
         guild = self.bot.get_guild(guild_id)
-        if guild:
-            guild_name = guild.name
-        else:
-            guild_name = 'Not found'
+        guild_name = guild.name if guild else 'Not found'
 
         guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
         if guild_config.blacklisted is False:

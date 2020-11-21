@@ -169,7 +169,7 @@ class Economy(commands.Cog):
         `global_leaderboard`: Whether or not to show the global leaderboard. Should be a True or False value.
         """
 
-        if global_leaderboard is True:
+        if global_leaderboard:
             leaderboard = self.bot.user_manager.leaderboard(leaderboard_type=leaderboard_type)
             title = f'`{leaderboard_type.title()}` leaderboard across the whole bot.'
         else:
@@ -179,9 +179,10 @@ class Economy(commands.Cog):
         if not leaderboard:
             raise exceptions.ArgumentError(f'There are no leaderboard stats.')
 
-        entries = []
-        for index, (user_id, user_config) in enumerate(leaderboard):
-            entries.append(f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{ctx.bot.get_user(user_id)}')
+        entries = [
+            f'{index + 1:<6} |{getattr(user_config, leaderboard_type):<10} |{ctx.bot.get_user(user_id)}'
+            for index, (user_id, user_config) in enumerate(leaderboard)
+        ]
 
         header = f'Rank   |{leaderboard_type.title():<10} |Name\n'
         await ctx.paginate_embed(entries=entries, per_page=10, header=header, title=title, codeblock=True)
@@ -198,7 +199,7 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        if global_rank is True:
+        if global_rank:
             rank = self.bot.user_manager.rank(user_id=member.id)
             message = f'{member} is rank `{rank}` across the whole bot.'
         else:

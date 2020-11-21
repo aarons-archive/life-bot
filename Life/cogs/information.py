@@ -65,11 +65,8 @@ class Information(commands.Cog):
                             continue
 
                         if line.startswith('"""'):
-                            if docstring is False:
-                                docstring = True
-                            else:
-                                docstring = False
-                        if docstring is True:
+                            docstring = docstring is False
+                        if docstring:
                             continue
 
                         if line.startswith('#'):
@@ -313,18 +310,18 @@ class Information(commands.Cog):
         if not guild:
             guild = ctx.guild
 
-        entries = []
-
         channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
-        for channel in sorted(channels, key=lambda channel: channel.position):
-            entries.append(f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
+        entries = [
+            f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}'
+            for channel in sorted(channels, key=lambda channel: channel.position)
+        ]
 
+        space = '\u200b ' * 4
         for category in sorted(categories, key=lambda category: category.position):
             entries.append(f'<:category:738960756233601097> **{category}**')
             for channel in category.channels:
-                space = '\u200b ' * 4
                 entries.append(f'{space}{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
 
         return await ctx.paginate_embed(entries=entries, per_page=30, title='List of channels, categories and voice channels.')

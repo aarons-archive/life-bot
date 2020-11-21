@@ -141,7 +141,7 @@ class UserConfigManager:
                 user_config.xp += value
             elif operation.value == 'minus':
                 user_config.xp -= value
-            if operation.value == 'set':
+            elif operation.value == 'set':
                 user_config.xp = value
 
             if Editables.xp not in user_config.requires_db_update:
@@ -153,7 +153,7 @@ class UserConfigManager:
                 user_config.coins += value
             elif operation.value == 'minus':
                 user_config.coins -= value
-            if operation.value == 'set':
+            elif operation.value == 'set':
                 user_config.coins = value
 
             if Editables.coins not in user_config.requires_db_update:
@@ -285,6 +285,11 @@ class UserConfigManager:
         buffer = io.BytesIO()
         image.save(buffer, 'png')
         buffer.seek(0)
+
+        image.close()
+        del image
+        del draw
+        del font
 
         return buffer
 

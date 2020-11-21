@@ -27,15 +27,3 @@ class ImageError(LifeError):
 
 class VoiceError(LifeError):
     pass
-
-
-class HTTPError(LifeError):
-    pass
-
-
-class HTTPForbidden(LifeError):
-    pass
-
-
-class HTTPNotFound(LifeError):
-    pass

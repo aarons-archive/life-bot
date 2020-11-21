@@ -126,7 +126,7 @@ class Player(VoiceProtocol, ABC):
 
     @property
     def listeners(self) -> list:
-        return [member for member in self.channel.members if not member.bot and not (member.voice.deaf or member.voice.self_deaf)]
+        return [member for member in self.channel.members if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
 
     async def connect(self, *, timeout: float, reconnect: bool) -> None:
 
@@ -214,7 +214,7 @@ class Player(VoiceProtocol, ABC):
 
         embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
-        queue_time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in self.queue])) / 1000, friendly=True)
+        queue_time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) / 1000, friendly=True)
 
         embed.add_field(name='Player info:',
                         value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`\n'
@@ -245,7 +245,7 @@ class Player(VoiceProtocol, ABC):
 
             if self.queue.is_empty:
                 try:
-                    with async_timeout.timeout(timeout=20):
+                    with async_timeout.timeout(timeout=120):
                         await self.wait_queue_add.wait()
                 except asyncio.TimeoutError:
                     await self.destroy()
@@ -270,8 +270,9 @@ class Player(VoiceProtocol, ABC):
                 await self.send(message=f'Something went wrong while starting the track `{track.title}`.')
                 continue
 
+            await self.wait_track_end.wait()
+
             if self.queue.is_looping:
                 self.queue.put(tracks=track)
 
-            await self.wait_track_end.wait()
             self.current = None

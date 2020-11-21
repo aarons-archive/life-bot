@@ -161,7 +161,7 @@ class Life(commands.AutoShardedBot):
             log.debug('[REDIS] Attempting connection.')
             redis = aredis.StrictRedis(**self.config.redis)
             await redis.set('connected', 0)
-        except aredis.ConnectionError or aredis.ResponseError:
+        except (aredis.ConnectionError, aredis.ResponseError):
             log.critical(f'[REDIS] Error while connecting.')
             print(f'[REDIS] An error occurred while connecting to Redis.\n')
             raise ConnectionError
