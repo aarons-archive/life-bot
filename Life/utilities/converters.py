@@ -129,7 +129,7 @@ class ImageConverter(commands.Converter, ABC):
         url = None
 
         try:
-            member = await ctx.bot.member_converter.convert(ctx, str(argument))
+            member = await commands.MemberConverter().convert(ctx, str(argument))
         except commands.BadArgument:
             pass
         else:
