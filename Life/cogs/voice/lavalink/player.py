@@ -225,10 +225,11 @@ class Player(VoiceProtocol, ABC):
                               f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}\nLive: `{self.current.is_stream}`')
 
         entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | `{self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)}` | {entry.requester.mention}'
-                   for index, entry in enumerate(self.queue[:4])]
+                   for index, entry in enumerate(self.queue[:5])]
 
-        entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
-                       f'`{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)}` | {self.queue[-1].requester.mention}')
+        if len(self.queue) > 5:
+            entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
+                           f'`{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)}` | {self.queue[-1].requester.mention}')
 
         embed.add_field(name='Up next:', value='\n'.join(entries) if entries else 'There are no tracks in the queue.', inline=False)
 
