@@ -24,20 +24,21 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
-    async def todo(self, ctx: context.Context) -> None:
+    async def todo(self, ctx: context.Context, content: str = None) -> None:
         """
         Display a list of your todos.
         """
+
+        if content is not None:
+            await ctx.invoke(self.todo_add, content=content)
+            return
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
             raise exceptions.ArgumentError('You do not have any todos.')
 
-        entries = []
-        for index, todo in enumerate(todos):
-            entries.append(f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}')
-
-        await ctx.paginate_embed(entries=entries, per_page=10, title=f'{ctx.author}\'s todo list.')
+        entries = [f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}' for index, todo in enumerate(todos)]
+        await ctx.paginate_embed(entries=entries, per_page=10, header=f'**{ctx.author}\'s todo list:**\n\n')
 
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx: context.Context, *, content: commands.clean_content) -> None:
@@ -53,14 +54,12 @@ class Todo(commands.Cog):
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
         if todo_count['c'] > 100:
-            raise exceptions.ArgumentError(f'You have too many todos, try doing some of them before adding more.')
+            raise exceptions.ArgumentError(f'You have too many todos, try removing some of them before adding more.')
 
-        query = 'INSERT INTO todos VALUES ($1, $2, $3, $4)'
-        await self.bot.db.execute(query, ctx.author.id, pendulum.now(tz=pendulum.timezone('UTC')), content, ctx.message.jump_url)
+        query = 'INSERT INTO todos (owner_id, time_added, todo, link) VALUES ($1, $2, $3, $4)'
+        await self.bot.db.execute(query, ctx.author.id, pendulum.now(tz='UTC'), content, ctx.message.jump_url)
 
-        embed = discord.Embed(title='Your todo was created.', colour=ctx.colour)
-        embed.add_field(name='Content:', value=content)
-        await ctx.send(embed=embed)
+        await ctx.send('Your todo was created.')
 
     @todo.command(name='delete', aliases=['remove'])
     async def todo_delete(self, ctx: context.Context, *, todo_ids: str) -> None:
@@ -72,7 +71,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            raise exceptions.ArgumentError('You do not have any todos.')
+            raise exceptions.ArgumentError(f'You do not have any todos.')
 
         todos = {index + 1: todo for index, todo in enumerate(todos)}
         todos_to_remove = []
@@ -96,9 +95,8 @@ class Todo(commands.Cog):
         entries = [(todos[todo_id]['owner_id'], todos[todo_id]['time_added']) for todo_id in todos_to_remove]
         await self.bot.db.executemany(query, entries)
 
-        contents = '\n'.join([f'{todo_id}. {todos[todo_id]["todo"]}' for todo_id in todos_to_remove])
-        embed = discord.Embed(title=f'Deleted {len(todos_to_remove)} todo(s).', colour=ctx.colour)
-        embed.add_field(name='Contents:', value=contents)
+        embed = discord.Embed(colour=ctx.colour, description=f'**Deleted** `{len(todos_to_remove)}` **todo(s):**')
+        embed.add_field(name='Contents:', value='\n'.join([f'[`{todo_id}`]({todos[todo_id]["link"]}) {todos[todo_id]["todo"]}' for todo_id in todos_to_remove]))
         await ctx.send(embed=embed)
 
     @todo.command(name='clear')
@@ -112,16 +110,14 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError('You don not have any todos.')
 
         await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
+        await ctx.send(f'Cleared your todo list of `{len(todos)}` todo(s).')
 
-        embed = discord.Embed(title=f'Cleared your todo list of {len(todos)} todo(s).', colour=ctx.colour)
-        await ctx.send(embed=embed)
-
-    @todo.command(name='edit')
+    @todo.command(name='edit', aliases=['update'])
     async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content) -> None:
         """
         Edits the todo with the given id.
 
-        `todo_id`: The id of the todo.
+        `todo_id`: The id of the todo to edit.
         `content`: The content of the new todo.
         """
 
@@ -150,7 +146,7 @@ class Todo(commands.Cog):
         query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $3 and time_added = $4'
         await self.bot.db.execute(query, content, ctx.message.jump_url, todo['owner_id'], todo['time_added'])
 
-        embed = discord.Embed(title=f'Updated your todo.', colour=ctx.colour)
+        embed = discord.Embed(colour=ctx.colour, description=f'**Updated your todo:**')
         embed.add_field(name='Old content:', value=todo['todo'], inline=False)
         embed.add_field(name='New content:', value=content, inline=False)
         await ctx.send(embed=embed)

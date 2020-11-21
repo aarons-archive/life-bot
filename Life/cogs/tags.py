@@ -94,7 +94,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name, content, None, pendulum.now(tz=pendulum.timezone("UTC")))
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag created:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag created:**')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{content}', inline=False)
         await ctx.send(embed=embed)
@@ -117,7 +117,7 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET content = $1 WHERE guild_id = $2 AND name = $3', content, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag edited:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag edited:**')
         embed.add_field(name='Old content:', value=f'{tag["content"]}', inline=False)
         embed.add_field(name='New content:', value=f'{content}', inline=False)
         await ctx.send(embed=embed)
@@ -140,7 +140,7 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3', ctx.author.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag claimed:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag claimed:**')
         embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
         embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
         await ctx.send(embed=embed)
@@ -165,7 +165,7 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, pendulum.now(tz=pendulum.timezone('UTC')))
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag alias created:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag alias created:**')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
         embed.add_field(name='Links to:', value=f'{original}', inline=False)
         await ctx.send(embed=embed)
@@ -188,7 +188,7 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3', member.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag transferred:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag transferred:**')
         embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
         embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
         await ctx.send(embed=embed)
@@ -208,7 +208,7 @@ class Tags(commands.Cog):
         await self.bot.db.execute('DELETE FROM tags WHERE guild_id = $1 AND owner_id = $2 AND name = $3', ctx.guild.id, ctx.author.id, name)
         await self.bot.db.execute('DELETE FROM tags WHERE guild_id = $1 AND alias = $2', ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag deleted:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag deleted:**')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{tag["content"]}', inline=False)
         await ctx.send(embed=embed)
@@ -226,7 +226,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server similar to the term `{name}`.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, header=f'Tags matching: `{name}`\n\n')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**Tags matching:** `{name}`\n\n')
 
     @tag.command(name='list')
     async def tag_list(self, ctx: context.Context, *, member: discord.Member = None) -> None:
@@ -244,7 +244,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'`{member}` has no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, title=f'{member}\'s tags')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**{member}\'s tags:**\n\n')
 
     @tag.command(name='all')
     async def tag_all(self, ctx: context.Context) -> None:
@@ -257,7 +257,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, title=f'{ctx.guild}\'s tags')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**{ctx.guild}\'s tags:**\n\n')
 
     @tag.command(name='info')
     async def tag_info(self, ctx: context.Context, *, name: converters.TagName) -> None:
@@ -273,7 +273,7 @@ class Tags(commands.Cog):
 
         owner = ctx.guild.get_member(tag['owner_id'])
 
-        embed = discord.Embed(colour=ctx.colour, title=f'{tag["name"]}')
+        embed = discord.Embed(colour=ctx.colour, description=f'**{tag["name"]}**')
         embed.description = f'`Owner:` {owner.mention if owner else "None"} ({tag["owner_id"]})\n`Claimable:` {owner is None}\n`Alias:` {tag["alias"]}'
         embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=tag["created_at"])}')
         await ctx.send(embed=embed)
