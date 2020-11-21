@@ -37,7 +37,7 @@ class Queue:
     def __contains__(self, item: objects.Track) -> bool:
         return True if item in self.queue else False
 
-    def __getitem__(self, key: slice) -> list:
+    def __getitem__(self, key):
         return self.queue[key]
 
     def __len__(self) -> int:

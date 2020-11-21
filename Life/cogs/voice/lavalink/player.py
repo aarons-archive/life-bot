@@ -214,15 +214,22 @@ class Player(VoiceProtocol, ABC):
 
         embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
+        queue_time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in self.queue])) / 1000, friendly=True)
+
         embed.add_field(name='Player info:',
-                        value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`')
+                        value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`\n'
+                              f'Queue time: `{queue_time}`')
         embed.add_field(name='Track info:',
                         value=f'Time: `{self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
                               f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}`\n'
-                              f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}')
+                              f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}\nLive: `{self.current.is_stream}`')
 
         entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | `{self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)}` | {entry.requester.mention}'
-                   for index, entry in enumerate(self.queue[:5])]
+                   for index, entry in enumerate(self.queue[:4])]
+
+        entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
+                       f'`{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)}` | {self.queue[-1].requester.mention}')
+
         embed.add_field(name='Up next:', value='\n'.join(entries) if entries else 'There are no tracks in the queue.', inline=False)
 
         await self.send(embed=embed)
