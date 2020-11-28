@@ -18,7 +18,6 @@ import pendulum.exceptions
 import rapidfuzz.process
 import yarl
 from discord.ext import commands
-import dateparser.search
 
 from utilities import context, exceptions
 
