@@ -12,6 +12,7 @@ rapidfuzz>=0.13.3
 inflect>=5.0.2
 aioscheduler>=1.4.2
 yarl>=1.6.3
+dateparser>=1.0.0
 
 git+git://github.com/Axelancerr/discord-ext-alternatives.git#egg=discord-ext-alternatives
 git+git://github.com/Axelancerr/ksoftapi.py.git#egg=ksoftapi.py

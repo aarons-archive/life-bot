@@ -12,6 +12,7 @@
 
 from abc import ABC
 
+import dateparser.search
 import discord
 import pendulum
 import pendulum.exceptions
