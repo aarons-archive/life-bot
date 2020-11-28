@@ -31,7 +31,7 @@ class Events(commands.Cog):
         self.bot = bot
 
         self.bot.error_formatter = prettify_exceptions.DefaultFormatter()
-        self.bot.mystbin = mystbin.MystbinClient()
+        self.bot.mystbin = mystbin.Client()
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:

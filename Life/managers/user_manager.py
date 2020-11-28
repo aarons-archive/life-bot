@@ -22,6 +22,7 @@ import pendulum
 from PIL import Image, ImageDraw, ImageFont
 from discord.ext import tasks
 
+from managers import reminder_manager
 from utilities import exceptions, objects
 from utilities.enums import Editables, Operations
 
@@ -38,6 +39,8 @@ class UserConfigManager:
 
         self.update_database.start()
 
+        self.remind_manager = reminder_manager.ReminderManager(bot=self.bot)
+
     async def load(self) -> None:
 
         user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
@@ -46,6 +49,8 @@ class UserConfigManager:
 
         log.info(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
         print(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
+
+        await self.remind_manager.load()
 
     #
 

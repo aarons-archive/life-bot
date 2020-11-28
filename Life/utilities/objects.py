@@ -101,7 +101,7 @@ class DefaultUserConfig:
 class UserConfig:
 
     __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
-                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak')
+                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'reminders')
 
     def __init__(self, data: dict) -> None:
 
@@ -126,6 +126,8 @@ class UserConfig:
         self.weekly_streak = data.get('weekly_streak')
         self.monthly_streak = data.get('monthly_streak')
 
+        self.reminders = []
+
         self.requires_db_update = []
 
     def __repr__(self) -> str:
@@ -142,3 +144,29 @@ class UserConfig:
     @property
     def next_level_xp(self) -> int:
         return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
+
+
+class Reminder:
+
+    __slots__ = ('user_id', 'channel_id', 'message_id', 'id', 'datetime', 'created_at', 'content', 'link', 'dm', 'task')
+
+    def __init__(self, data: dict) -> None:
+
+        self.user_id = data.get('user_id')
+        self.channel_id = data.get('channel_id')
+        self.message_id = data.get('message_id')
+        self.id = data.get('id')
+        self.datetime = pendulum.instance(data.get('datetime'), tz='UTC')
+        self.created_at = pendulum.instance(data.get('created_at'), tz='UTC')
+        self.content = data.get('content')
+        self.link = data.get('link')
+        self.dm = data.get('dm')
+
+        self.task = None
+
+    def __repr__(self) -> str:
+        return f'<Reminder user_id={self.user_id} id={self.id} datetime={self.datetime} done={self.done}>'
+
+    @property
+    def done(self) -> bool:
+        return pendulum.now(tz='UTC') > self.datetime

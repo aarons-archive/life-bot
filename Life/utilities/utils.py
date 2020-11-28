@@ -118,8 +118,8 @@ class Utils:
 
         return datetime
 
-    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> str:
-        return self.convert_datetime(datetime=datetime).format('dddd Do [of] MMMM YYYY [at] HH:mm A (zzZZ)')
+    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], seconds: bool = False) -> str:
+        return self.convert_datetime(datetime=datetime).format(f'dddd Do [of] MMMM YYYY [at] HH:mm{":ss" if seconds else ""} A (zzZZ)')
 
     def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
 

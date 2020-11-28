@@ -9,6 +9,8 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
+import asyncio
+import typing
 
 import discord
 import pendulum
@@ -23,6 +25,15 @@ class Time(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
         self.bot = bot
+
+        self.bot.dateparser_settings = {
+            'DATE_ORDER': 'DMY',
+            'TIMEZONE': 'UTC',
+            'RETURN_AS_TIMEZONE_AWARE': False,
+            'PREFER_DAY_OF_MONTH': 'current',
+            'PREFER_DATES_FROM': 'future',
+            'PARSERS': ['relative-time', 'absolute-time', 'timestamp', 'custom-formats']
+        }
 
     @commands.command(name='timezones', aliases=['tzs'])
     async def timezones(self, ctx: context.Context) -> None:
@@ -108,6 +119,54 @@ class Time(commands.Cog):
         async with ctx.typing():
             buffer = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
             await ctx.send(file=discord.File(fp=buffer, filename='timecard.png'))
+
+    @commands.group(name='reminders', aliases=['remind', 'reminder', 'remindme'])
+    async def reminders(self, ctx: context.Context, *, reminder: converters.DatetimeParser = None) -> None:
+        """
+        Schedules a reminder for the given time with the text.
+        """
+
+        if reminder is not None:
+
+            if len(reminder['found'].keys()) > 1:
+
+                entries = [(datetime_phrase, datetime) for datetime_phrase, datetime in reminder['found'].items()]
+
+                paginator = await ctx.paginate_embed(entries=[
+                    f'`{index + 1}.` **{datetime_phrase}**\n`{self.bot.utils.format_datetime(datetime=datetime)}`' for index, (datetime_phrase, datetime) in enumerate(entries)
+                ], per_page=10, header=f'**Multiple time and/or dates were detected within your query, please select the one you would like to be reminded at:**\n\n')
+
+                try:
+                    response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
+                except asyncio.TimeoutError:
+                    raise exceptions.ArgumentError('You took too long to respond.')
+
+                response = await commands.clean_content().convert(ctx=ctx, argument=response.content)
+                try:
+                    response = int(response) - 1
+                except ValueError:
+                    raise exceptions.ArgumentError('That was not a valid number.')
+                if response < 0 or response >= len(entries):
+                    raise exceptions.ArgumentError('That was not one of the available options.')
+
+                await paginator.stop()
+                result = tuple(entries[response])
+
+            else:
+                result = tuple(reminder['found'].items())
+
+            datetime = self.bot.utils.format_datetime(datetime=result[0][1], seconds=True)
+            datetime_difference = self.bot.utils.format_difference(datetime=result[0][1], suppress=[])
+
+            await self.bot.user_manager.remind_manager.create_reminder(user_id=ctx.author.id, datetime=result[0][1], content=reminder['argument'], ctx=ctx)
+            await ctx.send(f'Set a reminder for `{datetime}`, `{datetime_difference}` from now.')
+            return
+
+        await ctx.invoke(self.reminders_list)
+
+    @reminders.command(name='list')
+    async def reminders_list(self, ctx: context.Context) -> None:
+        pass
 
 
 def setup(bot):

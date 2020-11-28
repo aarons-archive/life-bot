@@ -136,8 +136,8 @@ class Life(commands.AutoShardedBot):
 
         self.first_ready = False
 
-        await self.guild_manager.load()
         await self.user_manager.load()
+        await self.guild_manager.load()
 
         for cog in self.cogs.values():
             if hasattr(cog, 'load'):

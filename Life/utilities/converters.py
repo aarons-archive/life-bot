@@ -10,14 +10,15 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-import typing
 from abc import ABC
 
 import discord
-import rapidfuzz.process
 import pendulum
+import pendulum.exceptions
+import rapidfuzz.process
 import yarl
 from discord.ext import commands
+import dateparser.search
 
 from utilities import context, exceptions
 
@@ -48,7 +49,7 @@ class ChannelEmojiConverter(commands.Converter, ABC):
 
 class TimezoneConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str) -> typing.Any:
+    async def convert(self, ctx: context.Context, argument: str) -> pendulum.timezone:
 
         timezones = [timezone for timezone in pendulum.timezones]
 
@@ -76,6 +77,30 @@ class Prefix(commands.clean_content):
             raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
 
         return argument
+
+
+class DatetimeParser(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, argument: str) -> dict:
+
+        searches = dateparser.search.search_dates(argument, languages=['en'], settings=ctx.bot.dateparser_settings)
+        if not searches:
+            raise exceptions.ArgumentError('I was unable to find a time and/or date within your query, try to be more explicit or put the time/date first.')
+
+        data = {'argument': argument, 'found': {}}
+
+        for datetime_phrase, datetime in searches:
+
+            datetime = pendulum.instance(dt=datetime, tz='UTC')
+            if datetime < pendulum.now(tz='UTC'):
+                continue
+
+            data['found'][datetime_phrase] = datetime
+
+        if not data['found']:
+            raise exceptions.ArgumentError('I was able to find a time and/or date within your query, however it seems to be in the past.')
+
+        return data
 
 
 #
@@ -141,5 +166,3 @@ class ImageConverter(commands.Converter, ABC):
                 url = argument
 
         return url
-
-
