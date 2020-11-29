@@ -40,8 +40,9 @@ class Time(commands.Cog):
         """
         Displays a list of timezones that can be used with the bot.
         """
-
         await ctx.paginate_embed(entries=pendulum.timezones, per_page=20, title='Available timezones:')
+
+    #
 
     @commands.group(name='time', invoke_without_command=True)
     async def time(self, ctx: context.Context, *, timezone: str = None) -> None:
@@ -110,6 +111,8 @@ class Time(commands.Cog):
             await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.reset)
             await ctx.send('Your timezone is now public.')
 
+    #
+
     @commands.command(name='timecard')
     async def timecard(self, ctx: context.Context) -> None:
         """
@@ -120,10 +123,14 @@ class Time(commands.Cog):
             buffer = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
             await ctx.send(file=discord.File(fp=buffer, filename='timecard.png'))
 
+    #
+
     @commands.group(name='reminders', aliases=['remind', 'reminder', 'remindme'], invoke_without_command=True)
     async def reminders(self, ctx: context.Context, *, reminder: converters.DatetimeParser) -> None:
         """
         Schedules a reminder for the given time with the text.
+
+        `reminder`: The content of reminder, should include some form of date or time such as `tomorrow`, `in 12h` or `1st january 2020`.
         """
 
         entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(reminder['found'].items())}
@@ -161,6 +168,9 @@ class Time(commands.Cog):
 
     @reminders.command(name='list')
     async def reminders_list(self, ctx: context.Context) -> None:
+        """
+        Displays a list of your reminders.
+        """
 
         reminders = [reminder for reminder in ctx.user_config.reminders if not reminder.done]
 
@@ -176,6 +186,38 @@ class Time(commands.Cog):
                                  f'`Content:` {reminder.content[:100]}\n\n'
 
         await ctx.send(embed=embed)
+
+    @reminders.command(name='delete', aliases=['remove'])
+    async def reminders_delete(self, ctx: context.Context, *, reminder_ids: str) -> None:
+        """
+        Deletes the reminder(s) with the given ID(s).
+
+        `reminder_ids`: A list of reminders IDs to delete, separated by spaces.
+        """
+
+        reminder_ids_to_remove = []
+
+        for reminder_id in reminder_ids.split(' '):
+
+            try:
+                reminder_id = int(reminder_id)
+            except ValueError:
+                raise exceptions.ArgumentError(f'`{reminder_id}` is not a valid reminder id.')
+
+            reminder = await self.bot.user_manager.remind_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+            if not reminder:
+                raise exceptions.ArgumentError(f'You do not have a reminder with the id `{reminder_id}`.')
+
+            if reminder.id in reminder_ids_to_remove:
+                raise exceptions.ArgumentError(f'You provided the reminder id `{reminder.id}` more than once.')
+
+            reminder_ids_to_remove.append(reminder.id)
+
+        for reminder_id in reminder_ids_to_remove:
+            await self.bot.user_manager.remind_manager.delete_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+
+        s = "s" if len(reminder_ids_to_remove) > 1 else ""
+        await ctx.send(f'Deleted {len(reminder_ids_to_remove)} reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
 
 
 def setup(bot):

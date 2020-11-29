@@ -11,6 +11,7 @@
 #
 
 import logging
+import typing
 
 import aioscheduler
 import discord
@@ -88,7 +89,7 @@ class ReminderManager:
         reminder.task = self.scheduler.schedule(self.do_reminder(reminder=reminder), when=reminder.datetime.naive())
         log.info(f'[REMINDER MANAGER] Scheduled reminder with id \'{reminder.id}\' for \'{reminder.datetime}\'')
 
-    async def create_reminder(self, *, user_id: int, datetime: pendulum.datetime, content: str, ctx: context.Context, dm: bool = False):
+    async def create_reminder(self, *, user_id: int, datetime: pendulum.datetime, content: str, ctx: context.Context, dm: bool = False) -> objects.Reminder:
 
         user_config = self.bot.user_manager.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
@@ -106,7 +107,19 @@ class ReminderManager:
         user_config.reminders.append(reminder)
         return reminder
 
-    async def delete_reminder(self, user_id: int, reminder_id: int):
+    async def get_reminder(self, *, user_id: int, reminder_id: int) -> typing.Optional[objects.Reminder]:
+
+        user_config = self.bot.user_manager.get_user_config(user_id=user_id)
+        if isinstance(user_config, objects.DefaultUserConfig):
+            user_config = await self.bot.user_manager.create_user_config(user_id=user_id)
+
+        reminders = [reminder for reminder in user_config.reminders if reminder.id == reminder_id]
+        if not reminders:
+            return
+
+        return reminders[0]
+
+    async def delete_reminder(self, user_id: int, reminder_id: int) -> None:
 
         user_config = self.bot.user_manager.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
