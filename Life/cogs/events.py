@@ -210,6 +210,7 @@ class Events(commands.Cog):
 
         error_messages = {
             exceptions.ArgumentError: f'{error}',
+            exceptions.GeneralError: f'{error}',
             exceptions.ImageError: f'{error}',
             exceptions.VoiceError: f'{error}',
             NodeNotFound: f'There are no lavalink nodes available right now.',
