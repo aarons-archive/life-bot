@@ -27,3 +27,7 @@ class ImageError(LifeError):
 
 class VoiceError(LifeError):
     pass
+
+
+class GeneralError(LifeError):
+    pass
