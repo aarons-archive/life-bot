@@ -55,7 +55,7 @@ class GuildConfig:
 class DefaultUserConfig:
 
     __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
-                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak')
+                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'reminders')
 
     def __init__(self) -> None:
 
@@ -79,6 +79,8 @@ class DefaultUserConfig:
         self.daily_streak = 0
         self.weekly_streak = 0
         self.monthly_streak = 0
+
+        self.reminders = []
 
         self.requires_db_update = []
 
