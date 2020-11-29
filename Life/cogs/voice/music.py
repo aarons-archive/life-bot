@@ -281,7 +281,7 @@ class Music(commands.Cog):
         if not ctx.guild.voice_client.current.is_seekable:
             raise exceptions.VoiceError('The current track is not seekable.')
 
-        if not seconds and not seconds == 0:
+        if not seconds and seconds != 0:
             await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.guild.voice_client.position / 1000)}`')
             return
 
