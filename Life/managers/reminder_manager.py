@@ -32,7 +32,7 @@ class ReminderManager:
 
         self.scheduler.start()
 
-        reminders = await self.bot.db.fetch('SELECT * FROM reminders')
+        reminders = await self.bot.db.fetch('SELECT * FROM reminders order by datetime')
         for reminder in reminders:
 
             user_config = self.bot.user_manager.get_user_config(user_id=reminder['user_id'])
@@ -62,20 +62,18 @@ class ReminderManager:
         embed = discord.Embed(colour=user_config.colour,
                               description=f'**[Reminder]({reminder.link}) - {self.bot.utils.format_difference(datetime=reminder.created_at, suppress=[])} ago**\n\n'
                                           f'{reminder.content}\n\n'
-                                          f'**Time set:**\n{reminder.created_at.format("dddd Do [of] MMMM YYYY [at] HH:mm:ss A (zz)")}\n'
-                                          f'**Time to remind at:**\n{reminder.datetime.format("dddd Do [of] MMMM YYYY [at] HH:mm:ss A (zz)")}')
+                                          f'**Time set:** `{self.bot.utils.format_datetime(datetime=reminder.created_at, seconds=True)}`\n'
+                                          f'**Time to remind at:** `{self.bot.utils.format_datetime(datetime=reminder.datetime, seconds=True)}`')
 
-        if reminder.dm:
+        channel = self.bot.get_channel(reminder.channel_id)
+
+        if reminder.dm or channel is None:
             try:
                 await person.send(content=f'<@!{reminder.user_id}>', embed=embed)
             except discord.Forbidden:
                 return
 
         else:
-
-            channel = self.bot.get_channel(reminder.channel_id)
-            if not channel:
-                return
 
             try:
                 await channel.send(content=f'<@!{reminder.user_id}>', embed=embed)
