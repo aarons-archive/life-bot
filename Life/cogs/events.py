@@ -72,7 +72,7 @@ class Events(commands.Cog):
         if message.guild is None:
 
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-            info = f'Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+            info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
             embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
             embed.add_field(name='Info:', value=info)
