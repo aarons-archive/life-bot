@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import io
 import multiprocessing
@@ -22,6 +21,7 @@ from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
 
+from bot import Life
 from utilities import context
 from utilities.exceptions import ArgumentError, ImageError
 
@@ -196,12 +196,11 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
                     for old_frame in old_image.sequence:
                         new_frame, image_text = edit_function(old_frame, **kwargs)
                         new_image.sequence.append(new_frame)
-                    image_format = new_image.format
-                    new_image.save(file=image_edited)
                 else:
                     new_image, image_text = edit_function(old_image, **kwargs)
-                    image_format = new_image.format
-                    new_image.save(file=image_edited)
+
+                image_format = new_image.format
+                new_image.save(file=image_edited)
 
         image_edited.seek(0)
 
@@ -220,10 +219,10 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
 
 class Imaging:
 
-    def __init__(self, bot):
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs):
+    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs) -> discord.Embed:
 
         if ctx.message.attachments:
             url = ctx.message.attachments[0].url
@@ -235,15 +234,12 @@ class Imaging:
             async with self.bot.session.get(url) as response:
                 image_bytes = await response.read()
         except Exception:
-            raise ArgumentError(f'Something went wrong while trying to get that image. Check the url.')
+            raise ArgumentError(f'Something went wrong while trying to download that image. Check the URL.')
         else:
-            content_type = response.headers.get('Content-Type')
-            content_length = response.headers.get('Content-Length')
-
-            if content_type not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
+            if response.headers.get('Content-Type') not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
                 raise ImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
-            if content_length and int(content_length) > 15728640:
+            if response.headers.get('Content-Length') and int(response.headers.get('Content-Length')) > 15728640:
                 raise ImageError('That file is over 15mb.')
 
         parent_pipe, child_pipe = multiprocessing.Pipe()
@@ -260,21 +256,17 @@ class Imaging:
         process.join()
         process.close()
 
-        image = data['image']
-        image_format = data['format']
-        image_text = data['text']
+        form_data = aiohttp.FormData()
+        form_data.add_field('file', data['image'], filename=f'image.{data["format"].lower()}')
 
-        url = 'https://idevision.net/api/media/post'
-        headers = {"Authorization": self.bot.config.idevision_key}
-        upload_data = aiohttp.FormData()
-        upload_data.add_field('file', image, filename=f'image.{image_format.lower()}')
+        async with self.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": self.bot.config.axelweb_token}, data=form_data) as response:
 
-        async with self.bot.session.post(url, data=upload_data, headers=headers) as response:
             if response.status == 413:
-                raise ImageError('The image produced was over 20mb.')
+                raise ImageError('The image produced was over 100mb.')
+
             post = await response.json()
 
         embed = discord.Embed(colour=ctx.colour)
-        embed.set_footer(text=image_text)
-        embed.set_image(url=post.get('sike_heres_the_real_url'))
+        embed.set_footer(text=data['text'])
+        embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
         return embed

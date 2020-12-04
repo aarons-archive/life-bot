@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import discord
 import pendulum
@@ -25,7 +24,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @commands.group(name='tag', aliases=['tags'], invoke_without_command=True)
-    async def tag(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Get a tag by it's name or alias's.
 
@@ -36,7 +35,7 @@ class Tags(commands.Cog):
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
 
-        if not tags[0]['name'] == name:
+        if tags[0]['name'] != name:
 
             extra_msg = ''
             if len(tags) > 0:
@@ -51,7 +50,7 @@ class Tags(commands.Cog):
         await ctx.send(tags[0]['content'])
 
     @tag.command(name='raw')
-    async def tag_raw(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_raw(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Get a tags raw content.
 
@@ -62,7 +61,7 @@ class Tags(commands.Cog):
         if not tags:
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`.')
 
-        if not tags[0]['name'] == name:
+        if tags[0]['name'] != name:
 
             extra_msg = ''
             if len(tags) > 0:
@@ -77,7 +76,7 @@ class Tags(commands.Cog):
         await ctx.send(discord.utils.escape_markdown(tags[0]['content']))
 
     @tag.command(name='create', aliases=['make', 'add'])
-    async def tag_create(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content) -> None:
+    async def tag_create(self, ctx: context.Context, name: converters.TagConverter, *, content: commands.clean_content) -> None:
         """
         Create a tag.
 
@@ -95,13 +94,13 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, name, content, None, pendulum.now(tz=pendulum.timezone("UTC")))
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag created:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag created:**')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{content}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='edit')
-    async def tag_edit(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content) -> None:
+    async def tag_edit(self, ctx: context.Context, name: converters.TagConverter, *, content: commands.clean_content) -> None:
         """
         Edit a tags content.
 
@@ -118,13 +117,13 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET content = $1 WHERE guild_id = $2 AND name = $3', content, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag edited:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag edited:**')
         embed.add_field(name='Old content:', value=f'{tag["content"]}', inline=False)
         embed.add_field(name='New content:', value=f'{content}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='claim')
-    async def tag_claim(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_claim(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Claim a tag if it's owner has left the server.
 
@@ -141,13 +140,13 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3', ctx.author.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag claimed:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag claimed:**')
         embed.add_field(name='Previous owner:', value=f'{tag["owner_id"]}', inline=False)
         embed.add_field(name='New owner:', value=f'{ctx.author.mention}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='alias')
-    async def tag_alias(self, ctx: context.Context, alias: converters.TagName, original: converters.TagName) -> None:
+    async def tag_alias(self, ctx: context.Context, alias: converters.TagConverter, original: converters.TagConverter) -> None:
         """
         Alias a name to a tag.
 
@@ -166,13 +165,13 @@ class Tags(commands.Cog):
         query = 'INSERT INTO tags VALUES ($1, $2, $3, $4, $5, $6)'
         await self.bot.db.execute(query, ctx.author.id, ctx.guild.id, alias, None, original, pendulum.now(tz=pendulum.timezone('UTC')))
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag alias created:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag alias created:**')
         embed.add_field(name='Alias:', value=f'{alias}', inline=False)
         embed.add_field(name='Links to:', value=f'{original}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='transfer')
-    async def tag_transfer(self, ctx: context.Context, name: converters.TagName, *, member: discord.Member) -> None:
+    async def tag_transfer(self, ctx: context.Context, name: converters.TagConverter, *, member: discord.Member) -> None:
         """
         Transfer a tag to another member.
 
@@ -189,13 +188,13 @@ class Tags(commands.Cog):
 
         await self.bot.db.execute('UPDATE tags SET owner_id = $1 WHERE guild_id = $2 AND name = $3', member.id, ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag transferred:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag transferred:**')
         embed.add_field(name='Previous owner:', value=f'{ctx.author.mention}', inline=False)
         embed.add_field(name='New owner:', value=f'{member.mention}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='delete', aliases=['remove'])
-    async def tag_delete(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_delete(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Delete a tag.
 
@@ -209,13 +208,13 @@ class Tags(commands.Cog):
         await self.bot.db.execute('DELETE FROM tags WHERE guild_id = $1 AND owner_id = $2 AND name = $3', ctx.guild.id, ctx.author.id, name)
         await self.bot.db.execute('DELETE FROM tags WHERE guild_id = $1 AND alias = $2', ctx.guild.id, name)
 
-        embed = discord.Embed(colour=ctx.colour, title='Tag deleted:')
+        embed = discord.Embed(colour=ctx.colour, description='**Tag deleted:**')
         embed.add_field(name='Name:', value=f'{name}', inline=False)
         embed.add_field(name='Content:', value=f'{tag["content"]}', inline=False)
         await ctx.send(embed=embed)
 
     @tag.command(name='search')
-    async def tag_search(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_search(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Display a list of tags that are similar to the search.
 
@@ -227,7 +226,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server similar to the term `{name}`.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, header=f'Tags matching: `{name}`\n\n')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**Tags matching:** `{name}`\n\n')
 
     @tag.command(name='list')
     async def tag_list(self, ctx: context.Context, *, member: discord.Member = None) -> None:
@@ -245,7 +244,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'`{member}` has no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, title=f'{member}\'s tags')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**{member}\'s tags:**\n\n')
 
     @tag.command(name='all')
     async def tag_all(self, ctx: context.Context) -> None:
@@ -258,10 +257,10 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags in this server.')
 
         entries = [f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags)]
-        await ctx.paginate_embed(entries=entries, per_page=25, title=f'{ctx.guild}\'s tags')
+        await ctx.paginate_embed(entries=entries, per_page=25, header=f'**{ctx.guild}\'s tags:**\n\n')
 
     @tag.command(name='info')
-    async def tag_info(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_info(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Displays information about a tag.
 
@@ -274,7 +273,7 @@ class Tags(commands.Cog):
 
         owner = ctx.guild.get_member(tag['owner_id'])
 
-        embed = discord.Embed(colour=ctx.colour, title=f'{tag["name"]}')
+        embed = discord.Embed(colour=ctx.colour, description=f'**{tag["name"]}**')
         embed.description = f'`Owner:` {owner.mention if owner else "None"} ({tag["owner_id"]})\n`Claimable:` {owner is None}\n`Alias:` {tag["alias"]}'
         embed.set_footer(text=f'Created on {self.bot.utils.format_datetime(datetime=tag["created_at"])}')
         await ctx.send(embed=embed)

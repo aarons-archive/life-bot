@@ -1,15 +1,15 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
 import json
 import random
 import typing
@@ -35,9 +35,9 @@ class Queue:
         return self.queue.__iter__()
 
     def __contains__(self, item: objects.Track) -> bool:
-        return True if item in self.queue else False
+        return item in self.queue
 
-    def __getitem__(self, key: slice) -> list:
+    def __getitem__(self, key):
         return self.queue[key]
 
     def __len__(self) -> int:
@@ -45,11 +45,11 @@ class Queue:
 
     @property
     def is_empty(self) -> bool:
-        return True if not self.queue else False
+        return not self.queue
 
     @property
     def is_looping(self) -> bool:
-        return True if self.looping is True else False
+        return self.looping is True
 
     @property
     def json(self) -> str:
@@ -63,9 +63,7 @@ class Queue:
 
     @property
     def history(self) -> typing.Generator:
-
-        for item in self.queue_history[1:]:
-            yield item
+        yield from self.queue_history[1:]
 
     async def get(self, *, position: int = 0, history: bool = True) -> typing.Optional[objects.Track]:
 
@@ -74,7 +72,7 @@ class Queue:
         except IndexError:
             return None
 
-        if history is True:
+        if history:
             self.put_history(tracks=item, position=position)
 
         self.player.dispatch_event(data={'type': 'PlayerQueueUpdate', 'player': self.player})

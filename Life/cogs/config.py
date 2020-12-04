@@ -1,22 +1,23 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+import typing
 
 import discord
-import typing
 from discord.ext import commands
 
 from bot import Life
 from utilities import context, converters, exceptions
+from utilities.enums import Editables, Operations
 
 
 class Config(commands.Cog):
@@ -58,21 +59,21 @@ class Config(commands.Cog):
 
         old_colour = ctx.guild_config.colour
 
-        if operation == 'reset':
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='colour', operation='reset')
+        if operation in {'reset'}:
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.colour, operation=Operations.reset)
 
-        elif operation == 'set':
+        elif operation in {'set'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a valid colour argument. They can be `0x<hex>`, `#<hex>`, `0x#<hex>` or a colour such as red or green.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='colour', operation='set', value=f'0x{str(value).strip("#")}')
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.colour, operation=Operations.set, value=value)
 
         await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
 
-    @config.command(name='prefix')
-    async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.Prefix = None) -> None:
+    @config.command(name='prefix', aliases=['prefixes'])
+    async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.PrefixConverter = None) -> None:
 
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
@@ -83,7 +84,7 @@ class Config(commands.Cog):
         if await self.bot.is_owner(person=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
-        if operation == 'add':
+        if operation in {'add'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less then 15 characters and contain no backtick (`) characters.')
@@ -93,10 +94,10 @@ class Config(commands.Cog):
             elif value in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{value}`.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='add', value=value)
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.add, value=value)
             await ctx.send(f'Added `{value}` to this servers prefixes.')
 
-        elif operation == 'remove':
+        elif operation in {'remove'}:
 
             if not value:
                 raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less then 15 characters and contain no backtick (`) characters.')
@@ -104,7 +105,7 @@ class Config(commands.Cog):
             if value not in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{value}`.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='remove', value=value)
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.remove, value=value)
             await ctx.send(f'Removed `{value}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
@@ -112,7 +113,7 @@ class Config(commands.Cog):
             if not ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
 
-            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, attribute='prefix', operation='reset')
+            await self.bot.guild_manager.edit_guild_config(guild_id=ctx.guild.id, editable=Editables.prefixes, operation=Operations.clear)
             await ctx.send(f'Cleared this servers prefixes.')
 
 
