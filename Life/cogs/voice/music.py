@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import asyncio
 
@@ -21,7 +20,7 @@ from discord.ext import commands
 
 from bot import Life
 from cogs.voice.lavalink import client, objects
-from cogs.voice.lavalink.exceptions import *
+from cogs.voice.lavalink.exceptions import NodeCreationError
 from utilities import context, exceptions
 
 
@@ -48,10 +47,10 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_lavalink_track_start(self, event: objects.TrackStartEvent) -> None:
 
-        await event.player.invoke_controller()
-
         event.player.wait_track_start.set()
         event.player.wait_track_start.clear()
+
+        await event.player.invoke_controller()
 
     @commands.Cog.listener()
     async def on_lavalink_track_end(self, event: objects.TrackEndEvent) -> None:
@@ -190,7 +189,7 @@ class Music(commands.Cog):
         if not ctx.guild.voice_client.is_playing:
             raise exceptions.VoiceError(f'There are no tracks playing.')
 
-        if not ctx.guild.voice_client.current.requester.id == ctx.author.id:
+        if ctx.guild.voice_client.current.requester.id != ctx.author.id:
             amount = 1
 
             if ctx.author not in ctx.guild.voice_client.listeners:
@@ -208,21 +207,20 @@ class Music(commands.Cog):
             if len(ctx.guild.voice_client.skip_requests) < skips_needed:
                 raise exceptions.VoiceError(f'Currently on `{len(ctx.guild.voice_client.skip_requests)}` out of `{skips_needed}` votes needed to skip.')
 
-        if not amount == 1:
+        if amount != 1:
 
             if amount <= 0 or amount > len(ctx.guild.voice_client.queue) + 1:
                 raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and '
                                             f'`{len(ctx.guild.voice_client.queue) + 1}`.')
 
             for index, track in enumerate(ctx.guild.voice_client.queue[:amount - 1]):
-                if not track.requester.id == ctx.author.id:
+                if track.requester.id != ctx.author.id:
                     raise exceptions.VoiceError(f'You only skipped `{index + 1}` out of the next `{amount}` tracks because you were not the requester of all them.')
 
                 await ctx.guild.voice_client.queue.get()
 
         await ctx.guild.voice_client.stop()
         await ctx.send(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
-        return
 
     @commands.command(name='pause')
     async def pause(self, ctx: context.Context) -> None:
@@ -283,7 +281,7 @@ class Music(commands.Cog):
         if not ctx.guild.voice_client.current.is_seekable:
             raise exceptions.VoiceError('The current track is not seekable.')
 
-        if not seconds and not seconds == 0:
+        if not seconds and seconds != 0:
             await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.guild.voice_client.position / 1000)}`')
             return
 
@@ -309,7 +307,7 @@ class Music(commands.Cog):
         if not channel or channel.id != ctx.guild.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if not volume and not volume == 0:
+        if not volume and volume != 0:
             await ctx.send(f'The players volume is `{ctx.guild.voice_client.volume}%`.')
             return
 
@@ -344,14 +342,15 @@ class Music(commands.Cog):
         if ctx.guild.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in ctx.guild.voice_client.queue])) / 1000, friendly=True)
+        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in ctx.guild.voice_client.queue)) / 1000, friendly=True)
         header = f'Showing `{min([10, len(ctx.guild.voice_client.queue)])}` out of `{len(ctx.guild.voice_client.queue)}` track(s) in the queue. ' \
                  f'Total queue time is `{time}`.\n\n'
 
-        entries = []
-        for index, track in enumerate(ctx.guild.voice_client.queue):
-            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
-                           f'{track.requester.mention}')
+        entries = [
+            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
+            f'{track.requester.mention}'
+            for index, track in enumerate(ctx.guild.voice_client.queue)
+        ]
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue:', header=header)
 
@@ -410,13 +409,14 @@ class Music(commands.Cog):
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
-        time = self.bot.utils.format_seconds(seconds=round(sum([track.length for track in history])) / 1000, friendly=True)
+        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in history)) / 1000, friendly=True)
         header = f'Showing `{min([10, len(history)])}` out of `{len(history)}` track(s) in the queues history. Total queue history time is `{time}`.\n\n'
 
-        entries = []
-        for index, track in enumerate(history):
-            entries.append(f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
-                           f'{track.requester.mention}')
+        entries = [
+            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
+            f'{track.requester.mention}'
+            for index, track in enumerate(history)
+        ]
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue history:', header=header)
 
@@ -568,7 +568,6 @@ class Music(commands.Cog):
         if ctx.guild.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-
         if entry_1 <= 0 or entry_1 > len(ctx.guild.voice_client.queue):
             raise exceptions.VoiceError(f'That was not a valid track entry to move from. Choose a number between `1` and `{len(ctx.guild.voice_client.queue)}` ')
 
@@ -627,12 +626,26 @@ class Music(commands.Cog):
     @commands.command(nane='lyrics', aliases=['lyric'])
     async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
 
-        if query is None:
+        if query == 'spotify':
+
+            spotify_activity = discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)
+            if not spotify_activity:
+                raise exceptions.VoiceError('You are not listening to anything on spotify.')
+
+            query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
+
+        if query == 'bot':
+
             if not ctx.guild or not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
             if not ctx.guild.voice_client.is_playing:
                 raise exceptions.VoiceError(f'There are no tracks playing.')
+
             query = f'{ctx.guild.voice_client.current.title} - {ctx.guild.voice_client.current.requester}'
+
+        if not query:
+            raise exceptions.VoiceError('You must provide a valid query to find lyrics for. You can use `bot` to find lyrics for the track the bot is currently playing, or '
+                                        'you can use `spotify` for the track you are listening to on spotify.')
 
         try:
             results = await self.bot.ksoft.music.lyrics(query=query, limit=20)
@@ -664,16 +677,16 @@ class Music(commands.Cog):
         entries = []
         for line in result.lyrics.split('\n'):
 
-            if len(entries) == 0:
+            if not entries:
                 entries.append(line)
                 continue
 
-            last_entry = entries[len(entries) - 1]
+            last_entry = entries[-1]
             if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
                 entries.append(line)
                 continue
 
-            entries[len(entries) - 1] += f'\n{line}'
+            entries[-1] += f'\n{line}'
 
         await ctx.paginate_embed(entries=entries, header=f'Lyrics for `{result.name}` by `{result.artist}`:\n\n',
                                  embed_add_footer='Lyrics provided by KSoft.Si API', per_page=1)

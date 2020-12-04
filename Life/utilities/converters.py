@@ -1,26 +1,59 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
-
-import typing
 from abc import ABC
 
+import dateparser.search
 import discord
-import fuzzywuzzy.process
 import pendulum
+import pendulum.exceptions
+import rapidfuzz.process
 import yarl
 from discord.ext import commands
 
 from utilities import context, exceptions
+
+
+class UserConverter(commands.UserConverter):
+
+    async def convert(self, ctx: context.Context, argument: str) -> discord.User:
+
+        user = None
+        try:
+            user = await super().convert(ctx, argument)
+        except commands.BadArgument:
+            pass
+
+        if not user:
+            try:
+                user = await ctx.bot.fetch_user(argument)
+            except (discord.NotFound, discord.HTTPException):
+                raise commands.BadArgument
+
+        return user
+
+
+class TimezoneConverter(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, argument: str) -> pendulum.timezone:
+
+        timezones = [timezone for timezone in pendulum.timezones]
+
+        if argument not in timezones:
+            matches = rapidfuzz.process.extract(query=argument, choices=pendulum.timezones, limit=5)
+            extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
+            raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
+
+        return pendulum.timezone(argument)
 
 
 class ChannelEmojiConverter(commands.Converter, ABC):
@@ -47,62 +80,63 @@ class ChannelEmojiConverter(commands.Converter, ABC):
         return ctx.bot.utils.channel_emojis[emoji]
 
 
-class TimezoneConverter(commands.Converter, ABC):
-
-    async def convert(self, ctx: context.Context, argument: str) -> typing.Any:
-
-        timezones = [timezone for timezone in pendulum.timezones]
-
-        if argument not in timezones:
-            matches = fuzzywuzzy.process.extract(query=argument, choices=pendulum.timezones, limit=5)
-            extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
-            raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
-
-        return pendulum.timezone(argument)
-
-
-class Prefix(commands.clean_content):
+class ImageConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
 
-        argument = await super().convert(ctx, argument)
-        argument = discord.utils.escape_markdown(argument)
+        url = None
 
-        if not argument:
-            raise commands.BadArgument
-
-        if '`' in argument:
-            raise exceptions.ArgumentError('Prefixes can not contain backtick characters.')
-        if len(argument) > 15:
-            raise exceptions.ArgumentError('Prefixes can not be more than 15 characters.')
-
-        return argument
-
-
-
-
-
-class User(commands.UserConverter):
-
-    async def convert(self, ctx: context.Context, argument: str) -> discord.User:
-        user = None
         try:
-            user = await super().convert(ctx, argument)
+            user = await UserConverter().convert(ctx=ctx, argument=str(argument))
         except commands.BadArgument:
             pass
+        else:
+            url = str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png'))
 
-        if not user:
+        if url is None:
             try:
-                user = await ctx.bot.fetch_user(argument)
-            except discord.NotFound:
-                raise commands.BadArgument
-            except discord.HTTPException:
-                raise commands.BadArgument
+                member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
+            except commands.BadArgument:
+                pass
+            else:
+                url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
-        return user
+        if url is None:
+            check = yarl.URL(argument)
+            if check.scheme and check.host:
+                url = argument
+
+        if url is None:
+            url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
+
+        return url
 
 
-class TagName(commands.clean_content):
+class DatetimeConverter(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, argument: str) -> dict:
+
+        searches = dateparser.search.search_dates(argument, languages=['en'], settings=ctx.bot.dateparser_settings)
+        if not searches:
+            raise exceptions.ArgumentError('I was unable to find a time and/or date within your query, try to be more explicit or put the time/date first.')
+
+        data = {'argument': argument, 'found': {}}
+
+        for datetime_phrase, datetime in searches:
+
+            datetime = pendulum.instance(dt=datetime, tz='UTC')
+            if datetime < pendulum.now(tz='UTC'):
+                continue
+
+            data['found'][datetime_phrase] = datetime
+
+        if not data['found']:
+            raise exceptions.ArgumentError('I was able to find a time and/or date within your query, however it seems to be in the past.')
+
+        return data
+
+
+class TagConverter(commands.clean_content, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
 
@@ -123,24 +157,19 @@ class TagName(commands.clean_content):
         return argument
 
 
-class ImageConverter(commands.Converter, ABC):
+class PrefixConverter(commands.clean_content, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
 
-        url = None
+        argument = await super().convert(ctx, argument)
+        argument = discord.utils.escape_markdown(argument)
 
-        try:
-            member = await ctx.bot.member_converter.convert(ctx, str(argument))
-        except commands.BadArgument:
-            pass
-        else:
-            url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
+        if not argument:
+            raise commands.BadArgument
 
-        if url is None:
-            check = yarl.URL(argument)
-            if check.scheme and check.host:
-                url = argument
+        if '`' in argument:
+            raise exceptions.ArgumentError('Your prefix can not contain backtick characters.')
+        if len(argument) > 15:
+            raise exceptions.ArgumentError('Your prefix can not be more than 15 characters.')
 
-        return url
-
-
+        return argument

@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import datetime as dt
 import typing
@@ -119,8 +118,10 @@ class Utils:
 
         return datetime
 
-    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> str:
-        return self.convert_datetime(datetime=datetime).format('dddd Do [of] MMMM YYYY [at] HH:mm A (zzZZ)')
+    def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], seconds: bool = False) -> str:
+
+        datetime = self.convert_datetime(datetime=datetime)
+        return datetime.format(f'dddd Do [of] MMMM YYYY [at] HH:mm{":ss" if seconds else ""} A (zz{"ZZ" if datetime.timezone == "UTC" else ""})')
 
     def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
 
@@ -129,6 +130,24 @@ class Utils:
 
         return humanize.precisedelta(pendulum.now(tz='UTC').diff(self.convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
 
+    def badges(self, *, person: typing.Union[discord.User, discord.Member]) -> str:
+
+        badges = [badge for name, badge in self.badge_emojis.items() if dict(person.public_flags)[name] is True]
+        if dict(person.public_flags)['verified_bot'] is False and person.bot:
+            badges.append('<:bot:738979752244674674>')
+
+        if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
+            badges.append('<:booster_level_4:738961099310760036>')
+
+        if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
+            badges.append('<:nitro:738961134958149662>')
+
+        elif member := discord.utils.get(self.bot.get_all_members(), id=person.id):
+            if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
+                if activity.emoji and activity.emoji.is_custom_emoji():
+                    badges.append('<:nitro:738961134958149662>')
+
+        return ' '.join(badges) if badges else 'N/A'
 
     def activities(self, *, person: discord.Member) -> str:
 
@@ -167,29 +186,10 @@ class Utils:
                 if isinstance(activity, discord.Spotify):
                     url = f'https://open.spotify.com/track/{activity.track_id}'
                     message += f'• Listening to **[{activity.title}]({url})** by **{", ".join(activity.artists)}** '
-                    if activity.album and not activity.album == activity.title:
+                    if activity.album and activity.album != activity.title:
                         message += f'from the album **{activity.album}** '
                     message += '\n'
                 else:
                     message += f'• Listening to **{activity.name}**\n'
 
         return message
-
-    def badges(self, *, person: typing.Union[discord.User, discord.Member]) -> str:
-
-        badges = [badge for name, badge in self.badge_emojis.items() if dict(person.public_flags)[name] is True]
-        if dict(person.public_flags)['verified_bot'] is False and person.bot:
-            badges.append('<:bot:738979752244674674>')
-
-        if any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
-            badges.append('<:booster_level_4:738961099310760036>')
-
-        if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in self.bot.guilds if person in guild.members]):
-            badges.append('<:nitro:738961134958149662>')
-
-        elif member := discord.utils.get(self.bot.get_all_members(), id=person.id):
-            if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
-                if activity.emoji and activity.emoji.is_custom_emoji():
-                    badges.append('<:nitro:738961134958149662>')
-
-        return ' '.join(badges) if badges else 'N/A'

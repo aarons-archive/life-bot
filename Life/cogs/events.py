@@ -1,25 +1,28 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
+import logging
 
 import discord
+import mystbin
 import pendulum
 import prettify_exceptions
 from discord.ext import commands
+from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 from bot import Life
 from cogs.voice.lavalink.exceptions import NodeNotFound
 from utilities import context, exceptions
-from discord.ext.alternatives.literal_converter import BadLiteralArgument
+
+log = logging.getLogger(__name__)
 
 
 class Events(commands.Cog):
@@ -27,16 +30,19 @@ class Events(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
+        self.bot.error_formatter = prettify_exceptions.DefaultFormatter()
+        self.bot.mystbin = mystbin.Client()
+
     @commands.Cog.listener()
     async def on_ready(self) -> None:
 
         print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
-        self.bot.log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
+        log.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
 
-        self.bot.log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
+        log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
         time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Joined a guild',
@@ -44,19 +50,13 @@ class Events(commands.Cog):
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
-        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild.id)
-        if guild_config.blacklisted:
-            await guild.leave()
-
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
 
-        self.bot.log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
-
-        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild.id)
+        log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
         time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a {"blacklisted " if guild_config.blacklisted else ""}guild',
+        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
@@ -72,8 +72,7 @@ class Events(commands.Cog):
         if message.guild is None:
 
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-            guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
-            info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+            info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
             embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
             embed.add_field(name='Info:', value=info)
@@ -83,8 +82,7 @@ class Events(commands.Cog):
         if self.bot.user in message.mentions:
 
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-            guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
-            info = f'{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+            info = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
             embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
             embed.add_field(name='Info:', value=info)
@@ -106,6 +104,9 @@ class Events(commands.Cog):
     async def on_command_error(self, ctx: context.Context, error) -> None:
 
         error = getattr(error, 'original', error)
+
+        log.error(f'[COMMANDS] Error while running command. Name: {ctx.command} | Error: {type(error)} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) |'
+                  f'{f"Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}')
 
         if isinstance(error, commands.CommandNotFound):
             return
@@ -207,44 +208,40 @@ class Events(commands.Cog):
                 await ctx.send(f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.')
             return
 
-        else:
+        error_messages = {
+            exceptions.ArgumentError: f'{error}',
+            exceptions.GeneralError: f'{error}',
+            exceptions.ImageError: f'{error}',
+            exceptions.VoiceError: f'{error}',
+            NodeNotFound: f'There are no lavalink nodes available right now.',
 
-            error_messages = {
-                exceptions.ArgumentError: f'{error}',
-                exceptions.ImageError: f'{error}',
-                exceptions.VoiceError: f'{error}',
-                NodeNotFound: f'There are no lavalink nodes available right now.',
+            commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
 
-                commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what argument to use.',
+            commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+            commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
+            commands.ExpectedClosingQuoteError: f'There is a missing quote character in the arguments you passed.',
 
-                commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
-                commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
-                commands.ExpectedClosingQuoteError: f'There is a missing quote character in the argument you passed.',
+            commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
+                                  f'arguments to use.',
 
-                commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
-                                      f'arguments to use.',
+            commands.CheckFailure: f'{error}',
+            commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
+            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
+            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
+            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
 
-                commands.CheckFailure: f'{error}',
-                commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
-                commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-                commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-                commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
+            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+        }
 
-                commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
-            }
-
-            error_message = error_messages.get(type(error), None)
-            if error_message is not None:
-                await ctx.send(error_message)
-
+        error_message = error_messages.get(type(error), None)
+        if error_message is not None:
+            await ctx.send(error_message)
             return
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
 
-        formatter = prettify_exceptions.DefaultFormatter()
-
-        formatter.theme['_ansi_enabled'] = True
-        print(f'\n{"".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
+        self.bot.error_formatter.theme['_ansi_enabled'] = True
+        print(f'\n{"".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
 
         time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
@@ -256,18 +253,28 @@ class Events(commands.Cog):
         await self.bot.errors_webhook.send(embed=embed, username=f'{ctx.author}',
                                            avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
 
-        formatter.theme['_ansi_enabled'] = False
-        traceback = "".join(formatter.format_exception(type(error), error, error.__traceback__)).strip()
+        self.bot.error_formatter.theme['_ansi_enabled'] = False
+        traceback = "".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()
 
-        if len(traceback) > 2000:
-            async with self.bot.session.post('https://mystb.in/documents', data=traceback) as response:
-                response = await response.json()
-            traceback = f'https://mystb.in/{response["key"]}.python'
+        log.error(f'[COMMANDS]\n\n{traceback}\n\n')
+
+        if len(traceback) < 2000:
+            traceback = f'```py\n{traceback}\n```'
+
         else:
-            traceback = f'```\n{traceback}\n```'
+            try:
+                traceback = await self.bot.mystbin.post(traceback, syntax='python')
+            except mystbin.APIError as error:
+                log.warning('[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
+                print(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
 
         await self.bot.errors_webhook.send(content=f'{traceback}', username=f'{ctx.author}',
                                            avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context) -> None:
+        log.info(f'[COMMANDS] Command used. Name: {ctx.command} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) | '
+                 f'{f"Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}')
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict) -> None:

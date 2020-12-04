@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import discord
 from discord.ext import commands
@@ -43,7 +42,7 @@ class SystemCollapse(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
 
-        if not payload.guild_id == self.guild_id:
+        if payload.guild_id != self.guild_id:
             return
 
         guild = self.bot.get_guild(payload.guild_id)
@@ -66,7 +65,7 @@ class SystemCollapse(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
 
-        if not payload.guild_id == self.guild_id:
+        if payload.guild_id != self.guild_id:
             return
 
         guild = self.bot.get_guild(payload.guild_id)

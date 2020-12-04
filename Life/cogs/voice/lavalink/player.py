@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import asyncio
 import time
@@ -26,6 +25,7 @@ from utilities import exceptions
 class Player(VoiceProtocol, ABC):
 
     def __init__(self, bot, channel: discord.VoiceChannel) -> None:
+        super().__init__(bot, channel)
 
         self.bot = self.client = bot
         self.channel = channel
@@ -126,7 +126,7 @@ class Player(VoiceProtocol, ABC):
 
     @property
     def listeners(self) -> list:
-        return [member for member in self.channel.members if not member.bot and not (member.voice.deaf or member.voice.self_deaf)]
+        return [member for member in self.channel.members if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
 
     async def connect(self, *, timeout: float, reconnect: bool) -> None:
 
@@ -214,15 +214,23 @@ class Player(VoiceProtocol, ABC):
 
         embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
+        queue_time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) / 1000, friendly=True)
+
         embed.add_field(name='Player info:',
-                        value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`')
+                        value=f'Volume: `{self.volume}`\nPaused: `{self.is_paused}`\nLooping: `{self.queue.is_looping}`\nQueue entries: `{len(self.queue)}`\n'
+                              f'Queue time: `{queue_time}`')
         embed.add_field(name='Track info:',
                         value=f'Time: `{self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
                               f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}`\n'
-                              f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}')
+                              f'Author: `{self.current.author}`\nSource: `{self.current.source}`\nRequester: {self.current.requester.mention}\nLive: `{self.current.is_stream}`')
 
         entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | `{self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)}` | {entry.requester.mention}'
                    for index, entry in enumerate(self.queue[:5])]
+
+        if len(self.queue) > 5:
+            entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
+                           f'`{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)}` | {self.queue[-1].requester.mention}')
+
         embed.add_field(name='Up next:', value='\n'.join(entries) if entries else 'There are no tracks in the queue.', inline=False)
 
         await self.send(embed=embed)
@@ -237,7 +245,7 @@ class Player(VoiceProtocol, ABC):
 
             if self.queue.is_empty:
                 try:
-                    with async_timeout.timeout(timeout=20):
+                    with async_timeout.timeout(timeout=120):
                         await self.wait_queue_add.wait()
                 except asyncio.TimeoutError:
                     await self.destroy()
@@ -262,8 +270,9 @@ class Player(VoiceProtocol, ABC):
                 await self.send(message=f'Something went wrong while starting the track `{track.title}`.')
                 continue
 
+            await self.wait_track_end.wait()
+
             if self.queue.is_looping:
                 self.queue.put(tracks=track)
 
-            await self.wait_track_end.wait()
             self.current = None

@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import re
 import typing
@@ -20,7 +19,7 @@ import spotify
 import yarl
 
 from cogs.voice.lavalink import objects
-from cogs.voice.lavalink.exceptions import *
+from cogs.voice.lavalink.exceptions import NodeConnectionError, NodeCreationError
 from cogs.voice.lavalink.player import Player
 from utilities import context, exceptions
 
@@ -163,7 +162,7 @@ class Node:
         async with self.client.session.get(f'{self.rest_url}/decodetrack?', headers={'Authorization': self.password}, params={'track': track_id}) as response:
             data = await response.json()
 
-            if not response.status == 200:
+            if response.status != 200:
                 raise exceptions.VoiceError('Track id was not valid.')
 
         return objects.Track(track_id=track_id, info=data, ctx=ctx)
@@ -190,7 +189,7 @@ class Node:
         async with self.client.session.get(url=f'{self.rest_url}/loadtracks?identifier={parse.quote(query)}', headers={'Authorization': self.password}) as response:
             data = await response.json()
 
-        if raw is True:
+        if raw:
             return data
 
         load_type = data.pop('loadType')
@@ -206,7 +205,7 @@ class Node:
             playlist = objects.Playlist(playlist_info=data.get('playlistInfo'), raw_tracks=data.get('tracks'), ctx=ctx)
             return objects.Search(source=playlist.tracks[0].source, source_type='playlist', tracks=playlist.tracks, result=playlist)
 
-        elif load_type == 'SEARCH_RESULT' or load_type == 'TRACK_LOADED':
+        elif load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
 
             raw_tracks = data.get('tracks')
             if not raw_tracks:
@@ -218,15 +217,15 @@ class Node:
     async def spotify_search(self, *, query: str, spotify_type: str, spotify_id: str, ctx: context.Context = None) -> objects.Search:
 
         try:
-            if spotify_type == 'track':
-                result = await self.client.bot.spotify.get_track(spotify_id)
-                spotify_tracks = [result]
-            elif spotify_type == 'album':
+            if spotify_type == 'album':
                 result = await self.client.bot.spotify.get_album(spotify_id)
                 spotify_tracks = await result.get_tracks(limit=100)
             elif spotify_type == 'playlist':
                 result = spotify.Playlist(self.client.bot.spotify, await self.client.bot.spotify_http.get_playlist(spotify_id))
                 spotify_tracks = await result.get_all_tracks()
+            elif spotify_type == 'track':
+                result = await self.client.bot.spotify.get_track(spotify_id)
+                spotify_tracks = [result]
             else:
                 raise exceptions.VoiceError(f'The query `{query}` is not a valid spotify URL.')
 
@@ -240,7 +239,7 @@ class Node:
         for track in spotify_tracks:
 
             info = {'identifier': track.id, 'isSeekable': False, 'author': ', '.join([artist.name for artist in track.artists]), 'length': track.duration,
-                    'isStream': False, 'position': 0, 'title': track.name, 'uri': track.url if track.url else 'spotify',
+                    'isStream': False, 'position': 0, 'title': track.name, 'uri': track.url or 'spotify',
                     'thumbnail': track.images[0].url if track.images else None
                     }
             tracks.append(objects.Track(track_id='', info=info, ctx=ctx))

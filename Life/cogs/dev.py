@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import collections
 import sys
@@ -23,6 +22,7 @@ from discord.ext import commands
 
 from bot import Life
 from utilities import context, converters, exceptions
+from utilities.enums import Editables, Operations
 
 
 class Dev(commands.Cog):
@@ -164,7 +164,7 @@ class Dev(commands.Cog):
         await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_user.command(name='add', hidden=True)
-    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.User, *, reason: str = None) -> None:
+    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = None) -> None:
         """
         Blacklist a user.
 
@@ -179,11 +179,11 @@ class Dev(commands.Cog):
         if user_config.blacklisted is True:
             raise exceptions.ArgumentError(f'`{user} - {user.id}` is already blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='set', value=reason)
+        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.set, value=reason)
         await ctx.send(f'`{user} - {user.id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_user.command(name='remove', hidden=True)
-    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.User) -> None:
+    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
         """
         Unblacklist a user.
 
@@ -194,7 +194,7 @@ class Dev(commands.Cog):
         if user_config.blacklisted is False:
             raise exceptions.ArgumentError(f'`{user} - {user.id}` is not blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, attribute='blacklist', operation='reset')
+        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.reset)
         await ctx.send(f'`{user} - {user.id}` is now unblacklisted.')
 
     @dev_blacklist.group(name='guild', hidden=True, invoke_without_command=True)
@@ -246,7 +246,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is True:
             raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is already blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='set', value=reason)
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.set, value=reason)
         await ctx.send(f'The guild `{guild_name} - {guild_id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_guild.command(name='remove', hidden=True)
@@ -261,16 +261,13 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('That is not a valid guild id.')
 
         guild = self.bot.get_guild(guild_id)
-        if guild:
-            guild_name = guild.name
-        else:
-            guild_name = 'Not found'
+        guild_name = guild.name if guild else 'Not found'
 
         guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
         if guild_config.blacklisted is False:
             raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is not blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, attribute='blacklist', operation='reset')
+        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.reset)
         await ctx.send(f'The guild `{guild_name} - {guild_id}` is now unblacklisted.')
 
 

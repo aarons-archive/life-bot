@@ -1,15 +1,14 @@
-"""
-Life
-Copyright (C) 2020 Axel#3456
-
-Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later version.
-
-Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with Life. If not, see <https://www.gnu.org/licenses/>.
-"""
+#  Life
+#  Copyright (C) 2020 Axel#3456
+#
+#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+#
 
 import codecs
 import collections
@@ -66,11 +65,8 @@ class Information(commands.Cog):
                             continue
 
                         if line.startswith('"""'):
-                            if docstring is False:
-                                docstring = True
-                            else:
-                                docstring = False
-                        if docstring is True:
+                            docstring = docstring is False
+                        if docstring:
                             continue
 
                         if line.startswith('#'):
@@ -314,24 +310,24 @@ class Information(commands.Cog):
         if not guild:
             guild = ctx.guild
 
-        entries = []
-
         channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
-        for channel in sorted(channels, key=lambda channel: channel.position):
-            entries.append(f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
+        entries = [
+            f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}'
+            for channel in sorted(channels, key=lambda channel: channel.position)
+        ]
 
+        space = '\u200b ' * 4
         for category in sorted(categories, key=lambda category: category.position):
             entries.append(f'<:category:738960756233601097> **{category}**')
             for channel in category.channels:
-                space = '\u200b ' * 4
                 entries.append(f'{space}{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
 
         return await ctx.paginate_embed(entries=entries, per_page=30, title='List of channels, categories and voice channels.')
 
     @commands.command(name='avatar', aliases=['avy'])
-    async def avatar(self, ctx: context.Context, *, user: typing.Union[discord.Member, converters.User] = None):
+    async def avatar(self, ctx: context.Context, *, user: typing.Union[discord.Member, converters.UserConverter] = None):
         """
         Display a user's avatar.
 
@@ -352,7 +348,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='user', aliases=['userinfo'])
-    async def user(self, ctx: context.Context, *, user: converters.User = None):
+    async def user(self, ctx: context.Context, *, user: converters.UserConverter = None):
         """
         Displays a user's basic account information.
 
