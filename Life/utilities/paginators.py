@@ -154,7 +154,7 @@ class Paginator(BasePaginator):
         self.task_loop.cancel()
         self.looping = False
 
-        if delete is True:
+        if delete:
             self.message = await self.message.delete()
 
     async def forward(self) -> None:
@@ -231,7 +231,7 @@ class EmbedPaginator(BasePaginator):
         self.task_loop.cancel()
         self.looping = False
 
-        if delete is True:
+        if delete:
             self.message = await self.message.delete()
 
     async def forward(self) -> None:
@@ -358,7 +358,7 @@ class EmbedsPaginator:
         self.task_loop.cancel()
         self.looping = False
 
-        if delete is True:
+        if delete:
             self.message = await self.message.delete()
 
     async def forward(self) -> None:
