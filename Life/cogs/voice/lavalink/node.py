@@ -217,15 +217,15 @@ class Node:
     async def spotify_search(self, *, query: str, spotify_type: str, spotify_id: str, ctx: context.Context = None) -> objects.Search:
 
         try:
-            if spotify_type == 'track':
-                result = await self.client.bot.spotify.get_track(spotify_id)
-                spotify_tracks = [result]
-            elif spotify_type == 'album':
+            if spotify_type == 'album':
                 result = await self.client.bot.spotify.get_album(spotify_id)
                 spotify_tracks = await result.get_tracks(limit=100)
             elif spotify_type == 'playlist':
                 result = spotify.Playlist(self.client.bot.spotify, await self.client.bot.spotify_http.get_playlist(spotify_id))
                 spotify_tracks = await result.get_all_tracks()
+            elif spotify_type == 'track':
+                result = await self.client.bot.spotify.get_track(spotify_id)
+                spotify_tracks = [result]
             else:
                 raise exceptions.VoiceError(f'The query `{query}` is not a valid spotify URL.')
 
@@ -238,10 +238,18 @@ class Node:
         tracks = []
         for track in spotify_tracks:
 
-            info = {'identifier': track.id, 'isSeekable': False, 'author': ', '.join([artist.name for artist in track.artists]), 'length': track.duration,
-                    'isStream': False, 'position': 0, 'title': track.name, 'uri': track.url if track.url else 'spotify',
-                    'thumbnail': track.images[0].url if track.images else None
-                    }
+            info = {
+                'identifier': track.id,
+                'isSeekable': False,
+                'author': ', '.join([artist.name for artist in track.artists]),
+                'length': track.duration,
+                'isStream': False,
+                'position': 0,
+                'title': track.name,
+                'uri': track.url or 'spotify',
+                'thumbnail': track.images[0].url if track.images else None,
+            }
+
             tracks.append(objects.Track(track_id='', info=info, ctx=ctx))
 
         return objects.Search(source='spotify', source_type=spotify_type, tracks=tracks, result=result)
