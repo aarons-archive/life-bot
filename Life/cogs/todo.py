@@ -35,7 +35,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            raise exceptions.ArgumentError('You do not have any todos.')
+            raise exceptions.GeneralError('You do not have any todos.')
 
         entries = [f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}' for index, todo in enumerate(todos)]
         await ctx.paginate_embed(entries=entries, per_page=10, header=f'**{ctx.author}\'s todo list:**\n\n')
@@ -54,7 +54,7 @@ class Todo(commands.Cog):
 
         todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
         if todo_count['c'] > 100:
-            raise exceptions.ArgumentError(f'You have too many todos, try removing some of them before adding more.')
+            raise exceptions.GeneralError(f'You have too many todos, try removing some of them before adding more.')
 
         query = 'INSERT INTO todos (owner_id, time_added, todo, link) VALUES ($1, $2, $3, $4)'
         await self.bot.db.execute(query, ctx.author.id, pendulum.now(tz='UTC'), content, ctx.message.jump_url)
@@ -71,7 +71,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            raise exceptions.ArgumentError(f'You do not have any todos.')
+            raise exceptions.GeneralError(f'You do not have any todos.')
 
         todos = {index + 1: todo for index, todo in enumerate(todos)}
         todos_to_remove = []
@@ -81,10 +81,8 @@ class Todo(commands.Cog):
             try:
                 todo_id = int(todo_id)
             except ValueError:
-                todo_id = str(todo_id)
-
-            if type(todo_id) == str:
                 raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
+
             if todo_id not in todos.keys():
                 raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
             if todo_id in todos_to_remove:
@@ -107,7 +105,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            raise exceptions.ArgumentError('You don not have any todos.')
+            raise exceptions.GeneralError('You don not have any todos.')
 
         await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
         await ctx.send(f'Cleared your todo list of `{len(todos)}` todo(s).')
@@ -123,7 +121,7 @@ class Todo(commands.Cog):
 
         todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
         if not todos:
-            raise exceptions.ArgumentError('You do not have any todos.')
+            raise exceptions.GeneralError('You do not have any todos.')
 
         content = str(content)
         if len(content) > 180:
@@ -134,10 +132,8 @@ class Todo(commands.Cog):
         try:
             todo_id = int(todo_id)
         except ValueError:
-            todo_id = str(todo_id)
-
-        if type(todo_id) == str:
             raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
+
         if todo_id not in todos.keys():
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 

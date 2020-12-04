@@ -21,6 +21,7 @@ from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
 
+from bot import Life
 from utilities import context
 from utilities.exceptions import ArgumentError, ImageError
 
@@ -218,10 +219,10 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
 
 class Imaging:
 
-    def __init__(self, bot):
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs):
+    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs) -> discord.Embed:
 
         if ctx.message.attachments:
             url = ctx.message.attachments[0].url
@@ -233,15 +234,12 @@ class Imaging:
             async with self.bot.session.get(url) as response:
                 image_bytes = await response.read()
         except Exception:
-            raise ArgumentError(f'Something went wrong while trying to get that image. Check the url.')
+            raise ArgumentError(f'Something went wrong while trying to download that image. Check the URL.')
         else:
-            content_type = response.headers.get('Content-Type')
-            content_length = response.headers.get('Content-Length')
-
-            if content_type not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
+            if response.headers.get('Content-Type') not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
                 raise ImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
-            if content_length and int(content_length) > 15728640:
+            if response.headers.get('Content-Length') and int(response.headers.get('Content-Length')) > 15728640:
                 raise ImageError('That file is over 15mb.')
 
         parent_pipe, child_pipe = multiprocessing.Pipe()
@@ -258,21 +256,17 @@ class Imaging:
         process.join()
         process.close()
 
-        image = data['image']
-        image_format = data['format']
-        image_text = data['text']
+        form_data = aiohttp.FormData()
+        form_data.add_field('file', data['image'], filename=f'image.{data["format"].lower()}')
 
-        url = 'https://media.mrrandom.xyz/api/media'
-        upload_data = aiohttp.FormData()
-        upload_data.add_field('file', image, filename=f'image.{image_format.lower()}')
+        async with self.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": self.bot.config.axelweb_token}, data=form_data) as response:
 
-        async with self.bot.session.post(url, data=upload_data, headers={"Authorization": self.bot.config.axelweb_token}) as response:
             if response.status == 413:
                 raise ImageError('The image produced was over 100mb.')
 
             post = await response.json()
 
         embed = discord.Embed(colour=ctx.colour)
-        embed.set_footer(text=image_text)
+        embed.set_footer(text=data['text'])
         embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
         return embed

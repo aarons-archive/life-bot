@@ -164,7 +164,7 @@ class Dev(commands.Cog):
         await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
 
     @dev_blacklist_user.command(name='add', hidden=True)
-    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.User, *, reason: str = None) -> None:
+    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = None) -> None:
         """
         Blacklist a user.
 
@@ -183,7 +183,7 @@ class Dev(commands.Cog):
         await ctx.send(f'`{user} - {user.id}` is now blacklisted with reason:\n\n`{reason}`')
 
     @dev_blacklist_user.command(name='remove', hidden=True)
-    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.User) -> None:
+    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
         """
         Unblacklist a user.
 

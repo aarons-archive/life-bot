@@ -327,7 +327,7 @@ class Information(commands.Cog):
         return await ctx.paginate_embed(entries=entries, per_page=30, title='List of channels, categories and voice channels.')
 
     @commands.command(name='avatar', aliases=['avy'])
-    async def avatar(self, ctx: context.Context, *, user: typing.Union[discord.Member, converters.User] = None):
+    async def avatar(self, ctx: context.Context, *, user: typing.Union[discord.Member, converters.UserConverter] = None):
         """
         Display a user's avatar.
 
@@ -348,7 +348,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='user', aliases=['userinfo'])
-    async def user(self, ctx: context.Context, *, user: converters.User = None):
+    async def user(self, ctx: context.Context, *, user: converters.UserConverter = None):
         """
         Displays a user's basic account information.
 

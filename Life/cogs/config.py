@@ -73,7 +73,7 @@ class Config(commands.Cog):
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
 
     @config.command(name='prefix', aliases=['prefixes'])
-    async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.Prefix = None) -> None:
+    async def config_prefix(self, ctx: context.Context, operation: typing.Literal['add', 'remove', 'reset', 'clear'] = None, value: converters.PrefixConverter = None) -> None:
 
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)

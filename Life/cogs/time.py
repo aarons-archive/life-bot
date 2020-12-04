@@ -40,7 +40,7 @@ class Time(commands.Cog):
         """
         Displays a list of timezones that can be used with the bot.
         """
-        await ctx.paginate_embed(entries=pendulum.timezones, per_page=20, title='Available timezones:')
+        await ctx.paginate_embed(entries=pendulum.timezones, per_page=25, title='Available timezones:')
 
     #
 
@@ -60,7 +60,6 @@ class Time(commands.Cog):
             try:
                 member = None
                 timezone = await converters.TimezoneConverter().convert(ctx=ctx, argument=timezone)
-
             except exceptions.ArgumentError as error:
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
@@ -71,7 +70,7 @@ class Time(commands.Cog):
                 except commands.BadArgument:
                     raise exceptions.ArgumentError(str(error))
 
-        datetime = self.bot.utils.format_datetime(datetime=pendulum.now(tz=timezone))
+        datetime = self.bot.utils.format_datetime(datetime=pendulum.now(tz=timezone), seconds=True)
 
         embed = discord.Embed(colour=ctx.colour, title=f'Time in {timezone.name} {f"({member})" if member else ""}', description=f'```py\n{datetime}\n```')
         await ctx.send(embed=embed)
@@ -80,8 +79,6 @@ class Time(commands.Cog):
     async def time_set(self, ctx: context.Context, *, timezone: converters.TimezoneConverter) -> None:
         """
         Sets your timezone to the one specified.
-
-        See https://dashboard.mrrandom.xyz/timezones for a full list of available timezones.
 
         `timezone`: The timezone to use.
         """
@@ -126,7 +123,7 @@ class Time(commands.Cog):
     #
 
     @commands.group(name='reminders', aliases=['remind', 'reminder', 'remindme'], invoke_without_command=True)
-    async def reminders(self, ctx: context.Context, *, reminder: converters.DatetimeParser) -> None:
+    async def reminders(self, ctx: context.Context, *, reminder: converters.DatetimeConverter) -> None:
         """
         Schedules a reminder for the given time with the text.
 

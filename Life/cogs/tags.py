@@ -24,7 +24,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @commands.group(name='tag', aliases=['tags'], invoke_without_command=True)
-    async def tag(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Get a tag by it's name or alias's.
 
@@ -50,7 +50,7 @@ class Tags(commands.Cog):
         await ctx.send(tags[0]['content'])
 
     @tag.command(name='raw')
-    async def tag_raw(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_raw(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Get a tags raw content.
 
@@ -76,7 +76,7 @@ class Tags(commands.Cog):
         await ctx.send(discord.utils.escape_markdown(tags[0]['content']))
 
     @tag.command(name='create', aliases=['make', 'add'])
-    async def tag_create(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content) -> None:
+    async def tag_create(self, ctx: context.Context, name: converters.TagConverter, *, content: commands.clean_content) -> None:
         """
         Create a tag.
 
@@ -100,7 +100,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='edit')
-    async def tag_edit(self, ctx: context.Context, name: converters.TagName, *, content: commands.clean_content) -> None:
+    async def tag_edit(self, ctx: context.Context, name: converters.TagConverter, *, content: commands.clean_content) -> None:
         """
         Edit a tags content.
 
@@ -123,7 +123,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='claim')
-    async def tag_claim(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_claim(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Claim a tag if it's owner has left the server.
 
@@ -146,7 +146,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='alias')
-    async def tag_alias(self, ctx: context.Context, alias: converters.TagName, original: converters.TagName) -> None:
+    async def tag_alias(self, ctx: context.Context, alias: converters.TagConverter, original: converters.TagConverter) -> None:
         """
         Alias a name to a tag.
 
@@ -171,7 +171,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='transfer')
-    async def tag_transfer(self, ctx: context.Context, name: converters.TagName, *, member: discord.Member) -> None:
+    async def tag_transfer(self, ctx: context.Context, name: converters.TagConverter, *, member: discord.Member) -> None:
         """
         Transfer a tag to another member.
 
@@ -194,7 +194,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='delete', aliases=['remove'])
-    async def tag_delete(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_delete(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Delete a tag.
 
@@ -214,7 +214,7 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
     @tag.command(name='search')
-    async def tag_search(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_search(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Display a list of tags that are similar to the search.
 
@@ -260,7 +260,7 @@ class Tags(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=25, header=f'**{ctx.guild}\'s tags:**\n\n')
 
     @tag.command(name='info')
-    async def tag_info(self, ctx: context.Context, *, name: converters.TagName) -> None:
+    async def tag_info(self, ctx: context.Context, *, name: converters.TagConverter) -> None:
         """
         Displays information about a tag.
 
