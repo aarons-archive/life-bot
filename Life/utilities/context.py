@@ -58,3 +58,13 @@ class Context(commands.Context):
         paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
         await paginator.paginate()
         return paginator
+
+    async def try_dm(self, **kwargs) -> typing.Optional[discord.Message]:
+
+        try:
+            return await self.author.send(**kwargs)
+        except discord.Forbidden:
+            try:
+                return await self.channel.send(**kwargs)
+            except discord.Forbidden:
+                return

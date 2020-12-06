@@ -37,7 +37,7 @@ class UserConverter(commands.UserConverter):
             try:
                 user = await ctx.bot.fetch_user(argument)
             except (discord.NotFound, discord.HTTPException):
-                raise commands.BadArgument
+                raise commands.UserNotFound(argument=argument)
 
         return user
 
