@@ -25,47 +25,47 @@ class Utils:
         self.bot = bot
 
         self.channel_emojis = {
-            'text': '<:text:739399497200697465>',
-            'text_locked': '<:text_locked:739399496953364511>',
-            'text_nsfw': '<:text_nsfw:739399497251160115>',
-            'news': '<:news:739399496936718337>',
-            'news_locked': '<:news_locked:739399497062416435>',
-            'voice': '<:voice:739399497221931058>',
+            'text':         '<:text:739399497200697465>',
+            'text_locked':  '<:text_locked:739399496953364511>',
+            'text_nsfw':    '<:text_nsfw:739399497251160115>',
+            'news':         '<:news:739399496936718337>',
+            'news_locked':  '<:news_locked:739399497062416435>',
+            'voice':        '<:voice:739399497221931058>',
             'voice_locked': '<:voice_locked:739399496924135476>',
-            'category': '<:category:738960756233601097>'
+            'category':     '<:category:738960756233601097>'
         }
 
         self.badge_emojis = {
-            'staff': '<:staff:738961032109752441>',
-            'partner': '<:partner:738961058613559398>',
-            'hypesquad': '<:hypesquad:738960840375664691>',
-            'bug_hunter': '<:bug_hunter:738961014275571723>',
-            'bug_hunter_level_2': '<:bug_hunter_level_2:739390267949580290>',
-            'hypesquad_bravery': '<:hypesquad_bravery:738960831596855448>',
-            'hypesquad_brilliance': '<:hypesquad_brilliance:738960824327995483>',
-            'hypesquad_balance': '<:hypesquad_balance:738960813460684871>',
-            'early_supporter': '<:early_supporter:738961113219203102>',
-            'system': '<:system_1:738960703284576378><:system_2:738960703288770650>',
-            'verified_bot': '<:verified_bot_1:738960728022581258><:verified_bot_2:738960728102273084>',
+            'staff':                  '<:staff:738961032109752441>',
+            'partner':                '<:partner:738961058613559398>',
+            'hypesquad':              '<:hypesquad:738960840375664691>',
+            'bug_hunter':             '<:bug_hunter:738961014275571723>',
+            'bug_hunter_level_2':     '<:bug_hunter_level_2:739390267949580290>',
+            'hypesquad_bravery':      '<:hypesquad_bravery:738960831596855448>',
+            'hypesquad_brilliance':   '<:hypesquad_brilliance:738960824327995483>',
+            'hypesquad_balance':      '<:hypesquad_balance:738960813460684871>',
+            'early_supporter':        '<:early_supporter:738961113219203102>',
+            'system':                 '<:system_1:738960703284576378><:system_2:738960703288770650>',
+            'verified_bot':           '<:verified_bot_1:738960728022581258><:verified_bot_2:738960728102273084>',
             'verified_bot_developer': '<:verified_bot_developer:738961212250914897>',
         }
 
         self.features = {
-            'VERIFIED': 'Is verified server',
-            'PARTNERED': 'Is partnered server',
-            'MORE_EMOJI': 'Can have 50+ emoji',
-            'DISCOVERABLE': 'Is discoverable',
-            'FEATURABLE': 'Is featurable',
-            'PUBLIC': 'Is public',
-            'VIP_REGIONS': 'Can have VIP voice regions',
-            'VANITY_URL': 'Can have vanity invite',
-            'INVITE_SPLASH': 'Can have invite splash',
-            'COMMERCE': 'Can have store channels',
-            'NEWS': 'Can have news channels',
-            'BANNER': 'Can have banner',
-            'ANIMATED_ICON': 'Can have animated icon',
-            'PUBLIC_DISABLED': 'Can not be public',
-            'WELCOME_SCREEN_ENABLED': 'Can have welcome screen',
+            'VERIFIED':                         'Is verified server',
+            'PARTNERED':                        'Is partnered server',
+            'MORE_EMOJI':                       'Can have 50+ emoji',
+            'DISCOVERABLE':                     'Is discoverable',
+            'FEATURABLE':                       'Is featurable',
+            'PUBLIC':                           'Is public',
+            'VIP_REGIONS':                      'Can have VIP voice regions',
+            'VANITY_URL':                       'Can have vanity invite',
+            'INVITE_SPLASH':                    'Can have invite splash',
+            'COMMERCE':                         'Can have store channels',
+            'NEWS':                             'Can have news channels',
+            'BANNER':                           'Can have banner',
+            'ANIMATED_ICON':                    'Can have animated icon',
+            'PUBLIC_DISABLED':                  'Can not be public',
+            'WELCOME_SCREEN_ENABLED':           'Can have welcome screen',
             'MEMBER_VERIFICATION_GATE_ENABLED': 'Has member verify gate'
         }
 
@@ -75,26 +75,26 @@ class Utils:
         }
 
         self.colours = {
-            discord.Status.online: 0x008000,
-            discord.Status.idle: 0xFF8000,
-            discord.Status.dnd: 0xFF0000,
-            discord.Status.offline: 0x808080,
+            discord.Status.online:    0x008000,
+            discord.Status.idle:      0xFF8000,
+            discord.Status.dnd:       0xFF0000,
+            discord.Status.offline:   0x808080,
             discord.Status.invisible: 0x808080,
         }
 
         self.verification_levels = {
-            discord.VerificationLevel.none: 'None - No criteria set.',
-            discord.VerificationLevel.low: 'Low - Must have a verified email.',
-            discord.VerificationLevel.medium: 'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
-            discord.VerificationLevel.high: 'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more '
-                                            'then 10 minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for '
-                                               'more then 10 minutes and a have a verified phone number.'
+            discord.VerificationLevel.none:    'None - No criteria set.',
+            discord.VerificationLevel.low:     'Low - Must have a verified email.',
+            discord.VerificationLevel.medium:  'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
+            discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 '
+                                               'minutes.',
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 '
+                                               'minutes and a have a verified phone number.'
         }
 
         self.content_filter_levels = {
-            discord.ContentFilter.disabled: 'None',
-            discord.ContentFilter.no_role: 'No roles',
+            discord.ContentFilter.disabled:    'None',
+            discord.ContentFilter.no_role:     'No roles',
             discord.ContentFilter.all_members: 'All members',
         }
 
@@ -119,9 +119,8 @@ class Utils:
         return datetime
 
     def format_datetime(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], seconds: bool = False) -> str:
-
         datetime = self.convert_datetime(datetime=datetime)
-        return datetime.format(f'dddd Do [of] MMMM YYYY [at] HH:mm{":ss" if seconds else ""} A (zz{"ZZ" if datetime.timezone == "UTC" else ""})')
+        return datetime.format(f'dddd Do [of] MMMM YYYY [at] HH:mm{":ss" if seconds else ""} A (zz{"ZZ" if datetime.timezone != "UTC" else ""})')
 
     def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
 

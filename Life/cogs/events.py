@@ -9,7 +9,9 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
+
 import logging
+import typing
 
 import discord
 import mystbin
@@ -70,7 +72,6 @@ class Events(commands.Cog):
         ctx = await self.bot.get_context(message)
 
         if message.guild is None:
-
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -80,7 +81,6 @@ class Events(commands.Cog):
                                                      avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
 
         if self.bot.user in message.mentions:
-
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             info = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -101,7 +101,7 @@ class Events(commands.Cog):
         await self.bot.process_commands(after)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: context.Context, error) -> None:
+    async def on_command_error(self, ctx: context.Context, error) -> typing.Optional[discord.Message]:
 
         error = getattr(error, 'original', error)
 
@@ -111,147 +111,146 @@ class Events(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             return
 
-        elif isinstance(error, commands.CommandOnCooldown):
-            cooldown_types = {
-                commands.BucketType.default: f'for the whole bot.',
-                commands.BucketType.user: f'for you.',
-                commands.BucketType.member: f'for you.',
-                commands.BucketType.role: f'for your role.',
-                commands.BucketType.guild: f'for this server.',
-                commands.BucketType.channel: f'for this channel.',
-                commands.BucketType.category: f'for this channel category.'
-            }
-            await ctx.send(f'The command `{ctx.command}` is on cooldown {cooldown_types.get(error.cooldown.type, "for you.")} You can retry in '
-                           f'`{self.bot.utils.format_seconds(seconds=error.retry_after, friendly=True)}`')
-            return
-
-        elif isinstance(error, commands.MaxConcurrencyReached):
-            cooldowns = {
-                commands.BucketType.default: f'.',
-                commands.BucketType.user: f' per user.',
-                commands.BucketType.member: f' per member.',
-                commands.BucketType.role: f' per role.',
-                commands.BucketType.guild: f' per server.',
-                commands.BucketType.channel: f' per channel.',
-                commands.BucketType.category: f' per channel category.',
-            }
-            await ctx.send(f'The command `{ctx.command}` is being ran at its maximum of {error.number} time(s){cooldowns.get(error.per, ".")} Retry a bit later.')
-            return
-
-        elif isinstance(error, commands.BotMissingPermissions):
+        if isinstance(error, commands.BotMissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
             message = f'I am missing the following permissions required to run the command `{ctx.command}`.\n{permissions}'
-            try:
-                await ctx.send(message)
-            except discord.Forbidden:
-                try:
-                    await ctx.author.send(message)
-                except discord.Forbidden:
-                    return
-            return
+            return await ctx.try_dm(content=message)
+
+        message = None
+
+        if isinstance(error, commands.BadArgument):
+
+            argument = getattr(error, "argument", "None")
+            bad_argument_errors = {
+                commands.MessageNotFound:               f'A message for the argument `{argument}` was not found.',
+                commands.MemberNotFound:                f'A member for the argument `{argument}` was not found.',
+                commands.UserNotFound:                  f'A user for the argument `{argument}` was not found.',
+                commands.ChannelNotFound:               f'A channel for the argument `{argument}` was not found.',
+                commands.RoleNotFound:                  f'A role for the argument `{argument}` was not found.',
+                commands.EmojiNotFound:                 f'An emoji for the argument `{argument}` was not found.',
+                commands.ChannelNotReadable:            f'I do not have permission to read the channel `{argument}`',
+                commands.BadInviteArgument:             f'The invite `{argument}` was not valid or is expired.',
+                commands.PartialEmojiConversionFailure: f'The argument `{argument}` did not match the partial emoji format.',
+                commands.BadBoolArgument:               f'The argument `{argument}` was not a valid True or False value.',
+                commands.BadColourArgument:             f'The argument `{argument}` was not a valid colour type.',
+                BadLiteralArgument:                     f'The argument `{argument}` must be one of '
+                                                        f'{", ".join([f"`{valid_argument}`" for valid_argument in getattr(error, "valid_arguments", [])])}.',
+                commands.BadArgument:                   f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more '
+                                                        f'information on what arguments to use.',
+            }
+            message = bad_argument_errors.get(type(error), 'None')
+
+        elif isinstance(error, commands.CommandOnCooldown):
+            cooldown_buckets = {
+                commands.BucketType.default:  f'for the whole bot.',
+                commands.BucketType.user:     f'for you.',
+                commands.BucketType.member:   f'for you.',
+                commands.BucketType.role:     f'for your role.',
+                commands.BucketType.guild:    f'for this server.',
+                commands.BucketType.channel:  f'for this channel.',
+                commands.BucketType.category: f'for this channel category.'
+            }
+            message = f'The command `{ctx.command}` is on cooldown {cooldown_buckets.get(error.cooldown.type, "for you.")} You can retry in ' \
+                      f'`{self.bot.utils.format_seconds(seconds=error.retry_after, friendly=True)}`'
+
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            cooldown_types = {
+                commands.BucketType.default:  f'.',
+                commands.BucketType.user:     f' per user.',
+                commands.BucketType.member:   f' per member.',
+                commands.BucketType.role:     f' per role.',
+                commands.BucketType.guild:    f' per server.',
+                commands.BucketType.channel:  f' per channel.',
+                commands.BucketType.category: f' per channel category.',
+            }
+            message = f'The command `{ctx.command}` is being ran at its maximum of {error.number} time(s){cooldown_types.get(error.per, ".")} Retry a bit later.'
 
         elif isinstance(error, commands.MissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            await ctx.send(f'You are missing the following permissions required to run the command `{ctx.command}`.\n{permissions}')
-            return
+            message = f'You are missing the following permissions required to run the command `{ctx.command}`.\n{permissions}'
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.')
-            return
+            message = f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.'
 
         elif isinstance(error, commands.BadUnionArgument):
-            await ctx.send(f'I was unable to convert the `{error.param}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments '
-                           f'to use.')
-            return
+            message = f'I was unable to convert the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.'
 
         elif isinstance(error, commands.MissingRole):
-            await ctx.send(f'The role `{error.missing_role}` is required to run this command.')
-            return
+            message = f'The role `{error.missing_role}` is required to run this command.'
 
         elif isinstance(error, commands.BotMissingRole):
-            await ctx.send(f'The bot requires the role `{error.missing_role}` to run this command.')
-            return
+            message = f'The bot requires the role `{error.missing_role}` to run this command.'
 
         elif isinstance(error, commands.MissingAnyRole):
-            await ctx.send(f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.')
-            return
+            message = f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.'
 
         elif isinstance(error, commands.BotMissingAnyRole):
-            await ctx.send(f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.')
-            return
+            message = f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.'
 
-        elif isinstance(error, commands.BadArgument):
-
-            if isinstance(error, commands.MessageNotFound):
-                await ctx.send(f'A message for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.MemberNotFound):
-                await ctx.send(f'A member for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.UserNotFound):
-                await ctx.send(f'A user for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.ChannelNotFound):
-                await ctx.send(f'A channel for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.RoleNotFound):
-                await ctx.send(f'A role for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.EmojiNotFound):
-                await ctx.send(f'An emoji for the argument `{error.argument}` was not found.')
-            elif isinstance(error, commands.ChannelNotReadable):
-                await ctx.send(f'I do not have permission to read the channel `{error.argument}`')
-            elif isinstance(error, commands.PartialEmojiConversionFailure):
-                await ctx.send(f'The argument `{error.argument}` did not match the partial emoji format.')
-            elif isinstance(error, commands.BadInviteArgument):
-                await ctx.send(f'The invite that matched that argument was not valid or is expired.')
-            elif isinstance(error, commands.BadBoolArgument):
-                await ctx.send(f'The argument `{error.argument}` was not a valid True/False value.')
-            elif isinstance(error, commands.BadColourArgument):
-                await ctx.send(f'The argument `{error.argument}` was not a valid colour.')
-            elif isinstance(error, BadLiteralArgument):
-                await ctx.send(f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.')
-            return
+        if message:
+            return await ctx.send(message)
 
         error_messages = {
-            exceptions.ArgumentError: f'{error}',
-            exceptions.GeneralError: f'{error}',
-            exceptions.ImageError: f'{error}',
-            exceptions.VoiceError: f'{error}',
-            NodeNotFound: f'There are no lavalink nodes available right now.',
+            exceptions.ArgumentError:               f'{error}',
+            exceptions.GeneralError:                f'{error}',
+            exceptions.ImageError:                  f'{error}',
+            exceptions.VoiceError:                  f'{error}',
+            NodeNotFound:                           f'There are no lavalink nodes available right now.',
 
-            commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
+            commands.TooManyArguments:              f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
 
-            commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+            commands.UnexpectedQuoteError:          f'There was an unexpected quote character in the arguments you passed.',
             commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
-            commands.ExpectedClosingQuoteError: f'There is a missing quote character in the arguments you passed.',
+            commands.ExpectedClosingQuoteError:     f'There is a missing quote character in the arguments you passed.',
 
-            commands.BadArgument: f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what '
-                                  f'arguments to use.',
+            commands.CheckFailure:                  f'{error}',
+            commands.PrivateMessageOnly:            f'The command `{ctx.command}` can only be used in private messages',
+            commands.NoPrivateMessage:              f'The command `{ctx.command}` can not be used in private messages.',
+            commands.NotOwner:                      f'The command `{ctx.command}` is owner only.',
+            commands.NSFWChannelRequired:           f'The command `{ctx.command}` can only be run in a NSFW channel.',
 
-            commands.CheckFailure: f'{error}',
-            commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
-            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
-
-            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+            commands.DisabledCommand:               f'The command `{ctx.command}` has been disabled.',
         }
 
-        error_message = error_messages.get(type(error), None)
-        if error_message is not None:
-            await ctx.send(error_message)
-            return
+        message = error_messages.get(type(error), None)
+        if message:
+            return await ctx.send(message)
+
+        await self.handle_traceback(ctx=ctx, error=error)
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context) -> None:
+        log.info(f'[COMMANDS] Command used. Name: {ctx.command} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) | '
+                 f'{f"Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}')
+
+    @commands.Cog.listener()
+    async def on_socket_response(self, message: dict) -> None:
+
+        event = message.get('t', 'None')
+        if event is not None:
+            self.bot.socket_stats[event] += 1
+
+    #
+
+    async def handle_traceback(self, *, ctx: context.Context, error) -> None:
 
         await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
 
         self.bot.error_formatter.theme['_ansi_enabled'] = True
         print(f'\n{"".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
 
-        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-        guild = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n' if ctx.guild else ''
-        info = f'Error in command `{ctx.command}`\n\n{guild}`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+        avatar_url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png'))
+
+        info = f'Error in command `{ctx.command}`\n\n' \
+               f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}\n' \
+               f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n' \
+               f'`Author:` {ctx.author} `{ctx.author.id}`\n' \
+               f'`Time:` {self.bot.utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
 
         embed = discord.Embed(colour=ctx.colour, description=f'{ctx.message.content}')
         embed.add_field(name='Info:', value=info)
 
-        await self.bot.errors_webhook.send(embed=embed, username=f'{ctx.author}',
-                                           avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
+        await self.bot.errors_webhook.send(embed=embed, username=f'{ctx.author}', avatar_url=avatar_url)
 
         self.bot.error_formatter.theme['_ansi_enabled'] = False
         traceback = "".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()
@@ -265,23 +264,10 @@ class Events(commands.Cog):
             try:
                 traceback = await self.bot.mystbin.post(traceback, syntax='python')
             except mystbin.APIError as error:
-                log.warning('[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
+                log.warning(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
                 print(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
 
-        await self.bot.errors_webhook.send(content=f'{traceback}', username=f'{ctx.author}',
-                                           avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
-
-    @commands.Cog.listener()
-    async def on_command(self, ctx: commands.Context) -> None:
-        log.info(f'[COMMANDS] Command used. Name: {ctx.command} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) | '
-                 f'{f"Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}')
-
-    @commands.Cog.listener()
-    async def on_socket_response(self, message: dict) -> None:
-
-        event = message.get('t', 'None')
-        if event is not None:
-            self.bot.socket_stats[event] += 1
+        await self.bot.errors_webhook.send(content=f'{traceback}', username=f'{ctx.author}', avatar_url=avatar_url)
 
 
 def setup(bot):
