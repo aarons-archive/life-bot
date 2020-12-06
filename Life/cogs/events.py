@@ -72,7 +72,6 @@ class Events(commands.Cog):
         ctx = await self.bot.get_context(message)
 
         if message.guild is None:
-
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -82,7 +81,6 @@ class Events(commands.Cog):
                                                      avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
 
         if self.bot.user in message.mentions:
-
             time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
             info = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
 
@@ -193,25 +191,25 @@ class Events(commands.Cog):
             return await ctx.send(message)
 
         error_messages = {
-            exceptions.ArgumentError: f'{error}',
-            exceptions.GeneralError: f'{error}',
-            exceptions.ImageError: f'{error}',
-            exceptions.VoiceError: f'{error}',
-            NodeNotFound: f'There are no lavalink nodes available right now.',
+            exceptions.ArgumentError:               f'{error}',
+            exceptions.GeneralError:                f'{error}',
+            exceptions.ImageError:                  f'{error}',
+            exceptions.VoiceError:                  f'{error}',
+            NodeNotFound:                           f'There are no lavalink nodes available right now.',
 
-            commands.TooManyArguments: f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
+            commands.TooManyArguments:              f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
 
-            commands.UnexpectedQuoteError: f'There was an unexpected quote character in the arguments you passed.',
+            commands.UnexpectedQuoteError:          f'There was an unexpected quote character in the arguments you passed.',
             commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
-            commands.ExpectedClosingQuoteError: f'There is a missing quote character in the arguments you passed.',
+            commands.ExpectedClosingQuoteError:     f'There is a missing quote character in the arguments you passed.',
 
-            commands.CheckFailure: f'{error}',
-            commands.PrivateMessageOnly: f'The command `{ctx.command}` can only be used in private messages',
-            commands.NoPrivateMessage: f'The command `{ctx.command}` can not be used in private messages.',
-            commands.NotOwner: f'The command `{ctx.command}` is owner only.',
-            commands.NSFWChannelRequired: f'The command `{ctx.command}` can only be run in a NSFW channel.',
+            commands.CheckFailure:                  f'{error}',
+            commands.PrivateMessageOnly:            f'The command `{ctx.command}` can only be used in private messages',
+            commands.NoPrivateMessage:              f'The command `{ctx.command}` can not be used in private messages.',
+            commands.NotOwner:                      f'The command `{ctx.command}` is owner only.',
+            commands.NSFWChannelRequired:           f'The command `{ctx.command}` can only be run in a NSFW channel.',
 
-            commands.DisabledCommand: f'The command `{ctx.command}` has been disabled.',
+            commands.DisabledCommand:               f'The command `{ctx.command}` has been disabled.',
         }
 
         message = error_messages.get(type(error), None)
