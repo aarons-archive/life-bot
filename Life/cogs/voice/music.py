@@ -137,9 +137,9 @@ class Music(commands.Cog):
             if search.source == 'spotify':
 
                 if search.source_type == 'track':
-                    message = f'Added the spotify track **{search.result.name}** to the queue.'
+                    message = f'Added the Spotify track **{search.result.name}** to the queue.'
                 elif search.source_type in ('album', 'playlist'):
-                    message = f'Added the spotify {search.source_type} **{search.result.name}** to the queue with a total of **{len(search.tracks)}** track(s).'
+                    message = f'Added the Spotify {search.source_type} **{search.result.name}** to the queue with a total of **{len(search.tracks)}** track(s).'
                 tracks = search.tracks
 
             else:

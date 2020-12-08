@@ -16,7 +16,6 @@ import inspect
 import os
 import pathlib
 import time
-import typing
 
 import discord
 import psutil

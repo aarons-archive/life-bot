@@ -10,6 +10,7 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
+# noinspection SpellCheckingInspection
 class Config:
 
     def __init__(self, bot):
