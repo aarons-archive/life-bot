@@ -219,7 +219,7 @@ class Node:
         try:
             if spotify_type == 'album':
                 result = await self.client.bot.spotify.get_album(spotify_id)
-                spotify_tracks = await result.get_tracks(limit=100)
+                spotify_tracks = await result.get_all_tracks()
             elif spotify_type == 'playlist':
                 result = spotify.Playlist(self.client.bot.spotify, await self.client.bot.spotify_http.get_playlist(spotify_id))
                 spotify_tracks = await result.get_all_tracks()
