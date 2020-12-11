@@ -31,14 +31,6 @@ class Information(commands.Cog):
     def __init__(self, bot: Life):
         self.bot = bot
 
-    @commands.command(name='info', aliases=['about'])
-    async def info(self, ctx: context.Context):
-        """
-        Get information about the bot.
-        """
-
-        return await ctx.send("soon:tm:")
-
     @commands.command(name='stats')
     async def stats(self, ctx: context.Context):
         """
@@ -367,7 +359,7 @@ class Information(commands.Cog):
         embed.set_footer(text=f'ID: {user.id}')
         return await ctx.send(embed=embed)
 
-    @commands.command(name='member', alias=['memberinfo'])
+    @commands.command(name='member', aliases=['memberinfo'])
     async def member(self, ctx: context.Context, *, member: discord.Member = None):
         """
         Displays a member's account information.
