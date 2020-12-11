@@ -238,7 +238,7 @@ class Node:
         tracks = []
         for track in spotify_tracks:
 
-            info = {'identifier': track.id, 'isSeekable': False, 'author': ', '.join([artist.name for artist in track.artists]), 'length': track.duration,
+            info = {'identifier': track.id, 'isSeekable': False, 'author': ', '.join(artist.name for artist in track.artists), 'length': track.duration,
                     'isStream': False, 'position': 0, 'title': track.name, 'uri': track.url or 'spotify',
                     'thumbnail': track.images[0].url if track.images else None
                     }
