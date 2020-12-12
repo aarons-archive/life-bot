@@ -123,11 +123,7 @@ class DatetimeConverter(commands.Converter, ABC):
         data = {'argument': argument, 'found': {}}
 
         for datetime_phrase, datetime in searches:
-
             datetime = pendulum.instance(dt=datetime, tz='UTC')
-            if datetime < pendulum.now(tz='UTC'):
-                continue
-
             data['found'][datetime_phrase] = datetime
 
         if not data['found']:

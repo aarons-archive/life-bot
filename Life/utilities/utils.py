@@ -122,7 +122,10 @@ class Utils:
         datetime = self.convert_datetime(datetime=datetime)
         return datetime.format(f'dddd Do [of] MMMM YYYY [at] HH:mm{":ss" if seconds else ""} A (zz{"ZZ" if datetime.timezone != "UTC" else ""})')
 
-    def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress: typing.List[str] = None) -> str:
+    def format_date(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime]) -> str:
+        return self.convert_datetime(datetime=datetime).format(f'dddd Do [of] MMMM YYYY')
+
+    def format_difference(self, *, datetime: typing.Union[pendulum.datetime, dt.datetime], suppress=None) -> str:
 
         if suppress is None:
             suppress = ['seconds']

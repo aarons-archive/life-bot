@@ -52,4 +52,7 @@ class Editables(enum.Enum):
     monthly_collected = 'monthly_collected'
     monthly_streak = 'monthly_streak'
 
+    birthday = 'birthday'
+    birthday_private = 'birthday_private'
+
 

@@ -72,7 +72,8 @@ class HelpCommand(commands.HelpCommand):
                 continue
 
             cog_help = f'__**{cog.qualified_name}:**__\n'
-            cog_help += ''.join([f'`{command.qualified_name}`\u200b ' for command in cog_commands])
+            cog_help += ''.join(f'`{command.qualified_name}`\u200b ' for command in cog_commands)
+
             entries.append(cog_help)
 
         title = f"__{ctx.bot.user.name}'s help page__"
@@ -122,10 +123,10 @@ class HelpCommand(commands.HelpCommand):
 
         ctx = self.context
 
-        command_help = command.help if command.help else 'No help provided for this command.'
+        command_help = command.help.strip('\n') if command.help else 'No help provided for this command.'
         aliases = f'**Aliases:** {"/".join(command.aliases)}\n\n'
 
-        title = f'{command.name} {command.signature if command.signature else ""}'
+        title = f'{command.qualified_name} {command.signature if command.signature else ""}'
         description = f'{aliases if command.aliases else ""}{command_help}'
         embed = discord.Embed(colour=ctx.colour, title=title, description=description)
 

@@ -54,8 +54,8 @@ class GuildConfig:
 
 class DefaultUserConfig:
 
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
-                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'reminders')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'daily_collected', 'weekly_collected',
+                 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'created_at', 'birthday', 'birthday_private', 'reminders', 'requires_db_update')
 
     def __init__(self) -> None:
 
@@ -80,12 +80,24 @@ class DefaultUserConfig:
         self.weekly_streak = 0
         self.monthly_streak = 0
 
-        self.reminders = []
+        self.created_at = pendulum.now(tz='UTC')
 
+        self.birthday = pendulum.DateTime(2020, 1, 1, 0, 0, 0, tzinfo=pendulum.timezone('UTC'))
+        self.birthday_private = False
+
+        self.reminders = []
         self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig colour=\'{self.colour}\' coins={self.coins}>'
+
+    @property
+    def age(self) -> int:
+        return (pendulum.now(tz="UTC") - self.birthday).in_years()
+
+    @property
+    def next_birthday(self) -> pendulum.datetime:
+        return self.birthday.replace(year=self.birthday.year + self.age + 1)
 
     @property
     def time(self) -> pendulum.datetime:
@@ -102,8 +114,8 @@ class DefaultUserConfig:
 
 class UserConfig:
 
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'requires_db_update',
-                 'daily_collected', 'weekly_collected', 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'reminders')
+    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'daily_collected', 'weekly_collected',
+                 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'created_at', 'birthday', 'birthday_private', 'reminders', 'requires_db_update')
 
     def __init__(self, data: dict) -> None:
 
@@ -128,12 +140,24 @@ class UserConfig:
         self.weekly_streak = data.get('weekly_streak')
         self.monthly_streak = data.get('monthly_streak')
 
-        self.reminders = []
+        self.created_at = pendulum.instance(data.get('created_at'), tz='UTC')
 
+        self.birthday = pendulum.parse(data.get('birthday').isoformat(), tz='UTC')
+        self.birthday_private = data.get('birthday_private')
+
+        self.reminders = []
         self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<UserConfig colour=\'{self.colour}\' coins={self.coins}>'
+
+    @property
+    def age(self) -> int:
+        return (pendulum.now(tz="UTC") - self.birthday).in_years()
+
+    @property
+    def next_birthday(self) -> pendulum.datetime:
+        return self.birthday.replace(year=self.birthday.year + self.age + 1)
 
     @property
     def time(self) -> pendulum.datetime:

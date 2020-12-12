@@ -65,7 +65,7 @@ class UserConfigManager:
         async with self.bot.db.acquire(timeout=300) as db:
             for user_id, user_config in need_updating.items():
 
-                query = ','.join([f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update)])
+                query = ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
                 values = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
                 await db.execute(f'UPDATE user_configs SET {query} WHERE id = $1', user_id, *values)
 
@@ -195,6 +195,26 @@ class UserConfigManager:
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
             setattr(user_config, editable.value, data[editable.value])
+
+        elif editable == Editables.birthday:
+
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET birthday = $1 WHERE id = $2 RETURNING birthday', value, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET birthday = $1 WHERE id = $2 RETURNING birthday', pendulum.datetime(year=2020, month=1, day=1), user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.birthday = pendulum.parse(data['birthday'].isoformat(), tz='UTC')
+
+        elif editable == Editables.birthday_private:
+
+            operations = {
+                Operations.set.value: ('UPDATE user_configs SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', False, user_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            user_config.birthday_private = data['birthday_private']
 
         return user_config
 
