@@ -250,5 +250,5 @@ class Economy(commands.Cog):
         await ctx.send(f'{member} is level `{self.bot.user_manager.get_user_config(user_id=member.id).level}`.')
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Economy(bot))

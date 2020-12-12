@@ -279,5 +279,5 @@ class Tags(commands.Cog):
         await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Tags(bot))

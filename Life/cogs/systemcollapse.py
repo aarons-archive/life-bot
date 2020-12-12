@@ -86,5 +86,5 @@ class SystemCollapse(commands.Cog):
                 await member.remove_roles(self.content_role)
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(SystemCollapse(bot))

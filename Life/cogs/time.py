@@ -217,5 +217,5 @@ class Time(commands.Cog):
         await ctx.send(f'Deleted {len(reminder_ids_to_remove)} reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Time(bot))

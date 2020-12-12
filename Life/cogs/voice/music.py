@@ -692,5 +692,5 @@ class Music(commands.Cog):
                                  embed_add_footer='Lyrics provided by KSoft.Si API', per_page=1)
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Music(bot))

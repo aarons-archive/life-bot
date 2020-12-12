@@ -270,5 +270,5 @@ class Events(commands.Cog):
         await self.bot.errors_webhook.send(content=f'{traceback}', username=f'{ctx.author}', avatar_url=avatar_url)
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Events(bot))

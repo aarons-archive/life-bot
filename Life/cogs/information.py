@@ -393,5 +393,5 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: Life):
     bot.add_cog(Information(bot))
