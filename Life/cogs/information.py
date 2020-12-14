@@ -239,7 +239,7 @@ class Information(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name='server', aliases=['serverinfo'])
-    async def server(self, ctx: context.Context, guild: guild_converter.Guild = None):
+    async def server(self, ctx: context.Context, *, guild: guild_converter.Guild = None):
         """
         Display information about a server.
 
@@ -391,6 +391,18 @@ class Information(commands.Cog):
         embed.set_thumbnail(url=str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png')))
         embed.set_footer(text=f'ID: {member.id}')
         return await ctx.send(embed=embed)
+
+    @commands.command(name='rolecounts', aliases=['rcs', 'roles'])
+    async def role_counts(self, ctx: context.Context) -> None:
+        """
+        Displays a list of roles and how many people have that role.
+        """
+
+        counts = {role.name.title(): len(role.members) for role in ctx.guild.roles}
+        counts['Bots (Actual)'] = len([member for member in ctx.guild.members if member.bot])
+
+        roles = [f'{role_name[:20] + (role_name[20:] and ".."):23} | {role_count}' for role_name, role_count in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)]
+        await ctx.paginate(entries=roles, per_page=20, codeblock=True)
 
 
 def setup(bot: Life):
