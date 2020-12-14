@@ -10,8 +10,6 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-import asyncio
-
 import discord
 import pendulum
 from discord.ext import commands
@@ -27,7 +25,7 @@ class Birthdays(commands.Cog):
         self.bot = bot
 
     @commands.group(name='birthday', aliases=['birthdays', 'bd'], invoke_without_command=True)
-    async def birthday(self, ctx: context.Context, person: converters.UserConverter = None) -> None:
+    async def birthday(self, ctx: context.Context, *, person: converters.UserConverter = None) -> None:
         """
         Displays the birthday of you, or the member provided.
 
@@ -42,9 +40,9 @@ class Birthdays(commands.Cog):
         if user_config.birthday == pendulum.DateTime(2020, 1, 1, 0, 0, 0, tzinfo=pendulum.timezone('UTC')):
             raise exceptions.ArgumentError(f'`{person}` has not set their birthday.')
         if user_config.birthday_private and ctx.author.id != person.id:
-            raise exceptions.ArgumentError(f'`{person}\'s` birthday is private.')
+            raise exceptions.ArgumentError(f'`{person}` has their birthday set to be private.')
 
-        embed = discord.Embed(description=f'**{person}\'s birthday information:**\n\n'
+        embed = discord.Embed(description=f'`{person.name}`**\'s birthday information:**\n\n'
                                           f'`Birthday:` {self.bot.utils.format_date(datetime=user_config.birthday)}\n'
                                           f'`Next birthday:` In {self.bot.utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
                                           f'`Age:` {user_config.age}\n',
@@ -60,47 +58,26 @@ class Birthdays(commands.Cog):
         `date`: Your birthday. This should include some form of date such as `tomorrow`, `in 3 weeks` or `1st january 2020`. Your birthday must allow you to be at least 13 years old and not more than 150.
         """
 
-        entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(date['found'].items())}
+        entries = {index: (date_phrase, datetime) for index, (date_phrase, datetime) in enumerate(date['found'].items())}
 
-        if len(entries) == 1:
-            result = entries[0]
-
-        else:
-
-            paginator = await ctx.paginate_embed(entries=[
-                f'`{index + 1}.` **{datetime_phrase}**\n`{self.bot.utils.format_date(datetime=datetime)}`' for index, (datetime_phrase, datetime) in entries.items()],
-                per_page=10, header=f'**Multiple time and/or dates were detected within your query, please select the one that matches your birthday:**\n\n'
+        if len(entries) != 1:
+            result = await ctx.paginate_choice(
+                    entries=[f'`{index + 1}.` **{datetime_phrase}**\n`{self.bot.utils.format_date(datetime=datetime)}`' for index, (datetime_phrase, datetime) in entries.items()],
+                    per_page=10, header=f'**Multiple dates were detected within your query, please select the one that best matches your birthday:**\n\n'
             )
-
-            try:
-                response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
-            except asyncio.TimeoutError:
-                raise exceptions.ArgumentError('You took too long to respond.')
-
-            response = await commands.clean_content().convert(ctx=ctx, argument=response.content)
-            try:
-                response = int(response) - 1
-            except ValueError:
-                raise exceptions.ArgumentError('That was not a valid number.')
-            if response < 0 or response >= len(entries):
-                raise exceptions.ArgumentError('That was not one of the available options.')
-
-            await paginator.stop()
-            result = entries[response]
+        else:
+            result = entries[0]
 
         datetime = result[1]
 
-        if not datetime.day or not datetime.month or not datetime.year:
-            raise exceptions.ArgumentError('That datetime did not have a year, month or day.')
-
         now = pendulum.now()
         if datetime > now.subtract(years=13) or datetime < now.subtract(years=150):
-            raise exceptions.ArgumentError('You must be older than `13` and cant be more than `150` years old.')
+            raise exceptions.ArgumentError('You must be more than 13 (As per discord TOS) and less than 150 years old.')
 
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.birthday, operation=Operations.set, value=datetime)
         await ctx.send(f'Your birthday has been set to `{self.bot.utils.format_date(datetime=ctx.user_config.birthday)}`.')
 
-    @commands.command(name='reset')
+    @birthday.command(name='reset')
     async def birthday_reset(self, ctx: context.Context) -> None:
         """
         Resets your birthday.
@@ -112,7 +89,7 @@ class Birthdays(commands.Cog):
     @birthday.command(name='private')
     async def birthday_private(self, ctx: context.Context) -> None:
         """
-        Toggles your birthday being private or public.
+        Toggles your birthday being publicly available or not.
         """
 
         if ctx.user_config.birthday_private is False:
@@ -128,7 +105,7 @@ class Birthdays(commands.Cog):
         Displays a list of upcoming birthdays within the server.
         """
 
-        configs = sorted(self.bot.user_manager.configs.items(), key=lambda kv: kv[1].birthday)
+        configs = sorted(self.bot.user_manager.configs.items(), key=lambda user_config: user_config[1].birthday)
         birthdays = {}
 
         for user_id, config in configs:
@@ -143,14 +120,14 @@ class Birthdays(commands.Cog):
             birthdays[member] = config
 
         if not birthdays:
-            raise exceptions.ArgumentError('There are no users with birthdays set in this server.')
+            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
 
         birthdays_format = "\n\n".join(
-            f'__**{person}:**__\n'
+            f'__**`{person.name}`\'s birthday:**__\n'
             f'`Birthday:` {self.bot.utils.format_date(datetime=user_config.birthday)}\n'
             f'`Next birthday:` In {self.bot.utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
             f'`Current age:` {user_config.age}'
-            for person, user_config in list(birthdays.items())[:10]
+            for person, user_config in list(birthdays.items())[:5]
         )
 
         embed = discord.Embed(description=f'**Upcoming birthdays:**\n\n{birthdays_format}', colour=ctx.colour)
@@ -159,10 +136,10 @@ class Birthdays(commands.Cog):
     @birthday.command(name='next')
     async def birthday_next(self, ctx: context.Context) -> None:
         """
-        Displays the birthday of the next person to have one within the server.
+        Displays the next person to have a birthday within the server.
         """
 
-        configs = sorted(self.bot.user_manager.configs.items(), key=lambda kv: kv[1].birthday)
+        configs = sorted(self.bot.user_manager.configs.items(), key=lambda user_config: user_config[1].birthday)
         birthdays = {}
 
         for user_id, config in configs:
@@ -177,15 +154,15 @@ class Birthdays(commands.Cog):
             birthdays[member] = config
 
         if not birthdays:
-            raise exceptions.ArgumentError('There are no users with birthdays set in this server.')
+            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
 
-        birthdays = list(birthdays.items())[0]
+        birthday = list(birthdays.items())[0]
 
         embed = discord.Embed(description=f'**The next person to have a birthday is:**\n\n'
-                                          f'**{birthdays[0]}:**\n'
-                                          f'`Birthday:` {self.bot.utils.format_date(datetime=birthdays[1].birthday)}\n'
-                                          f'`Next birthday:` In {self.bot.utils.format_difference(datetime=birthdays[1].next_birthday.subtract(days=1), suppress=[])}\n'
-                                          f'`Current age:` {birthdays[1].age}', colour=ctx.colour)
+                                          f'__**`{birthday[0].name}`:**__\n'
+                                          f'`Birthday:` {self.bot.utils.format_date(datetime=birthday[1].birthday)}\n'
+                                          f'`Next birthday:` In {self.bot.utils.format_difference(datetime=birthday[1].next_birthday.subtract(days=1), suppress=[])}\n'
+                                          f'`Age:` {birthday[1].age}\n', colour=ctx.colour)
         await ctx.send(embed=embed)
 
 

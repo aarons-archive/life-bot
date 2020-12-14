@@ -10,8 +10,6 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-import asyncio
-
 import discord
 import pendulum
 from discord.ext import commands
@@ -132,30 +130,14 @@ class Time(commands.Cog):
 
         entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(reminder['found'].items())}
 
-        if len(entries) == 1:
-            result = entries[0]
+        if len(entries) != 1:
+            result = await ctx.paginate_choice(
+                    entries=[f'`{index + 1}.` **{phrase}**\n`{self.bot.utils.format_datetime(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
+                    per_page=10, header=f'**Multiple times/dates were detected within your query, please select the one you would like to be reminded at:**\n\n'
+            )
 
         else:
-
-            paginator = await ctx.paginate_embed(entries=[
-                f'`{index + 1}.` **{datetime_phrase}**\n`{self.bot.utils.format_datetime(datetime=datetime)}`' for index, (datetime_phrase, datetime) in entries.items()],
-                    per_page=10, header=f'**Multiple time and/or dates were detected within your query, please select the one you would like to be reminded at:**\n\n')
-
-            try:
-                response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
-            except asyncio.TimeoutError:
-                raise exceptions.ArgumentError('You took too long to respond.')
-
-            response = await commands.clean_content().convert(ctx=ctx, argument=response.content)
-            try:
-                response = int(response) - 1
-            except ValueError:
-                raise exceptions.ArgumentError('That was not a valid number.')
-            if response < 0 or response >= len(entries):
-                raise exceptions.ArgumentError('That was not one of the available options.')
-
-            await paginator.stop()
-            result = entries[response]
+            result = entries[0]
 
         datetime = self.bot.utils.format_datetime(datetime=result[1], seconds=True)
         datetime_difference = self.bot.utils.format_difference(datetime=result[1], suppress=[])

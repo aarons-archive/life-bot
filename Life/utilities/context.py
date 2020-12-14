@@ -9,13 +9,13 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
-
+import asyncio
 import typing
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-from utilities import objects, paginators
+from utilities import exceptions, objects, paginators
 
 
 class Context(commands.Context):
@@ -58,6 +58,26 @@ class Context(commands.Context):
         paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
         await paginator.paginate()
         return paginator
+
+    async def paginate_choice(self, **kwargs) -> typing.Any:
+
+        paginator = await self.paginate_embed(**kwargs)
+
+        try:
+            response = await self.bot.wait_for('message', check=lambda msg: msg.author == self.author and msg.channel == self.channel, timeout=30.0)
+        except asyncio.TimeoutError:
+            raise exceptions.ArgumentError('You took too long to respond.')
+
+        response = await commands.clean_content().convert(ctx=self, argument=response.content)
+        try:
+            response = int(response) - 1
+        except ValueError:
+            raise exceptions.ArgumentError('That was not a valid number.')
+        if response < 0 or response >= len(kwargs.get('entries')):
+            raise exceptions.ArgumentError('That was not one of the available options.')
+
+        await paginator.stop()
+        return kwargs.get('entries')[response]
 
     async def try_dm(self, **kwargs) -> typing.Optional[discord.Message]:
 
