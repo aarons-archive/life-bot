@@ -32,11 +32,12 @@ log = logging.getLogger(__name__)
 class Life(commands.AutoShardedBot):
 
     def __init__(self) -> None:
-        super().__init__(command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(),
-                         activity=discord.Activity(type=discord.ActivityType.competing, name='the cheese games'),
-                         intents=discord.Intents(guilds=True, members=True, bans=False, emojis=False, integrations=False, webhooks=False,
-                                                 invites=False, voice_states=True, presences=True, messages=True, reactions=True, typing=False)
-                         )
+        super().__init__(
+                command_prefix=self.get_prefix, reconnect=True, help_command=help.HelpCommand(),
+                activity=discord.Game(name='Cyberpunk 2069'),
+                intents=discord.Intents(guilds=True, members=True, bans=False, emojis=False, integrations=False, webhooks=False, invites=False, voice_states=True, presences=True,
+                                        messages=True, reactions=True, typing=False)
+        )
 
         self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True,
                                                     external_emojis=True)

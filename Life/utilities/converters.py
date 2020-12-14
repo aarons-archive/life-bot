@@ -19,6 +19,7 @@ import pendulum.exceptions
 import rapidfuzz.process
 import yarl
 from discord.ext import commands
+from pendulum.tz.timezone import Timezone
 
 from utilities import context, exceptions
 
@@ -44,13 +45,13 @@ class UserConverter(commands.UserConverter):
 
 class TimezoneConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, argument: str) -> pendulum.timezone:
+    async def convert(self, ctx: context.Context, argument: str) -> Timezone:
 
         timezones = [timezone for timezone in pendulum.timezones]
 
         if argument not in timezones:
             matches = rapidfuzz.process.extract(query=argument, choices=pendulum.timezones, limit=5)
-            extra_message = '\n'.join([f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches)])
+            extra_message = '\n'.join(f'`{index + 1}.` {match[0]}' for index, match in enumerate(matches))
             raise exceptions.ArgumentError(f'That was not a recognised timezone. Maybe you meant one of these?\n{extra_message}')
 
         return pendulum.timezone(argument)

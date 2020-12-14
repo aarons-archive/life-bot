@@ -39,7 +39,7 @@ class Tags(commands.Cog):
 
             extra_msg = ''
             if len(tags) > 0:
-                extras = '\n'.join([f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags[0:])])
+                extras = '\n'.join(f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags[0:]))
                 extra_msg = f'Maybe you meant one of these?\n{extras}'
 
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`. {extra_msg}')
@@ -65,7 +65,7 @@ class Tags(commands.Cog):
 
             extra_msg = ''
             if len(tags) > 0:
-                extras = '\n'.join([f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags[0:])])
+                extras = '\n'.join(f'`{index + 1}.` {tag["name"]}' for index, tag in enumerate(tags[0:]))
                 extra_msg = f'Maybe you meant one of these?\n{extras}'
 
             raise exceptions.ArgumentError(f'There are no tags in this server with the name `{name}`. {extra_msg}')

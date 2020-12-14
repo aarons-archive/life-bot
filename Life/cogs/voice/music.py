@@ -623,7 +623,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(nane='lyrics', aliases=['lyric'])
+    @commands.command(name='lyrics', aliases=['lyric'])
     async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
 
         if query == 'spotify':
