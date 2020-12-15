@@ -101,7 +101,7 @@ class Economy(commands.Cog):
 
         if now < time_when_claimable:
             time_difference = self.bot.utils.format_difference(datetime=time_when_claimable, suppress=[])
-            raise exceptions.ArgumentError(f'Your `{claim}` bundle is currently on cooldown. Retry the command in `{time_difference}`')
+            raise exceptions.ArgumentError(f'Your `{claim}` bundle is currently on cooldown. Retry the command in `{time_difference}`.')
 
         coins = self.claim_type_coins[claim]
         time_when_streak_expires = getattr(user_config, self.claim_types[claim].name).add(days=self.claim_type_times[claim][1])
