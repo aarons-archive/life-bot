@@ -222,7 +222,7 @@ class Imaging:
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    async def edit_image(self, ctx: context.Context, url: str, edit_type: str, **kwargs) -> discord.Embed:
+    async def edit_image(self, ctx: context.Context, edit_type: str,  url: str = None, **kwargs) -> discord.Embed:
 
         if ctx.message.attachments:
             url = ctx.message.attachments[0].url

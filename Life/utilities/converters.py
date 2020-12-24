@@ -88,19 +88,19 @@ class ImageConverter(commands.Converter, ABC):
         url = None
 
         try:
-            user = await UserConverter().convert(ctx=ctx, argument=str(argument))
+            member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
         except commands.BadArgument:
             pass
         else:
-            url = str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png'))
+            url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
         if url is None:
             try:
-                member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
+                user = await UserConverter().convert(ctx=ctx, argument=str(argument))
             except commands.BadArgument:
                 pass
             else:
-                url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
+                url = str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png'))
 
         if url is None:
             check = yarl.URL(argument)
@@ -108,7 +108,7 @@ class ImageConverter(commands.Converter, ABC):
                 url = argument
 
         if url is None:
-            url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
+            raise commands.ConversionError
 
         return url
 
