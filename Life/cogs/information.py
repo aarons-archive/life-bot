@@ -56,7 +56,7 @@ class Information(commands.Cog):
                             continue
 
                         if line.startswith('"""'):
-                            docstring = docstring is False
+                            docstring = not docstring
                         if docstring:
                             continue
 
