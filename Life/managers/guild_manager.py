@@ -84,13 +84,23 @@ class GuildConfigManager:
 
             operations = {
                 Operations.set.value:
-                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', True, value, guild_id),
+                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, guild_id),
                 Operations.reset.value:
-                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $2 RETURNING blacklisted, blacklisted_reason', False, None, guild_id)
+                    ('UPDATE guild_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, guild_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
             guild_config.blacklisted = data['blacklisted']
             guild_config.blacklisted_reason = data['blacklisted_reason']
+
+        elif editable == Editables.embed_size:
+
+            operations = {
+                Operations.set.value: ('UPDATE guild_configs SET embed_size = $1 WHERE id = $2 RETURNING embed_size', value, guild_id),
+                Operations.reset.value: ('UPDATE guild_configs SET embed_size = $1 WHERE id = $2 RETURNING embed_size', 'normal', guild_id)
+            }
+
+            data = await self.bot.db.fetchrow(*operations[operation.value])
+            guild_config.embed_size = data['embed_size']
 
         return guild_config

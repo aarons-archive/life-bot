@@ -98,28 +98,38 @@ class Player(slate.Player):
 
         embed = discord.Embed(colour=self.current.ctx.colour)
         embed.set_thumbnail(url=self.current.thumbnail)
-
         embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
         queue_time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) / 1000, friendly=True)
 
-        embed.add_field(name='Player info:',
-                        value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n'
-                              f'`Queue entries:` {len(self.queue)}\n`Queue time:` {queue_time}')
-        embed.add_field(name='Track info:',
-                        value=f'`Time:` {self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
-                              f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
-                              f'`Requester:` {self.current.requester.mention}\n`Live:` {self.current.is_stream}\n`Seekable:` {self.current.is_seekable}')
+        if self.current.ctx.guild_config.embed_size == 'normal':
 
-        if not self.queue.is_empty:
-            entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)} | {entry.requester.mention}'
-                       for index, entry in enumerate(self.queue[:5])]
+            embed.add_field(name='Player info:',
+                            value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n'
+                                  f'`Queue entries:` {len(self.queue)}\n`Queue time:` {queue_time}')
+            embed.add_field(name='Track info:',
+                            value=f'`Time:` {self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
+                                  f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
+                                  f'`Requester:` {self.current.requester.mention}\n`Live:` {self.current.is_stream}\n`Seekable:` {self.current.is_seekable}')
 
-            if len(self.queue) > 5:
-                entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
-                               f'{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)} | {self.queue[-1].requester.mention}')
+            if not self.queue.is_empty:
+                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)} | {entry.requester.mention}'
+                           for index, entry in enumerate(self.queue[:5])]
 
-            embed.add_field(name='Up next:', value='\n'.join(entries) if entries else 'There are no tracks in the queue.', inline=False)
+                if len(self.queue) > 5:
+                    entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
+                                   f'{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)} | {self.queue[-1].requester.mention}')
+
+                embed.add_field(name='Up next:', value='\n'.join(entries), inline=False)
+
+        if self.current.ctx.guild_config.embed_size == 'small':
+
+            embed.add_field(name='Player info:',
+                            value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n')
+            embed.add_field(name='Track info:',
+                            value=f'`Time:` {self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
+                                  f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
+                                  f'`Requester:` {self.current.requester.mention}\n')
 
         await self.send(embed=embed)
 

@@ -55,4 +55,6 @@ class Editables(enum.Enum):
     birthday = 'birthday'
     birthday_private = 'birthday_private'
 
+    embed_size = 'embed_size'
+
 

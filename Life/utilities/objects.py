@@ -18,7 +18,7 @@ import pendulum
 
 class DefaultGuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'embed_size', 'requires_db_update')
 
     def __init__(self) -> None:
 
@@ -28,6 +28,8 @@ class DefaultGuildConfig:
         self.blacklisted = False
         self.blacklisted_reason = 'None'
 
+        self.embed_size = 'normal'
+
         self.requires_db_update = []
 
     def __repr__(self) -> str:
@@ -36,7 +38,7 @@ class DefaultGuildConfig:
 
 class GuildConfig:
 
-    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'requires_db_update')
+    __slots__ = ('prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'embed_size', 'requires_db_update')
 
     def __init__(self, data: dict) -> None:
 
@@ -45,6 +47,8 @@ class GuildConfig:
 
         self.blacklisted = data.get('blacklisted')
         self.blacklisted_reason = data.get('blacklisted_reason')
+
+        self.embed_size = data.get('embed_size')
 
         self.requires_db_update = []
 
