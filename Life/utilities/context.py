@@ -46,7 +46,7 @@ class Context(commands.Context):
     @property
     def colour(self) -> discord.Colour:
 
-        if isinstance(self.user_config, objects.DefaultUserConfig):
+        if str(self.user_config.colour) == str(discord.Colour(int('f1c40f', 16))):
             return self.guild_config.colour
 
         return self.user_config.colour
