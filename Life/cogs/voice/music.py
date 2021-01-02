@@ -367,7 +367,7 @@ class Music(commands.Cog):
         header = f'Showing `{min([10, len(ctx.voice_client.queue)])}` out of `{len(ctx.voice_client.queue)}` track(s) in the queue. Total queue time is `{time}`.\n\n'
 
         entries = [
-            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
+            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
             for index, track in enumerate(ctx.voice_client.queue)
         ]
 
@@ -432,7 +432,7 @@ class Music(commands.Cog):
         header = f'Showing `{min([10, len(history)])}` out of `{len(history)}` track(s) in the queues history. Total queue history time is `{time}`.\n\n'
 
         entries = [
-            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
+            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
             for index, track in enumerate(history)
         ]
 
