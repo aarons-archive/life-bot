@@ -11,16 +11,16 @@
 #
 
 import asyncio
+from typing import Literal
 
 import discord
-import humanize
 import ksoftapi
+import slate
 import spotify
 from discord.ext import commands
 
 from bot import Life
-from cogs.voice.lavalink import client, objects
-from cogs.voice.lavalink.exceptions import NodeCreationError
+from cogs.voice.custom.player import Player
 from utilities import context, exceptions
 
 
@@ -29,65 +29,76 @@ class Music(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.bot.lavalink = client.Client(bot=self.bot, session=self.bot.session)
-        self.bot.spotify = spotify.Client(client_id=self.bot.config.spotify_app_id, client_secret=self.bot.config.spotify_secret)
-        self.bot.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_app_id, client_secret=self.bot.config.spotify_secret)
-        self.bot.ksoft = ksoftapi.Client(self.bot.config.ksoft_token)
+        self.slate = slate.Client(bot=self.bot)
+
+        self.spotify = spotify.Client(client_id=self.bot.config.spotify_client_id, client_secret=self.bot.config.spotify_client_secret)
+        self.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_client_id, client_secret=self.bot.config.spotify_client_secret)
+
+        self.ksoft = ksoftapi.Client(self.bot.config.ksoft_token)
 
     async def load(self) -> None:
 
         for node in self.bot.config.nodes:
             try:
-                await self.bot.lavalink.create_node(host=node['host'], port=node['port'], password=node['password'], identifier=node['identifier'])
-            except NodeCreationError as e:
-                print(f'[LAVALINK] {e}')
+                await self.slate.create_node(cls=getattr(slate, node.pop('type')), **node)
+            except (slate.NodeConnectionError, slate.NodeCreationError) as e:
+                print(f'[SLATE] {e}')
             else:
-                print(f'[LAVALINK] Node {node["identifier"]} connected.')
+                print(f'[SLATE] Node \'{node["identifier"]}\' connected.')
+
+    #
 
     @commands.Cog.listener()
-    async def on_lavalink_track_start(self, event: objects.TrackStartEvent) -> None:
+    async def on_slate_track_start(self, event: slate.TrackStartEvent) -> None:
 
-        event.player.wait_track_start.set()
-        event.player.wait_track_start.clear()
+        event.player.track_start_event.set()
+        event.player.track_start_event.clear()
 
         await event.player.invoke_controller()
 
     @commands.Cog.listener()
-    async def on_lavalink_track_end(self, event: objects.TrackEndEvent) -> None:
+    async def on_slate_track_end(self, event: slate.TrackEndEvent) -> None:
+
+        event.player.track_end_event.set()
+        event.player.track_end_event.clear()
 
         event.player.skip_requests.clear()
 
-        event.player.wait_track_end.set()
-        event.player.wait_track_end.clear()
-
     @commands.Cog.listener()
-    async def on_lavalink_track_exception(self, event: objects.TrackExceptionEvent) -> None:
+    async def on_slate_track_exception(self, event: slate.TrackExceptionEvent) -> None:
 
-        await event.player.send(message=f'Something went wrong while playing the track `{event.track.title}`. Error: `{event.error}`')
+        track = None
+        try:
+            track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
+        except slate.TrackDecodeError:
+            pass
+
+        title = getattr(track or event.player.current, 'title', 'Not Found')
+        await event.player.send(message=f'There was an error of severity `{event.severity}` while playing the track `{title}`.\nReason: {event.message}')
+
+        event.player.track_end_event.set()
+        event.player.track_end_event.clear()
+
         event.player.skip_requests.clear()
 
-        event.player.wait_track_end.set()
-        event.player.wait_track_end.clear()
-
     @commands.Cog.listener()
-    async def on_lavalink_track_stuck(self, event: objects.TrackStuckEvent) -> None:
+    async def on_slate_track_stuck(self, event: slate.TrackStuckEvent) -> None:
 
-        await event.player.send(message=f'Something went wrong while playing the track `{event.track.title}`. Use `{self.bot.config.prefix}support` for more help.')
+        track = None
+        try:
+            track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
+        except slate.TrackDecodeError:
+            pass
+
+        title = getattr(track or event.player.current, 'title', 'Not Found')
+        await event.player.send(message=f'Something went wrong while playing the track `{title}`. Use `{self.bot.config.prefix}support` for more help.')
+
+        event.player.track_end_event.set()
+        event.player.track_end_event.clear()
+
         event.player.skip_requests.clear()
 
-        event.player.wait_track_end.set()
-        event.player.wait_track_end.clear()
-
-    @commands.Cog.listener()
-    async def on_lavalink_websocket_closed(self, event: objects.WebSocketClosedEvent) -> None:
-
-        if event.code == 1000:
-            return
-
-        await event.player.send(message=f'Your nodes websocket has disconnected. Use `{self.bot.config.prefix}support` for more help.')
-
-        await event.player.destroy()
-        event.player.task.cancel()
+    #
 
     @commands.command(name='join', aliases=['connect'])
     async def join(self, ctx: context.Context) -> None:
@@ -99,60 +110,59 @@ class Music(commands.Cog):
         if not channel:
             raise exceptions.VoiceError('You must be in a voice channel to use this command.')
 
-        if ctx.guild.voice_client and ctx.guild.voice_client.is_connected:
+        if ctx.voice_client and ctx.voice_client.is_connected:
+            raise exceptions.VoiceError('I am already in a voice channel.')
 
-            if channel.id != ctx.guild.voice_client.channel.id:
-                raise exceptions.VoiceError(f'I am already in the voice channel `{ctx.guild.voice_client.channel}`.')
+        if ctx.voice_client:
+            await ctx.voice_client.reconnect(channel=channel)
+        else:
+            await self.slate.create_player(channel=channel, cls=Player)
 
-            raise exceptions.VoiceError('I am already in your voice channel.')
+        ctx.voice_client.text_channel = ctx.channel
+        await ctx.send(f'Joined the voice channel `{channel}`.')
 
-        await self.bot.lavalink.connect(channel=channel)
-        ctx.guild.voice_client.text_channel = ctx.channel
-        await ctx.send(f'Joined your voice channel `{channel}`.')
-
-    @commands.command(name='play')
+    @commands.command(name='play', aliases=['p'])
     async def play(self, ctx: context.Context, *, query: str) -> None:
         """
         Plays or queues a track with the given search.
 
-        `query`: The search term to find tracks for. You can prepend this query with soundcloud to search for soundcloud tracks.
+        `query`: The search term to find tracks for. You can prepend this query with soundcloud to search for tracks on soundcloud.
 
-        This command supports youtube/soundcloud searching or youtube, soundcloud, spotify, bandcamp, and vimeo links.
+        This command supports youtube/soundcloud searching or youtube, soundcloud, spotify, bandcamp, beam, twitch, and vimeo links.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             await ctx.invoke(self.join)
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         async with ctx.channel.typing():
 
-            search = await ctx.guild.voice_client.node.search(query=query, ctx=ctx)
+            search = await ctx.voice_client.search(query=query, ctx=ctx)
 
             if search.source == 'HTTP' and ctx.author.id not in self.bot.config.owner_ids:
                 raise exceptions.VoiceError('You are unable to play HTTP links.')
 
             if search.source == 'spotify':
 
-                if search.source_type == 'track':
-                    message = f'Added the Spotify track **{search.result.name}** to the queue.'
-                elif search.source_type in ('album', 'playlist'):
-                    message = f'Added the Spotify {search.source_type} **{search.result.name}** to the queue with a total of **{len(search.tracks)}** track(s).'
+                message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the queue.'
+                if search.search_type in ('album', 'playlist'):
+                    message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
+
                 tracks = search.tracks
 
             else:
 
-                if search.source_type == 'track':
-                    message = f'Added the {search.source} track **{search.tracks[0].title}** to the queue.'
+                if search.search_type == 'track':
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the queue.'
                     tracks = [search.tracks[0]]
-
-                elif search.source_type == 'playlist':
-                    message = f'Added the {search.source} playlist **{search.result.name}** to the queue with a total of **{len(search.tracks)}** track(s)'
+                elif search.search_type == 'playlist':
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** track(s)'
                     tracks = search.tracks
 
-            ctx.guild.voice_client.queue.put(tracks=tracks)
+            ctx.voice_client.queue.put(items=tracks)
             await ctx.send(message)
 
     @commands.command(name='leave', aliases=['disconnect', 'dc'])
@@ -161,17 +171,30 @@ class Music(commands.Cog):
         Leaves the voice channel.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
-        await ctx.guild.voice_client.destroy()
+        await ctx.voice_client.stop()
+        await ctx.voice_client.disconnect()
 
-    @commands.command(name='skip', aliases=['stop'])
+    @commands.command(name='destroy')
+    async def destroy(self, ctx: context.Context) -> None:
+        """
+        Completely destroys the guilds player.
+        """
+
+        if not ctx.voice_client:
+            raise exceptions.VoiceError('I am not connected to any voice channels.')
+
+        await ctx.send(f'Destroyed this guilds player.')
+        await ctx.voice_client.destroy()
+
+    @commands.command(name='skip', aliases=['stop', 'next'])
     async def skip(self, ctx: context.Context, amount: int = 1) -> None:
         """
         Skips an amount of tracks.
@@ -179,47 +202,45 @@ class Music(commands.Cog):
         `amount`: The amount of tracks to skip. Defaults to 1
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if not ctx.guild.voice_client.is_playing:
+        if not ctx.voice_client.is_playing:
             raise exceptions.VoiceError(f'There are no tracks playing.')
 
-        if ctx.guild.voice_client.current.requester.id != ctx.author.id:
+        if ctx.voice_client.current.requester.id != ctx.author.id:
             amount = 1
 
-            if ctx.author not in ctx.guild.voice_client.listeners:
-                raise exceptions.VoiceError('You can not vote to skip as your are currently deafened.')
+            if ctx.author not in ctx.voice_client.listeners:
+                raise exceptions.VoiceError('You can not vote to skip as you are currently deafened or server deafened.')
 
-            if ctx.author.id in ctx.guild.voice_client.skip_requests:
-
-                ctx.guild.voice_client.skip_requests.remove(ctx.author.id)
+            if ctx.author.id in ctx.voice_client.skip_requests:
+                ctx.voice_client.skip_requests.remove(ctx.author.id)
                 raise exceptions.VoiceError(f'Removed your vote to skip.')
             else:
-                ctx.guild.voice_client.skip_requests.append(ctx.author.id)
+                ctx.voice_client.skip_requests.append(ctx.author.id)
                 await ctx.send('Added your vote to skip.')
 
-            skips_needed = (len(ctx.guild.voice_client.listeners) // 2) + 1
-            if len(ctx.guild.voice_client.skip_requests) < skips_needed:
-                raise exceptions.VoiceError(f'Currently on `{len(ctx.guild.voice_client.skip_requests)}` out of `{skips_needed}` votes needed to skip.')
+            skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
+            if len(ctx.voice_client.skip_requests) < skips_needed:
+                raise exceptions.VoiceError(f'Currently on `{len(ctx.voice_client.skip_requests)}` out of `{skips_needed}` votes needed to skip.')
 
         if amount != 1:
 
-            if amount <= 0 or amount > len(ctx.guild.voice_client.queue) + 1:
-                raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and '
-                                            f'`{len(ctx.guild.voice_client.queue) + 1}`.')
+            if amount <= 0 or amount > len(ctx.voice_client.queue) + 1:
+                raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and `{len(ctx.voice_client.queue) + 1}`.')
 
-            for index, track in enumerate(ctx.guild.voice_client.queue[:amount - 1]):
+            for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
                 if track.requester.id != ctx.author.id:
                     raise exceptions.VoiceError(f'You only skipped `{index + 1}` out of the next `{amount}` tracks because you were not the requester of all them.')
 
-                await ctx.guild.voice_client.queue.get()
+                ctx.voice_client.queue.get()
 
-        await ctx.guild.voice_client.stop()
+        await ctx.voice_client.stop()
         await ctx.send(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
 
     @commands.command(name='pause')
@@ -228,17 +249,17 @@ class Music(commands.Cog):
         Pauses the player.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.is_paused:
+        if ctx.voice_client.is_paused:
             raise exceptions.VoiceError('The player is already paused.')
 
-        await ctx.guild.voice_client.set_pause(pause=True)
+        await ctx.voice_client.set_pause(pause=True)
         await ctx.send(f'The player is now paused.')
 
     @commands.command(name='unpause', aliases=['resume'])
@@ -247,18 +268,18 @@ class Music(commands.Cog):
         Resumes the player.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.paused is False:
+        if ctx.voice_client.is_paused is False:
             raise exceptions.VoiceError('The player is not paused.')
 
-        await ctx.guild.voice_client.set_pause(pause=False)
-        await ctx.send(f'The player is now un-paused')
+        await ctx.voice_client.set_pause(pause=False)
+        await ctx.send(f'The player is now resumed.')
 
     @commands.command(name='seek')
     async def seek(self, ctx: context.Context, seconds: int = None) -> None:
@@ -268,28 +289,28 @@ class Music(commands.Cog):
         `position`: The position to seek too, in seconds.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if not ctx.guild.voice_client.is_playing:
+        if not ctx.voice_client.is_playing:
             raise exceptions.VoiceError(f'There are no tracks playing.')
 
-        if not ctx.guild.voice_client.current.is_seekable:
+        if not ctx.voice_client.current.is_seekable:
             raise exceptions.VoiceError('The current track is not seekable.')
 
         if not seconds and seconds != 0:
-            await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.guild.voice_client.position / 1000)}`')
+            await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.voice_client.position / 1000)}`')
             return
 
         milliseconds = seconds * 1000
-        if milliseconds < 0 or milliseconds > ctx.guild.voice_client.current.length:
-            raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.guild.voice_client.current.length / 1000)}`.')
+        if milliseconds < 0 or milliseconds > ctx.voice_client.current.length:
+            raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.voice_client.current.length / 1000)}`.')
 
-        await ctx.guild.voice_client.set_position(position=milliseconds)
+        await ctx.voice_client.set_position(position=milliseconds)
         await ctx.send(f'The players position is now `{self.bot.utils.format_seconds(seconds=milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
@@ -300,22 +321,22 @@ class Music(commands.Cog):
         `volume`: The volume to change too, between 0 and 100.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
         if not volume and volume != 0:
-            await ctx.send(f'The players volume is `{ctx.guild.voice_client.volume}%`.')
+            await ctx.send(f'The players volume is `{ctx.voice_client.volume}%`.')
             return
 
-        if volume < 0 or volume > 100:
+        if volume < 0 or volume > 100 and ctx.author.id not in self.bot.config.owner_ids:
             raise exceptions.VoiceError(f'That was not a valid volume, Please choose a value between `0` and and `100`.')
 
-        await ctx.guild.voice_client.set_volume(volume=volume)
-        await ctx.send(f'The players volume is now `{ctx.guild.voice_client.volume}%`.')
+        await ctx.voice_client.set_volume(volume=volume)
+        await ctx.send(f'The players volume is now `{ctx.voice_client.volume}%`.')
 
     @commands.command(name='now_playing', aliases=['np'])
     async def now_playing(self, ctx: context.Context) -> None:
@@ -323,13 +344,13 @@ class Music(commands.Cog):
         Displays the player controller.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
-        if not ctx.guild.voice_client.is_playing:
+        if not ctx.voice_client.is_playing:
             raise exceptions.VoiceError(f'There are no tracks playing.')
 
-        await ctx.guild.voice_client.invoke_controller()
+        await ctx.voice_client.invoke_controller()
 
     @commands.group(name='queue', aliases=['q'], invoke_without_command=True)
     async def queue(self, ctx: context.Context) -> None:
@@ -337,64 +358,62 @@ class Music(commands.Cog):
         Displays the queue.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in ctx.guild.voice_client.queue)) / 1000, friendly=True)
-        header = f'Showing `{min([10, len(ctx.guild.voice_client.queue)])}` out of `{len(ctx.guild.voice_client.queue)}` track(s) in the queue. ' \
-                 f'Total queue time is `{time}`.\n\n'
+        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in ctx.voice_client.queue)) / 1000, friendly=True)
+        header = f'Showing `{min([10, len(ctx.voice_client.queue)])}` out of `{len(ctx.voice_client.queue)}` track(s) in the queue. Total queue time is `{time}`.\n\n'
 
         entries = [
-            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
-            f'{track.requester.mention}'
-            for index, track in enumerate(ctx.guild.voice_client.queue)
+            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
+            for index, track in enumerate(ctx.voice_client.queue)
         ]
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue:', header=header)
 
-    @queue.command(name='clear')
-    async def queue_clear(self, ctx: context.Context) -> None:
-        """
-        Clears the queue.
-        """
-
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
-
-        if ctx.guild.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
-
-        ctx.guild.voice_client.queue.clear()
-        await ctx.send(f'The queue has been cleared.')
-
-    @queue.command(name='detailed', aliases=['detail', 'd'])
+    @queue.command(name='detailed', aliases=['d'])
     async def queue_detailed(self, ctx: context.Context) -> None:
         """
         Displays detailed information about the queue.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
         entries = []
-        for index, track in enumerate(ctx.guild.voice_client.queue):
+        for index, track in enumerate(ctx.voice_client.queue):
             embed = discord.Embed(colour=ctx.colour)
             embed.set_image(url=track.thumbnail)
-            embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(ctx.guild.voice_client.queue)}` in the queue.\n\n' \
-                                f'[{track.title}]({track.uri})\n\nAuthor: `{track.author}`\nSource: `{track.source}`\n' \
-                                f'Length: `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}`\n' \
-                                f'Is seekable: `{track.is_seekable}`\nIs stream: `{track.is_stream}`\nRequester: {track.requester.mention}'
+            embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(ctx.voice_client.queue)}` in the queue.\n\n' \
+                                f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
+                                f'`Length:` {self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}\n' \
+                                f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
             entries.append(embed)
 
         await ctx.paginate_embeds(entries=entries)
+
+    @queue.command(name='clear', aliases=['c'])
+    async def queue_clear(self, ctx: context.Context) -> None:
+        """
+        Clears the queue.
+        """
+
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
+            raise exceptions.VoiceError('I am not connected to any voice channels.')
+
+        channel = getattr(ctx.author.voice, 'channel', None)
+        if not channel or channel.id != ctx.voice_client.channel.id:
+            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+
+        if ctx.voice_client.queue.is_empty:
+            raise exceptions.VoiceError('The players queue is empty.')
+
+        ctx.voice_client.queue.clear()
+        await ctx.send(f'The queue has been cleared.')
 
     @queue.group(name='history', aliases=['h'], invoke_without_command=True)
     async def queue_history(self, ctx: context.Context) -> None:
@@ -402,10 +421,10 @@ class Music(commands.Cog):
         Displays the queue history.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
-        history = list(ctx.guild.voice_client.queue.history)
+        history = list(ctx.voice_client.queue.history)
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
@@ -413,43 +432,22 @@ class Music(commands.Cog):
         header = f'Showing `{min([10, len(history)])}` out of `{len(history)}` track(s) in the queues history. Total queue history time is `{time}`.\n\n'
 
         entries = [
-            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000)}` | '
-            f'{track.requester.mention}'
+            f'**{index + 1}.** [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
             for index, track in enumerate(history)
         ]
 
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue history:', header=header)
 
-    @queue_history.command(name='clear')
-    async def queue_history_clear(self, ctx: context.Context) -> None:
-        """
-        Clears the queue history.
-        """
-
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
-
-        history = list(ctx.guild.voice_client.queue.history)
-        if not history:
-            raise exceptions.VoiceError('The queue history is empty.')
-
-        ctx.guild.voice_client.queue.clear_history()
-        await ctx.send(f'The queue history has been cleared.')
-
-    @queue_history.command(name='detailed', aliases=['detail', 'd'])
+    @queue_history.command(name='detailed', aliases=['d'])
     async def queue_history_detailed(self, ctx: context.Context) -> None:
         """
         Displays detailed information about the queues history.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
-        history = list(ctx.guild.voice_client.queue.history)
+        history = list(ctx.voice_client.queue.history)
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
@@ -458,12 +456,32 @@ class Music(commands.Cog):
             embed = discord.Embed(colour=ctx.colour)
             embed.set_image(url=track.thumbnail)
             embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(history)}` in the queue history.\n\n' \
-                                f'[{track.title}]({track.uri})\n\nAuthor: `{track.author}`\nSource: `{track.source}`\n' \
-                                f'Length: `{self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}`\n' \
-                                f'Is seekable: `{track.is_seekable}`\nIs stream: `{track.is_stream}`\nRequester: {track.requester.mention}'
+                                f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
+                                f'`Length:` {self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}\n' \
+                                f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
             entries.append(embed)
 
         await ctx.paginate_embeds(entries=entries)
+
+    @queue_history.command(name='clear', aliases=['c'])
+    async def queue_history_clear(self, ctx: context.Context) -> None:
+        """
+        Clears the queue history.
+        """
+
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
+            raise exceptions.VoiceError('I am not connected to any voice channels.')
+
+        channel = getattr(ctx.author.voice, 'channel', None)
+        if not channel or channel.id != ctx.voice_client.channel.id:
+            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+
+        history = list(ctx.voice_client.queue.history)
+        if not history:
+            raise exceptions.VoiceError('The queue history is empty.')
+
+        ctx.voice_client.queue.clear_history()
+        await ctx.send(f'The queue history has been cleared.')
 
     @queue.command(name='shuffle')
     async def queue_shuffle(self, ctx: context.Context) -> None:
@@ -471,17 +489,17 @@ class Music(commands.Cog):
         Shuffles the queue.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        ctx.guild.voice_client.queue.shuffle()
+        ctx.voice_client.queue.shuffle()
         await ctx.send(f'The queue has been shuffled.')
 
     @queue.command(name='reverse')
@@ -490,39 +508,77 @@ class Music(commands.Cog):
         Reverses the queue.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        ctx.guild.voice_client.queue.reverse()
+        ctx.voice_client.queue.reverse()
         await ctx.send(f'The queue has been reversed.')
 
+    @queue.group(name='loop', aliases=['l'], invoke_without_command=True)
+    async def queue_loop(self, ctx: context.Context) -> None:
+        """
+        Loops the whole queue.
+        """
+
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
+            raise exceptions.VoiceError('I am not connected to any voice channels.')
+
+        channel = getattr(ctx.author.voice, 'channel', None)
+        if not channel or channel.id != ctx.voice_client.channel.id:
+            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+
+        ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=False)
+        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the whole queue.')
+
+    @queue_loop.command(name='current', aliases=['c'])
+    async def queue_loop_current(self, ctx: context.Context) -> None:
+        """
+        Loops the current track.
+        """
+
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
+            raise exceptions.VoiceError('I am not connected to any voice channels.')
+
+        channel = getattr(ctx.author.voice, 'channel', None)
+        if not channel or channel.id != ctx.voice_client.channel.id:
+            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+
+        ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=True)
+        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the current track.')
+
     @queue.command(name='sort')
-    async def queue_sort(self, ctx: context.Context, method: str, reverse: bool = False) -> None:
+    async def queue_sort(self, ctx: context.Context, method: Literal['title', 'length', 'author'], reverse: bool = False) -> None:
         """
         Sorts the queue.
 
-        `method`: The method to sort the queue with. Can be `title`, `author` or `length`.
+        `method`: The method to sort the queue with. Can be `title`, `length` or `author`.
         `reverse`: Whether or not to reverse the sort, as in `5, 3, 2, 4, 1` -> `5, 4, 3, 2, 1` instead of `5, 3, 2, 4, 1` -> `1, 2, 3, 4, 5`.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        ctx.guild.voice_client.queue.sort(method=method, reverse=reverse)
+        if method == 'title':
+            ctx.voice_client.queue._queue.sort(key=lambda track: track.title, reverse=reverse)
+        elif method == 'author':
+            ctx.voice_client.queue._queue.sort(key=lambda track: track.author, reverse=reverse)
+        elif method == 'length':
+            ctx.voice_client.queue._queue.sort(key=lambda track: track.length, reverse=reverse)
+
         await ctx.send(f'The queue has been sorted with method `{method}`.')
 
     @queue.command(name='remove')
@@ -533,20 +589,20 @@ class Music(commands.Cog):
         `entry`: The position of the track you want to remove.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        if entry <= 0 or entry > len(ctx.guild.voice_client.queue):
-            raise exceptions.VoiceError(f'That was not a valid track entry. Choose a number between `1` and `{len(ctx.guild.voice_client.queue)}` ')
+        if entry <= 0 or entry > len(ctx.voice_client.queue):
+            raise exceptions.VoiceError(f'That was not a valid track entry. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
 
-        item = await ctx.guild.voice_client.queue.get(position=entry - 1, history=False)
+        item = await ctx.voice_client.queue.get(position=entry - 1, put_history=False)
         await ctx.send(f'Removed `{item.title}` from the queue.')
 
     @queue.command(name='move')
@@ -558,104 +614,55 @@ class Music(commands.Cog):
         `entry_2`: The position of the track you want to move too.
         """
 
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
+        if not channel or channel.id != ctx.voice_client.channel.id:
             raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
 
-        if ctx.guild.voice_client.queue.is_empty:
+        if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        if entry_1 <= 0 or entry_1 > len(ctx.guild.voice_client.queue):
-            raise exceptions.VoiceError(f'That was not a valid track entry to move from. Choose a number between `1` and `{len(ctx.guild.voice_client.queue)}` ')
+        if entry_1 <= 0 or entry_1 > len(ctx.voice_client.queue):
+            raise exceptions.VoiceError(f'That was not a valid track entry to move from. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
 
-        if entry_2 <= 0 or entry_2 > len(ctx.guild.voice_client.queue):
-            raise exceptions.VoiceError(f'That was not a valid track entry to move too. Choose a number between `1` and `{len(ctx.guild.voice_client.queue)}` ')
+        if entry_2 <= 0 or entry_2 > len(ctx.voice_client.queue):
+            raise exceptions.VoiceError(f'That was not a valid track entry to move too. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
 
-        track = await ctx.guild.voice_client.queue.get(position=entry_1 - 1, history=False)
-        ctx.guild.voice_client.queue.put(tracks=track, position=entry_2 - 1)
+        track = ctx.voice_client.queue.get(position=entry_1 - 1, put_history=False)
+        ctx.voice_client.queue.put(items=track, position=entry_2 - 1)
         await ctx.send(f'Moved `{track.title}` from position `{entry_1}` to position `{entry_2}`.')
 
-    @queue.command(name='loop')
-    async def queue_loop(self, ctx: context.Context) -> None:
-        """
-        Loops the queue.
-        """
-
-        if not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.guild.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
-
-        if ctx.guild.voice_client.queue.is_looping is True:
-            ctx.guild.voice_client.queue.looping = False
-            await ctx.send(f'The queue will stop looping.')
-        else:
-            ctx.guild.voice_client.queue.looping = True
-            await ctx.send(f'The queue will start looping.')
-
-    @commands.command(name='lavalink', aliases=['ll'])
-    async def lavalink(self, ctx: context.Context) -> None:
-        """
-        Display stats about the bots lavalink connection.
-        """
-
-        embed = discord.Embed(colour=ctx.colour)
-        embed.add_field(name='Lavalink stats:', value=f'`Players:` {len(self.bot.lavalink.players)}\n`Nodes:` {len(self.bot.lavalink.nodes)}', inline=False)
-
-        for node in self.bot.lavalink.nodes.values():
-
-            active_players = len([player for player in node.players.values() if player.is_connected])
-            uptime = self.bot.utils.format_seconds(seconds=round(node.stats.uptime / 1000), friendly=True)
-            reservable = humanize.naturalsize(node.stats.memory_reservable)
-            allocated = humanize.naturalsize(node.stats.memory_allocated)
-            used = humanize.naturalsize(node.stats.memory_used)
-            free = humanize.naturalsize(node.stats.memory_free)
-            cpu_cores = node.stats.cpu_cores
-
-            embed.add_field(name=f'Node: {node.identifier}', value=f'`Players:` {len(node.players)}\n`Active players:` {active_players}\n'
-                                                                   f'`Memory reservable:` {reservable}\n`Memory allocated:` {allocated}\n'
-                                                                   f'`Memory used:` {used}\n`Memory free:` {free}\n`CPU Cores:` {cpu_cores}\n`Uptime:` {uptime}')
-
-        await ctx.send(embed=embed)
-
-    @commands.command(name='lyrics', aliases=['lyric'])
-    async def lyrics(self, ctx: context.Context, *, query: str = None) -> None:
+    @commands.command(name='lyrics')
+    async def lyrics(self, ctx: context.Context, *, query: str = 'spotify') -> None:
 
         if query == 'spotify':
 
             spotify_activity = discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)
             if not spotify_activity:
-                raise exceptions.VoiceError('You are not listening to anything on spotify.')
+                raise exceptions.VoiceError('I was unable to detect a Spotify status on your account.')
 
             query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
 
-        if query == 'bot':
+        elif query == 'player':
 
-            if not ctx.guild or not ctx.guild.voice_client or not ctx.guild.voice_client.is_connected:
+            if not ctx.voice_client or not ctx.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
-            if not ctx.guild.voice_client.is_playing:
+            if not ctx.voice_client.is_playing:
                 raise exceptions.VoiceError(f'There are no tracks playing.')
 
-            query = f'{ctx.guild.voice_client.current.title} - {ctx.guild.voice_client.current.requester}'
-
-        if not query:
-            raise exceptions.VoiceError('You must provide a valid query to find lyrics for. You can use `bot` to find lyrics for the track the bot is currently playing, or '
-                                        'you can use `spotify` for the track you are listening to on spotify.')
+            query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
 
         try:
-            results = await self.bot.ksoft.music.lyrics(query=query, limit=20)
+            results = await self.ksoft.music.lyrics(query=query, limit=20)
         except ksoftapi.NoResults:
-            raise exceptions.ArgumentError(f'No lyrics were found for the query `{query}`.')
+            raise exceptions.ArgumentError(f'No results were found for the query `{query}`.')
         except ksoftapi.APIError:
-            raise exceptions.VoiceError('Lyric API is currently down.')
+            raise exceptions.VoiceError('The API used to fetch lyrics is currently down/broken.')
 
         paginator = await ctx.paginate_embed(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
-                                             header='Please choose the number of the track you would like lyrics for:\n')
+                                             header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
 
         try:
             response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
@@ -668,10 +675,9 @@ class Music(commands.Cog):
         except ValueError:
             raise exceptions.ArgumentError('That was not a valid number.')
         if response < 0 or response >= len(results):
-            raise exceptions.ArgumentError('That was not one of the available tracks.')
+            raise exceptions.ArgumentError('That was not one of the available lyrics.')
 
         await paginator.stop()
-
         result = results[response]
 
         entries = []
@@ -688,8 +694,7 @@ class Music(commands.Cog):
 
             entries[-1] += f'\n{line}'
 
-        await ctx.paginate_embed(entries=entries, header=f'Lyrics for `{result.name}` by `{result.artist}`:\n\n',
-                                 embed_add_footer='Lyrics provided by KSoft.Si API', per_page=1)
+        await ctx.paginate_embed(entries=entries, header=f'Lyrics for `{result.name}` by `{result.artist}`:\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.', per_page=1)
 
 
 def setup(bot: Life):

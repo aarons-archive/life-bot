@@ -9,13 +9,20 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
+
+from __future__ import annotations
+
 import asyncio
 import typing
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
 
 from utilities import exceptions, objects, paginators
+
+if TYPE_CHECKING:
+    from cogs.voice.custom.player import Player
 
 
 class Context(commands.Context):
@@ -43,6 +50,10 @@ class Context(commands.Context):
             return self.guild_config.colour
 
         return self.user_config.colour
+
+    @property
+    def voice_client(self) -> Player:
+        return super().voice_client
 
     async def paginate(self, **kwargs) -> paginators.Paginator:
         paginator = paginators.Paginator(ctx=self, **kwargs)

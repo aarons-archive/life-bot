@@ -79,8 +79,6 @@ class Life(commands.AutoShardedBot):
         self.first_ready = True
 
         self.error_formatter = None
-        self.wolframalpha = None
-        self.lavalink = None
         self.mystbin = None
         self.imaging = None
         self.ksoft = None

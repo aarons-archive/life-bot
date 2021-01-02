@@ -17,11 +17,11 @@ import discord
 import mystbin
 import pendulum
 import prettify_exceptions
+import slate
 from discord.ext import commands
 from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 from bot import Life
-from cogs.voice.lavalink.exceptions import NodeNotFound
 from utilities import context, exceptions
 
 log = logging.getLogger(__name__)
@@ -195,7 +195,7 @@ class Events(commands.Cog):
             exceptions.GeneralError:                f'{error}',
             exceptions.ImageError:                  f'{error}',
             exceptions.VoiceError:                  f'{error}',
-            NodeNotFound:                           f'There are no lavalink nodes available right now.',
+            slate.NoNodesAvailable:                 f'There are no music nodes available right now.',
 
             commands.TooManyArguments:              f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
 

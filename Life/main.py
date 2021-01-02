@@ -26,7 +26,7 @@ from bot import Life
 @contextlib.contextmanager
 def logger():
 
-    logs = {'discord': None, 'bot': None, 'cogs': None, 'managers': None, 'utilities': None}
+    logs = {'discord': None, 'bot': None, 'cogs': None, 'managers': None, 'utilities': None, 'slate': None}
 
     for log_name in logs:
 
@@ -44,6 +44,7 @@ def logger():
     logs['cogs'].setLevel(logging.DEBUG)
     logs['managers'].setLevel(logging.DEBUG)
     logs['utilities'].setLevel(logging.DEBUG)
+    logs['slate'].setLevel(logging.DEBUG)
 
     try:
         yield

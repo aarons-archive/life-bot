@@ -10,26 +10,25 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-class LavaLinkException(Exception):
-    pass
+from __future__ import annotations
+
+from typing import Any, List, TYPE_CHECKING, Union
+
+import slate
+
+if TYPE_CHECKING:
+    from cogs.voice.custom.player import Player
 
 
-class NodeException(LavaLinkException):
-    pass
+class Queue(slate.Queue):
 
+    def __init__(self, player: Player) -> None:
+        super().__init__()
 
-class NodeCreationError(NodeException):
-    pass
+        self.player = player
 
+    def _put(self, iterable: List, items: Union[List[Any], Any], position: int = None) -> None:
+        super()._put(iterable=iterable, items=items, position=position)
 
-class NodeConnectionError(NodeException):
-    pass
-
-
-class NodeNotFound(NodeException):
-    pass
-
-
-class NodesNotFound(NodeException):
-    pass
-
+        self.player.queue_add_event.set()
+        self.player.queue_add_event.clear()
