@@ -10,20 +10,25 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
+from __future__ import annotations
 
 import asyncio
-from typing import Any, Optional, Union
+import typing
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
 
 from utilities import exceptions, objects, paginators
 
+if TYPE_CHECKING:
+    from cogs.voice.custom.player import Player
+
 
 class Context(commands.Context):
 
     @property
-    def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+    def user_config(self) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
 
         if not self.author:
             return self.bot.user_manager.default_user_config
@@ -31,7 +36,7 @@ class Context(commands.Context):
         return self.bot.user_manager.get_user_config(user_id=self.author.id)
 
     @property
-    def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    def guild_config(self) -> typing.Union[objects.DefaultGuildConfig, objects.GuildConfig]:
 
         if not self.guild:
             return self.bot.guild_manager.default_guild_config
@@ -45,6 +50,10 @@ class Context(commands.Context):
             return self.guild_config.colour
 
         return self.user_config.colour
+
+    @property
+    def voice_client(self) -> Player:
+        return super().voice_client
 
     async def paginate(self, **kwargs) -> paginators.Paginator:
         paginator = paginators.Paginator(ctx=self, **kwargs)
@@ -61,12 +70,12 @@ class Context(commands.Context):
         await paginator.paginate()
         return paginator
 
-    async def paginate_choice(self, **kwargs) -> Any:
+    async def paginate_choice(self, **kwargs) -> typing.Any:
 
         paginator = await self.paginate_embed(**kwargs)
 
         try:
-            response = await self.bot.wait_for('message', check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
+            response = await self.bot.wait_for('message', check=lambda msg: msg.author == self.author and msg.channel == self.channel, timeout=30.0)
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
 
@@ -76,12 +85,12 @@ class Context(commands.Context):
         except ValueError:
             raise exceptions.ArgumentError('That was not a valid number.')
         if response < 0 or response >= len(kwargs.get('entries')):
-            raise exceptions.ArgumentError('That was not one of the available choices.')
+            raise exceptions.ArgumentError('That was not one of the available options.')
 
         await paginator.stop()
-        return response
+        return kwargs.get('entries')[response]
 
-    async def try_dm(self, **kwargs) -> Optional[discord.Message]:
+    async def try_dm(self, **kwargs) -> typing.Optional[discord.Message]:
 
         try:
             return await self.author.send(**kwargs)
@@ -89,4 +98,4 @@ class Context(commands.Context):
             try:
                 return await self.channel.send(**kwargs)
             except discord.Forbidden:
-                return None
+                return

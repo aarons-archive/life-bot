@@ -10,49 +10,47 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from __future__ import annotations
-
 import io
 import logging
 import math
 import os
 import random
-from typing import Any, List, Literal, TYPE_CHECKING, Union
+import typing
 
 import discord
 import pendulum
 from PIL import Image, ImageDraw, ImageFont
 from discord.ext import tasks
 
+from managers import reminder_manager
 from utilities import exceptions, objects
 from utilities.enums import Editables, Operations
 
-if TYPE_CHECKING:
-    from bot import Life
-
-__log__ = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
-class UserManager:
+class UserConfigManager:
 
-    def __init__(self, bot: Life) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
 
-        self.default_config = objects.DefaultUserConfig()
+        self.default_user_config = objects.DefaultUserConfig()
         self.configs = {}
 
         self.update_database.start()
 
+        self.remind_manager = reminder_manager.ReminderManager(bot=self.bot)
+
     async def load(self) -> None:
 
-        configs = await self.bot.db.fetch('SELECT * FROM users')
-        for config in configs:
-            self.configs[config['id']] = objects.UserConfig(data=dict(config))
+        user_configs = await self.bot.db.fetch('SELECT * FROM user_configs')
+        for user_config in user_configs:
+            self.configs[user_config['id']] = objects.UserConfig(data=dict(user_config))
 
-        __log__.info(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
-        print(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
+        log.info(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
+        print(f'[USER MANAGER] Loaded user configs. [{len(user_configs)} users]')
 
-        await self.bot.reminder_manager.load()
+        await self.remind_manager.load()
 
     #
 
@@ -68,48 +66,42 @@ class UserManager:
             for user_id, user_config in need_updating.items():
 
                 query = ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
-                await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *[getattr(user_config, attribute.value) for attribute in user_config.requires_db_update])
+                values = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
+                await db.execute(f'UPDATE user_configs SET {query} WHERE id = $1', user_id, *values)
 
                 user_config.requires_db_update = []
 
     @update_database.before_loop
     async def before_update_database(self) -> None:
+
         await self.bot.wait_until_ready()
 
     #
 
     async def create_user_config(self, *, user_id: int) -> objects.UserConfig:
 
-        data = await self.bot.db.fetchrow('INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
+        data = await self.bot.db.fetchrow('INSERT INTO user_configs (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
         self.configs[user_id] = objects.UserConfig(data=dict(data))
 
-        __log__.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
+        log.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
         return self.configs[user_id]
 
-    def get_user_config(self, *, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
-        return self.configs.get(user_id, self.default_config)
+    def get_user_config(self, *, user_id: int) -> typing.Union[objects.DefaultUserConfig, objects.UserConfig]:
+        return self.configs.get(user_id, self.default_user_config)
 
-    async def get_or_create_user_config(self, *, user_id: int) -> objects.UserConfig:
-
-        user_config = self.get_user_config(user_id=user_id)
-        if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.create_user_config(user_id=user_id)
-
-        return user_config
-
-    async def edit_user_config(self, *, user_id: int, editable: Editables, operation: Operations, value: Any = None) -> objects.UserConfig:
+    async def edit_user_config(self, *, user_id: int, editable: Editables, operation: Operations, value: typing.Any = None) -> objects.UserConfig:
 
         user_config = self.get_user_config(user_id=user_id)
         if isinstance(user_config, objects.DefaultUserConfig):
             user_config = await self.create_user_config(user_id=user_id)
 
-        __log__.info(f'[USER MANAGERS] Edited user config for user with id \'{user_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
+        log.info(f'[USER MANAGERS] Edited user config for user with id \'{user_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
 
         if editable == Editables.colour:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', user_id),
-                Operations.reset.value: ('UPDATE users SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id),
+                Operations.set.value: ('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', user_id),
+                Operations.reset.value: ('UPDATE user_configs SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id),
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -119,9 +111,9 @@ class UserManager:
 
             operations = {
                 Operations.set.value:
-                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
                 Operations.reset.value:
-                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
+                    ('UPDATE user_configs SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -131,8 +123,8 @@ class UserManager:
         elif editable == Editables.timezone:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id),
-                Operations.reset.value: ('UPDATE users SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
+                Operations.set.value: ('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -141,8 +133,8 @@ class UserManager:
         elif editable == Editables.timezone_private:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id),
-                Operations.reset.value: ('UPDATE users SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
+                Operations.set.value: ('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -175,8 +167,8 @@ class UserManager:
         elif editable == Editables.level_up_notifications:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', True, user_id),
-                Operations.reset.value: ('UPDATE users SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', False, user_id)
+                Operations.set.value: ('UPDATE user_configs SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', False, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -185,8 +177,8 @@ class UserManager:
         elif editable in {Editables.daily_collected, Editables.weekly_collected, Editables.monthly_collected}:
 
             operations = {
-                Operations.set.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}' , value, user_id),
-                Operations.reset.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', pendulum.now(tz='UTC'), user_id)
+                Operations.set.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value, user_id),
+                Operations.reset.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', pendulum.now(tz='UTC'), user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -197,8 +189,8 @@ class UserManager:
             value = getattr(user_config, editable.value)
 
             operations = {
-                Operations.add.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value + 1, user_id),
-                Operations.reset.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', 0, user_id)
+                Operations.add.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value + 1, user_id),
+                Operations.reset.value: (f'UPDATE user_configs SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', 0, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -207,8 +199,8 @@ class UserManager:
         elif editable == Editables.birthday:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET birthday = $1 WHERE id = $2 RETURNING birthday', value, user_id),
-                Operations.reset.value: ('UPDATE users SET birthday = $1 WHERE id = $2 RETURNING birthday', pendulum.datetime(year=2020, month=1, day=1), user_id)
+                Operations.set.value: ('UPDATE user_configs SET birthday = $1 WHERE id = $2 RETURNING birthday', value, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET birthday = $1 WHERE id = $2 RETURNING birthday', pendulum.datetime(year=2020, month=1, day=1), user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
@@ -217,26 +209,13 @@ class UserManager:
         elif editable == Editables.birthday_private:
 
             operations = {
-                Operations.set.value: ('UPDATE users SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', True, user_id),
-                Operations.reset.value: ('UPDATE users SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', False, user_id)
+                Operations.set.value: ('UPDATE user_configs SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', True, user_id),
+                Operations.reset.value: ('UPDATE user_configs SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', False, user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.birthday_private = data['birthday_private']
 
-<<<<<<< Updated upstream
-=======
-        elif editable == Editables.spotify_refresh_token:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET spotify_refresh_token = $1 WHERE id = $2 RETURNING spotify_refresh_token', value, user_id),
-                Operations.reset.value: ('UPDATE users SET spotify_refresh_token = $1 WHERE id = $2 RETURNING spotify_refresh_token', None, user_id),
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.spotify_refresh_token = data['spotify_refresh_token']
-
->>>>>>> Stashed changes
         return user_config
 
     #
@@ -290,8 +269,7 @@ class UserManager:
         buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_users)
         return buffer
 
-    @staticmethod
-    def create_timecard_image(timezone_users: dict) -> io.BytesIO:
+    def create_timecard_image(self, timezone_users: dict) -> io.BytesIO:
 
         width_x = (1600 * (len(timezone_users.keys()) if len(timezone_users.keys()) < 5 else 5)) + 100
         height_y = (1800 * math.ceil(len(timezone_users.keys()) / 5)) + 100
@@ -359,7 +337,7 @@ class UserManager:
 
         return [config[0] for config in configs].index(user_id) + 1
 
-    def leaderboard(self, *, leaderboard_type: Literal['level', 'xp', 'coins'], guild_id: int = None) -> List[objects.UserConfig]:
+    def leaderboard(self, *, leaderboard_type: typing.Literal['level', 'xp', 'coins'], guild_id: int = None) -> typing.List[objects.UserConfig]:
 
         if not guild_id:
 

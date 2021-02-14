@@ -15,7 +15,7 @@ import pendulum
 from discord.ext import commands
 
 from bot import Life
-from utilities import context, converters, exceptions, utils
+from utilities import context, converters, exceptions
 from utilities.enums import Editables, Operations
 
 
@@ -37,14 +37,14 @@ class Birthdays(commands.Cog):
 
         user_config = self.bot.user_manager.get_user_config(user_id=person.id)
 
-        if user_config.birthday == pendulum.DateTime(2020, 1, 1, tzinfo=pendulum.timezone('UTC')):
+        if user_config.birthday == pendulum.DateTime(2020, 1, 1, 0, 0, 0, tzinfo=pendulum.timezone('UTC')):
             raise exceptions.ArgumentError(f'`{person}` has not set their birthday.')
         if user_config.birthday_private and ctx.author.id != person.id:
             raise exceptions.ArgumentError(f'`{person}` has their birthday set to be private.')
 
         embed = discord.Embed(description=f'`{person.name}`**\'s birthday information:**\n\n'
-                                          f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
-                                          f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
+                                          f'`Birthday:` {self.bot.utils.format_date(datetime=user_config.birthday)}\n'
+                                          f'`Next birthday:` In {self.bot.utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
                                           f'`Age:` {user_config.age}\n',
                               colour=user_config.colour)
 
@@ -62,7 +62,7 @@ class Birthdays(commands.Cog):
 
         if len(entries) != 1:
             result = await ctx.paginate_choice(
-                    entries=[f'`{index + 1}.` **{datetime_phrase}**\n`{utils.format_date(datetime=datetime)}`' for index, (datetime_phrase, datetime) in entries.items()],
+                    entries=[f'`{index + 1}.` **{datetime_phrase}**\n`{self.bot.utils.format_date(datetime=datetime)}`' for index, (datetime_phrase, datetime) in entries.items()],
                     per_page=10, header=f'**Multiple dates were detected within your query, please select the one that best matches your birthday:**\n\n'
             )
         else:
@@ -75,7 +75,7 @@ class Birthdays(commands.Cog):
             raise exceptions.ArgumentError('You must be more than 13 (As per discord TOS) and less than 150 years old.')
 
         await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.birthday, operation=Operations.set, value=datetime)
-        await ctx.send(f'Your birthday has been set to `{utils.format_date(datetime=ctx.user_config.birthday)}`.')
+        await ctx.send(f'Your birthday has been set to `{self.bot.utils.format_date(datetime=ctx.user_config.birthday)}`.')
 
     @birthday.command(name='reset')
     async def birthday_reset(self, ctx: context.Context) -> None:
@@ -114,7 +114,7 @@ class Birthdays(commands.Cog):
             if not member:
                 continue
 
-            if config.birthday_private or config.birthday == pendulum.DateTime(2020, 1, 1, tzinfo=pendulum.timezone('UTC')):
+            if config.birthday_private or config.birthday == pendulum.DateTime(2020, 1, 1, 0, 0, 0, tzinfo=pendulum.timezone('UTC')):
                 continue
 
             birthdays[member] = config
@@ -124,8 +124,8 @@ class Birthdays(commands.Cog):
 
         birthdays_format = "\n\n".join(
             f'__**`{person.name}`\'s birthday:**__\n'
-            f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
-            f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
+            f'`Birthday:` {self.bot.utils.format_date(datetime=user_config.birthday)}\n'
+            f'`Next birthday:` In {self.bot.utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
             f'`Current age:` {user_config.age}'
             for person, user_config in list(birthdays.items())[:5]
         )
@@ -148,7 +148,7 @@ class Birthdays(commands.Cog):
             if not member:
                 continue
 
-            if config.birthday_private or config.birthday == pendulum.DateTime(2020, 1, 1, tzinfo=pendulum.timezone('UTC')):
+            if config.birthday_private or config.birthday == pendulum.DateTime(2020, 1, 1, 0, 0, 0, tzinfo=pendulum.timezone('UTC')):
                 continue
 
             birthdays[member] = config
@@ -160,8 +160,8 @@ class Birthdays(commands.Cog):
 
         embed = discord.Embed(description=f'**The next person to have a birthday is:**\n\n'
                                           f'__**`{birthday[0].name}`:**__\n'
-                                          f'`Birthday:` {utils.format_date(datetime=birthday[1].birthday)}\n'
-                                          f'`Next birthday:` In {utils.format_difference(datetime=birthday[1].next_birthday.subtract(days=1), suppress=[])}\n'
+                                          f'`Birthday:` {self.bot.utils.format_date(datetime=birthday[1].birthday)}\n'
+                                          f'`Next birthday:` In {self.bot.utils.format_difference(datetime=birthday[1].next_birthday.subtract(days=1), suppress=[])}\n'
                                           f'`Age:` {birthday[1].age}\n', colour=ctx.colour)
         await ctx.send(embed=embed)
 

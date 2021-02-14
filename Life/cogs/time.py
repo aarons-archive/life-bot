@@ -14,9 +14,8 @@ import discord
 import pendulum
 from discord.ext import commands
 
-import config
 from bot import Life
-from utilities import context, converters, exceptions, utils
+from utilities import context, converters, exceptions
 from utilities.enums import Editables, Operations
 
 
@@ -25,12 +24,30 @@ class Time(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    @commands.command(name='time')
+        self.bot.dateparser_settings = {
+            'DATE_ORDER': 'DMY',
+            'TIMEZONE': 'UTC',
+            'RETURN_AS_TIMEZONE_AWARE': False,
+            'PREFER_DAY_OF_MONTH': 'current',
+            'PREFER_DATES_FROM': 'future',
+            'PARSERS': ['relative-time', 'absolute-time', 'timestamp', 'custom-formats']
+        }
+
+    @commands.command(name='timezones', aliases=['tzs'])
+    async def timezones(self, ctx: context.Context) -> None:
+        """
+        Displays a list of timezones that can be used with the bot.
+        """
+        await ctx.paginate_embed(entries=pendulum.timezones, per_page=25, title='Available timezones:')
+
+    #
+
+    @commands.group(name='time', invoke_without_command=True)
     async def time(self, ctx: context.Context, *, timezone: str = None) -> None:
         """
-        Displays the time of the member or timezone provided.
+        Displays the time of the member or the timezone provided.
 
-        `timezone`: The timezone or members Name, Nickname, ID, or @Mention that you want to get.
+        `timezone`: The timezone or members name, id or mention that you want to get.
         """
 
         if not timezone:
@@ -38,7 +55,6 @@ class Time(commands.Cog):
             timezone = ctx.user_config.timezone
 
         else:
-
             try:
                 member = None
                 timezone = await converters.TimezoneConverter().convert(ctx=ctx, argument=timezone)
@@ -52,36 +68,45 @@ class Time(commands.Cog):
                 except commands.BadArgument:
                     raise exceptions.ArgumentError(str(error))
 
-        datetime = utils.format_datetime(datetime=pendulum.now(tz=timezone))
+        datetime = self.bot.utils.format_datetime(datetime=pendulum.now(tz=timezone), seconds=True)
 
-        embed = discord.Embed(colour=ctx.colour, title=f'Time in {timezone.name}{f" ({member})" if member else ""}:', description=f'```py\n{datetime}\n```')
+        embed = discord.Embed(colour=ctx.colour, title=f'Time in {timezone.name} {f"({member})" if member else ""}', description=f'```py\n{datetime}\n```')
         await ctx.send(embed=embed)
 
-    @commands.command(name='times')
-    async def times(self, ctx: context.Context) -> None:
+    @time.command(name='set')
+    async def time_set(self, ctx: context.Context, *, timezone: converters.TimezoneConverter) -> None:
+        """
+        Sets your timezone to the one specified.
 
-        configs = sorted(self.bot.user_manager.configs.items(), key=lambda kv: kv[1].time.offset_hours)
-        timezone_users = {}
+        `timezone`: The timezone to use.
+        """
 
-        for user_id, user_config in configs:
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.set, value=timezone.name)
+        await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
-            member = ctx.guild.get_member(user_id)
-            if not member:
-                continue
+    @time.command(name='reset', aliases=['clear', 'default'])
+    async def time_reset(self, ctx: context.Context) -> None:
+        """
+        Sets your timezone back to the default (UTC)
+        """
 
-            if user_config.timezone_private or user_config.timezone == pendulum.timezone('UTC'):
-                continue
+        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.reset)
+        await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
-            if timezone_users.get(user_config.time.format('HH:mm (ZZ)')) is None:
-                timezone_users[user_config.time.format('HH:mm (ZZ)')] = [f'{member} - {user_config.timezone.name}']
-            else:
-                timezone_users[user_config.time.format('HH:mm (ZZ)')].append(f'{member} - {user_config.timezone.name}')
+    @time.command(name='private')
+    async def time_private(self, ctx: context.Context) -> None:
+        """
+        Toggles your timezone being private or public.
+        """
 
-        if not timezone_users:
-            raise exceptions.ArgumentError('There are no users with timezones set.')
+        if ctx.user_config.timezone_private is False:
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.set)
+            await ctx.send('Your timezone is now private.')
+        else:
+            await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.reset)
+            await ctx.send('Your timezone is now public.')
 
-        entries = [f'`{timezone}:`\n{config.NL.join(members)}\n' for timezone, members in timezone_users.items()]
-        await ctx.paginate_embed(entries=entries, per_page=5, header='**User timezones:**\n\n')
+    #
 
     @commands.command(name='timecard')
     async def timecard(self, ctx: context.Context) -> None:
@@ -92,61 +117,6 @@ class Time(commands.Cog):
         async with ctx.typing():
             buffer = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
             await ctx.send(file=discord.File(fp=buffer, filename='timecard.png'))
-
-    #
-
-    @commands.group(name='timezone', aliases=['timezones', 'tzs', 'tz'], invoke_without_command=True)
-    async def _timezone(self, ctx: context.Context) -> None:
-        """
-        Displays a list of timezones that can be used with the bot.
-        """
-
-        await ctx.paginate_embed(entries=pendulum.timezones, per_page=20,
-                                 header='**Available timezones:**\nClick [here](https://skeletonclique.mrrandom.xyz/timezones) to view a list of timezones.\n\n')
-
-    @_timezone.command(name='set')
-    async def _timezone_set(self, ctx: context.Context, *, timezone: converters.TimezoneConverter) -> None:
-        """
-        Sets your timezone to the one specified.
-
-        `timezone`: The timezone to use. See `!timezones` for a list of timezones.
-        """
-
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.set, value=timezone.name)
-        await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
-
-    @_timezone.command(name='reset', aliases=['default'])
-    async def _timezone_reset(self, ctx: context.Context) -> None:
-        """
-        Sets your timezone back to the default (UTC).
-        """
-
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.reset)
-        await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
-
-    @_timezone.command(name='private')
-    async def _timezone_private(self, ctx: context.Context) -> None:
-        """
-        Sets your timezone to be private.
-        """
-
-        if ctx.user_config.timezone_private is True:
-            raise exceptions.ArgumentError('Your timezone is already private.')
-
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.set)
-        await ctx.send('Your timezone is now private.')
-
-    @_timezone.command(name='public')
-    async def _timezone_public(self, ctx: context.Context) -> None:
-        """
-        Sets your timezone to be public.
-        """
-
-        if ctx.user_config.timezone_private is False:
-            raise exceptions.ArgumentError('Your timezone is already public.')
-
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.reset)
-        await ctx.send('Your timezone is now public.')
 
     #
 
@@ -161,18 +131,18 @@ class Time(commands.Cog):
         entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(reminder['found'].items())}
 
         if len(entries) != 1:
-            choice = await ctx.paginate_choice(
-                     entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
-                     per_page=10, header=f'**Multiple times/dates were detected within your query, please select the one you would like to be reminded at:**\n\n'
+            result = await ctx.paginate_choice(
+                    entries=[f'`{index + 1}.` **{phrase}**\n`{self.bot.utils.format_datetime(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
+                    per_page=10, header=f'**Multiple times/dates were detected within your query, please select the one you would like to be reminded at:**\n\n'
             )
-            result = entries[choice]
+
         else:
             result = entries[0]
 
-        datetime = utils.format_datetime(datetime=result[1], seconds=True)
-        datetime_difference = utils.format_difference(datetime=result[1], suppress=[])
+        datetime = self.bot.utils.format_datetime(datetime=result[1], seconds=True)
+        datetime_difference = self.bot.utils.format_difference(datetime=result[1], suppress=[])
 
-        await self.bot.reminder_manager.create_reminder(user_id=ctx.author.id, datetime=result[1], content=reminder['argument'], ctx=ctx)
+        await self.bot.user_manager.remind_manager.create_reminder(user_id=ctx.author.id, datetime=result[1], content=reminder['argument'], ctx=ctx)
         await ctx.send(f'Set a reminder for `{datetime}`, `{datetime_difference}` from now.')
 
     @reminders.command(name='list')
@@ -184,16 +154,17 @@ class Time(commands.Cog):
         reminders = [reminder for reminder in ctx.user_config.reminders if not reminder.done]
 
         if not reminders:
-            raise exceptions.ArgumentError('You do not have any active reminders.')
+            raise exceptions.GeneralError('You do not have any active reminders.')
 
-        entries = [
-            f'`{reminder.id}:` **In {utils.format_difference(datetime=reminder.datetime, suppress=[])}**\n'
-            f'`When:` {utils.format_datetime(datetime=reminder.datetime, seconds=True)}\n'
-            f'`Content:` {reminder.content[:100]}\n'
-            for reminder in sorted(reminders, key=lambda reminder: reminder.datetime)
-        ]
+        embed = discord.Embed(colour=ctx.colour, description=f'**Reminders for** `{ctx.author}:`\n\n')
 
-        await ctx.paginate_embed(entries=entries, per_page=5, header=f'**Reminders for** `{ctx.author}:`\n\n')
+        for reminder in sorted(reminders, key=lambda reminder: reminder.datetime):
+
+            embed.description += f'`{reminder.id}`: **In {self.bot.utils.format_difference(datetime=reminder.datetime, suppress=[])}**\n' \
+                                 f'`When:` {self.bot.utils.format_datetime(datetime=reminder.datetime, seconds=True)}\n' \
+                                 f'`Content:` {reminder.content[:100]}\n\n'
+
+        await ctx.send(embed=embed)
 
     @reminders.command(name='delete', aliases=['remove'])
     async def reminders_delete(self, ctx: context.Context, *, reminder_ids: str) -> None:
@@ -212,7 +183,7 @@ class Time(commands.Cog):
             except ValueError:
                 raise exceptions.ArgumentError(f'`{reminder_id}` is not a valid reminder id.')
 
-            reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+            reminder = await self.bot.user_manager.remind_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
             if not reminder:
                 raise exceptions.ArgumentError(f'You do not have a reminder with the id `{reminder_id}`.')
 
@@ -222,9 +193,9 @@ class Time(commands.Cog):
             reminder_ids_to_remove.append(reminder.id)
 
         for reminder_id in reminder_ids_to_remove:
-            await self.bot.reminder_manager.delete_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+            await self.bot.user_manager.remind_manager.delete_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
 
-        s = 's' if len(reminder_ids_to_remove) > 1 else ''
+        s = "s" if len(reminder_ids_to_remove) > 1 else ""
         await ctx.send(f'Deleted {len(reminder_ids_to_remove)} reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
 
 

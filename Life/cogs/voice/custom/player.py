@@ -24,7 +24,7 @@ from spotify.errors import HTTPException
 
 from bot import Life
 from cogs.voice.custom import objects, queue
-from utilities import context, exceptions, utils
+from utilities import context, exceptions
 
 __log__ = logging.getLogger('slate.player')
 
@@ -100,7 +100,7 @@ class Player(slate.Player):
         embed.set_thumbnail(url=self.current.thumbnail)
         embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
-        queue_time = utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)
+        queue_time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) / 1000, friendly=True)
 
         if self.current.ctx.guild_config.embed_size == 'normal':
 
@@ -108,17 +108,17 @@ class Player(slate.Player):
                             value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n'
                                   f'`Queue entries:` {len(self.queue)}\n`Queue time:` {queue_time}')
             embed.add_field(name='Track info:',
-                            value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / '
-                                  f'{utils.format_seconds(seconds=round(self.current.length) // 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
+                            value=f'`Time:` {self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
+                                  f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
                                   f'`Requester:` {self.current.requester.mention}\n`Live:` {self.current.is_stream}\n`Seekable:` {self.current.is_seekable}')
 
             if not self.queue.is_empty:
-                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {utils.format_seconds(seconds=round(entry.length) // 1000)} | {entry.requester.mention}'
+                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {self.bot.utils.format_seconds(seconds=round(entry.length) / 1000)} | {entry.requester.mention}'
                            for index, entry in enumerate(self.queue[:5])]
 
                 if len(self.queue) > 5:
                     entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
-                                   f'{utils.format_seconds(seconds=round(self.queue[-1].length) // 1000)} | {self.queue[-1].requester.mention}')
+                                   f'{self.bot.utils.format_seconds(seconds=round(self.queue[-1].length) / 1000)} | {self.queue[-1].requester.mention}')
 
                 embed.add_field(name='Up next:', value='\n'.join(entries), inline=False)
 
@@ -127,8 +127,8 @@ class Player(slate.Player):
             embed.add_field(name='Player info:',
                             value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n')
             embed.add_field(name='Track info:',
-                            value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / '
-                                  f'{utils.format_seconds(seconds=round(self.current.length) // 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
+                            value=f'`Time:` {self.bot.utils.format_seconds(seconds=round(self.position) / 1000)} / '
+                                  f'{self.bot.utils.format_seconds(seconds=round(self.current.length) / 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
                                   f'`Requester:` {self.current.requester.mention}\n')
 
         await self.send(embed=embed)
