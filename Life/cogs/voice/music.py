@@ -213,7 +213,7 @@ class Music(commands.Cog):
         if not ctx.voice_client.is_playing:
             raise exceptions.VoiceError(f'There are no tracks playing.')
 
-        if ctx.voice_client.current.requester.id != ctx.author.id:
+        if ctx.voice_client.current.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
             amount = 1
 
             if ctx.author not in ctx.voice_client.listeners:
@@ -312,7 +312,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.voice_client.current.length / 1000)}`.')
 
         await ctx.voice_client.set_position(position=milliseconds)
-        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=milliseconds / 1000)}`.')
+        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=milliseconds // 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
     async def volume(self, ctx: context.Context, volume: int = None) -> None:
@@ -603,7 +603,7 @@ class Music(commands.Cog):
         if entry <= 0 or entry > len(ctx.voice_client.queue):
             raise exceptions.VoiceError(f'That was not a valid track entry. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
 
-        item = await ctx.voice_client.queue.get(position=entry - 1, put_history=False)
+        item = ctx.voice_client.queue.get(position=entry - 1, put_history=False)
         await ctx.send(f'Removed `{item.title}` from the queue.')
 
     @queue.command(name='move')
@@ -640,13 +640,11 @@ class Music(commands.Cog):
 
         if query == 'spotify':
 
-            spotify_activity = discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)
-            if not spotify_activity:
-                raise exceptions.VoiceError('I was unable to detect a Spotify status on your account.')
+            query = 'player'
+            if (spotify_activity := discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)) is not None:
+                query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
 
-            query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
-
-        elif query == 'player':
+        if query == 'player':
 
             if not ctx.voice_client or not ctx.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
@@ -656,30 +654,15 @@ class Music(commands.Cog):
             query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
 
         try:
-            results = await self.ksoft.music.lyrics(query=query, limit=20)
+            results = await self.ksoft.music.lyrics(query=query, limit=50)
         except ksoftapi.NoResults:
             raise exceptions.ArgumentError(f'No results were found for the query `{query}`.')
         except ksoftapi.APIError:
             raise exceptions.VoiceError('The API used to fetch lyrics is currently down/broken.')
 
-        paginator = await ctx.paginate_embed(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
-                                             header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
-
-        try:
-            response = await self.bot.wait_for('message', check=lambda msg: msg.author == ctx.author and msg.channel == ctx.channel, timeout=30.0)
-        except asyncio.TimeoutError:
-            raise exceptions.ArgumentError('You took too long to respond.')
-
-        response = await commands.clean_content().convert(ctx=ctx, argument=response.content)
-        try:
-            response = int(response) - 1
-        except ValueError:
-            raise exceptions.ArgumentError('That was not a valid number.')
-        if response < 0 or response >= len(results):
-            raise exceptions.ArgumentError('That was not one of the available lyrics.')
-
-        await paginator.stop()
-        result = results[response]
+        choice = await ctx.paginate_choice(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
+                                           header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
+        result = results[choice]
 
         entries = []
         for line in result.lyrics.split('\n'):
@@ -695,7 +678,9 @@ class Music(commands.Cog):
 
             entries[-1] += f'\n{line}'
 
-        await ctx.paginate_embed(entries=entries, header=f'Lyrics for `{result.name}` by `{result.artist}`:\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.', per_page=1)
+        await ctx.paginate_embed(
+                entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.'
+        )
 
 
 def setup(bot: Life):

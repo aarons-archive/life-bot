@@ -30,5 +30,4 @@ class SearchResult:
         self.tracks = tracks
 
     def __repr__(self) -> str:
-        return f'<life.SearchResult source={self.source} search_type={self.search_type} search_result={self.search_result}>'
-
+        return f'<SearchResult source={self.source} search_type={self.search_type} search_result={self.search_result}>'

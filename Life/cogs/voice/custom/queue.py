@@ -25,10 +25,11 @@ class Queue(slate.Queue):
     def __init__(self, player: Player) -> None:
         super().__init__()
 
-        self.player = player
+        self.player: Player = player
 
-    def _put(self, iterable: List, items: Union[List[Any], Any], position: int = None) -> None:
-        super()._put(iterable=iterable, items=items, position=position)
+    def put(self, *, items: Union[List[Any], Any], position: int = None) -> None:
+        super().put(items=items, position=position)
 
         self.player.queue_add_event.set()
         self.player.queue_add_event.clear()
+

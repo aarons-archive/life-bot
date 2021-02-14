@@ -22,6 +22,7 @@ import spotify
 import yarl
 from spotify.errors import HTTPException
 
+import config
 from bot import Life
 from cogs.voice.custom import objects, queue
 from utilities import context, exceptions, utils
@@ -199,9 +200,9 @@ class Player(slate.Player):
             try:
                 search_result = await self.node.search(query=query, ctx=ctx)
             except slate.TrackLoadError as error:
-                raise exceptions.VoiceError(f'`{error.status_code}` error code while searching for results. For support use `{self.bot.config.prefix}support`.')
+                raise exceptions.VoiceError(f'`{error.status_code}` error code while searching for results. For support use `{config.PREFIX}support`.')
             except slate.TrackLoadFailed as error:
-                raise exceptions.VoiceError(f'`{error.severity}` error while searching for results. For support use `{self.bot.config.prefix}support`.\nReason: `{error.message}`')
+                raise exceptions.VoiceError(f'`{error.severity}` error while searching for results. For support use `{config.PREFIX}support`.\nReason: `{error.message}`')
 
             if not search_result:
                 raise exceptions.VoiceError(f'No results were found for your search.')
@@ -229,7 +230,7 @@ class Player(slate.Player):
 
             if self.queue.is_empty:
 
-                timeout = 10
+                timeout = 120
 
                 try:
                     with async_timeout.timeout(timeout=timeout):
@@ -256,7 +257,7 @@ class Player(slate.Player):
                 with async_timeout.timeout(timeout=10):
                     await self.track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(message=f'Something went wrong while starting the track `{track.title}`. Use `{self.bot.config.prefix}support` for help.')
+                await self.send(message=f'Something went wrong while starting the track `{track.title}`. Use `{config.PREFIX}support` for help.')
                 continue
 
             await self.track_end_event.wait()
