@@ -121,7 +121,7 @@ class UserManager:
                 Operations.set.value:
                     ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
                 Operations.reset.value:
-                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, user_id)
+                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, 'None', user_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])

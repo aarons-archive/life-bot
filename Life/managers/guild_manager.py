@@ -96,7 +96,7 @@ class GuildManager:
                 Operations.set.value:
                     ('UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, guild_id),
                 Operations.reset.value:
-                    ('UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, None, guild_id)
+                    ('UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, 'None', guild_id)
             }
 
             data = await self.bot.db.fetchrow(*operations[operation.value])
