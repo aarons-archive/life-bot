@@ -72,14 +72,9 @@ class DefaultUserConfig:
     def next_birthday(self) -> pendulum.datetime:
         return self.birthday.replace(year=self.birthday.year + self.age + 1)
 
-<<<<<<< Updated upstream
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'daily_collected', 'weekly_collected',
-                 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'created_at', 'birthday', 'birthday_private', 'reminders', 'requires_db_update')
-=======
     @property
     def time(self) -> pendulum.datetime:
         return pendulum.now(tz=self.timezone)
->>>>>>> Stashed changes
 
     @property
     def level(self) -> int:
@@ -122,9 +117,6 @@ class UserConfig:
         self.weekly_collected: DateTime = pendulum.instance(data.get('weekly_collected'), tz='UTC')
         self.weekly_streak: int = data.get('weekly_streak')
 
-<<<<<<< Updated upstream
-        self.reminders = []
-=======
         self.monthly_collected: DateTime = pendulum.instance(data.get('monthly_collected'), tz='UTC')
         self.monthly_streak: int = data.get('monthly_streak')
 
@@ -133,7 +125,6 @@ class UserConfig:
         self.created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
 
         self.reminders: List[Optional[Reminder]] = []
->>>>>>> Stashed changes
         self.requires_db_update = []
 
     def __repr__(self) -> str:
@@ -162,12 +153,7 @@ class UserConfig:
 
 class DefaultGuildConfig:
 
-<<<<<<< Updated upstream
-    __slots__ = ('colour', 'blacklisted', 'blacklisted_reason', 'timezone', 'timezone_private', 'coins', 'xp', 'level_up_notifications', 'daily_collected', 'weekly_collected',
-                 'monthly_collected', 'daily_streak', 'weekly_streak', 'monthly_streak', 'created_at', 'birthday', 'birthday_private', 'reminders', 'requires_db_update')
-=======
     __slots__ = 'prefixes', 'colour', 'blacklisted', 'blacklisted_reason', 'embed_size', 'tags', 'requires_db_update'
->>>>>>> Stashed changes
 
     def __init__(self) -> None:
 
@@ -192,9 +178,6 @@ class GuildConfig:
 
     def __init__(self, data: dict) -> None:
 
-<<<<<<< Updated upstream
-        self.reminders = []
-=======
         self.colour = discord.Colour(int(data.get('colour'), 16))
         self.prefixes = data.get('prefixes')
 
@@ -204,7 +187,6 @@ class GuildConfig:
         self.embed_size = data.get('embed_size')
 
         self.tags: Dict[str, Tag] = {}
->>>>>>> Stashed changes
         self.requires_db_update = []
 
     def __repr__(self) -> str:
@@ -231,22 +213,24 @@ class Tag:
 
 class Reminder:
 
-    __slots__ = 'owner_id', 'id', 'created_at', 'datetime', 'content', 'message_link', 'message_id', 'task'
+    __slots__ = 'user_id', 'channel_id', 'message_id', 'id', 'datetime', 'created_at', 'content', 'link', 'dm', 'task'
 
     def __init__(self, data: dict) -> None:
 
-        self.owner_id: int = data.get('owner_id')
-        self.id: int = data.get('id')
-        self.created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
-        self.datetime: DateTime = pendulum.instance(data.get('datetime'), tz='UTC')
-        self.content: str = data.get('content')
-        self.message_link: str = data.get('message_link')
-        self.message_id: int = data.get('message_id')
+        self.user_id = data.get('user_id')
+        self.channel_id = data.get('channel_id')
+        self.message_id = data.get('message_id')
+        self.id = data.get('id')
+        self.datetime = pendulum.instance(data.get('datetime'), tz='UTC')
+        self.created_at = pendulum.instance(data.get('created_at'), tz='UTC')
+        self.content = data.get('content')
+        self.link = data.get('link')
+        self.dm = data.get('dm')
 
         self.task = None
 
     def __repr__(self) -> str:
-        return f'<Reminder owner_id=\'{self.owner_id}\' id=\'{self.id}\' datetime={self.datetime} done={self.done}>'
+        return f'<Reminder user_id={self.user_id} id={self.id} datetime={self.datetime} done={self.done}>'
 
     @property
     def done(self) -> bool:

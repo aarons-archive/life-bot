@@ -3,11 +3,7 @@
 *.log*
 
 .idea/
-node_modules/
 venv/
+node_modules/
 
-Life/config/config.py
-package-lock.json
-.stylelintrc.json
-package.json
-
+config.py

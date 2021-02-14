@@ -17,49 +17,56 @@ import logging.handlers
 import os
 import sys
 
-import prettify_exceptions
 import setproctitle
 
+import config
 from bot import Life
 
 
 @contextlib.contextmanager
 def logger():
 
-    logs = {'discord': None, 'bot': None, 'cogs': None, 'managers': None, 'utilities': None, 'slate': None}
+    loggers = {
+        'discord':   None,
+        'bot':       None,
+        'cogs':      None,
+        'utilities': None,
+        'slate':     None,
+        'aiohttp':   None
+    }
 
-    for log_name in logs:
+    for log_name in loggers:
 
         log = logging.getLogger(log_name)
+        loggers[log_name] = log
+
         handler = logging.handlers.RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
-        handler.setFormatter(logging.Formatter(f'%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p'))
+        log.addHandler(handler)
         if os.path.isfile(f'logs/{log_name}.log'):
             handler.doRollover()
-        log.addHandler(handler)
 
-        logs[log_name] = log
+        formatter = logging.Formatter(fmt=f'%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p')
+        handler.setFormatter(formatter)
 
-    logs['discord'].setLevel(logging.INFO)
-    logs['bot'].setLevel(logging.DEBUG)
-    logs['cogs'].setLevel(logging.DEBUG)
-    logs['managers'].setLevel(logging.DEBUG)
-    logs['utilities'].setLevel(logging.DEBUG)
-    logs['slate'].setLevel(logging.DEBUG)
+    loggers['discord'].setLevel(logging.INFO)
+    loggers['bot'].setLevel(logging.DEBUG)
+    loggers['cogs'].setLevel(logging.DEBUG)
+    loggers['utilities'].setLevel(logging.DEBUG)
+    loggers['slate'].setLevel(logging.DEBUG)
+    loggers['aiohttp'].setLevel(logging.DEBUG)
 
     try:
         yield
     finally:
-        [log.handlers[0].close() for log in logs.values()]
+        [log.handlers[0].close() for log in loggers.values()]
 
 
 if __name__ == '__main__':
 
     os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
     os.environ['JISHAKU_HIDE'] = 'True'
-    os.environ['PY_PRETTIFY_EXC'] = 'True'
 
     setproctitle.setproctitle('Life')
-    prettify_exceptions.hook()
 
     try:
         import uvloop
@@ -67,11 +74,9 @@ if __name__ == '__main__':
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     except ImportError:
         uvloop = None
-        if sys.platform == 'win32':
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     else:
         del uvloop
 
     with logger():
-        bot = Life()
-        bot.run(bot.config.token)
+        Life().run(config.TOKEN)
+

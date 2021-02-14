@@ -224,8 +224,6 @@ class UserManager:
             data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.birthday_private = data['birthday_private']
 
-<<<<<<< Updated upstream
-=======
         elif editable == Editables.spotify_refresh_token:
 
             operations = {
@@ -236,7 +234,6 @@ class UserManager:
             data = await self.bot.db.fetchrow(*operations[operation.value])
             user_config.spotify_refresh_token = data['spotify_refresh_token']
 
->>>>>>> Stashed changes
         return user_config
 
     #

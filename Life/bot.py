@@ -13,30 +13,21 @@
 import collections
 import logging
 import time
-<<<<<<< Updated upstream
-import typing
-=======
 from typing import List, Optional, Union
->>>>>>> Stashed changes
 
 import aiohttp
 import aredis
 import asyncpg
 import discord
+import mystbin
 import psutil
 from discord.ext import commands
 
-<<<<<<< Updated upstream
-from config import config
-from managers import guild_manager, user_manager
-from utilities import context, help, objects, utils
-=======
 import config
 from managers import guild_manager, reminder_manager, tag_manager, user_manager
 from utilities import context, help
->>>>>>> Stashed changes
 
-log = logging.getLogger(__name__)
+__log__ = logging.getLogger(__name__)
 
 
 class Life(commands.AutoShardedBot):
@@ -62,14 +53,6 @@ class Life(commands.AutoShardedBot):
         self.LOGGING_WEBHOOK = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.LOGGING_WEBHOOK_URL)
         self.ERROR_WEBHOOK = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.ERROR_WEBHOOK_URL)
 
-<<<<<<< Updated upstream
-        self.error_formatter = None
-        self.mystbin = None
-        self.imaging = None
-        self.ksoft = None
-        self.redis = None
-        self.db = None
-=======
         self.first_ready: bool = True
 
         self.db: Optional[asyncpg.Pool] = None
@@ -80,104 +63,24 @@ class Life(commands.AutoShardedBot):
         self.guild_manager: guild_manager.GuildManager = guild_manager.GuildManager(bot=self)
         self.reminder_manager: reminder_manager.ReminderManager = reminder_manager.ReminderManager(bot=self)
         self.tag_manager: tag_manager.TagManager = tag_manager.TagManager(bot=self)
->>>>>>> Stashed changes
 
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
 
-<<<<<<< Updated upstream
-    async def is_owner(self, person: typing.Union[discord.User, discord.Member]) -> bool:
-        return person.id in self.config.owner_ids
-=======
     async def is_owner(self, person: Union[discord.User, discord.Member]) -> bool:
         return person.id in config.OWNER_IDS
->>>>>>> Stashed changes
 
     async def get_prefix(self, message: discord.Message) -> List[str]:
 
         if not message.guild:
-<<<<<<< Updated upstream
-            return commands.when_mentioned_or(self.config.prefix, '')(self, message)
-
-        guild_config = self.guild_manager.get_guild_config(guild_id=message.guild.id)
-        if isinstance(guild_config, objects.DefaultGuildConfig):
-            return commands.when_mentioned_or(self.config.prefix)(self, message)
-
-        return commands.when_mentioned_or(self.config.prefix, *guild_config.prefixes)(self, message)
-
-    async def command_check(self, ctx: context.Context) -> bool:
-
-        if ctx.user_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
-            raise commands.CheckFailure(f'You are blacklisted from using this bot with the reason:\n\n`{ctx.user_config.blacklisted_reason}`')
-
-        elif ctx.guild_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
-            raise commands.CheckFailure(f'This guild is blacklisted from using this bot with the reason:\n\n`{ctx.guild_config.blacklisted_reason}`')
-
-        if ctx.guild is None and ctx.command.qualified_name in self.commands_not_allowed_dms:
-            raise commands.NoPrivateMessage()
-
-        current_permissions = dict(ctx.me.permissions_in(ctx.channel))
-        needed_permissions = {permission: value for permission, value in self.text_permissions if value is True}
-
-        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:
-            if (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
-                needed_permissions.update({permission: value for permission, value in self.voice_permissions if value is True})
-                current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})
-
-        missing = [permissions for permissions, value in needed_permissions.items() if current_permissions[permissions] != value]
-
-        if missing:
-            raise commands.BotMissingPermissions(missing)
-
-        return True
-
-    async def on_ready(self) -> None:
-
-        if self.first_ready is False:
-            return
-
-        self.first_ready = False
-
-        await self.user_manager.load()
-        await self.guild_manager.load()
-
-        for cog in self.cogs.values():
-            if hasattr(cog, 'load'):
-                await cog.load()
-=======
             return commands.when_mentioned_or(config.PREFIX, 'I-', '')(self, message)
 
         guild_config = self.guild_manager.get_guild_config(guild_id=message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
->>>>>>> Stashed changes
 
     async def start(self, *args, **kwargs) -> None:
 
         try:
-<<<<<<< Updated upstream
-            log.debug('[PSQL] Attempting connection.')
-            db = await asyncpg.create_pool(**self.config.postgresql, max_inactive_connection_lifetime=0)
-        except Exception as e:
-            log.critical(f'[PSQL] Error while connecting.\n{e}\n')
-            print(f'\n[POSTGRESQL] An error occurred while connecting to PostgreSQL: {e}')
-            raise ConnectionError
-        else:
-            log.info('[PSQL] Successful connection.')
-            print(f'\n[POSTGRESQL] Connected to the PostgreSQL database.')
-            self.db = db
-
-        try:
-            log.debug('[REDIS] Attempting connection.')
-            redis = aredis.StrictRedis(**self.config.redis)
-            await redis.set('connected', 0)
-        except (aredis.ConnectionError, aredis.ResponseError):
-            log.critical(f'[REDIS] Error while connecting.')
-            print(f'[REDIS] An error occurred while connecting to Redis.\n')
-            raise ConnectionError
-        else:
-            log.info('[REDIS] Successful connection.')
-            print(f'[REDIS] Connected to Redis.\n')
-=======
             __log__.debug('[POSTGRESQL] Attempting connection.')
             db = await asyncpg.create_pool(**config.POSTGRESQL, max_inactive_connection_lifetime=0)
         except Exception as e:
@@ -200,40 +103,39 @@ class Life(commands.AutoShardedBot):
         else:
             __log__.info(f'[REDIS] Successful connection.')
             print(f'[REDIS] Successful connection to Redis DB number \'{config.REDIS["db"]}\'. \n')
->>>>>>> Stashed changes
             self.redis = redis
 
         for extension in config.EXTENSIONS:
             try:
                 self.load_extension(extension)
-                log.info(f'[EXTENSIONS] Loaded - {extension}')
+                __log__.info(f'[EXTENSIONS] Loaded - {extension}')
                 print(f'[EXTENSIONS] Loaded - {extension}')
             except commands.ExtensionNotFound:
-                log.warning(f'[EXTENSIONS] Extension not found - {extension}')
+                __log__.warning(f'[EXTENSIONS] Extension not found - {extension}')
                 print(f'[EXTENSIONS] Extension not found - {extension}')
             except commands.NoEntryPointError:
-                log.warning(f'[EXTENSIONS] No entry point - {extension}')
+                __log__.warning(f'[EXTENSIONS] No entry point - {extension}')
                 print(f'[EXTENSIONS] No entry point - {extension}')
             except commands.ExtensionFailed as error:
-                log.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
+                __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
                 print(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
 
         await super().start(*args, **kwargs)
 
     async def close(self) -> None:
 
-        log.info('[BOT] Closing bot down.')
+        __log__.info('[BOT] Closing bot down.')
         print('\n[BOT] Closing bot down.')
 
-        log.info('[BOT] Closing database connection.')
+        __log__.info('[BOT] Closing database connection.')
         print('[DB] Closing database connection.')
         await self.db.close()
 
-        log.info('[BOT] Closing aiohttp client session.')
+        __log__.info('[BOT] Closing aiohttp client session.')
         print('[CS] Closing aiohttp client session.')
         await self.session.close()
 
-        log.info('[BOT] Bot has shutdown.')
+        __log__.info('[BOT] Bot has shutdown.')
         print('Bye bye!')
         await super().close()
 
