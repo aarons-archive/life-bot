@@ -19,9 +19,10 @@ import slate
 import spotify
 from discord.ext import commands
 
+import config
 from bot import Life
 from cogs.voice.custom.player import Player
-from utilities import context, exceptions
+from utilities import context, exceptions, utils
 
 
 class Music(commands.Cog):
@@ -31,14 +32,14 @@ class Music(commands.Cog):
 
         self.slate = slate.Client(bot=self.bot)
 
-        self.spotify = spotify.Client(client_id=self.bot.config.spotify_client_id, client_secret=self.bot.config.spotify_client_secret)
-        self.spotify_http = spotify.HTTPClient(client_id=self.bot.config.spotify_client_id, client_secret=self.bot.config.spotify_client_secret)
+        self.spotify = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
+        self.spotify_http = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
 
-        self.ksoft = ksoftapi.Client(self.bot.config.ksoft_token)
+        self.ksoft = ksoftapi.Client(config.KSOFT_TOKEN)
 
     async def load(self) -> None:
 
-        for node in self.bot.config.nodes:
+        for node in config.NODES:
             try:
                 await self.slate.create_node(cls=getattr(slate, node.pop('type')), **node)
             except (slate.NodeConnectionError, slate.NodeCreationError) as e:
@@ -91,7 +92,7 @@ class Music(commands.Cog):
             pass
 
         title = getattr(track or event.player.current, 'title', 'Not Found')
-        await event.player.send(message=f'Something went wrong while playing the track `{title}`. Use `{self.bot.config.prefix}support` for more help.')
+        await event.player.send(message=f'Something went wrong while playing the track `{title}`. Use `{config.PREFIX}support` for more help.')
 
         event.player.track_end_event.set()
         event.player.track_end_event.clear()
@@ -142,7 +143,7 @@ class Music(commands.Cog):
 
             search = await ctx.voice_client.search(query=query, ctx=ctx)
 
-            if search.source == 'HTTP' and ctx.author.id not in self.bot.config.owner_ids:
+            if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
                 raise exceptions.VoiceError('You are unable to play HTTP links.')
 
             if search.source == 'spotify':
@@ -303,7 +304,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The current track is not seekable.')
 
         if not seconds and seconds != 0:
-            await ctx.send(f'The players position is `{self.bot.utils.format_seconds(seconds=ctx.voice_client.position / 1000)}`')
+            await ctx.send(f'The players position is `{utils.format_seconds(seconds=ctx.voice_client.position / 1000)}`')
             return
 
         milliseconds = seconds * 1000
@@ -311,7 +312,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.voice_client.current.length / 1000)}`.')
 
         await ctx.voice_client.set_position(position=milliseconds)
-        await ctx.send(f'The players position is now `{self.bot.utils.format_seconds(seconds=milliseconds / 1000)}`.')
+        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=milliseconds / 1000)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
     async def volume(self, ctx: context.Context, volume: int = None) -> None:
@@ -332,7 +333,7 @@ class Music(commands.Cog):
             await ctx.send(f'The players volume is `{ctx.voice_client.volume}%`.')
             return
 
-        if volume < 0 or volume > 100 and ctx.author.id not in self.bot.config.owner_ids:
+        if volume < 0 or volume > 100 and ctx.author.id not in config.OWNER_IDS:
             raise exceptions.VoiceError(f'That was not a valid volume, Please choose a value between `0` and and `100`.')
 
         await ctx.voice_client.set_volume(volume=volume)
@@ -363,11 +364,11 @@ class Music(commands.Cog):
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
-        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in ctx.voice_client.queue)) / 1000, friendly=True)
+        time = utils.format_seconds(seconds=round(sum(track.length for track in ctx.voice_client.queue)) // 1000, friendly=True)
         header = f'Showing `{min([10, len(ctx.voice_client.queue)])}` out of `{len(ctx.voice_client.queue)}` track(s) in the queue. Total queue time is `{time}`.\n\n'
 
         entries = [
-            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
+            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {utils.format_seconds(seconds=round(track.length) // 1000)} | {track.requester.mention}'
             for index, track in enumerate(ctx.voice_client.queue)
         ]
 
@@ -390,7 +391,7 @@ class Music(commands.Cog):
             embed.set_image(url=track.thumbnail)
             embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(ctx.voice_client.queue)}` in the queue.\n\n' \
                                 f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
-                                f'`Length:` {self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}\n' \
+                                f'`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n' \
                                 f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
             entries.append(embed)
 
@@ -428,11 +429,11 @@ class Music(commands.Cog):
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
-        time = self.bot.utils.format_seconds(seconds=round(sum(track.length for track in history)) / 1000, friendly=True)
+        time = utils.format_seconds(seconds=round(sum(track.length for track in history)) // 1000, friendly=True)
         header = f'Showing `{min([10, len(history)])}` out of `{len(history)}` track(s) in the queues history. Total queue history time is `{time}`.\n\n'
 
         entries = [
-            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {self.bot.utils.format_seconds(seconds=round(track.length) / 1000)} | {track.requester.mention}'
+            f'`{index + 1}.` [{str(track.title)}]({track.uri}) | {utils.format_seconds(seconds=round(track.length) // 1000)} | {track.requester.mention}'
             for index, track in enumerate(history)
         ]
 
@@ -457,7 +458,7 @@ class Music(commands.Cog):
             embed.set_image(url=track.thumbnail)
             embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(history)}` in the queue history.\n\n' \
                                 f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
-                                f'`Length:` {self.bot.utils.format_seconds(seconds=round(track.length) / 1000, friendly=True)}\n' \
+                                f'`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n' \
                                 f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
             entries.append(embed)
 

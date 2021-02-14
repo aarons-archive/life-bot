@@ -94,7 +94,7 @@ class Todo(commands.Cog):
         await self.bot.db.executemany(query, entries)
 
         embed = discord.Embed(colour=ctx.colour, description=f'**Deleted** `{len(todos_to_remove)}` **todo(s):**')
-        embed.add_field(name='Contents:', value='\n'.join([f'[`{todo_id}`]({todos[todo_id]["link"]}) {todos[todo_id]["todo"]}' for todo_id in todos_to_remove]))
+        embed.add_field(name='Contents:', value='\n'.join(f'[`{todo_id}`]({todos[todo_id]["link"]}) {todos[todo_id]["todo"]}' for todo_id in todos_to_remove))
         await ctx.send(embed=embed)
 
     @todo.command(name='clear')

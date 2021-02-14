@@ -21,8 +21,9 @@ import slate
 from discord.ext import commands
 from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
+import config
 from bot import Life
-from utilities import context, exceptions
+from utilities import context, exceptions, utils
 
 log = logging.getLogger(__name__)
 
@@ -46,22 +47,22 @@ class Events(commands.Cog):
 
         log.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        await self.bot.LOGGING_WEBHOOK.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
 
         log.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.logging_webhook.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        await self.bot.LOGGING_WEBHOOK.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -71,23 +72,15 @@ class Events(commands.Cog):
 
         ctx = await self.bot.get_context(message)
 
-        if message.guild is None:
-            time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-            info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+        if message.guild:
+            return
 
-            embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
-            embed.add_field(name='Info:', value=info)
-            await self.bot.mentions_dms_webhook.send(embed=embed, username=f'DM from: {ctx.author}',
-                                                     avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
+        time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
+        embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
+        embed.add_field(name='Info:', value=info)
+        await self.bot.DM_WEBHOOK.send(embed=embed, username=f'DM from: {ctx.author}', avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
 
-        if self.bot.user in message.mentions:
-            time = self.bot.utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-            info = f'`Guild:` {ctx.guild} `{ctx.guild.id}`\n`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {time}'
-
-            embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
-            embed.add_field(name='Info:', value=info)
-            await self.bot.mentions_dms_webhook.send(embed=embed, username=f'Mentioned by: {ctx.author}',
-                                                     avatar_url=str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() else 'png')))
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
@@ -135,7 +128,7 @@ class Events(commands.Cog):
                 commands.BadColourArgument:             f'The argument `{argument}` was not a valid colour type.',
                 BadLiteralArgument:                     f'The argument `{argument}` must be one of '
                                                         f'{", ".join([f"`{valid_argument}`" for valid_argument in getattr(error, "valid_arguments", [])])}.',
-                commands.BadArgument:                   f'I was unable to convert an argument that you used. Use `{self.bot.config.prefix}help {ctx.command}` for more '
+                commands.BadArgument:                   f'I was unable to convert an argument that you used. Use `{config.PREFIX}help {ctx.command}` for more '
                                                         f'information on what arguments to use.',
             }
             message = bad_argument_errors.get(type(error), 'None')
@@ -151,7 +144,7 @@ class Events(commands.Cog):
                 commands.BucketType.category: f'for this channel category.'
             }
             message = f'The command `{ctx.command}` is on cooldown {cooldown_buckets.get(error.cooldown.type, "for you.")} You can retry in ' \
-                      f'`{self.bot.utils.format_seconds(seconds=error.retry_after, friendly=True)}`'
+                      f'`{utils.format_seconds(seconds=error.retry_after, friendly=True)}`'
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             cooldown_types = {
@@ -170,10 +163,10 @@ class Events(commands.Cog):
             message = f'You are missing the following permissions required to run the command `{ctx.command}`.\n{permissions}'
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            message = f'You missed the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.'
+            message = f'You missed the `{error.param.name}` argument. Use `{config.PREFIX}help {ctx.command}` for more information on what arguments to use.'
 
         elif isinstance(error, commands.BadUnionArgument):
-            message = f'I was unable to convert the `{error.param.name}` argument. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.'
+            message = f'I was unable to convert the `{error.param.name}` argument. Use `{config.PREFIX}help {ctx.command}` for more information on what arguments to use.'
 
         elif isinstance(error, commands.MissingRole):
             message = f'The role `{error.missing_role}` is required to run this command.'
@@ -197,7 +190,7 @@ class Events(commands.Cog):
             exceptions.VoiceError:                  f'{error}',
             slate.NoNodesAvailable:                 f'There are no music nodes available right now.',
 
-            commands.TooManyArguments:              f'You used too many arguments. Use `{self.bot.config.prefix}help {ctx.command}` for more information on what arguments to use.',
+            commands.TooManyArguments:              f'You used too many arguments. Use `{config.PREFIX}help {ctx.command}` for more information on what arguments to use.',
 
             commands.UnexpectedQuoteError:          f'There was an unexpected quote character in the arguments you passed.',
             commands.InvalidEndOfQuotedStringError: f'There was an unexpected space after a quote character in the arguments you passed.',
@@ -234,7 +227,7 @@ class Events(commands.Cog):
 
     async def handle_traceback(self, *, ctx: context.Context, error) -> None:
 
-        await ctx.send(f'Something went wrong while executing that command. Please use `{self.bot.config.prefix}support` for more help or information.')
+        await ctx.send(f'Something went wrong while executing that command. Please use `{config.PREFIX}` for more help or information.')
 
         self.bot.error_formatter.theme['_ansi_enabled'] = True
         print(f'\n{"".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()}\n')
@@ -245,12 +238,12 @@ class Events(commands.Cog):
                f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}\n' \
                f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n' \
                f'`Author:` {ctx.author} `{ctx.author.id}`\n' \
-               f'`Time:` {self.bot.utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
+               f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
 
         embed = discord.Embed(colour=ctx.colour, description=f'{ctx.message.content}')
         embed.add_field(name='Info:', value=info)
 
-        await self.bot.errors_webhook.send(embed=embed, username=f'{ctx.author}', avatar_url=avatar_url)
+        await self.bot.ERROR_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=avatar_url)
 
         self.bot.error_formatter.theme['_ansi_enabled'] = False
         traceback = "".join(self.bot.error_formatter.format_exception(type(error), error, error.__traceback__)).strip()
@@ -267,7 +260,7 @@ class Events(commands.Cog):
                 log.warning(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
                 print(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
 
-        await self.bot.errors_webhook.send(content=f'{traceback}', username=f'{ctx.author}', avatar_url=avatar_url)
+        await self.bot.ERROR_WEBHOOK.send(content=f'{traceback}', username=f'{ctx.author}', avatar_url=avatar_url)
 
 
 def setup(bot: Life):
