@@ -21,6 +21,7 @@ from wand.exceptions import MissingDelegateError
 from wand.image import Image
 from wand.sequence import SingleImage
 
+import config
 from bot import Life
 from utilities import context
 from utilities.exceptions import ArgumentError, ImageError
@@ -259,7 +260,7 @@ class Imaging:
         form_data = aiohttp.FormData()
         form_data.add_field('file', data['image'], filename=f'image.{data["format"].lower()}')
 
-        async with self.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": self.bot.config.axelweb_token}, data=form_data) as response:
+        async with self.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": config.AXEL_WEB_TOKEN}, data=form_data) as response:
 
             if response.status == 413:
                 raise ImageError('The image produced was over 100mb.')

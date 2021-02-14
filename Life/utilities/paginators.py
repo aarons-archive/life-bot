@@ -373,4 +373,3 @@ class EmbedsPaginator:
 
         self.page = len(self.entries) - 1
         await self.message.edit(embed=self.entries[self.page])
-

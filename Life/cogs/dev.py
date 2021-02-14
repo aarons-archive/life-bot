@@ -12,6 +12,8 @@
 
 import collections
 import sys
+
+import config
 import time
 
 import discord
@@ -80,10 +82,8 @@ class Dev(commands.Cog):
         `limit`: The amount of messages to check back through. Defaults to 50.
         """
 
-        prefix = self.bot.config.prefix
-
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me or message.content.startswith(prefix), bulk=True, limit=limit)
+            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me or message.content.startswith(config.PREFIX), bulk=True, limit=limit)
         else:
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
@@ -100,10 +100,10 @@ class Dev(commands.Cog):
 
         entries = []
 
-        for guild in sorted(self.bot.guilds, reverse=True, key=lambda _guild: (sum(1 for member in _guild.members if member.bot) / len(_guild.members)) * 100):
+        for guild in sorted(self.bot.guilds, reverse=True, key=lambda _guild: sum(bool(member.bot) for member in _guild.members) / len(_guild.members) * 100):
 
             total = len(guild.members)
-            members = sum(1 for m in guild.members if not m.bot)
+            members = sum(not m.bot for m in guild.members)
             bots = sum(1 for m in guild.members if m.bot)
             percent_bots = f'{round((bots / total) * 100, 2)}%'
 
@@ -139,7 +139,7 @@ class Dev(commands.Cog):
         Base command for blacklisting.
         """
 
-        await ctx.send(f'Choose a valid subcommand. Use `{self.bot.config.prefix}help dev blacklist` for more information.')
+        await ctx.send(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
 
     @dev_blacklist.group(name='user', hidden=True, invoke_without_command=True)
     async def dev_blacklist_user(self, ctx: context.Context) -> None:
