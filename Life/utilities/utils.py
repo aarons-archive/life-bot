@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 __log__ = logging.getLogger(__name__)
 
 
-async def safe_text(*, mystbin_client: mystbin.Client, text: str) -> str:
+async def safe_text(*, mystbin_client: mystbin.Client, text: str, max_characters: int = 1024) -> str:
 
-    if len(text) <= 1024:
+    if len(text) <= max_characters:
         return text
 
     try:
