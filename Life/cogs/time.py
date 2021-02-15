@@ -153,13 +153,12 @@ class Time(commands.Cog):
     @commands.group(name='reminders', aliases=['remind', 'reminder', 'remindme'], invoke_without_command=True)
     async def reminders(self, ctx: context.Context, *, reminder: converters.DatetimeConverter) -> None:
         """
-        Schedules a reminder for the given time with the text.
+        Schedule a reminder for the given time.
 
         `reminder`: The content of reminder, should include some form of date or time such as `tomorrow`, `in 12h` or `1st january 2020`.
         """
 
         entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(reminder['found'].items())}
-
         if len(entries) != 1:
             choice = await ctx.paginate_choice(
                      entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
@@ -171,36 +170,55 @@ class Time(commands.Cog):
 
         datetime = utils.format_datetime(datetime=result[1], seconds=True)
         datetime_difference = utils.format_difference(datetime=result[1], suppress=[])
+        content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder['argument'], max_characters=1800)
 
-        await self.bot.reminder_manager.create_reminder(user_id=ctx.author.id, datetime=result[1], content=reminder['argument'], ctx=ctx)
-        await ctx.send(f'Set a reminder for `{datetime}`, `{datetime_difference}` from now.')
+        reminder = await self.bot.reminder_manager.create_reminder(user_id=ctx.author.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
+        await ctx.send(f'Created a reminder with ID `{reminder.id}` for `{datetime}`, `{datetime_difference}` from now.')
 
     @reminders.command(name='list')
     async def reminders_list(self, ctx: context.Context) -> None:
         """
-        Displays a list of your reminders.
+        Display a list of your active reminders.
         """
 
-        reminders = [reminder for reminder in ctx.user_config.reminders if not reminder.done]
-
+        reminders = [reminder for reminder in ctx.user_config.reminders.values() if not reminder.done]
         if not reminders:
             raise exceptions.ArgumentError('You do not have any active reminders.')
 
         entries = [
             f'`{reminder.id}:` **In {utils.format_difference(datetime=reminder.datetime, suppress=[])}**\n'
             f'`When:` {utils.format_datetime(datetime=reminder.datetime, seconds=True)}\n'
-            f'`Content:` {reminder.content[:100]}\n'
+            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=100)}\n'
             for reminder in sorted(reminders, key=lambda reminder: reminder.datetime)
         ]
 
-        await ctx.paginate_embed(entries=entries, per_page=5, header=f'**Reminders for** `{ctx.author}:`\n\n')
+        await ctx.paginate_embed(entries=entries, per_page=5, header=f'**Active reminders for** `{ctx.author}:`\n\n')
 
-    @reminders.command(name='delete', aliases=['remove'])
+    @reminders.command(name='all')
+    async def reminders_all(self, ctx: context.Context) -> None:
+        """
+        Display a list of all your reminders.
+        """
+
+        if not ctx.user_config.reminders:
+            raise exceptions.ArgumentError('You do not have any reminders.')
+
+        entries = [
+            f'`{reminder.id}:` **{"In " if reminder.done is False else ""}{utils.format_difference(datetime=reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**\n'
+            f'`When:` {utils.format_datetime(datetime=reminder.datetime, seconds=True)}\n'
+            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=100)}\n'
+            f'`Done:` {reminder.done}\n'
+            for reminder in sorted(ctx.user_config.reminders.values(), key=lambda reminder: reminder.datetime)
+        ]
+
+        await ctx.paginate_embed(entries=entries, per_page=5, header=f'**All reminders for** `{ctx.author}:`\n\n')
+
+    @reminders.command(name='delete')
     async def reminders_delete(self, ctx: context.Context, *, reminder_ids: str) -> None:
         """
-        Deletes the reminder(s) with the given ID(s).
+        Delete reminders with the given id's.
 
-        `reminder_ids`: A list of reminders IDs to delete, separated by spaces.
+        `reminder_ids`: A list of reminders id's to delete, separated by spaces.
         """
 
         reminder_ids_to_remove = []
@@ -212,12 +230,12 @@ class Time(commands.Cog):
             except ValueError:
                 raise exceptions.ArgumentError(f'`{reminder_id}` is not a valid reminder id.')
 
+            if reminder_id in reminder_ids_to_remove:
+                raise exceptions.ArgumentError(f'You provided the reminder id `{reminder_id}` more than once.')
+
             reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
             if not reminder:
                 raise exceptions.ArgumentError(f'You do not have a reminder with the id `{reminder_id}`.')
-
-            if reminder.id in reminder_ids_to_remove:
-                raise exceptions.ArgumentError(f'You provided the reminder id `{reminder.id}` more than once.')
 
             reminder_ids_to_remove.append(reminder.id)
 
@@ -225,7 +243,45 @@ class Time(commands.Cog):
             await self.bot.reminder_manager.delete_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
 
         s = 's' if len(reminder_ids_to_remove) > 1 else ''
-        await ctx.send(f'Deleted {len(reminder_ids_to_remove)} reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
+        await ctx.send(f'Deleted `{len(reminder_ids_to_remove)}` reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
+
+    @reminders.command(name='edit')
+    async def reminders_edit(self, ctx: context.Context, reminder_id: int, *, content: str) -> None:
+        """
+        Edit a reminders content.
+
+        `reminder_id`: The id of the reminder to edit.
+        `content`: The content to edit the reminder with.
+        """
+
+        reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+        if not reminder:
+            raise exceptions.ArgumentError('You do not have a reminder with that id.')
+
+        content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800)
+        await self.bot.reminder_manager.edit_reminder_content(user_id=ctx.author.id, reminder_id=reminder.id, content=content, jump_url=ctx.message.jump_url)
+
+        await ctx.send(f'Edited reminder id `{reminder.id}`\'s content.')
+
+    @reminders.command(name='info')
+    async def reminders_info(self, ctx: context.Context, reminder_id: int) -> None:
+        """
+        Display information about the reminder with the given id.
+        """
+
+        reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+        if not reminder:
+            raise exceptions.ArgumentError('You do not have a reminder with that id.')
+
+        embed = discord.Embed(colour=ctx.colour)
+        embed.description = f'**Reminder `{reminder.id}`:**\n\n' \
+                            f'**{"In " if reminder.done is False else ""}{utils.format_difference(datetime=reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**\n' \
+                            f'`When:` {utils.format_datetime(datetime=reminder.datetime, seconds=True)}\n' \
+                            f'`Created:` {utils.format_datetime(datetime=reminder.created_at, seconds=True)}\n' \
+                            f'`Done:` {reminder.done}\n\n' \
+                            f'`Content:`\n {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=1800)}\n'
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot: Life):
