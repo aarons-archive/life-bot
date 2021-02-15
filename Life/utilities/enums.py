@@ -58,3 +58,10 @@ class Editables(enum.Enum):
     embed_size = 'embed_size'
 
 
+class EmbedSize(enum.Enum):
+
+    LARGE = 0
+    MEDIUM = 1
+    SMALL = 2
+
+
