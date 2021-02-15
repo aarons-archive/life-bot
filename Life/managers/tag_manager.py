@@ -66,41 +66,45 @@ class TagManager:
     async def get_tags_owned_by(self, *, guild_id: int, member: discord.Member) -> Optional[List[objects.Tag]]:
 
         guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
-        return [tag for tag in guild_config.tags.values() if tag.owner_id == member.id]
+        return [tag for tag in guild_config.tags.values() if tag.user_id == member.id]
 
     #
 
-    async def create_tag(self, *, guild_id: int, author: discord.Member, name: str, content: str, jump_link: str = None) -> None:
+    async def create_tag(self, *, user_id: int, guild_id: int, name: str, content: str, jump_url: str = None) -> None:
 
         guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
 
-        query = 'INSERT INTO tags (owner_id, guild_id, name, content, jump_link) VALUES ($1, $2, $3, $4, $5) RETURNING *'
-        tag_data = await self.bot.db.fetchrow(query, author.id, guild_id, name, content, jump_link)
+        tag_data = await self.bot.db.fetchrow(
+                'INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                user_id, guild_id, name, content, jump_url
+        )
+        guild_config.tags[tag_data['name']] = objects.Tag(data=tag_data)
 
+    async def create_tag_alias(self, *, user_id: int, guild_id: int, alias: str, original: str, jump_url: str = None) -> None:
+
+        guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
+
+        tag_data = await self.bot.db.fetchrow(
+                'INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                user_id, guild_id, alias, original, jump_url
+        )
         guild_config.tags[tag_data['name']] = objects.Tag(data=dict(tag_data))
 
-    async def create_tag_alias(self, *, guild_id: int, author: discord.Member, alias: str, original: str, jump_link: str = None) -> None:
+    async def edit_tag_content(self, *, guild_id: int, name: str, content: str, jump_url: str = None) -> None:
 
         guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
 
-        query = 'INSERT INTO tags (owner_id, guild_id, name, alias, jump_link) VALUES ($1, $2, $3, $4, $5) RETURNING *'
-        tag_data = await self.bot.db.fetchrow(query, author.id, guild_id, alias, original, jump_link)
+        await self.bot.db.execute('UPDATE tags SET content = $1, jump_url = $2 WHERE name = $3 and guild_id = $4', content, jump_url, name, guild_id)
+        guild_config.tags[name].content = content
+        if jump_url:
+            guild_config.tags[name].jump_url = jump_url
 
-        guild_config.tags[tag_data['name']] = objects.Tag(data=dict(tag_data))
-
-    async def edit_tag_content(self, *, guild_id: int, name: str, new_content: str) -> None:
-
-        guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
-
-        await self.bot.db.execute('UPDATE tags SET content = $1 WHERE name = $2 and guild_id = $3', new_content, name, guild_id)
-        guild_config.tags[name].content = new_content
-
-    async def edit_tag_owner(self, *, guild_id: int, name: str, new_owner: discord.Member) -> None:
+    async def edit_tag_owner(self, *, guild_id: int, name: str, user_id: int) -> None:
 
         guild_config = await self.bot.guild_manager.get_or_create_guild_config(guild_id=guild_id)
 
-        await self.bot.db.execute('UPDATE tags SET owner_id = $1 WHERE name = $2 and guild_id = $3', new_owner.id, name, guild_id)
-        guild_config.tags[name].owner_id = new_owner.id
+        await self.bot.db.execute('UPDATE tags SET user_id = $1 WHERE name = $2 and guild_id = $3', user_id, name, guild_id)
+        guild_config.tags[name].user_id = user_id
 
     async def delete_tag(self, *, guild_id: int, name: str) -> None:
 
