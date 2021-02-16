@@ -23,7 +23,7 @@ from utilities import enums
 class DefaultUserConfig:
 
     __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'coins', 'xp', \
-                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'requires_db_update'
+                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'todos', 'requires_db_update'
 
     def __init__(self) -> None:
 
@@ -53,6 +53,7 @@ class DefaultUserConfig:
         self.monthly_collected: DateTime = pendulum.now(tz='UTC')
         self.monthly_streak: int = 0
 
+        self.todos: Dict[int, Todo] = {}
         self.reminders: Dict[int, Reminder] = {}
         self.requires_db_update = []
 
@@ -63,7 +64,7 @@ class DefaultUserConfig:
 class UserConfig:
 
     __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'coins', 'xp', \
-                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'requires_db_update'
+                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'todos', 'requires_db_update'
 
     def __init__(self, data: dict) -> None:
 
@@ -93,6 +94,7 @@ class UserConfig:
         self.monthly_collected: DateTime = pendulum.instance(data.get('monthly_collected'), tz='UTC')
         self.monthly_streak: int = data.get('monthly_streak')
 
+        self.todos: Dict[int, Todo] = {}
         self.reminders: Dict[int, Reminder] = {}
         self.requires_db_update = []
 

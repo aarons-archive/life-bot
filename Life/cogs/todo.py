@@ -11,7 +11,6 @@
 #
 
 import discord
-import pendulum
 from discord.ext import commands
 
 from bot import Life
@@ -24,7 +23,7 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
-    async def todo(self, ctx: context.Context, content: str = None) -> None:
+    async def todo(self, ctx: context.Context, *, content: str = None) -> None:
         """
         Display a list of your todos.
         """
@@ -33,49 +32,42 @@ class Todo(commands.Cog):
             await ctx.invoke(self.todo_add, content=content)
             return
 
-        todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
-        if not todos:
+        if not ctx.user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
-        entries = [f'[`{index + 1}`]({todo["link"]}) {todo["todo"]}' for index, todo in enumerate(todos)]
-        await ctx.paginate_embed(entries=entries, per_page=10, header=f'**{ctx.author}\'s todo list:**\n\n')
+        entries = [f'[`{todo.id}`]({todo.jump_url}) {todo.content}' for todo in ctx.user_config.todos.values()]
+        await ctx.paginate_embed(entries=entries, per_page=10, title=f'`{ctx.author.name}\'s` todo list:')
 
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx: context.Context, *, content: commands.clean_content) -> None:
         """
-        Creates a todo.
+        Create a todo.
 
         `content`: The content of your todo. Can not be more than 180 characters.
         """
-        content = str(content)
 
+        if len(ctx.user_config.todos) > 100:
+            raise exceptions.GeneralError('You have too many todos. Try doing some of them before adding more.')
+
+        content = str(content)
         if len(content) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
-        todo_count = await self.bot.db.fetchrow('SELECT count(*) as c FROM todos WHERE owner_id = $1', ctx.author.id)
-        if todo_count['c'] > 100:
-            raise exceptions.GeneralError(f'You have too many todos, try removing some of them before adding more.')
-
-        query = 'INSERT INTO todos (owner_id, time_added, todo, link) VALUES ($1, $2, $3, $4)'
-        await self.bot.db.execute(query, ctx.author.id, pendulum.now(tz='UTC'), content, ctx.message.jump_url)
-
-        await ctx.send('Your todo was created.')
+        todo = await self.bot.todo_manager.create_todo(user_id=ctx.author.id, content=content, jump_url=ctx.message.jump_url)
+        await ctx.send(f'Todo with id `{todo.id}` was created.')
 
     @todo.command(name='delete', aliases=['remove'])
     async def todo_delete(self, ctx: context.Context, *, todo_ids: str) -> None:
         """
-        Deletes a todo.
+        Delete todos with the given ids.
 
-        `todo_ids`: The ids of the todos to delete. You can provide a list of ids and they will all be deleted.
+        `todo_ids`: The ids of the todos to delete. You can provide a list of ids separated by spaces to delete multiple.
         """
 
-        todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
-        if not todos:
-            raise exceptions.GeneralError(f'You do not have any todos.')
+        if not ctx.user_config.todos:
+            raise exceptions.GeneralError('You do not have any todos.')
 
-        todos = {index + 1: todo for index, todo in enumerate(todos)}
-        todos_to_remove = []
-
+        todo_ids_to_delete = []
         for todo_id in todo_ids.split(' '):
 
             try:
@@ -83,69 +75,60 @@ class Todo(commands.Cog):
             except ValueError:
                 raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
 
-            if todo_id not in todos.keys():
+            if todo_id not in ctx.user_config.todos.keys():
                 raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
-            if todo_id in todos_to_remove:
+            if todo_id in todo_ids_to_delete:
                 raise exceptions.ArgumentError(f'You provided the todo id `{todo_id}` more than once.')
-            todos_to_remove.append(todo_id)
 
-        query = 'DELETE FROM todos WHERE owner_id = $1 and time_added = $2'
-        entries = [(todos[todo_id]['owner_id'], todos[todo_id]['time_added']) for todo_id in todos_to_remove]
-        await self.bot.db.executemany(query, entries)
+            todo_ids_to_delete.append(todo_id)
 
-        embed = discord.Embed(colour=ctx.colour, description=f'**Deleted** `{len(todos_to_remove)}` **todo(s):**')
-        embed.add_field(name='Contents:', value='\n'.join(f'[`{todo_id}`]({todos[todo_id]["link"]}) {todos[todo_id]["todo"]}' for todo_id in todos_to_remove))
+        embed = discord.Embed(colour=ctx.colour, title=f'Deleted `{len(todo_ids_to_delete)}` todo{"s" if len(todo_ids_to_delete) > 1 else ""}:')
+        embed.add_field(name='Contents: ', value='\n'.join(f'[`{ctx.user_config.todos[todo_id].id}`]({ctx.user_config.todos[todo_id].jump_url}) '
+                                                           f'{ctx.user_config.todos[todo_id].content}' for todo_id in todo_ids_to_delete))
+
+        await self.bot.todo_manager.delete_todos(user_id=ctx.author.id, todo_ids=todo_ids_to_delete)
         await ctx.send(embed=embed)
 
     @todo.command(name='clear')
     async def todo_clear(self, ctx: context.Context) -> None:
         """
-        Clears your todo list.
+        Clear your todo list.
         """
 
-        todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
-        if not todos:
-            raise exceptions.GeneralError('You don not have any todos.')
+        if not ctx.user_config.todos:
+            raise exceptions.GeneralError('You do not have any todos.')
 
-        await self.bot.db.execute('DELETE FROM todos WHERE owner_id = $1 RETURNING *', ctx.author.id)
-        await ctx.send(f'Cleared your todo list of `{len(todos)}` todo(s).')
+        todo_ids = list(ctx.user_config.todos.keys())
+        await self.bot.todo_manager.delete_todos(user_id=ctx.author.id, todo_ids=todo_ids)
+        await ctx.send(f'Cleared your todo list of `{len(todo_ids)}` todo{"s" if len(todo_ids) > 1 else ""}.')
 
     @todo.command(name='edit', aliases=['update'])
     async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content) -> None:
         """
-        Edits the todo with the given id.
+        Edit the todo with the given id.
 
         `todo_id`: The id of the todo to edit.
         `content`: The content of the new todo.
         """
 
-        todos = await self.bot.db.fetch('SELECT * FROM todos WHERE owner_id = $1 ORDER BY time_added', ctx.author.id)
-        if not todos:
+        if not ctx.user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
         content = str(content)
         if len(content) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
-        todos = {index + 1: todo for index, todo in enumerate(todos)}
-
         try:
             todo_id = int(todo_id)
         except ValueError:
             raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
 
-        if todo_id not in todos.keys():
+        todo = ctx.user_config.todos.get(todo_id)
+        if not todo:
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
-        todo = todos[todo_id]
-
-        query = 'UPDATE todos SET todo = $1, link = $2 WHERE owner_id = $3 and time_added = $4'
-        await self.bot.db.execute(query, content, ctx.message.jump_url, todo['owner_id'], todo['time_added'])
-
-        embed = discord.Embed(colour=ctx.colour, description=f'**Updated your todo:**')
-        embed.add_field(name='Old content:', value=todo['todo'], inline=False)
-        embed.add_field(name='New content:', value=content, inline=False)
-        await ctx.send(embed=embed)
+        await self.bot.todo_manager.edit_todo_content(user_id=ctx.author.id, todo_id=todo.id, content=content, jump_url=ctx.message.jump_url)
+        await ctx.send(f'Edited todo with id `{todo_id}`.')
 
 
 def setup(bot: Life):
