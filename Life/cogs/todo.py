@@ -38,6 +38,13 @@ class Todo(commands.Cog):
         entries = [f'[`{todo.id}`]({todo.jump_url}) {todo.content}' for todo in ctx.user_config.todos.values()]
         await ctx.paginate_embed(entries=entries, per_page=10, title=f'`{ctx.author.name}\'s` todo list:')
 
+    @todo.command(name='list')
+    async def todo_list(self, ctx: context.Context) -> None:
+        """
+        View a list of your todos.
+        """
+        await ctx.invoke(self.todo, content=None)
+
     @todo.command(name='add', aliases=['make', 'create'])
     async def todo_add(self, ctx: context.Context, *, content: commands.clean_content) -> None:
         """
