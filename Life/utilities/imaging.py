@@ -22,7 +22,6 @@ from wand.image import Image
 from wand.sequence import SingleImage
 
 import config
-from bot import Life
 from utilities import context
 from utilities.exceptions import ArgumentError, ImageError
 
@@ -218,56 +217,49 @@ def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: mul
         child_pipe.send(ImageError())
 
 
-class Imaging:
+async def edit_image(ctx: context.Context, edit_type: str,  url: str = None, **kwargs) -> discord.Embed:
 
-    def __init__(self, bot: Life) -> None:
-        self.bot = bot
+    if ctx.message.attachments:
+        url = ctx.message.attachments[0].url
+    if url is None:
+        url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
 
-    async def edit_image(self, ctx: context.Context, edit_type: str,  url: str = None, **kwargs) -> discord.Embed:
+    async with ctx.bot.session.get(url) as response:
 
-        if ctx.message.attachments:
-            url = ctx.message.attachments[0].url
+        if response.status != 200:
+            raise ArgumentError('Something went wrong while loading that image, check the url or try again later.')
 
-        if url is None:
-            url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
+        if response.headers.get('Content-Type') not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
+            raise ImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
 
-        try:
-            async with self.bot.session.get(url) as response:
-                image_bytes = await response.read()
-        except Exception:
-            raise ArgumentError(f'Something went wrong while trying to download that image. Check the URL.')
-        else:
-            if response.headers.get('Content-Type') not in ['image/png', 'image/gif', 'image/jpeg', 'image/webp']:
-                raise ImageError('That file format is not allowed, only png, gif, jpg and webp are allowed.')
+        if (content_length := response.headers.get('Content-Length')) and int(content_length) > 20971520:
+            raise ImageError('The image provided was too big for me to edit, please keep to a `20mb` maximum')
 
-            if response.headers.get('Content-Length') and int(response.headers.get('Content-Length')) > 15728640:
-                raise ImageError('That file is over 15mb.')
+        image_bytes = await response.read()
 
-        parent_pipe, child_pipe = multiprocessing.Pipe()
-        args = (image_operations[edit_type], image_bytes, child_pipe)
+    parent_pipe, child_pipe = multiprocessing.Pipe()
+    process = multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True, args=(image_operations[edit_type], image_bytes, child_pipe))
+    process.start()
 
-        process = multiprocessing.Process(target=do_edit_image, kwargs=kwargs, daemon=True, args=args)
-        process.start()
+    data = await ctx.bot.loop.run_in_executor(None, parent_pipe.recv)
+    if isinstance(data, ImageError):
+        process.terminate()
+        raise ImageError('Something went wrong while trying to edit that image.')
 
-        data = await self.bot.loop.run_in_executor(None, parent_pipe.recv)
-        if isinstance(data, ImageError):
-            process.terminate()
-            raise ImageError('Something went wrong while trying to process that image.')
+    process.join()
+    process.close()
 
-        process.join()
-        process.close()
+    form_data = aiohttp.FormData()
+    form_data.add_field('file', data['image'], filename=f'image.{data["format"].lower()}')
 
-        form_data = aiohttp.FormData()
-        form_data.add_field('file', data['image'], filename=f'image.{data["format"].lower()}')
+    async with ctx.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": config.AXEL_WEB_TOKEN}, data=form_data) as response:
 
-        async with self.bot.session.post('https://media.mrrandom.xyz/api/media', headers={"Authorization": config.AXEL_WEB_TOKEN}, data=form_data) as response:
+        if response.status == 413:
+            raise ImageError('The image produced was too large to upload.')
 
-            if response.status == 413:
-                raise ImageError('The image produced was over 100mb.')
+        post = await response.json()
 
-            post = await response.json()
-
-        embed = discord.Embed(colour=ctx.colour)
-        embed.set_footer(text=data['text'])
-        embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
-        return embed
+    embed = discord.Embed(colour=ctx.colour)
+    embed.set_footer(text=data['text'])
+    embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
+    return embed

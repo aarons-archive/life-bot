@@ -134,10 +134,6 @@ class DatetimeConverter(commands.Converter, ABC):
         return data
 
 
-
-#
-
-
 class ImageConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
@@ -152,14 +148,6 @@ class ImageConverter(commands.Converter, ABC):
             url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
         if url is None:
-            try:
-                user = await UserConverter().convert(ctx=ctx, argument=str(argument))
-            except commands.BadArgument:
-                pass
-            else:
-                url = str(user.avatar_url_as(format='gif' if user.is_avatar_animated() is True else 'png'))
-
-        if url is None:
             check = yarl.URL(argument)
             if check.scheme and check.host:
                 url = argument
@@ -168,6 +156,9 @@ class ImageConverter(commands.Converter, ABC):
             raise commands.ConversionError
 
         return url
+
+
+#
 
 
 class PrefixConverter(commands.clean_content, ABC):
