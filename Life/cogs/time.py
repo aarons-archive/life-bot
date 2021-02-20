@@ -17,7 +17,6 @@ from discord.ext import commands
 import config
 from bot import Life
 from utilities import context, converters, exceptions, utils
-from utilities.enums import Editables, Operations
 
 
 class Time(commands.Cog):
@@ -45,7 +44,7 @@ class Time(commands.Cog):
             except exceptions.ArgumentError as error:
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
-                    user_config = self.bot.user_manager.get_user_config(user_id=member.id)
+                    user_config = self.bot.user_manager.get_config(user_id=member.id)
                     if user_config.timezone_private is True and member.id != ctx.author.id:
                         raise exceptions.ArgumentError('That users timezone is private.')
                     timezone = user_config.timezone
@@ -112,7 +111,7 @@ class Time(commands.Cog):
         `timezone`: The timezone to use. See `!timezones` for a list of timezones.
         """
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.set, value=timezone.name)
+        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, timezone=str(timezone))
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='reset', aliases=['default'])
@@ -121,7 +120,7 @@ class Time(commands.Cog):
         Sets your timezone back to the default (UTC).
         """
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone, operation=Operations.reset)
+        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, timezone='UTC')
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='private')
@@ -133,7 +132,7 @@ class Time(commands.Cog):
         if ctx.user_config.timezone_private is True:
             raise exceptions.ArgumentError('Your timezone is already private.')
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.set)
+        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, private=True)
         await ctx.send('Your timezone is now private.')
 
     @_timezone.command(name='public')
@@ -145,7 +144,7 @@ class Time(commands.Cog):
         if ctx.user_config.timezone_private is False:
             raise exceptions.ArgumentError('Your timezone is already public.')
 
-        await self.bot.user_manager.edit_user_config(user_id=ctx.author.id, editable=Editables.timezone_private, operation=Operations.reset)
+        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, private=False)
         await ctx.send('Your timezone is now public.')
 
     #

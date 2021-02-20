@@ -35,7 +35,7 @@ class TodoManager:
 
             todo = objects.Todo(data=todo_data)
 
-            user_config = await self.bot.user_manager.get_or_create_user_config(user_id=todo_data['user_id'])
+            user_config = await self.bot.user_manager.get_or_create_config(user_id=todo_data['user_id'])
             user_config.todos[todo.id] = todo
 
         __log__.info(f'[TODO MANAGER] Loaded reminders. [{len(todos)} todos]')
@@ -45,7 +45,7 @@ class TodoManager:
 
     async def create_todo(self, *, user_id: int, content: str, jump_url: str = None) -> objects.Todo:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 
         data = await self.bot.db.fetchrow('INSERT INTO todos (user_id, content, jump_url) VALUES ($1, $2, $3) RETURNING *', user_id, content, jump_url)
         todo = objects.Todo(data=data)
@@ -57,12 +57,12 @@ class TodoManager:
 
     def get_todo(self, *, user_id: int, todo_id: int) -> Optional[objects.Todo]:
 
-        user_config = self.bot.user_manager.get_user_config(user_id=user_id)
+        user_config = self.bot.user_manager.get_config(user_id=user_id)
         return user_config.todos.get(todo_id)
 
     async def delete_todo(self, user_id: int, todo_id: int) -> None:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 
         if not user_config.todos.get(todo_id):
             raise exceptions.GeneralError(f'Todo with id `{todo_id}` was not found.')
@@ -72,7 +72,7 @@ class TodoManager:
 
     async def delete_todos(self, user_id: int, todo_ids: List[int]) -> None:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 
         for todo_id in todo_ids:
             if not user_config.todos.get(todo_id):
@@ -84,7 +84,7 @@ class TodoManager:
 
     async def edit_todo_content(self, user_id: int, todo_id: int, content: str, jump_url: str = None) -> None:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 
         todo = user_config.todos.get(todo_id)
         if not todo:

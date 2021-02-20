@@ -83,6 +83,7 @@ class Information(commands.Cog):
         Display the bots stats.
         """
 
+        # noinspection PyUnresolvedReferences
         uptime = utils.format_seconds(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = utils.line_count()
 

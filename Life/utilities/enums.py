@@ -13,49 +13,32 @@
 import enum
 
 
-class Operations(enum.Enum):
+class Operation(enum.Enum):
 
-    set = 'set'
-    update = 'set'
+    SET = 'set'
+    UPDATE = SET
 
-    reset = 'reset'
-    clear = 'reset'
+    RESET = 'reset'
 
-    add = 'add'
+    ADD = 'add'
+    PLUS = ADD
 
-    remove = 'remove'
-    minus = 'remove'
+    MINUS = 'remove'
+    REMOVE = MINUS
 
 
-class Editables(enum.Enum):
+class Updateable(enum.Enum):
 
-    colour = 'colour'
+    COINS = 'coins'
+    XP = 'xp'
 
-    prefixes = 'prefixes'
+    DAILY_COLLECTED = 'daily_collected'
+    WEEKLY_COLLECTED = 'weekly_collected'
+    MONTHLY_COLLECTED = 'monthly_collected'
 
-    timezone = 'timezone'
-    timezone_private = 'timezone_private'
-
-    blacklist = 'blacklist'
-
-    coins = 'coins'
-    xp = 'xp'
-
-    level_up_notifications = 'level_up_notifications'
-
-    daily_collected = 'daily_collected'
-    daily_streak = 'daily_streak'
-
-    weekly_collected = 'weekly_collected'
-    weekly_streak = 'weekly_streak'
-
-    monthly_collected = 'monthly_collected'
-    monthly_streak = 'monthly_streak'
-
-    birthday = 'birthday'
-    birthday_private = 'birthday_private'
-
-    embed_size = 'embed_size'
+    DAILY_STREAK = 'daily_streak'
+    WEEKLY_STREAK = 'weekly_streak'
+    MONTHLY_STREAK = 'monthly_streak'
 
 
 class EmbedSize(enum.Enum):

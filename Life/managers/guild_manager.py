@@ -11,12 +11,11 @@
 #
 
 import logging
-from typing import Any, Union
+from typing import Union
 
 import discord
 
-from utilities import objects
-from utilities.enums import Editables, Operations
+from utilities import enums, objects
 
 __log__ = logging.getLogger(__name__)
 
@@ -31,86 +30,71 @@ class GuildManager:
 
     async def load(self) -> None:
 
-        guild_configs = await self.bot.db.fetch('SELECT * FROM guilds')
-        for guild_config in guild_configs:
-            self.configs[guild_config['id']] = objects.GuildConfig(data=dict(guild_config))
+        configs = await self.bot.db.fetch('SELECT * FROM guilds')
+        for config in configs:
+            self.configs[config['id']] = objects.GuildConfig(data=config)
 
-        __log__.info(f'[GUILD MANAGER] Loaded guild configs. [{len(guild_configs)} guilds]')
-        print(f'[GUILD MANAGER] Loaded guild configs. [{len(guild_configs)} guilds]')
+        __log__.info(f'[GUILD MANAGER] Loaded guild configs. [{len(configs)} guilds]')
+        print(f'[GUILD MANAGER] Loaded guild configs. [{len(configs)} guilds]')
 
         await self.bot.tag_manager.load()
 
     #
 
-    async def create_guild_config(self, *, guild_id: int) -> objects.GuildConfig:
+    async def create_config(self, *, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO guilds (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', guild_id)
-        self.configs[guild_id] = objects.GuildConfig(data=dict(data))
+        self.configs[guild_id] = objects.GuildConfig(data=data)
 
         __log__.info(f'[GUILD MANAGER] Created config for guild with id \'{guild_id}\'')
         return self.configs[guild_id]
 
-    def get_guild_config(self, *, guild_id: int) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    async def get_or_create_config(self, *, guild_id: int) -> objects.GuildConfig:
+
+        if isinstance(guild_config := self.get_config(guild_id=guild_id), objects.DefaultGuildConfig):
+            guild_config = await self.create_config(guild_id=guild_id)
+
+        return guild_config
+
+    def get_config(self, *, guild_id: int) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.configs.get(guild_id, self.default_config)
 
-    async def get_or_create_guild_config(self, *, guild_id: int) -> objects.GuildConfig:
+    #
 
-        guild_config = self.get_guild_config(guild_id=guild_id)
-        if isinstance(guild_config, objects.DefaultGuildConfig):
-            guild_config = await self.create_guild_config(guild_id=guild_id)
+    async def set_blacklisted(self, *, guild_id: int, blacklisted: bool = True, reason: str = None) -> None:
 
-        return guild_config
+        guild_config = await self.get_or_create_config(guild_id=guild_id)
 
-    async def edit_guild_config(self, *, guild_id: int, editable: Editables, operation: Operations, value: Any = None) -> objects.GuildConfig:
+        query = 'UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
+        data = await self.bot.db.fetchrow(query, blacklisted, reason, guild_id)
+        guild_config.blacklisted = data['blacklisted']
+        guild_config.blacklisted_reason = data['blacklisted_reason']
 
-        guild_config = self.get_guild_config(guild_id=guild_id)
-        if isinstance(guild_config, objects.DefaultGuildConfig):
-            guild_config = await self.create_guild_config(guild_id=guild_id)
+    async def set_colour(self, *, guild_id: int, colour: str = str(discord.Colour.gold())) -> None:
 
-        __log__.info(f'[GUILD MANAGERS] Edited guild config for guild with id \'{guild_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
+        guild_config = await self.get_or_create_config(guild_id=guild_id)
 
-        if editable == Editables.colour:
+        data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{colour.strip("#")}', guild_id)
+        guild_config.colour = discord.Colour(int(data['colour'], 16))
 
-            operations = {
-                Operations.set.value: ('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', guild_id),
-                Operations.reset.value: ('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', guild_id),
-            }
+    async def set_embed_size(self, *, guild_id: int, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            guild_config.colour = discord.Colour(int(data['colour'], 16))
+        guild_config = await self.get_or_create_config(guild_id=guild_id)
 
-        elif editable == Editables.prefixes:
+        data = await self.bot.db.fetchrow('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', embed_size.value, guild_id)
+        # noinspection PyArgumentList
+        guild_config.embed_size = enums.EmbedSize(data['embed_size'])
 
-            operations = {
-                Operations.add.value: ('UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id),
-                Operations.remove.value: ('UPDATE guilds SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes', value, guild_id),
-                Operations.reset.value: ('UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes', [], guild_id)
-            }
+    async def set_prefixes(self, *, guild_id: int, operation: enums.Operation = enums.Operation.ADD, prefix: str = None) -> None:
 
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            guild_config.prefixes = data['prefixes']
+        guild_config = await self.get_or_create_config(guild_id=guild_id)
 
-        elif editable == Editables.blacklist:
+        if operation in [enums.Operation.ADD, enums.Operation.REMOVE]:
+            op = 'array_append' if operation == enums.Operation.ADD else 'array_remove'
+            data = await self.bot.db.fetchrow(f'UPDATE guilds SET prefixes = {op}(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, guild_id)
+        elif operation == enums.Operation.RESET:
+            data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes', [], guild_id)
+        else:
+            raise ValueError('Invalid operation for editing prefixes.')
 
-            operations = {
-                Operations.set.value:
-                    ('UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, guild_id),
-                Operations.reset.value:
-                    ('UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, 'None', guild_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            guild_config.blacklisted = data['blacklisted']
-            guild_config.blacklisted_reason = data['blacklisted_reason']
-
-        elif editable == Editables.embed_size:
-
-            operations = {
-                Operations.set.value: ('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', value, guild_id),
-                Operations.reset.value: ('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', 'normal', guild_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            guild_config.embed_size = data['embed_size']
-
-        return guild_config
+        guild_config.prefixes = data['prefixes']

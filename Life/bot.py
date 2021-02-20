@@ -57,8 +57,8 @@ class Life(commands.AutoShardedBot):
 
         self.db: Optional[asyncpg.Pool] = None
         self.redis: Optional[aredis.StrictRedis] = None
-        self.mystbin: Optional[mystbin.Client] = None
 
+        self.mystbin: mystbin.Client = mystbin.Client()
         self.user_manager: user_manager.UserManager = user_manager.UserManager(bot=self)
         self.guild_manager: guild_manager.GuildManager = guild_manager.GuildManager(bot=self)
         self.reminder_manager: reminder_manager.ReminderManager = reminder_manager.ReminderManager(bot=self)
@@ -76,7 +76,7 @@ class Life(commands.AutoShardedBot):
         if not message.guild:
             return commands.when_mentioned_or(config.PREFIX, 'I-', '')(self, message)
 
-        guild_config = self.guild_manager.get_guild_config(guild_id=message.guild.id)
+        guild_config = self.guild_manager.get_config(guild_id=message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
 
     async def start(self, *args, **kwargs) -> None:

@@ -41,12 +41,11 @@ class ReminderManager:
         reminders = await self.bot.db.fetch('SELECT * FROM reminders order by datetime')
         for reminder_data in reminders:
 
-            user_config = await self.bot.user_manager.get_or_create_user_config(user_id=reminder_data['user_id'])
-
             reminder = objects.Reminder(data=reminder_data)
             if not reminder.done:
                 await self.schedule_reminder(reminder=reminder)
 
+            user_config = await self.bot.user_manager.get_or_create_config(user_id=reminder.user_id)
             user_config.reminders[reminder.id] = reminder
 
         __log__.info(f'[REMINDER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
@@ -66,7 +65,7 @@ class ReminderManager:
             __log__.warning(f'[REMINDER MANAGER] Attempted reminder with id \'{reminder.id}\' but user with \'{reminder.user_id}\' was not found.')
             return
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user.id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user.id)
 
         embed = discord.Embed(colour=user_config.colour,
                               description=f'**Reminder:**\n'
@@ -84,17 +83,18 @@ class ReminderManager:
 
     async def get_reminder(self, *, user_id: int, reminder_id: int) -> Optional[objects.Reminder]:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
         return user_config.reminders.get(reminder_id)
 
     async def create_reminder(self, *, user_id: int, datetime: DateTime, content: str, jump_url: str = None) -> objects.Reminder:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 
         data = await self.bot.db.fetchrow('INSERT INTO reminders (user_id, datetime, content, jump_url) VALUES ($1, $2, $3, $4) RETURNING *', user_id, datetime, content, jump_url)
-        __log__.info(f'[REMINDER MANAGER] Created reminder with id \'{data["id"]}\'for user with id \'{user_id}\'')
-
         reminder = objects.Reminder(data=data)
+
+        __log__.info(f'[REMINDER MANAGER] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'')
+
         if not reminder.done:
             await self.schedule_reminder(reminder=reminder)
 
@@ -103,7 +103,8 @@ class ReminderManager:
 
     async def delete_reminder(self, user_id: int, reminder_id: int) -> None:
 
-        user_config = await self.bot.user_manager.get_or_create_user_config(user_id=user_id)
+        user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
+
         reminder = await self.get_reminder(user_id=user_id, reminder_id=reminder_id)
         if not reminder:
             return

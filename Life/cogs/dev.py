@@ -13,18 +13,16 @@
 import collections
 import sys
 
-import config
-import time
-
 import discord
 import humanize
 import pkg_resources
 import setproctitle
 from discord.ext import commands
 
+import config
+import time
 from bot import Life
 from utilities import context, converters, exceptions
-from utilities.enums import Editables, Operations
 
 
 class Dev(commands.Cog):
@@ -77,7 +75,7 @@ class Dev(commands.Cog):
     @dev.command(name='cleanup', aliases=['clean'], hidden=True)
     async def dev_cleanup(self, ctx: context.Context, limit: int = 50) -> None:
         """
-        Cleans up the bots messages.
+        Clean up the bots messages.
 
         `limit`: The amount of messages to check back through. Defaults to 50.
         """
@@ -90,10 +88,10 @@ class Dev(commands.Cog):
         await ctx.send(f'Found and deleted `{len(messages)}` of my message(s) out of the last `{limit}` message(s).', delete_after=3)
 
     @commands.is_owner()
-    @dev.command(name='guilds', aliases=['guildlist', 'gl'], hidden=True)
+    @dev.command(name='guilds', hidden=True)
     async def dev_guilds(self, ctx: context.Context, guilds: int = 20) -> None:
         """
-        Displays a list of guilds the bot is in.
+        Display a list of guilds the bot is in.
 
         `guilds`: The amount of guilds to show per page.
         """
@@ -121,6 +119,7 @@ class Dev(commands.Cog):
 
         event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
         events_total = sum(event_stats.values())
+        # noinspection PyUnresolvedReferences
         events_per_second = round(events_total / round(time.time() - self.bot.start_time))
 
         description = [f'```py\n{events_total} socket events observed at a rate of {events_per_second} per second.\n']
@@ -141,30 +140,22 @@ class Dev(commands.Cog):
 
         await ctx.send(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
 
-    @dev_blacklist.group(name='user', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_user(self, ctx: context.Context) -> None:
+    @dev_blacklist.group(name='users', aliases=['user', 'u'], hidden=True, invoke_without_command=True)
+    async def dev_blacklist_users(self, ctx: context.Context) -> None:
         """
         Display a list of blacklisted users.
         """
 
-        blacklist = {user_id: user_config for user_id, user_config in self.bot.user_manager.configs.items() if user_config.blacklisted is True}
-        blacklisted = []
-
-        if not blacklist:
+        blacklisted = [user_config for user_config in self.bot.user_manager.configs.values() if user_config.blacklisted is True]
+        if not blacklisted:
             raise exceptions.ArgumentError('There are no blacklisted users.')
 
-        for user_id, user_config in blacklist.items():
-            try:
-                user = await self.bot.fetch_user(user_id)
-                blacklisted.append(f'{user.id:<19} |{user.name:<32} |{user_config.blacklisted_reason}')
-            except discord.NotFound:
-                blacklisted.append(f'{user_id:<19} |{"Not found":<32} |{user_config.blacklisted_reason}')
+        entries = [f'{user_config.id:<19} | {user_config.blacklisted_reason}' for user_config in blacklisted]
+        header = 'User id             | Reason\n'
+        await ctx.paginate(entries=entries, per_page=15, header=header, codeblock=True)
 
-        header = 'User id             |Name                             |Reason\n'
-        await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
-
-    @dev_blacklist_user.command(name='add', hidden=True)
-    async def dev_blacklist_user_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = None) -> None:
+    @dev_blacklist_users.command(name='add', hidden=True)
+    async def dev_blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
         """
         Blacklist a user.
 
@@ -172,57 +163,49 @@ class Dev(commands.Cog):
         `reason`: Reason why the user is being blacklisted.
         """
 
-        if not reason:
-            reason = user.name
+        if reason == 'No reason':
+            reason = f'{user.name} - No reason'
 
-        user_config = self.bot.user_manager.get_user_config(user_id=user.id)
+        user_config = self.bot.user_manager.get_config(user_id=user.id)
         if user_config.blacklisted is True:
-            raise exceptions.ArgumentError(f'`{user} - {user.id}` is already blacklisted.')
+            raise exceptions.ArgumentError(f'That user is already blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.set, value=reason)
-        await ctx.send(f'`{user} - {user.id}` is now blacklisted with reason:\n\n`{reason}`')
+        await self.bot.user_manager.set_blacklisted(user_id=user.id, reason=reason)
+        await ctx.send(f'Blacklisted user `{user.id}` with reason:\n\n`{reason}`')
 
-    @dev_blacklist_user.command(name='remove', hidden=True)
-    async def dev_blacklist_user_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
+    @dev_blacklist_users.command(name='remove', hidden=True)
+    async def dev_blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
         """
         Unblacklist a user.
 
         `user`: The user to remove from the blacklist.
         """
 
-        user_config = self.bot.user_manager.get_user_config(user_id=user.id)
+        user_config = self.bot.user_manager.get_config(user_id=user.id)
         if user_config.blacklisted is False:
-            raise exceptions.ArgumentError(f'`{user} - {user.id}` is not blacklisted.')
+            raise exceptions.ArgumentError(f'That user is not blacklisted.')
 
-        await self.bot.user_manager.edit_user_config(user_id=user.id, editable=Editables.blacklist, operation=Operations.reset)
-        await ctx.send(f'`{user} - {user.id}` is now unblacklisted.')
+        await self.bot.user_manager.set_blacklisted(user_id=user.id, blacklisted=False)
+        await ctx.send(f'Unblacklisted user `{user.id}`.')
 
-    @dev_blacklist.group(name='guild', hidden=True, invoke_without_command=True)
-    async def dev_blacklist_guild(self, ctx: context.Context) -> None:
+    @dev_blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
+    async def dev_blacklist_guilds(self, ctx: context.Context) -> None:
         """
         Display a list of blacklisted guilds.
         """
 
-        blacklist = {guild_id: guild_config for guild_id, guild_config in self.bot.guild_manager.configs.items() if guild_config.blacklisted is True}
-        blacklisted = []
-
-        if not blacklist:
+        blacklisted = [guild_config for guild_config in self.bot.guild_manager.configs.values() if guild_config.blacklisted is True]
+        if not blacklisted:
             raise exceptions.ArgumentError('There are no blacklisted guilds.')
 
-        for guild_id, guild_config in blacklist.items():
-            guild = self.bot.get_guild(guild_id)
-            if guild is not None:
-                blacklisted.append(f'{guild.id:<19} |{guild.name:<32} |{guild_config.blacklisted_reason}')
-            else:
-                blacklisted.append(f'{guild_id:<19} |{"Not found":<32} |{guild_config.blacklisted_reason}')
+        entries = [f'{guild_config.id:<19} | {guild_config.blacklisted_reason}' for guild_config in blacklisted]
+        header = 'Guild id            | Reason\n'
+        await ctx.paginate(entries=entries, per_page=10, header=header, codeblock=True)
 
-        header = 'Guild id            |Name                             |Reason\n'
-        await ctx.paginate(entries=blacklisted, per_page=10, header=header, codeblock=True)
-
-    @dev_blacklist_guild.command(name='add', hidden=True)
-    async def dev_blacklist_guild_add(self, ctx: context.Context, guild_id: int, *, reason: str = None) -> None:
+    @dev_blacklist_guilds.command(name='add', hidden=True)
+    async def dev_blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: str = 'No reason') -> None:
         """
-        Add a guild to the blacklist.
+        Blacklist a guild.
 
         `guild`: The guild to add to the blacklist.
         `reason`: Reason why the guild is being blacklisted.
@@ -231,26 +214,19 @@ class Dev(commands.Cog):
         if 17 > guild_id > 20:
             raise exceptions.ArgumentError('That is not a valid guild id.')
 
-        guild = self.bot.get_guild(guild_id)
+        if (guild := self.bot.get_guild(guild_id)) and reason == 'No reason':
+            reason = f'{guild.name} - No reason'
+            await guild.leave()
 
-        if guild:
-            guild_name = guild.name
-            if not reason:
-                reason = f'{guild.name}'
-        else:
-            guild_name = 'Not found'
-            if not reason:
-                reason = 'No reason'
-
-        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
+        guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
         if guild_config.blacklisted is True:
-            raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is already blacklisted.')
+            raise exceptions.ArgumentError(f'The guild is already blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.set, value=reason)
-        await ctx.send(f'The guild `{guild_name} - {guild_id}` is now blacklisted with reason:\n\n`{reason}`')
+        await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, reason=reason)
+        await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
 
-    @dev_blacklist_guild.command(name='remove', hidden=True)
-    async def dev_blacklist_guild_remove(self, ctx: context.Context, guild_id: int) -> None:
+    @dev_blacklist_guilds.command(name='remove', hidden=True)
+    async def dev_blacklist_guilds_remove(self, ctx: context.Context, guild_id: int) -> None:
         """
         Unblacklist a guild.
 
@@ -260,15 +236,12 @@ class Dev(commands.Cog):
         if 17 > guild_id > 20:
             raise exceptions.ArgumentError('That is not a valid guild id.')
 
-        guild = self.bot.get_guild(guild_id)
-        guild_name = guild.name if guild else 'Not found'
-
-        guild_config = self.bot.guild_manager.get_guild_config(guild_id=guild_id)
+        guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
         if guild_config.blacklisted is False:
-            raise exceptions.ArgumentError(f'The guild `{guild_name} - {guild_id}` is not blacklisted.')
+            raise exceptions.ArgumentError(f'That guild is not blacklisted.')
 
-        await self.bot.guild_manager.edit_guild_config(guild_id=guild_id, editable=Editables.blacklist, operation=Operations.reset)
-        await ctx.send(f'The guild `{guild_name} - {guild_id}` is now unblacklisted.')
+        await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, blacklisted=False)
+        await ctx.send(f'Unblacklisted guild `{guild_id}`.')
 
 
 def setup(bot: Life):

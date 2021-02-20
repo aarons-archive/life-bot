@@ -16,16 +16,15 @@ import io
 import logging
 import math
 import os
-import random
-from typing import Any, List, Literal, TYPE_CHECKING, Union
+from typing import List, Literal, TYPE_CHECKING, Union
 
 import discord
 import pendulum
 from PIL import Image, ImageDraw, ImageFont
 from discord.ext import tasks
+from pendulum import DateTime
 
-from utilities import exceptions, objects
-from utilities.enums import Editables, Operations
+from utilities import enums, exceptions, objects
 
 if TYPE_CHECKING:
     from bot import Life
@@ -47,7 +46,7 @@ class UserManager:
 
         configs = await self.bot.db.fetch('SELECT * FROM users')
         for config in configs:
-            self.configs[config['id']] = objects.UserConfig(data=dict(config))
+            self.configs[config['id']] = objects.UserConfig(data=config)
 
         __log__.info(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
         print(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
@@ -71,7 +70,7 @@ class UserManager:
                 query = ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
                 await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *[getattr(user_config, attribute.value) for attribute in user_config.requires_db_update])
 
-                user_config.requires_db_update = []
+                user_config.requires_db_update = set()
 
     @update_database.before_loop
     async def before_update_database(self) -> None:
@@ -79,182 +78,117 @@ class UserManager:
 
     #
 
-    async def create_user_config(self, *, user_id: int) -> objects.UserConfig:
+    async def create_config(self, *, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
-        self.configs[user_id] = objects.UserConfig(data=dict(data))
+        self.configs[user_id] = objects.UserConfig(data=data)
 
         __log__.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
         return self.configs[user_id]
 
-    def get_user_config(self, *, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+    async def get_or_create_config(self, *, user_id: int) -> objects.UserConfig:
+
+        if isinstance(user_config := self.get_config(user_id=user_id), objects.DefaultUserConfig):
+            user_config = await self.create_config(user_id=user_id)
+
+        return user_config
+
+    def get_config(self, *, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
         return self.configs.get(user_id, self.default_config)
-
-    async def get_or_create_user_config(self, *, user_id: int) -> objects.UserConfig:
-
-        user_config = self.get_user_config(user_id=user_id)
-        if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.create_user_config(user_id=user_id)
-
-        return user_config
-
-    async def edit_user_config(self, *, user_id: int, editable: Editables, operation: Operations, value: Any = None) -> objects.UserConfig:
-
-        user_config = self.get_user_config(user_id=user_id)
-        if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.create_user_config(user_id=user_id)
-
-        __log__.info(f'[USER MANAGERS] Edited user config for user with id \'{user_id}\'. Editable: {editable.value} | Operation: {operation.value} | Value: {value}')
-
-        if editable == Editables.colour:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(value).strip("#")}', user_id),
-                Operations.reset.value: ('UPDATE users SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(discord.Colour.gold()).strip("#")}', user_id),
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.colour = discord.Colour(int(data['colour'], 16))
-
-        elif editable == Editables.blacklist:
-
-            operations = {
-                Operations.set.value:
-                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', True, value, user_id),
-                Operations.reset.value:
-                    ('UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason', False, 'None', user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.blacklisted = data['blacklisted']
-            user_config.blacklisted_reason = data['blacklisted_reason']
-
-        elif editable == Editables.timezone:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET timezone = $1 WHERE id = $2 RETURNING timezone', value, user_id),
-                Operations.reset.value: ('UPDATE users SET timezone = $1 WHERE id = $2 RETURNING timezone', 'UTC', user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.timezone = pendulum.timezone(data['timezone'])
-
-        elif editable == Editables.timezone_private:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', True, user_id),
-                Operations.reset.value: ('UPDATE users SET timezone_private = $1 WHERE id = $2 RETURNING timezone_private', False, user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.timezone_private = data['timezone_private']
-
-        elif editable == Editables.xp:
-
-            if operation.value == 'add':
-                user_config.xp += value
-            elif operation.value == 'minus':
-                user_config.xp -= value
-            elif operation.value == 'set':
-                user_config.xp = value
-
-            if Editables.xp not in user_config.requires_db_update:
-                user_config.requires_db_update.append(Editables.xp)
-
-        elif editable == Editables.coins:
-
-            if operation.value == 'add':
-                user_config.coins += value
-            elif operation.value == 'minus':
-                user_config.coins -= value
-            elif operation.value == 'set':
-                user_config.coins = value
-
-            if Editables.coins not in user_config.requires_db_update:
-                user_config.requires_db_update.append(Editables.coins)
-
-        elif editable == Editables.level_up_notifications:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', True, user_id),
-                Operations.reset.value: ('UPDATE users SET level_up_notifications = $1 WHERE id = $2 RETURNING level_up_notifications', False, user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.level_up_notifications = data['level_up_notifications']
-
-        elif editable in {Editables.daily_collected, Editables.weekly_collected, Editables.monthly_collected}:
-
-            operations = {
-                Operations.set.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}' , value, user_id),
-                Operations.reset.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', pendulum.now(tz='UTC'), user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            setattr(user_config, editable.value, pendulum.instance(data[editable.value], tz='UTC'))
-
-        elif editable in {Editables.daily_streak, Editables.weekly_streak, Editables.monthly_streak}:
-
-            value = getattr(user_config, editable.value)
-
-            operations = {
-                Operations.add.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', value + 1, user_id),
-                Operations.reset.value: (f'UPDATE users SET {editable.value} = $1 WHERE id = $2 RETURNING {editable.value}', 0, user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            setattr(user_config, editable.value, data[editable.value])
-
-        elif editable == Editables.birthday:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET birthday = $1 WHERE id = $2 RETURNING birthday', value, user_id),
-                Operations.reset.value: ('UPDATE users SET birthday = $1 WHERE id = $2 RETURNING birthday', pendulum.datetime(year=2020, month=1, day=1), user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.birthday = pendulum.parse(data['birthday'].isoformat(), tz='UTC')
-
-        elif editable == Editables.birthday_private:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', True, user_id),
-                Operations.reset.value: ('UPDATE users SET birthday_private = $1 WHERE id = $2 RETURNING birthday_private', False, user_id)
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.birthday_private = data['birthday_private']
-
-        elif editable == Editables.spotify_refresh_token:
-
-            operations = {
-                Operations.set.value: ('UPDATE users SET spotify_refresh_token = $1 WHERE id = $2 RETURNING spotify_refresh_token', value, user_id),
-                Operations.reset.value: ('UPDATE users SET spotify_refresh_token = $1 WHERE id = $2 RETURNING spotify_refresh_token', None, user_id),
-            }
-
-            data = await self.bot.db.fetchrow(*operations[operation.value])
-            user_config.spotify_refresh_token = data['spotify_refresh_token']
-
-        return user_config
 
     #
 
-    async def add_xp(self, *, user_id: int) -> None:
+    async def set_blacklisted(self, *, user_id: int, blacklisted: bool = True, reason: str = None) -> None:
 
-        if await self.bot.redis.exists(f'{user_id}_xp_gain') is True:
-            return
+        user_config = await self.get_or_create_config(user_id=user_id)
 
-        user_config = self.get_user_config(user_id=user_id)
-        if isinstance(user_config, objects.DefaultUserConfig):
-            user_config = await self.create_user_config(user_id=user_id)
+        query = 'UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
+        data = await self.bot.db.fetchrow(query, blacklisted, reason, user_id)
+        user_config.blacklisted = data['blacklisted']
+        user_config.blacklisted_reason = data['blacklisted_reason']
 
-        xp = random.randint(10, 25)
+    async def set_colour(self, *, user_id: int, colour: str = str(discord.Colour.gold())) -> None:
 
-        if xp >= user_config.next_level_xp:
-            self.bot.dispatch('xp_level_up', user_id, user_config)
+        user_config = await self.get_or_create_config(user_id=user_id)
 
-        await self.edit_user_config(user_id=user_id, editable=Editables.xp, operation=Operations.add, value=xp)
-        await self.bot.redis.setex(name=f'{user_id}_xp_gain', time=60, value=None)
+        data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{colour.strip("#")}', user_id)
+        user_config.colour = discord.Colour(int(data['colour'], 16))
+
+    async def set_timezone(self, *, user_id: int, timezone: str = None, private: bool = None) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+        timezone = str(user_config.timezone) if timezone is None else timezone
+        private = user_config.timezone_private if private is None else private
+
+        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone, private, user_id)
+        user_config.timezone = pendulum.timezone(data['timezone'])
+        user_config.timezone_private = private
+
+    async def set_birthday(self, *, user_id: int, birthday: pendulum.datetime = None, private: bool = None) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+        birthday = user_config.birthday if birthday is None else birthday
+        private = user_config.timezone_private if private is None else private
+
+        data = await self.bot.db.fetchrow('UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private', birthday, private, user_id)
+        user_config.birthday = pendulum.parse(data['birthday'].isoformat(), tz='UTC')
+        user_config.birthday_private = private
+
+    async def set_coins(self, *, user_id: int, coins: int, operation: enums.Operation = enums.Operation.ADD) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+
+        if operation == enums.Operation.SET:
+            user_config.coins = coins
+        elif operation == enums.Operation.ADD:
+            user_config.coins += coins
+        elif operation == enums.Operation.MINUS:
+            user_config.coins -= coins
+
+        user_config.requires_db_update.add(enums.Updateable.COINS)
+
+    async def set_xp(self, *, user_id: int, xp: int, operation: enums.Operation = enums.Operation.ADD) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+
+        if operation == enums.Operation.SET:
+            user_config.xp = xp
+        elif operation == enums.Operation.ADD:
+            user_config.xp += xp
+        elif operation == enums.Operation.MINUS:
+            user_config.xp -= xp
+
+        user_config.requires_db_update.add(enums.Updateable.XP)
+
+    async def set_bundle_collection(
+            self, *, user_id: int, type: Union[enums.Updateable.DAILY_COLLECTED, enums.Updateable.WEEKLY_COLLECTED, enums.Updateable.MONTHLY_COLLECTED],
+            when: DateTime = pendulum.now(tz='UTC')
+    ) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+
+        data = await self.bot.db.fetchrow(f'UPDATE users SET {type.value} = $1 WHERE id = $2 RETURNING {type.value}', when, user_id)
+        setattr(user_config, type.value, pendulum.instance(data[type.value], tz='UTC'))
+
+    async def set_bundle_streak(
+            self, *, user_id: int, type: Union[enums.Updateable.DAILY_STREAK, enums.Updateable.WEEKLY_STREAK, enums.Updateable.MONTHLY_STREAK],
+            operation: enums.Operation = enums.Operation.SET, count: int = 0
+    ) -> None:
+
+        user_config = await self.get_or_create_config(user_id=user_id)
+
+        streak = None
+        if operation == enums.Operation.SET:
+            streak = count
+        elif operation == enums.Operation.ADD:
+            streak = getattr(user_config, type.value) + count
+        elif operation == enums.Operation.MINUS:
+            streak = getattr(user_config, type.value) - count
+        elif operation == enums.Operation.RESET:
+            streak = 0
+
+        data = await self.bot.db.fetchrow(f'UPDATE users SET {type.value} = $1 WHERE id = $2 RETURNING {type.value}', streak, user_id)
+        setattr(user_config, type.value, data[type.value])
 
     #
 
@@ -340,36 +274,33 @@ class UserManager:
 
     #
 
+    def leaderboard(self, *, guild_id: int = None, type: Literal['level', 'xp', 'coins']) -> List[objects.UserConfig]:
+
+        if not guild_id:
+            configs = filter(lambda kv: self.bot.get_user(kv[1].id) is not None and getattr(kv[1], type) != 0, self.configs.items())
+
+        else:
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                raise exceptions.ArgumentError('Guild with that id not found.')
+
+            configs = filter(lambda kv: guild.get_member(kv[1].id) is not None and getattr(kv[1], type) != 0, self.configs.items())
+
+        return sorted(configs, key=lambda kv: getattr(kv[1], type), reverse=True)
+
     def rank(self, *, user_id: int, guild_id: int = None) -> int:
 
         if not guild_id:
-
-            configs = sorted(self.configs.items(), key=lambda kv: kv[1].xp, reverse=True)
+            configs = dict(sorted(self.configs.items(), key=lambda kv: kv[1].xp, reverse=True))
 
         else:
-
             guild = self.bot.get_guild(guild_id)
             if not guild:
                 raise exceptions.ArgumentError('Guild with that id not found.')
 
-            user_ids = [member.id for member in guild.members]
-            configs = sorted({user_id: user_config for user_id, user_config in self.configs.items() if user_id in user_ids}.items(), key=lambda kv: kv[1].xp, reverse=True)
+            configs = dict(sorted(filter(lambda kv: guild.get_member(kv[1].id) is not None and kv[1].xp != 0, self.configs.items()), key=lambda kv: kv[1].xp, reverse=True))
 
-        return [config[0] for config in configs].index(user_id) + 1
-
-    def leaderboard(self, *, leaderboard_type: Literal['level', 'xp', 'coins'], guild_id: int = None) -> List[objects.UserConfig]:
-
-        if not guild_id:
-
-            configs = {user_id: config for user_id, config in self.configs.items() if self.bot.get_user(user_id) is not None}.items()
-
-        else:
-
-            guild = self.bot.get_guild(guild_id)
-            if not guild:
-                raise exceptions.ArgumentError('Guild with that id not found.')
-
-            member_ids = [member.id for member in guild.members]
-            configs = {user_id: config for user_id, config in self.configs.items() if user_id in member_ids}.items()
-
-        return sorted(configs, key=lambda kv: getattr(kv[1], leaderboard_type), reverse=True)
+        try:
+            return list(configs.keys()).index(user_id) + 1
+        except ValueError:
+            raise exceptions.ArgumentError('That user does not have a rank yet.')

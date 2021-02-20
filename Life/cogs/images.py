@@ -11,7 +11,7 @@
 #
 
 import random
-import typing
+from typing import Literal, Optional
 
 from discord.ext import commands
 
@@ -26,7 +26,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='edge')
-    async def edge(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1.5) -> None:
+    async def edge(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1.5) -> None:
         """
         Outlines edges within an image.
 
@@ -46,7 +46,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='blur')
-    async def blur(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], amount: float = 2.0) -> None:
+    async def blur(self, ctx: context.Context, image: Optional[converters.ImageConverter], amount: float = 2.0) -> None:
         """
         Blurs the given image.
 
@@ -63,7 +63,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='emboss')
-    async def emboss(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1) -> None:
+    async def emboss(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 3, sigma: float = 1) -> None:
         """
         Converts the image to greyscale and creates a 3d effect.
 
@@ -83,7 +83,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='kuwahara')
-    async def kuwahara(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 2, sigma: float = 1.5) -> None:
+    async def kuwahara(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 2, sigma: float = 1.5) -> None:
         """
         Smooths the given image while preserving edges.
 
@@ -104,7 +104,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='sharpen')
-    async def sharpen(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 8, sigma: float = 4) -> None:
+    async def sharpen(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 8, sigma: float = 4) -> None:
         """
         Sharpens the given image.
 
@@ -125,7 +125,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='spread')
-    async def spread(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 2.0) -> None:
+    async def spread(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 2.0) -> None:
         """
         Replaces each pixel with one from the surrounding area.
 
@@ -142,8 +142,8 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='noise')
-    async def noise(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], attenuate: float = 0.5,
-                    method: str = typing.Literal['uniform', 'gaussian', 'multiplicative_gaussian', 'impulse', 'laplacian', 'poisson', 'random']) -> None:
+    async def noise(self, ctx: context.Context, image: Optional[converters.ImageConverter], attenuate: float = 0.5,
+                    method: Literal['uniform', 'gaussian', 'multiplicative_gaussian', 'impulse', 'laplacian', 'poisson', 'random'] = 'uniform') -> None:
         """
         Adds random noise to the given image.
 
@@ -163,7 +163,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='blueshift')
-    async def blueshift(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], factor: float = 1.25) -> None:
+    async def blueshift(self, ctx: context.Context, image: Optional[converters.ImageConverter], factor: float = 1.25) -> None:
         """
         Creates a moonlight effect by shifting blue colours.
 
@@ -180,7 +180,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='charcoal')
-    async def charcoal(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], radius: float = 1.5, sigma: float = 0.5) -> None:
+    async def charcoal(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 1.5, sigma: float = 0.5) -> None:
         """
         Redraw the image as if it were drawn with charcoal.
 
@@ -201,7 +201,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='colorize')
-    async def colorize(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], colour: commands.ColourConverter = None) -> None:
+    async def colorize(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None) -> None:
         """
         Colorizes the given image with a random colour.
 
@@ -218,7 +218,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='implode')
-    async def implode(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], amount: float = 0.4) -> None:
+    async def implode(self, ctx: context.Context, image: Optional[converters.ImageConverter], amount: float = 0.4) -> None:
         """
         Pulls or pushes pixels from the center the image.
 
@@ -235,7 +235,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='polaroid')
-    async def polaroid(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], angle: float = 0.0, *, caption: str = None) -> None:
+    async def polaroid(self, ctx: context.Context, image: Optional[converters.ImageConverter], angle: float = 0.0, *, caption: str = None) -> None:
         """
         Puts the image in the center of a polaroid-like card.
 
@@ -256,7 +256,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='sepiatone')
-    async def sepia_tone(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], threshold: float = 0.8) -> None:
+    async def sepia_tone(self, ctx: context.Context, image: Optional[converters.ImageConverter], threshold: float = 0.8) -> None:
         """
         Applies a filter that simulates chemical photography.
 
@@ -273,7 +273,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='solarize')
-    async def solarize(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], threshold: float = 0.5) -> None:
+    async def solarize(self, ctx: context.Context, image: Optional[converters.ImageConverter], threshold: float = 0.5) -> None:
         """
         Replaces pixels above the threshold with negated ones.
 
@@ -290,7 +290,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='swirl')
-    async def swirl(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], degree: int = 45) -> None:
+    async def swirl(self, ctx: context.Context, image: Optional[converters.ImageConverter], degree: int = 45) -> None:
         """
         Swirls pixels around the center of the image.
 
@@ -307,7 +307,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='wave')
-    async def wave(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter]) -> None:
+    async def wave(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
         """
         Creates a wave like effect on the image.
 
@@ -320,7 +320,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='flip')
-    async def flip(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter]) -> None:
+    async def flip(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
         """
         Flips the image along the x-axis.
 
@@ -333,7 +333,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='flop')
-    async def flop(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter]) -> None:
+    async def flop(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
         """
         Flips the image along the y-axis.
 
@@ -346,7 +346,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='rotate')
-    async def rotate(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter], degree: int = 45) -> None:
+    async def rotate(self, ctx: context.Context, image: Optional[converters.ImageConverter], degree: int = 45) -> None:
         """
         Rotates the image an amount of degrees.
 
@@ -363,7 +363,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='floor')
-    async def floor(self, ctx: context.Context, image: typing.Optional[converters.ImageConverter]) -> None:
+    async def floor(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
         """
         Warps and tiles the image which makes it like a floor.
 

@@ -55,7 +55,7 @@ class DefaultUserConfig:
 
         self.todos: Dict[int, Todo] = {}
         self.reminders: Dict[int, Reminder] = {}
-        self.requires_db_update = []
+        self.requires_db_update = set()
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig id=\'{self.id}\'>'
@@ -96,7 +96,7 @@ class UserConfig:
 
         self.todos: Dict[int, Todo] = {}
         self.reminders: Dict[int, Reminder] = {}
-        self.requires_db_update = []
+        self.requires_db_update = set()
 
     def __repr__(self) -> str:
         return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour={self.colour} xp={self.xp} level={self.level}>'

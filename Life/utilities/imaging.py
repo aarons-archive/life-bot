@@ -12,7 +12,7 @@
 
 import io
 import multiprocessing
-import typing
+from typing import Any, Union
 
 import aiohttp
 import discord
@@ -26,62 +26,62 @@ from utilities import context
 from utilities.exceptions import ArgumentError, ImageError
 
 
-def edge(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def edge(image: Union[Image, SingleImage], radius: float, sigma: float):
 
     image.canny(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def blur(image: typing.Union[Image, SingleImage], amount: float):
+def blur(image: Union[Image, SingleImage], amount: float):
 
     image.blur(sigma=amount)
     return image, f'Amount: {amount}'
 
 
-def emboss(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def emboss(image: Union[Image, SingleImage], radius: float, sigma: float):
 
     image.transform_colorspace('gray')
     image.emboss(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def kuwahara(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def kuwahara(image: Union[Image, SingleImage], radius: float, sigma: float):
 
     image.kuwahara(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def sharpen(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def sharpen(image: Union[Image, SingleImage], radius: float, sigma: float):
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def spread(image: typing.Union[Image, SingleImage], radius: float):
+def spread(image: Union[Image, SingleImage], radius: float):
 
     image.spread(radius=radius)
     return image, f'Radius: {radius}'
 
 
-def noise(image: typing.Union[Image, SingleImage], method: str, attenuate: float):
+def noise(image: Union[Image, SingleImage], method: str, attenuate: float):
 
     image.noise(method, attenuate=attenuate)
     return image, f'Method: {method} | Attenuate: {attenuate}'
 
 
-def blueshift(image: typing.Union[Image, SingleImage], factor: float):
+def blueshift(image: Union[Image, SingleImage], factor: float):
 
     image.blue_shift(factor=factor)
     return image, f'Factor: {factor}'
 
 
-def charcoal(image: typing.Union[Image, SingleImage], radius: float, sigma: float):
+def charcoal(image: Union[Image, SingleImage], radius: float, sigma: float):
 
     image.charcoal(radius=radius, sigma=sigma)
     return image, f'Radius: {radius} | Sigma: {sigma}'
 
 
-def colorize(image: typing.Union[Image, SingleImage], colour: str):
+def colorize(image: Union[Image, SingleImage], colour: str):
 
     with Color(colour) as image_colour:
         with Color('rgb(50%, 50%, 50%)') as image_alpha:
@@ -90,61 +90,61 @@ def colorize(image: typing.Union[Image, SingleImage], colour: str):
     return image, f'Color: {colour}'
 
 
-def implode(image: typing.Union[Image, SingleImage], amount: float):
+def implode(image: Union[Image, SingleImage], amount: float):
 
     image.implode(amount=amount)
     return image, f'Amount: {amount}'
 
 
-def polaroid(image: typing.Union[Image, SingleImage], angle: float, caption: str):
+def polaroid(image: Union[Image, SingleImage], angle: float, caption: str):
 
     image.polaroid(angle=angle, caption=caption)
     return image, f'Angle: {angle} | Caption: {caption}'
 
 
-def sepiatone(image: typing.Union[Image, SingleImage], threshold: float):
+def sepiatone(image: Union[Image, SingleImage], threshold: float):
 
     image.sepia_tone(threshold=threshold)
     return image, f'Threshold: {threshold}'
 
 
-def solarize(image: typing.Union[Image, SingleImage], threshold: float):
+def solarize(image: Union[Image, SingleImage], threshold: float):
 
     image.solarize(threshold=threshold * image.quantum_range)
     return image, f'Threshold: {threshold}'
 
 
-def swirl(image: typing.Union[Image, SingleImage], degree: float):
+def swirl(image: Union[Image, SingleImage], degree: float):
 
     image.swirl(degree=degree)
     return image, f'Degree: {degree}'
 
 
-def wave(image: typing.Union[Image, SingleImage]):
+def wave(image: Union[Image, SingleImage]):
 
     image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
     return image, ''
 
 
-def flip(image: typing.Union[Image, SingleImage]):
+def flip(image: Union[Image, SingleImage]):
 
     image.flip()
     return image, ''
 
 
-def flop(image: typing.Union[Image, SingleImage]):
+def flop(image: Union[Image, SingleImage]):
 
     image.flop()
     return image, ''
 
 
-def rotate(image: typing.Union[Image, SingleImage], degree: float):
+def rotate(image: Union[Image, SingleImage], degree: float):
 
     image.rotate(degree=degree)
     return image, f'Degree: {degree}'
 
 
-def floor(image: typing.Union[Image, SingleImage]):
+def floor(image: Union[Image, SingleImage]):
 
     image.virtual_pixel = 'tile'
     arguments = (0,            0,            image.width * 0.2, image.height * 0.5,
@@ -180,7 +180,7 @@ image_operations = {
 }
 
 
-def do_edit_image(edit_function: typing.Any, image_bytes: bytes, child_pipe: multiprocessing.Pipe, **kwargs):
+def do_edit_image(edit_function: Any, image_bytes: bytes, child_pipe: multiprocessing.Pipe, **kwargs):
 
     try:
 
