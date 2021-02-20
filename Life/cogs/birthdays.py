@@ -121,14 +121,14 @@ class Birthdays(commands.Cog):
                                 lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
                                 self.bot.user_manager.configs.items()
                         ),
-                        key=lambda config: config[1].birthday
+                        key=lambda config: config[1].next_birthday
                 )
         )
         if not configs:
             raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'Upcoming birthdays:')
-        for user_id, user_config in list(configs.items())[:5]:
+        embed = discord.Embed(colour=ctx.colour, title=f'Upcoming birthdays (First 3): ')
+        for user_id, user_config in list(configs.items())[:3]:
             embed.add_field(
                     name=f'{ctx.guild.get_member(user_id)}',
                     value=f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
@@ -138,6 +138,33 @@ class Birthdays(commands.Cog):
             )
 
         await ctx.send(embed=embed)
+
+    @birthdays.command(name='list')
+    async def birthdays_list(self, ctx: context.Context) -> None:
+        """
+        Display a list of birthdays within the server.
+        """
+
+        configs = dict(
+                sorted(
+                        filter(
+                                lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
+                                self.bot.user_manager.configs.items()
+                        ),
+                        key=lambda config: config[1].next_birthday
+                )
+        )
+        if not configs:
+            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
+
+        entries = [
+            f'**{ctx.guild.get_member(user_id)}**\n'
+            f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
+            f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
+            f'`Current age:` {user_config.age}\n'
+            for user_id, user_config in configs.items()
+        ]
+        await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays: ')
 
     @birthdays.command(name='next')
     async def birthdays_next(self, ctx: context.Context) -> None:
@@ -151,7 +178,7 @@ class Birthdays(commands.Cog):
                                 lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
                                 self.bot.user_manager.configs.items()
                         ),
-                        key=lambda config: config[1].birthday
+                        key=lambda config: config[1].next_birthday
                 )
         )
 
