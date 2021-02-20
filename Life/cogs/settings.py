@@ -33,7 +33,12 @@ class Settings(commands.Cog):
 
         prefixes = ', '.join(f'`{prefix}`' for prefix in ctx.guild_config.prefixes)
 
-        embed = discord.Embed(colour=ctx.guild_config.colour, title=f'Guild config:', description=f'`Prefixes:` {prefixes}')
+        embed = discord.Embed(
+                colour=ctx.guild_config.colour,
+                title=f'Guild settings:',
+                description=f'`Prefixes:` {prefixes}\n'
+                            f'`Embed size:` {ctx.guild_config.embed_size.name.upper()}'
+        )
         embed.add_field(name='Embed colour:', value=f'`<---` `{str(ctx.guild_config.colour).upper()}`')
         await ctx.send(embed=embed)
 
