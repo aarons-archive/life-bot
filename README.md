@@ -5,7 +5,7 @@ Features:
 * Rich command error feedback.
 * Image manipulation/filter commands.
 * Wide range of informational commands.
-* Fully functional music system with spotify support through youtube. (Playlists coming soon:tm:)
+* Fully functional music system with spotify support through youtube. Playlists coming soon:tm:
 * Reminders including support for natural language datetimes. (eg, `do this tomorrow`, `in 2h remember to do this`, `1st january 2021 birthday time!`)
 * Guild and user config management.
 * Birthday tracking.
