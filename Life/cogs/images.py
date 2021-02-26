@@ -374,6 +374,44 @@ class Images(commands.Cog):
             embed = await imaging.edit_image(ctx=ctx, url=image, edit_type='floor')
             await ctx.reply(embed=embed)
 
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='cube')
+    async def cube(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Creates a cube!
+
+        `image`: Can be a members name, id or @mention, an image url or an attachment.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, url=image, edit_type='cube')
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='bounce')
+    async def bounce(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Make the image bounce?
+
+        `image`: Can be a members name, id or @mention, an image url or an attachment.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, url=image, edit_type='bounce')
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='colours', aliases=['colors'])
+    async def colours(self, ctx: context.Context, image: Optional[converters.ImageConverter], *, colours: int = 10) -> None:
+
+        if colours > 1024:
+            raise exceptions.ArgumentError('Number of colours must be less than 1024.')
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, url=image, edit_type='colours', number_colours=colours)
+            await ctx.reply(embed=embed)
+
+
 
 def setup(bot: Life):
     bot.add_cog(Images(bot))

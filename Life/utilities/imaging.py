@@ -12,6 +12,7 @@
 
 import io
 import multiprocessing
+from math import ceil, sqrt
 from typing import Any, Union
 
 import aiohttp
@@ -156,6 +157,104 @@ def floor(image: Union[Image, SingleImage]):
     return image, ''
 
 
+def cube(image: Union[Image, SingleImage]):
+
+    def d3(x: int):
+        return int(x / 3)
+
+    image.resize(1000, 1000)
+    image.alpha_channel = 'opaque'
+
+    top = Image(image)
+    top.resize(d3(1000), d3(860))
+    top.shear(x=-30, background=Color('none'))
+    top.rotate(degree=-30)
+
+    right = Image(image)
+    right.resize(d3(1000), d3(860))
+    right.shear(background=Color('none'), x=30)
+    right.rotate(degree=-30)
+
+    left = Image(image)
+    left.resize(d3(1000), d3(860))
+    left.shear(background=Color('none'), x=-30)
+    left.rotate(degree=30)
+
+    image.resize(width=d3(3000 - 450), height=d3(860 - 100) * 3)
+    image.gaussian_blur(sigma=5)
+
+    image.composite(top, left=d3(500 - 250), top=d3(0 - 230) + d3(118))
+    image.composite(right, left=d3(1000 - 250) - d3(72), top=d3(860 - 230))
+    image.composite(left, left=d3(0 - 250) + d3(68), top=d3(860 - 230))
+
+    top.close()
+    right.close()
+    left.close()
+
+    image.crop(left=80, top=40, right=665, bottom=710)
+    return image, ''
+
+
+def bounce(image: Union[Image, SingleImage]):
+
+    with Image(image) as ball:
+        ball.resize(75, 75)
+
+        image.resize(width=500, height=500)
+        image.format = 'gif'
+
+        h0 = 5  # m/s
+        v = 0  # m/s, current velocity
+        g = 10  # m/s/s
+        t = 0  # starting time
+        dt = 0.005  # time step
+        rho = 0.75  # coefficient of restitution
+        tau = 0.10  # contact time for bounce
+        hmax = h0  # keep track of the maximum height
+        h = h0
+        hstop = 0.01  # stop when bounce is less than 1 cm
+        freefall = True  # state: freefall or in contact
+        t_last = -sqrt(2 * h0 / g)  # time we would have launched to get to h0 at t=0
+        vmax = sqrt(2 * hmax * g)
+        H = []
+        T = []
+        while hmax > hstop:
+            if freefall:
+                hnew = h + v * dt - 0.5 * g * dt * dt
+                if hnew < 0:
+                    t = t_last + 2 * sqrt(2 * hmax / g)
+                    freefall = False
+                    t_last = t + tau
+                    h = 0
+                else:
+                    t += dt
+                    v -= g * dt
+                    h = hnew
+            else:
+                t += tau
+                vmax *= rho
+                v = vmax
+                freefall = True
+                h = 0
+            hmax = 0.5 * vmax * vmax / g
+            H.append(h)
+            T.append(t)
+
+        for y, x in zip(H[::5], T[::5]):
+            with Image(width=500, height=500, background=Color('white')) as frame:
+                frame.composite(ball, top=ceil((image.height - 75) - (y * 75)), left=ceil(x * 75))
+                image.sequence.append(frame)
+
+    image.optimize_transparency()
+    return image, ''
+
+
+def colours(image: Union[Image, SingleImage], number_colours: int = 10):
+
+    image.kmeans(number_colours)
+    return image, f'Colours: {number_colours}'
+
+
 image_operations = {
     'blur': blur,
     'edge': edge,
@@ -176,7 +275,10 @@ image_operations = {
     'flip': flip,
     'flop': flop,
     'rotate': rotate,
-    'floor': floor
+    'floor': floor,
+    'cube': cube,
+    'bounce': bounce,
+    'colours': colours
 }
 
 
