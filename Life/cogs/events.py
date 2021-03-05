@@ -45,7 +45,6 @@ class Events(commands.Cog):
             commands.PartialEmojiConversionFailure: 'The argument `{argument}` did not match the partial emoji format.',
             commands.BadBoolArgument:               'The argument `{argument}` was not a valid True or False value.',
             commands.BadColourArgument:             'The argument `{argument}` was not a valid colour type.',
-            BadLiteralArgument:                     'The argument `{argument}` must be one of {", ".join([f"`{arg}`" for arg in argument])}.',
             commands.BadArgument:                   'I was unable to convert an argument that you used.',
         }
 
@@ -110,7 +109,10 @@ class Events(commands.Cog):
 
         message = None
 
-        if isinstance(error, commands.BadArgument):
+        if isinstance(error, BadLiteralArgument):
+            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.'
+
+        elif isinstance(error, commands.BadArgument):
             message = self.BAD_ARGUMENT_ERRORS.get(type(error), 'None').format(argument=getattr(error, 'argument', 'None'))
 
         elif isinstance(error, commands.CommandOnCooldown):
