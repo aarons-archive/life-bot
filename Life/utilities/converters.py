@@ -24,6 +24,8 @@ from pendulum.tz.timezone import Timezone
 
 import config
 from utilities import context, exceptions
+from discord.ext.alternatives import asset_converter
+
 
 
 class ChannelEmojiConverter(commands.Converter, ABC):
@@ -135,24 +137,37 @@ class ImageConverter(commands.Converter, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
 
-        url = None
-
         try:
             member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
         except commands.BadArgument:
             pass
         else:
-            url = str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
+            await ctx.send(f'Editing the avatar of `{member}`. If this is a mistake please specify the user/image you would like to edit before any extra arguments.')
+            return str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
 
-        if url is None:
-            check = yarl.URL(argument)
-            if check.scheme and check.host:
-                url = argument
+        if (check := yarl.URL(argument)) and check.scheme and check.host:
+            return argument
 
-        if url is None:
-            raise commands.ConversionError
+        try:
+            emoji = await commands.EmojiConverter().convert(ctx=ctx, argument=str(argument))
+        except commands.EmojiNotFound:
+            pass
+        else:
+            return str(emoji.url)
 
-        return url
+        try:
+            partial_emoji = await commands.PartialEmojiConverter().convert(ctx=ctx, argument=str(argument))
+        except commands.PartialEmojiConversionFailure:
+            pass
+        else:
+            return str(partial_emoji.url)
+
+        url = f'https://twemoji.maxcdn.com/v/latest/72x72/{ord(argument[0]):x}.png'
+        async with ctx.bot.session.get(url) as response:
+            if response.status == 200:
+                return url
+
+        raise commands.ConversionError
 
 
 class PrefixConverter(commands.clean_content, ABC):

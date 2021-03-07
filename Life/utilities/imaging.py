@@ -284,8 +284,6 @@ def cube(image: Union[Image, SingleImage]) -> Optional[str]:
     return ''
 
 
-
-
 IMAGE_OPERATIONS = {
     'adaptive_blur': adaptive_blur,
     'adaptive_sharpen': adaptive_sharpen,
@@ -350,7 +348,6 @@ def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, im
                     with x as image_frame:
                         text = edit_function(image_frame, **kwargs)
                 image.optimize_transparency()
-                image.optimize_layers()
 
             image.save(file=image_edited_buffer)
 
@@ -412,12 +409,7 @@ async def _upload_image(*, ctx: context.Context, image: io.BytesIO, image_format
 #
 
 
-async def edit_image(*, ctx: context.Context, edit_type: str,  url: str = None, **kwargs) -> discord.Embed:
-
-    if ctx.message.attachments:
-        url = ctx.message.attachments[0].url
-    if url is None:
-        url = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
+async def edit_image(*, ctx: context.Context, edit_type: str,  url: str, **kwargs) -> discord.Embed:
 
     image_bytes = await _request_image_bytes(ctx=ctx, url=url)
     parent_pipe, child_pipe = multiprocessing.Pipe()
