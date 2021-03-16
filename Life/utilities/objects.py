@@ -111,7 +111,11 @@ class UserConfig:
 
     @property
     def next_birthday(self) -> pendulum.datetime:
-        return self.birthday.replace(year=self.birthday.year + self.age + 1)
+
+        now = pendulum.now(tz='UTC')
+
+        return now.replace(month=self.birthday.month, day=self.birthday.day + 1, hour=0, minute=0, second=0, microsecond=0) if now < self.birthday.add(years=self.age) else \
+            now.replace(month=self.birthday.month, day=self.birthday.day + 1, year=self.birthday.year + self.age + 1, hour=0, minute=0, second=0, microsecond=0)
 
     @property
     def level(self) -> int:
