@@ -24,8 +24,6 @@ from pendulum.tz.timezone import Timezone
 
 import config
 from utilities import context, exceptions
-from discord.ext.alternatives import asset_converter
-
 
 
 class ChannelEmojiConverter(commands.Converter, ABC):
