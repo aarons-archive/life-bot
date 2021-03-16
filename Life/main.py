@@ -32,7 +32,6 @@ def logger():
         'cogs':      None,
         'utilities': None,
         'slate':     None,
-        'aiohttp':   None
     }
 
     for log_name in loggers:
@@ -53,7 +52,6 @@ def logger():
     loggers['cogs'].setLevel(logging.DEBUG)
     loggers['utilities'].setLevel(logging.DEBUG)
     loggers['slate'].setLevel(logging.DEBUG)
-    loggers['aiohttp'].setLevel(logging.DEBUG)
 
     try:
         yield
