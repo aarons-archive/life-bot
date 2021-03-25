@@ -187,7 +187,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self) -> None:
 
-        print(f'\n[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
+        print(f'[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
         __log__.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
     #
