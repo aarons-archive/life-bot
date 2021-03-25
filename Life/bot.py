@@ -13,6 +13,7 @@
 import collections
 import logging
 import time
+import traceback
 from typing import List, Optional, Union
 
 import aiohttp
@@ -113,13 +114,15 @@ class Life(commands.AutoShardedBot):
                 print(f'[EXTENSIONS] Loaded - {extension}')
             except commands.ExtensionNotFound:
                 __log__.warning(f'[EXTENSIONS] Extension not found - {extension}')
-                print(f'[EXTENSIONS] Extension not found - {extension}')
+                print(f'\n[EXTENSIONS] Extension not found - {extension}\n')
             except commands.NoEntryPointError:
                 __log__.warning(f'[EXTENSIONS] No entry point - {extension}')
-                print(f'[EXTENSIONS] No entry point - {extension}')
+                print(f'\n[EXTENSIONS] No entry point - {extension}\n')
             except commands.ExtensionFailed as error:
                 __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
-                print(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
+                print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
+
+        print('')
 
         await super().start(*args, **kwargs)
 
