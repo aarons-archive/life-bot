@@ -17,12 +17,12 @@ from typing import List, Optional
 
 import async_timeout
 import discord
-import slate
 import spotify
 import yarl
 from spotify.errors import HTTPException
 
 import config
+import slate
 from bot import Life
 from cogs.voice.custom import objects, queue
 from utilities import context, exceptions, utils
@@ -30,7 +30,7 @@ from utilities import context, exceptions, utils
 __log__ = logging.getLogger('slate.player')
 
 
-class Player(slate.Player):
+class Player(slate.BasePlayer):
 
     def __init__(self, bot: Life, channel: discord.VoiceChannel) -> None:
         super().__init__(bot, channel)
@@ -53,17 +53,17 @@ class Player(slate.Player):
     async def connect(self, *, timeout: float, reconnect: bool) -> None:
 
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True)
-        __log__.info(f'PLAYER | Player for guild {self.guild!r} joined channel {self.channel!r}.')
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' joined channel \'{self.channel.id}\'.')
 
         self.task = self.bot.loop.create_task(self.player_loop())
 
-    async def disconnect(self, *, force: bool = True) -> None:
+    async def disconnect(self, *, force: bool = False) -> None:
 
-        if not force and not self.is_connected:
+        if not self.is_connected and not force:
             return
 
         await self.guild.change_voice_state(channel=None)
-        __log__.info(f'PLAYER | Player for guild {self.guild!r} disconnected from voice channel {self.channel!r}.')
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' disconnected from voice channel \'{self.channel.id}\'.')
 
         self.task.cancel()
         self.task = None
@@ -77,21 +77,21 @@ class Player(slate.Player):
         self.channel = channel
 
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True)
-        __log__.info(f'PLAYER | Player for guild {self.guild!r} has reconnected to voice channel: {channel} ')
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' joined channel \'{self.channel}\'.')
 
         self.task = self.bot.loop.create_task(self.player_loop())
 
-    async def destroy(self) -> None:
+    async def destroy(self, *, force: bool = False) -> None:
 
-        await self.disconnect()
+        await self.disconnect(force=force)
         await self.cleanup()
 
         if self.node.is_connected:
-            await self.stop()
+            await self.stop(force=force)
             await self.node._send(op='destroy', guildId=str(self.guild.id))
 
-        __log__.info(f'PLAYER | Player for guild {self.guild!r} was destroyed.')
         del self.node.players[self.guild.id]
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' was destroyed.')
 
     #
 
