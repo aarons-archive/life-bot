@@ -79,7 +79,6 @@ class Economy(commands.Cog):
 
     @commands.Cog.listener()
     async def on_xp_level_up(self, user_config: objects.UserConfig) -> None:
-        pass
 
         # TODO Implement notifications stuff.
 
@@ -87,7 +86,7 @@ class Economy(commands.Cog):
         user = self.bot.get_user(id=user_id)
         try:
             await user.send(f'Congrats, you are now level `{user_config.level}`!')
-        
+
         except discord.Forbidden:
             return
         """

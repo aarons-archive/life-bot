@@ -76,7 +76,6 @@ class Player(slate.Player):
 
     async def destroy(self, *, force: bool = False) -> None:
 
-
         if not self.is_connected and not force:
             return
 

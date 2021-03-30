@@ -67,11 +67,12 @@ class ReminderManager:
 
         user_config = await self.bot.user_manager.get_or_create_config(user_id=user.id)
 
-        embed = discord.Embed(colour=user_config.colour,
-                              description=f'**Reminder:**\n'
-                                          f'You said this `{utils.format_difference(datetime=reminder.created_at, suppress=[])}` ago:\n'
-                                          f'{reminder.content}\n\n'
-                                          f'**[Jump to message]({reminder.jump_url})**'
+        embed = discord.Embed(
+                colour=user_config.colour,
+                description=f'**Reminder:**\n'
+                            f'You said this `{utils.format_difference(datetime=reminder.created_at, suppress=[])}` ago:\n'
+                            f'{reminder.content}\n\n'
+                            f'**[Jump to message]({reminder.jump_url})**'
         )
 
         try:

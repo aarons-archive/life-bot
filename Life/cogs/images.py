@@ -39,7 +39,7 @@ commands.Command.transform = _transform
 
 
 class Images(commands.Cog):
-    
+
     def __init__(self, bot: Life):
         self.bot = bot
 

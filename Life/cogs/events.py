@@ -212,7 +212,6 @@ class Events(commands.Cog):
 
         await self.bot.process_commands(after)
 
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
 
