@@ -74,9 +74,8 @@ def charcoal(image: Union[Image, SingleImage], radius: float, sigma: float) -> O
 
 def colorize(image: Union[Image, SingleImage], colour: str = None) -> Optional[str]:
 
-    with Color(colour) as color:
-        with Color('rgb(50%, 50%, 50%)') as alpha:
-            image.colorize(color=color, alpha=alpha)
+    with Color(colour) as color, Color('rgb(50%, 50%, 50%)') as alpha:
+        image.colorize(color=color, alpha=alpha)
 
     return f'Colour: {colour}'
 

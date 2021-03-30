@@ -183,8 +183,8 @@ class EmbedPaginator(BasePaginator):
         self.url = kwargs.get('url', '')
 
         self.colour = kwargs.get('colour', self.ctx.colour)
-        self.image = kwargs.get('image', None)
-        self.thumbnail = kwargs.get('thumbnail', None)
+        self.image = kwargs.get('image')
+        self.thumbnail = kwargs.get('thumbnail')
 
         self.embed = discord.Embed(colour=self.colour, title=self.title)
         self.embed.set_footer(text=self.embed_footer)

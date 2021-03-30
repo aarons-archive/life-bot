@@ -241,7 +241,7 @@ class Information(commands.Cog):
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
         entries = [
-            f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}'
+            f'{await converters.ChannelEmojiConverter().convert(ctx=ctx, argument=channel)}{channel}'
             for channel in sorted(channels, key=lambda channel: channel.position)
         ]
 
@@ -249,7 +249,7 @@ class Information(commands.Cog):
         for category in sorted(categories, key=lambda category: category.position):
             entries.append(f'<:category:738960756233601097> **{category}**')
             for channel in category.channels:
-                entries.append(f'{space}{await converters.ChannelEmojiConverter().convert(ctx=ctx, channel=channel)}{channel}')
+                entries.append(f'{space}{await converters.ChannelEmojiConverter().convert(ctx=ctx, argument=channel)}{channel}')
 
         await ctx.paginate_embed(entries=entries, per_page=30, title=f'`{guild.name}`\'s channels.')
 

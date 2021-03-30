@@ -32,7 +32,7 @@ EXTENSIONS = [
     'cogs.systemcollapse',
 ]
 OWNER_IDS = {
-    0, 0, 0, 0, 0
+    0
 }
 
 

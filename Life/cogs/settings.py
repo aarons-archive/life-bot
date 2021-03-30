@@ -57,7 +57,7 @@ class Settings(commands.Cog):
             await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=str(ctx.guild_config.colour).upper()))
             return
 
-        if await self.bot.is_owner(person=ctx.author) is False:
+        if await self.bot.is_owner(ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
         old_colour = ctx.guild_config.colour
@@ -91,7 +91,7 @@ class Settings(commands.Cog):
         if not operation:
             await ctx.send(f'This servers embed size is `{ctx.guild_config.embed_size.name.title()}`.')
 
-        if await self.bot.is_owner(person=ctx.author) is False:
+        if await self.bot.is_owner(ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
         if operation == 'set':
@@ -124,7 +124,7 @@ class Settings(commands.Cog):
             await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=ctx.guild_config.colour, title=f'List of usable prefixes.')
             return
 
-        if await self.bot.is_owner(person=ctx.author) is False:
+        if await self.bot.is_owner(ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
         if operation == 'add':
