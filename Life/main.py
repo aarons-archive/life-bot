@@ -44,7 +44,7 @@ def logger():
         if os.path.isfile(f'logs/{log_name}.log'):
             handler.doRollover()
 
-        formatter = logging.Formatter(fmt=f'%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p')
+        formatter = logging.Formatter(fmt='%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p')
         handler.setFormatter(formatter)
 
     loggers['discord'].setLevel(logging.INFO)

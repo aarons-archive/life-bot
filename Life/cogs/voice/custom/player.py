@@ -99,7 +99,7 @@ class Player(slate.Player):
 
         embed = discord.Embed(colour=self.current.ctx.colour)
         embed.set_thumbnail(url=self.current.thumbnail)
-        embed.add_field(name=f'Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
+        embed.add_field(name='Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
         queue_time = utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)
 
@@ -162,9 +162,9 @@ class Player(slate.Player):
                     search_tracks = [search_result]
 
             except (spotify.NotFound, HTTPException):
-                raise exceptions.VoiceError(f'No results were found for your Spotify link.')
+                raise exceptions.VoiceError('No results were found for your Spotify link.')
             if not search_tracks:
-                raise exceptions.VoiceError(f'No results were found for your Spotify link.')
+                raise exceptions.VoiceError('No results were found for your Spotify link.')
 
             tracks = [
                 slate.Track(
@@ -195,7 +195,7 @@ class Player(slate.Player):
                 raise exceptions.VoiceError(f'`{error.severity}` error while searching for results. For support use `{config.PREFIX}support`. \nReason: `{error.message}`')
 
             if not search_result:
-                raise exceptions.VoiceError(f'No results were found for your search.')
+                raise exceptions.VoiceError('No results were found for your search.')
 
             if isinstance(search_result, slate.Playlist):
                 source = 'youtube'

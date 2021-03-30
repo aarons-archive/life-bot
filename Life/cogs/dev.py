@@ -168,7 +168,7 @@ class Dev(commands.Cog):
 
         user_config = self.bot.user_manager.get_config(user_id=user.id)
         if user_config.blacklisted is True:
-            raise exceptions.ArgumentError(f'That user is already blacklisted.')
+            raise exceptions.ArgumentError('That user is already blacklisted.')
 
         await self.bot.user_manager.set_blacklisted(user_id=user.id, reason=reason)
         await ctx.send(f'Blacklisted user `{user.id}` with reason:\n\n`{reason}`')
@@ -183,7 +183,7 @@ class Dev(commands.Cog):
 
         user_config = self.bot.user_manager.get_config(user_id=user.id)
         if user_config.blacklisted is False:
-            raise exceptions.ArgumentError(f'That user is not blacklisted.')
+            raise exceptions.ArgumentError('That user is not blacklisted.')
 
         await self.bot.user_manager.set_blacklisted(user_id=user.id, blacklisted=False)
         await ctx.send(f'Unblacklisted user `{user.id}`.')
@@ -220,7 +220,7 @@ class Dev(commands.Cog):
 
         guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
         if guild_config.blacklisted is True:
-            raise exceptions.ArgumentError(f'The guild is already blacklisted.')
+            raise exceptions.ArgumentError('The guild is already blacklisted.')
 
         await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, reason=reason)
         await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
@@ -238,7 +238,7 @@ class Dev(commands.Cog):
 
         guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
         if guild_config.blacklisted is False:
-            raise exceptions.ArgumentError(f'That guild is not blacklisted.')
+            raise exceptions.ArgumentError('That guild is not blacklisted.')
 
         await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, blacklisted=False)
         await ctx.send(f'Unblacklisted guild `{guild_id}`.')

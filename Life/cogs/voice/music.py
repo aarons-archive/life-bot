@@ -128,7 +128,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         async with ctx.channel.typing():
 
@@ -168,7 +168,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.stop()
@@ -183,7 +183,7 @@ class Music(commands.Cog):
         if not ctx.voice_client:
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
-        await ctx.send(f'Destroyed this guilds player.')
+        await ctx.send('Destroyed this guilds player.')
         await ctx.voice_client.destroy()
 
     @commands.command(name='skip', aliases=['stop', 'next'])
@@ -199,10 +199,10 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError(f'There are no tracks playing.')
+            raise exceptions.VoiceError('There are no tracks playing.')
 
         if ctx.voice_client.current.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
             amount = 1
@@ -212,7 +212,7 @@ class Music(commands.Cog):
 
             if ctx.author.id in ctx.voice_client.skip_request_ids:
                 ctx.voice_client.skip_request_ids.remove(ctx.author.id)
-                raise exceptions.VoiceError(f'Removed your vote to skip.')
+                raise exceptions.VoiceError('Removed your vote to skip.')
 
             ctx.voice_client.skip_request_ids.append(ctx.author.id)
             await ctx.send('Added your vote to skip.')
@@ -246,13 +246,13 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.is_paused:
             raise exceptions.VoiceError('The player is already paused.')
 
         await ctx.voice_client.set_pause(pause=True)
-        await ctx.send(f'The player is now paused.')
+        await ctx.send('The player is now paused.')
 
     @commands.command(name='unpause', aliases=['resume'])
     async def unpause(self, ctx: context.Context) -> None:
@@ -265,13 +265,13 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.is_paused is False:
             raise exceptions.VoiceError('The player is not paused.')
 
         await ctx.voice_client.set_pause(pause=False)
-        await ctx.send(f'The player is now resumed.')
+        await ctx.send('The player is now resumed.')
 
     @commands.command(name='seek')
     async def seek(self, ctx: context.Context, seconds: int = None) -> None:
@@ -286,10 +286,10 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError(f'There are no tracks playing.')
+            raise exceptions.VoiceError('There are no tracks playing.')
 
         if not ctx.voice_client.current.is_seekable:
             raise exceptions.VoiceError('The current track is not seekable.')
@@ -318,14 +318,14 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if not volume and volume != 0:
             await ctx.send(f'The players volume is `{ctx.voice_client.volume}%`.')
             return
 
         if volume < 0 or volume > 100 and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.VoiceError(f'That was not a valid volume, Please choose a value between `0` and and `100`.')
+            raise exceptions.VoiceError('That was not a valid volume, Please choose a value between `0` and and `100`.')
 
         await ctx.voice_client.set_volume(volume=volume)
         await ctx.send(f'The players volume is now `{ctx.voice_client.volume}%`.')
@@ -340,7 +340,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError(f'There are no tracks playing.')
+            raise exceptions.VoiceError('There are no tracks playing.')
 
         await ctx.voice_client.invoke_controller()
 
@@ -399,13 +399,13 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
         ctx.voice_client.queue.clear()
-        await ctx.send(f'The queue has been cleared.')
+        await ctx.send('The queue has been cleared.')
 
     @queue.group(name='history', aliases=['h'], invoke_without_command=True)
     async def queue_history(self, ctx: context.Context) -> None:
@@ -466,14 +466,14 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         history = list(ctx.voice_client.queue.history)
         if not history:
             raise exceptions.VoiceError('The queue history is empty.')
 
         ctx.voice_client.queue.clear_history()
-        await ctx.send(f'The queue history has been cleared.')
+        await ctx.send('The queue history has been cleared.')
 
     @queue.command(name='shuffle')
     async def queue_shuffle(self, ctx: context.Context) -> None:
@@ -486,13 +486,13 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
         ctx.voice_client.queue.shuffle()
-        await ctx.send(f'The queue has been shuffled.')
+        await ctx.send('The queue has been shuffled.')
 
     @queue.command(name='reverse')
     async def queue_reverse(self, ctx: context.Context) -> None:
@@ -505,13 +505,13 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
 
         ctx.voice_client.queue.reverse()
-        await ctx.send(f'The queue has been reversed.')
+        await ctx.send('The queue has been reversed.')
 
     @queue.group(name='loop', aliases=['l'], invoke_without_command=True)
     async def queue_loop(self, ctx: context.Context) -> None:
@@ -524,7 +524,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=False)
         await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the whole queue.')
@@ -540,7 +540,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=True)
         await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the current track.')
@@ -559,7 +559,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
@@ -586,7 +586,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
@@ -611,7 +611,7 @@ class Music(commands.Cog):
 
         channel = getattr(ctx.author.voice, 'channel', None)
         if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError(f'You must be connected to the same voice channel as me to use this command.')
+            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.queue.is_empty:
             raise exceptions.VoiceError('The players queue is empty.')
@@ -640,7 +640,7 @@ class Music(commands.Cog):
             if not ctx.voice_client or not ctx.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
             if not ctx.voice_client.is_playing:
-                raise exceptions.VoiceError(f'There are no tracks playing.')
+                raise exceptions.VoiceError('There are no tracks playing.')
 
             query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
 

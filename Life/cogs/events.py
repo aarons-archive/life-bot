@@ -49,23 +49,23 @@ class Events(commands.Cog):
         }
 
         self.COOLDOWN_BUCKETS = {
-            commands.BucketType.default:  f'for the whole bot',
-            commands.BucketType.user:     f'for you',
-            commands.BucketType.member:   f'for you',
-            commands.BucketType.role:     f'for your role',
-            commands.BucketType.guild:    f'for this server',
-            commands.BucketType.channel:  f'for this channel',
-            commands.BucketType.category: f'for this channel category'
+            commands.BucketType.default:  'for the whole bot',
+            commands.BucketType.user:     'for you',
+            commands.BucketType.member:   'for you',
+            commands.BucketType.role:     'for your role',
+            commands.BucketType.guild:    'for this server',
+            commands.BucketType.channel:  'for this channel',
+            commands.BucketType.category: 'for this channel category'
         }
 
         self.CONCURRENCY_BUCKETS = {
-            commands.BucketType.default:  f'for all users',
-            commands.BucketType.user:     f'per user',
-            commands.BucketType.member:   f'per member',
-            commands.BucketType.role:     f'per role',
-            commands.BucketType.guild:    f'per server',
-            commands.BucketType.channel:  f'per channel',
-            commands.BucketType.category: f'per channel category',
+            commands.BucketType.default:  'for all users',
+            commands.BucketType.user:     'per user',
+            commands.BucketType.member:   'per member',
+            commands.BucketType.role:     'per role',
+            commands.BucketType.guild:    'per server',
+            commands.BucketType.channel:  'per channel',
+            commands.BucketType.category: 'per channel category',
         }
 
         self.OTHER_ERRORS = {
@@ -154,7 +154,7 @@ class Events(commands.Cog):
 
     async def handle_traceback(self, *, ctx: context.Context, error) -> None:
 
-        await ctx.send(f'Something went wrong while executing that command.')
+        await ctx.send('Something went wrong while executing that command.')
 
         error_traceback = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         print(f'\n{error_traceback}\n', file=sys.stderr)
@@ -219,7 +219,7 @@ class Events(commands.Cog):
         __log__.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
         time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Joined a guild',
+        embed = discord.Embed(colour=discord.Colour.gold(), title='Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.LOGGING_WEBHOOK.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
@@ -230,7 +230,7 @@ class Events(commands.Cog):
         __log__.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
         time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
-        embed = discord.Embed(colour=discord.Colour.gold(), title=f'Left a guild',
+        embed = discord.Embed(colour=discord.Colour.gold(), title='Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.LOGGING_WEBHOOK.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))

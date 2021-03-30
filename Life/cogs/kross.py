@@ -132,7 +132,7 @@ class Kross(commands.Cog):
             try:
                 await member.add_roles(*roles)
                 await channel.send(f'{member.mention} just joined and was given `{len(roles)}` role(s) back.')
-                return await self.bot.db.execute(f'DELETE FROM kross_roles WHERE member_id = $1', member.id)
+                return await self.bot.db.execute('DELETE FROM kross_roles WHERE member_id = $1', member.id)
             except discord.Forbidden:
                 return await channel.send(f'{member.mention} just joined. I do not have permissions to give them roles.')
 

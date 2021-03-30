@@ -174,7 +174,7 @@ class Economy(commands.Cog):
 
         leaderboard = self.bot.user_manager.leaderboard(type=type, guild_id=ctx.guild.id)
         if not leaderboard:
-            raise exceptions.ArgumentError(f'There are no leaderboard stats.')
+            raise exceptions.ArgumentError('There are no leaderboard stats.')
 
         entries = [
             f'{index + 1:<6} |{getattr(user_config, type):<10} |{ctx.bot.get_user(user_id)}'
@@ -195,7 +195,7 @@ class Economy(commands.Cog):
 
         leaderboard = self.bot.user_manager.leaderboard(type=type)
         if not leaderboard:
-            raise exceptions.ArgumentError(f'There are no leaderboard stats.')
+            raise exceptions.ArgumentError('There are no leaderboard stats.')
 
         entries = [
             f'{index + 1:<6} |{getattr(user_config, type):<10} |{ctx.bot.get_user(user_id)}'

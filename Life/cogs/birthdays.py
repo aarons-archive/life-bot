@@ -64,7 +64,7 @@ class Birthdays(commands.Cog):
         if len(entries) != 1:
             choice = await ctx.paginate_choice(
                     entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_date(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
-                    per_page=10, header=f'**Multiple dates were detected within your query, please select the one that best matches your birthday:**\n\n'
+                    per_page=10, header='**Multiple dates were detected within your query, please select the one that best matches your birthday:**\n\n'
             )
             result = entries[choice]
         else:
@@ -127,7 +127,7 @@ class Birthdays(commands.Cog):
         if not configs:
             raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'Upcoming birthdays (First 3): ')
+        embed = discord.Embed(colour=ctx.colour, title='Upcoming birthdays (First 3): ')
         for user_id, user_config in list(configs.items())[:3]:
             embed.add_field(
                     name=f'{ctx.guild.get_member(user_id)}',
@@ -188,7 +188,7 @@ class Birthdays(commands.Cog):
         first = list(configs.items())[0]
         member = ctx.guild.get_member(first[0])
 
-        embed = discord.Embed(colour=ctx.colour, title=f'The next person to have a birthday is:')
+        embed = discord.Embed(colour=ctx.colour, title='The next person to have a birthday is:')
         embed.add_field(name=f'**{member}**',
                         value=f'`Birthday:` {utils.format_date(datetime=first[1].birthday)}\n'
                               f'`Next birthday:` In {utils.format_difference(datetime=first[1].next_birthday.subtract(days=1), suppress=[])}\n'

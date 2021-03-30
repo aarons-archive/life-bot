@@ -35,7 +35,7 @@ class Settings(commands.Cog):
 
         embed = discord.Embed(
                 colour=ctx.guild_config.colour,
-                title=f'Guild settings:',
+                title='Guild settings:',
                 description=f'`Prefixes:` {prefixes}\n'
                             f'`Embed size:` {ctx.guild_config.embed_size.name.upper()}'
         )
@@ -105,7 +105,7 @@ class Settings(commands.Cog):
         elif operation == 'reset':
 
             await self.bot.guild_manager.set_embed_size(guild_id=ctx.guild.id)
-            await ctx.send(f'Set this servers embed size to `Large`.')
+            await ctx.send('Set this servers embed size to `Large`.')
 
     @settings.command(name='prefix', aliases=['prefixes'])
     async def config_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
@@ -121,7 +121,7 @@ class Settings(commands.Cog):
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
             clean_prefixes = [f'`1.` {prefixes[0]}', *[f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:])]]
-            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=ctx.guild_config.colour, title=f'List of usable prefixes.')
+            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=ctx.guild_config.colour, title='List of usable prefixes.')
             return
 
         if await self.bot.is_owner(person=ctx.author) is False:
@@ -133,7 +133,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less then 15 characters and contain no backtick `\`` characters.')
 
             if len(ctx.guild_config.prefixes) > 20:
-                raise exceptions.ArgumentError(f'This server can not have more than 20 custom prefixes.')
+                raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
             if prefix in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
@@ -154,10 +154,10 @@ class Settings(commands.Cog):
         elif operation in {'reset', 'clear'}:
 
             if not ctx.guild_config.prefixes:
-                raise exceptions.ArgumentError(f'This server does not have any custom prefixes.')
+                raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
             await self.bot.guild_manager.set_prefixes(guild_id=ctx.guild.id, operation=enums.Operation.RESET)
-            await ctx.send(f'Cleared this servers prefixes.')
+            await ctx.send('Cleared this servers prefixes.')
 
 
 def setup(bot: Life):

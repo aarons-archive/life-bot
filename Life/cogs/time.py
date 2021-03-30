@@ -161,7 +161,7 @@ class Time(commands.Cog):
         if len(entries) != 1:
             choice = await ctx.paginate_choice(
                      entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
-                     per_page=10, header=f'**Multiple times/dates were detected within your query, please select the one you would like to be reminded at:**\n\n'
+                     per_page=10, header='**Multiple times/dates were detected within your query, please select the one you would like to be reminded at:**\n\n'
             )
             result = entries[choice]
         else:
