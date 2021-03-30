@@ -161,14 +161,14 @@ class UserManager:
         user_config.requires_db_update.add(enums.Updateable.XP)
 
     async def set_bundle_collection(
-            self, *, user_id: int, type: Union[enums.Updateable.DAILY_COLLECTED, enums.Updateable.WEEKLY_COLLECTED, enums.Updateable.MONTHLY_COLLECTED],
+            self, *, user_id: int, collection_type: Union[enums.Updateable.DAILY_COLLECTED, enums.Updateable.WEEKLY_COLLECTED, enums.Updateable.MONTHLY_COLLECTED],
             when: DateTime = pendulum.now(tz='UTC')
     ) -> None:
 
         user_config = await self.get_or_create_config(user_id=user_id)
 
-        data = await self.bot.db.fetchrow(f'UPDATE users SET {type.value} = $1 WHERE id = $2 RETURNING {type.value}', when, user_id)
-        setattr(user_config, type.value, pendulum.instance(data[type.value], tz='UTC'))
+        data = await self.bot.db.fetchrow(f'UPDATE users SET {collection_type.value} = $1 WHERE id = $2 RETURNING {collection_type.value}', when, user_id)
+        setattr(user_config, collection_type.value, pendulum.instance(data[collection_type.value], tz='UTC'))
 
     async def set_bundle_streak(
             self, *, user_id: int, bundle_type: Union[enums.Updateable.DAILY_STREAK, enums.Updateable.WEEKLY_STREAK, enums.Updateable.MONTHLY_STREAK],
@@ -270,19 +270,19 @@ class UserManager:
 
     #
 
-    def leaderboard(self, *, guild_id: int = None, type: Literal['level', 'xp', 'coins']) -> List[objects.UserConfig]:
+    def leaderboard(self, *, guild_id: int = None, lb_type: Literal['level', 'xp', 'coins']) -> List[objects.UserConfig]:
 
         if not guild_id:
-            configs = filter(lambda kv: self.bot.get_user(kv[1].id) is not None and getattr(kv[1], type) != 0, self.configs.items())
+            configs = filter(lambda kv: self.bot.get_user(kv[1].id) is not None and getattr(kv[1], lb_type) != 0, self.configs.items())
 
         else:
             guild = self.bot.get_guild(guild_id)
             if not guild:
                 raise exceptions.ArgumentError('Guild with that id not found.')
 
-            configs = filter(lambda kv: guild.get_member(kv[1].id) is not None and getattr(kv[1], type) != 0, self.configs.items())
+            configs = filter(lambda kv: guild.get_member(kv[1].id) is not None and getattr(kv[1], lb_type) != 0, self.configs.items())
 
-        return sorted(configs, key=lambda kv: getattr(kv[1], type), reverse=True)
+        return sorted(configs, key=lambda kv: getattr(kv[1], lb_type), reverse=True)
 
     def rank(self, *, user_id: int, guild_id: int = None) -> int:
 

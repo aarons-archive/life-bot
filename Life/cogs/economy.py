@@ -125,7 +125,7 @@ class Economy(commands.Cog):
             embed.description += f'Your `{claim.title()}` streak is over because you didnt claim your bundle within {self.claims[claim]["expired_reason"]} of the last claim.'
 
         await self.bot.user_manager.set_coins(user_id=ctx.author.id, coins=coins)
-        await self.bot.user_manager.set_bundle_collection(user_id=ctx.author.id, type=self.claims[claim]['collected'])
+        await self.bot.user_manager.set_bundle_collection(user_id=ctx.author.id, collection_type=self.claims[claim]['collected'])
         await ctx.send(embed=embed)
 
     #
@@ -162,7 +162,7 @@ class Economy(commands.Cog):
         `type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
         """
 
-        leaderboard = self.bot.user_manager.leaderboard(type=lb_type, guild_id=ctx.guild.id)
+        leaderboard = self.bot.user_manager.leaderboard(lb_type=lb_type, guild_id=ctx.guild.id)
         if not leaderboard:
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
@@ -183,7 +183,7 @@ class Economy(commands.Cog):
         `lb_type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
         """
 
-        leaderboard = self.bot.user_manager.leaderboard(type=lb_type)
+        leaderboard = self.bot.user_manager.leaderboard(lb_type=lb_type)
         if not leaderboard:
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
