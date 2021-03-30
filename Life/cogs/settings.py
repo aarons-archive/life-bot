@@ -134,7 +134,7 @@ class Settings(commands.Cog):
 
             if len(ctx.guild_config.prefixes) > 20:
                 raise exceptions.ArgumentError(f'This server can not have more than 20 custom prefixes.')
-            elif prefix in ctx.guild_config.prefixes:
+            if prefix in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
             await self.bot.guild_manager.set_prefixes(guild_id=ctx.guild.id, prefix=str(prefix))

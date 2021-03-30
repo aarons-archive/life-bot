@@ -74,9 +74,9 @@ def charcoal(image: Union[Image, SingleImage], radius: float, sigma: float) -> O
 
 def colorize(image: Union[Image, SingleImage], colour: str = None) -> Optional[str]:
 
-    with Color(colour) as colour:
+    with Color(colour) as color:
         with Color('rgb(50%, 50%, 50%)') as alpha:
-            image.colorize(color=colour, alpha=alpha)
+            image.colorize(color=color, alpha=alpha)
 
     return f'Colour: {colour}'
 
@@ -378,9 +378,9 @@ async def _request_image_bytes(*, ctx: context.Context, url: str) -> bytes:
 
         if request.status != 200:
             raise exceptions.ImageError('Something went wrong while loading that image, check the url or try again later.')
-        elif request.headers.get('Content-Type') not in VALID_CONTENT_TYPES:
+        if request.headers.get('Content-Type') not in VALID_CONTENT_TYPES:
             raise exceptions.ImageError('That image format is not allowed. Valid formats include `gif`, `heic`, `jpeg`, `png`, `webp`, `avif` and `svg`.')
-        elif (content_length := request.headers.get('Content-Length', 0)) and int(content_length) > MAX_CONTENT_SIZE:
+        if (content_length := request.headers.get('Content-Length', 0)) and int(content_length) > MAX_CONTENT_SIZE:
             raise exceptions.ImageError(f'That image was too big to edit, please keep to a `{humanize.naturalsize(MAX_CONTENT_SIZE)}` maximum')
 
         return await request.read()

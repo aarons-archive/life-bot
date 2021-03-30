@@ -115,12 +115,12 @@ class HelpCommand(commands.HelpCommand):
 
         await self.context.paginate_embeds(entries=[embed])
 
-    def command_not_found(self, search: str) -> str:
-        return f'There are no commands or categories with the name `{search}`. Be sure to capitalize the first letter if you are looking for the help of a category.'
+    def command_not_found(self, string: str) -> str:
+        return f'There are no commands or categories with the name `{string}`. Be sure to capitalize the first letter if you are looking for the help of a category.'
 
-    def subcommand_not_found(self, command: Union[commands.Command, commands.Group], search: str) -> str:
+    def subcommand_not_found(self, command: Union[commands.Command, commands.Group], string: str) -> str:
 
         if isinstance(command, commands.Group):
-            return f'The command `{command.qualified_name}` has no sub-commands called `{search}`.'
+            return f'The command `{command.qualified_name}` has no sub-commands called `{string}`.'
 
         return f'The command `{command.qualified_name}` has no sub-commands.'

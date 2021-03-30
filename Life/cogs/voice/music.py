@@ -213,9 +213,9 @@ class Music(commands.Cog):
             if ctx.author.id in ctx.voice_client.skip_request_ids:
                 ctx.voice_client.skip_request_ids.remove(ctx.author.id)
                 raise exceptions.VoiceError(f'Removed your vote to skip.')
-            else:
-                ctx.voice_client.skip_request_ids.append(ctx.author.id)
-                await ctx.send('Added your vote to skip.')
+
+            ctx.voice_client.skip_request_ids.append(ctx.author.id)
+            await ctx.send('Added your vote to skip.')
 
             skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
             if len(ctx.voice_client.skip_request_ids) < skips_needed:

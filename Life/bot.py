@@ -75,8 +75,8 @@ class Life(commands.AutoShardedBot):
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
 
-    async def is_owner(self, person: Union[discord.User, discord.Member]) -> bool:
-        return person.id in config.OWNER_IDS
+    async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
+        return user.id in config.OWNER_IDS
 
     async def get_prefix(self, message: discord.Message) -> List[str]:
 
@@ -170,8 +170,7 @@ class Life(commands.AutoShardedBot):
 
         if ctx.user_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
             raise commands.CheckFailure(f'You are blacklisted from using this bot with the reason:\n\n`{ctx.user_config.blacklisted_reason}`')
-
-        elif ctx.guild_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
+        if ctx.guild_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
             raise commands.CheckFailure(f'This guild is blacklisted from using this bot with the reason:\n\n`{ctx.guild_config.blacklisted_reason}`')
 
         current_permissions = dict(ctx.me.permissions_in(ctx.channel))

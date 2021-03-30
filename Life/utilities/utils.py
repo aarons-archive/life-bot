@@ -89,7 +89,7 @@ def line_count() -> Tuple[int, int, int, int]:
     files, functions, lines, classes = 0, 0, 0, 0
     is_docstring = False
 
-    for dirpath, dirname, filenames in os.walk('.'):
+    for dirpath, _, filenames in os.walk('.'):
 
         for filename in filenames:
             if not filename.endswith('.py'):
@@ -126,10 +126,10 @@ def badges(*, bot: Life, person: Union[discord.User, discord.Member]) -> str:
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
         badges_list.append('<:bot:738979752244674674>')
 
-    if any([guild.get_member(person.id).premium_since for guild in bot.guilds if person in guild.members]):
+    if any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
         badges_list.append('<:booster_level_4:738961099310760036>')
 
-    if person.is_avatar_animated() or any([guild.get_member(person.id).premium_since for guild in bot.guilds if person in guild.members]):
+    if person.is_avatar_animated() or any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
         badges_list.append('<:nitro:738961134958149662>')
 
     elif member := discord.utils.get(bot.get_all_members(), id=person.id):
@@ -137,7 +137,7 @@ def badges(*, bot: Life, person: Union[discord.User, discord.Member]) -> str:
             if activity.emoji and activity.emoji.is_custom_emoji():
                 badges_list.append('<:nitro:738961134958149662>')
 
-    return ' '.join(badges_list) if badges else 'N/A'
+    return ' '.join(badges_list) if badges_list else 'N/A'
 
 
 def activities(*, person: discord.Member) -> str:

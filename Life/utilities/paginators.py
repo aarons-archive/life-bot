@@ -66,7 +66,7 @@ class BasePaginator:
         if len(self.pages) == 1:
             await self.message.add_reaction(':stop:737826951980646491')
         else:
-            for emote in self.buttons.keys():
+            for emote in self.buttons:
                 if emote in (':start:737826967910481931', ':end:737826943520473198') and len(self.pages) < 5:
                     continue
                 await self.message.add_reaction(emote)
@@ -99,7 +99,7 @@ class BasePaginator:
             return
 
         if self.delete_when_done is False:
-            for reaction in self.buttons.keys():
+            for reaction in self.buttons:
                 await self.message.remove_reaction(reaction, self.bot.user)
 
         return await self.stop(delete=self.delete_when_done)
@@ -297,7 +297,7 @@ class EmbedsPaginator:
         if len(self.entries) == 1:
             await self.message.add_reaction(':stop:737826951980646491')
         else:
-            for emote in self.buttons.keys():
+            for emote in self.buttons:
                 if emote in (':start:737826967910481931', ':end:737826943520473198') and len(self.entries) < 5:
                     continue
                 await self.message.add_reaction(emote)
@@ -330,7 +330,7 @@ class EmbedsPaginator:
             return
 
         if self.delete_when_done is False:
-            for reaction in self.buttons.keys():
+            for reaction in self.buttons:
                 await self.message.remove_reaction(reaction, self.bot.user)
 
         return await self.stop(delete=self.delete_when_done)

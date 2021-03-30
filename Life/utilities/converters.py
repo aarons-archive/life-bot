@@ -28,18 +28,18 @@ from utilities import context, exceptions
 
 class ChannelEmojiConverter(commands.Converter, ABC):
 
-    async def convert(self, ctx: context.Context, channel: Union[discord.TextChannel, discord.VoiceChannel, discord.CategoryChannel]) -> str:
+    async def convert(self, ctx: context.Context, argument: Union[discord.TextChannel, discord.VoiceChannel, discord.CategoryChannel]) -> str:
 
-        if isinstance(channel, discord.VoiceChannel):
-            emoji = 'voice_locked' if channel.overwrites_for(channel.guild.default_role).connect is False else 'voice'
+        if isinstance(argument, discord.VoiceChannel):
+            emoji = 'voice_locked' if argument.overwrites_for(argument.guild.default_role).connect is False else 'voice'
 
-        elif isinstance(channel, discord.TextChannel):
-            if channel.is_news():
-                emoji = 'news_locked' if channel.overwrites_for(channel.guild.default_role).read_messages is False else 'news'
-            elif channel.is_nsfw():
+        elif isinstance(argument, discord.TextChannel):
+            if argument.is_news():
+                emoji = 'news_locked' if argument.overwrites_for(argument.guild.default_role).read_messages is False else 'news'
+            elif argument.is_nsfw():
                 emoji = 'text_nsfw'
             else:
-                emoji = 'text_locked' if channel.overwrites_for(channel.guild.default_role).read_messages is False else 'text'
+                emoji = 'text_locked' if argument.overwrites_for(argument.guild.default_role).read_messages is False else 'text'
 
         else:
             emoji = 'unknown'
