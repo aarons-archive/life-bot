@@ -97,11 +97,11 @@ class Life(commands.AutoShardedBot):
             raise ConnectionError
         else:
             __log__.info('[POSTGRESQL] Successful connection.')
-            print(f'\n[POSTGRESQL] Successful connection.')
+            print('\n[POSTGRESQL] Successful connection.')
             self.db = db
 
         try:
-            __log__.debug(f'[REDIS] Attempting connection')
+            __log__.debug('[REDIS] Attempting connection')
             redis = aredis.StrictRedis(**config.REDIS)
             await redis.set('connected', 0)
         except (aredis.ConnectionError, aredis.ResponseError) as e:
@@ -109,7 +109,7 @@ class Life(commands.AutoShardedBot):
             print(f'[REDIS] Error while connecting: {e}')
             raise ConnectionError()
         else:
-            __log__.info(f'[REDIS] Successful connection.')
+            __log__.info('[REDIS] Successful connection.')
             print(f'[REDIS] Successful connection to Redis DB number \'{config.REDIS["db"]}\'. \n')
             self.redis = redis
 

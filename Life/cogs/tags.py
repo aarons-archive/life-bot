@@ -115,7 +115,7 @@ class Tags(commands.Cog):
 
         owner = ctx.guild.get_member(tag.user_id)
         if owner is not None:
-            raise exceptions.ArgumentError(f'The owner of that tag is still in the server.')
+            raise exceptions.ArgumentError('The owner of that tag is still in the server.')
 
         await self.bot.tag_manager.edit_tag_owner(guild_id=ctx.guild.id, name=str(name), user_id=ctx.author.id)
         await ctx.send(f'You claimed the tag with name `{name}`.')
