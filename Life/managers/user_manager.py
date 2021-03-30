@@ -171,7 +171,7 @@ class UserManager:
         setattr(user_config, type.value, pendulum.instance(data[type.value], tz='UTC'))
 
     async def set_bundle_streak(
-            self, *, user_id: int, type: Union[enums.Updateable.DAILY_STREAK, enums.Updateable.WEEKLY_STREAK, enums.Updateable.MONTHLY_STREAK],
+            self, *, user_id: int, bundle_type: Union[enums.Updateable.DAILY_STREAK, enums.Updateable.WEEKLY_STREAK, enums.Updateable.MONTHLY_STREAK],
             operation: enums.Operation = enums.Operation.SET, count: int = 0
     ) -> None:
 
@@ -181,14 +181,14 @@ class UserManager:
         if operation == enums.Operation.SET:
             streak = count
         elif operation == enums.Operation.ADD:
-            streak = getattr(user_config, type.value) + count
+            streak = getattr(user_config, bundle_type.value) + count
         elif operation == enums.Operation.MINUS:
-            streak = getattr(user_config, type.value) - count
+            streak = getattr(user_config, bundle_type.value) - count
         elif operation == enums.Operation.RESET:
             streak = 0
 
-        data = await self.bot.db.fetchrow(f'UPDATE users SET {type.value} = $1 WHERE id = $2 RETURNING {type.value}', streak, user_id)
-        setattr(user_config, type.value, data[type.value])
+        data = await self.bot.db.fetchrow(f'UPDATE users SET {bundle_type.value} = $1 WHERE id = $2 RETURNING {bundle_type.value}', streak, user_id)
+        setattr(user_config, bundle_type.value, data[bundle_type.value])
 
     #
 

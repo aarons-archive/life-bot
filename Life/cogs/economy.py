@@ -79,17 +79,8 @@ class Economy(commands.Cog):
 
     @commands.Cog.listener()
     async def on_xp_level_up(self, user_config: objects.UserConfig) -> None:
-
+        pass
         # TODO Implement notifications stuff.
-
-        """
-        user = self.bot.get_user(id=user_id)
-        try:
-            await user.send(f'Congrats, you are now level `{user_config.level}`!')
-
-        except discord.Forbidden:
-            return
-        """
 
     #
 
@@ -120,17 +111,17 @@ class Economy(commands.Cog):
         if now < time_when_streak_expires:
 
             if getattr(user_config, self.claims[claim]['streak'].value) + 1 >= self.claims[claim]['streak_threshold']:
-                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
+                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
                 embed.description += f'You were awarded an extra `{self.claims[claim]["streak_coins"] - self.claims[claim]["base_coins"]}` coins for maintaining your ' \
                                      f'`{claim.title()}` streak which has now been reset to 0.\n\n'
             else:
-                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, type=self.claims[claim]['streak'], operation=enums.Operation.ADD, count=1)
+                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.ADD, count=1)
                 embed.description += f'You are now on a `{getattr(user_config, self.claims[claim]["streak"].value)}` out of `{self.claims[claim]["streak_threshold"]}` ' \
                                      f'`{claim.title()}` streak.\n\n'
 
         else:
 
-            await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
+            await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
             embed.description += f'Your `{claim.title()}` streak is over because you didnt claim your bundle within {self.claims[claim]["expired_reason"]} of the last claim.'
 
         await self.bot.user_manager.set_coins(user_id=ctx.author.id, coins=coins)
@@ -164,45 +155,45 @@ class Economy(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name='leaderboard', aliases=['lb'])
-    async def leaderboard(self, ctx: context.Context, type: Literal['xp', 'level', 'coins'] = 'xp') -> None:
+    async def leaderboard(self, ctx: context.Context, lb_type: Literal['xp', 'level', 'coins'] = 'xp') -> None:
         """
         Display the leaderboard for xp, coins or level in the current server.
 
         `type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
         """
 
-        leaderboard = self.bot.user_manager.leaderboard(type=type, guild_id=ctx.guild.id)
+        leaderboard = self.bot.user_manager.leaderboard(type=lb_type, guild_id=ctx.guild.id)
         if not leaderboard:
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
         entries = [
-            f'{index + 1:<6} |{getattr(user_config, type):<10} |{ctx.bot.get_user(user_id)}'
+            f'{index + 1:<6} |{getattr(user_config, lb_type):<10} |{ctx.bot.get_user(user_id)}'
             for index, (user_id, user_config) in enumerate(leaderboard)
         ]
 
-        title = f'`{type.title()}` leaderboard in `{ctx.guild}`:'
-        header = f'Rank   |{type.title():<10} |Name\n'
+        title = f'`{lb_type.title()}` leaderboard in `{ctx.guild}`:'
+        header = f'Rank   |{lb_type.title():<10} |Name\n'
         await ctx.paginate_embed(entries=entries, per_page=10, title=title, header=header, codeblock=True)
 
     @commands.command(name='global-leaderboard', aliases=['glb'])
-    async def global_leaderboard(self, ctx: context.Context, type: Literal['xp', 'level', 'coins'] = 'xp') -> None:
+    async def global_leaderboard(self, ctx: context.Context, lb_type: Literal['xp', 'level', 'coins'] = 'xp') -> None:
         """
         Display the global leaderboard for xp, coins or level.
 
-        `type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
+        `lb_type`: The type of leaderboard to show, could be `xp`, `level` or `coins`
         """
 
-        leaderboard = self.bot.user_manager.leaderboard(type=type)
+        leaderboard = self.bot.user_manager.leaderboard(type=lb_type)
         if not leaderboard:
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
         entries = [
-            f'{index + 1:<6} |{getattr(user_config, type):<10} |{ctx.bot.get_user(user_id)}'
+            f'{index + 1:<6} |{getattr(user_config, lb_type):<10} |{ctx.bot.get_user(user_id)}'
             for index, (user_id, user_config) in enumerate(leaderboard)
         ]
 
-        title = f'`{type.title()}` leaderboard across the whole bot.'
-        header = f'Rank   |{type.title():<10} |Name\n'
+        title = f'`{lb_type.title()}` leaderboard across the whole bot.'
+        header = f'Rank   |{lb_type.title():<10} |Name\n'
         await ctx.paginate_embed(entries=entries, per_page=10, title=title, header=header, codeblock=True)
 
     #
