@@ -14,11 +14,10 @@ from typing import Literal
 
 import discord
 import ksoftapi
-import slate
-import spotify
 from discord.ext import commands
 
 import config
+import slate
 from bot import Life
 from cogs.voice.custom.player import Player
 from utilities import context, exceptions, utils
@@ -29,18 +28,11 @@ class Music(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.slate = slate.Client(bot=self.bot)
-
-        self.spotify = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
-        self.spotify_http = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
-
-        self.ksoft = ksoftapi.Client(config.KSOFT_TOKEN)
-
     async def load(self) -> None:
 
         for node in config.NODES:
             try:
-                await self.slate.create_node(cls=getattr(slate, node.pop('type')), **node)
+                await self.bot.slate.create_node(cls=getattr(slate, node.pop('type')), **node)
             except (slate.NodeConnectionError, slate.NodeCreationError) as e:
                 print(f'[SLATE] {e}')
             else:
@@ -62,7 +54,7 @@ class Music(commands.Cog):
         event.player.track_end_event.set()
         event.player.track_end_event.clear()
 
-        event.player.skip_requests.clear()
+        event.player.skip_request_ids.clear()
 
     @commands.Cog.listener()
     async def on_slate_track_exception(self, event: slate.TrackExceptionEvent) -> None:
@@ -70,16 +62,16 @@ class Music(commands.Cog):
         track = None
         try:
             track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
-        except slate.TrackDecodeError:
+        except slate.HTTPError:
             pass
 
         title = getattr(track or event.player.current, 'title', 'Not Found')
-        await event.player.send(message=f'There was an error of severity `{event.severity}` while playing the track `{title}`.\nReason: {event.message}')
+        await event.player.send(f'There was an error of severity `{event.severity}` while playing the track `{title}`.\nReason: {event.message}')
 
         event.player.track_end_event.set()
         event.player.track_end_event.clear()
 
-        event.player.skip_requests.clear()
+        event.player.skip_request_ids.clear()
 
     @commands.Cog.listener()
     async def on_slate_track_stuck(self, event: slate.TrackStuckEvent) -> None:
@@ -87,16 +79,16 @@ class Music(commands.Cog):
         track = None
         try:
             track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
-        except slate.TrackDecodeError:
+        except slate.HTTPError:
             pass
 
         title = getattr(track or event.player.current, 'title', 'Not Found')
-        await event.player.send(message=f'Something went wrong while playing the track `{title}`. Use `{config.PREFIX}support` for more help.')
+        await event.player.send(f'Something went wrong while playing the track `{title}`. Use `{config.PREFIX}support` for more help.')
 
         event.player.track_end_event.set()
         event.player.track_end_event.clear()
 
-        event.player.skip_requests.clear()
+        event.player.skip_request_ids.clear()
 
     #
 
@@ -116,7 +108,7 @@ class Music(commands.Cog):
         if ctx.voice_client:
             await ctx.voice_client.reconnect(channel=channel)
         else:
-            await self.slate.create_player(channel=channel, cls=Player)
+            await self.bot.slate.create_player(channel=channel, cls=Player)
 
         ctx.voice_client.text_channel = ctx.channel
         await ctx.send(f'Joined the voice channel `{channel}`.')
@@ -218,16 +210,16 @@ class Music(commands.Cog):
             if ctx.author not in ctx.voice_client.listeners:
                 raise exceptions.VoiceError('You can not vote to skip as you are currently deafened or server deafened.')
 
-            if ctx.author.id in ctx.voice_client.skip_requests:
-                ctx.voice_client.skip_requests.remove(ctx.author.id)
+            if ctx.author.id in ctx.voice_client.skip_request_ids:
+                ctx.voice_client.skip_request_ids.remove(ctx.author.id)
                 raise exceptions.VoiceError(f'Removed your vote to skip.')
             else:
-                ctx.voice_client.skip_requests.append(ctx.author.id)
+                ctx.voice_client.skip_request_ids.append(ctx.author.id)
                 await ctx.send('Added your vote to skip.')
 
             skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
-            if len(ctx.voice_client.skip_requests) < skips_needed:
-                raise exceptions.VoiceError(f'Currently on `{len(ctx.voice_client.skip_requests)}` out of `{skips_needed}` votes needed to skip.')
+            if len(ctx.voice_client.skip_request_ids) < skips_needed:
+                raise exceptions.VoiceError(f'Currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.')
 
         if amount != 1:
 
@@ -653,7 +645,7 @@ class Music(commands.Cog):
             query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
 
         try:
-            results = await self.ksoft.music.lyrics(query=query, limit=50)
+            results = await self.bot.ksoft.music.lyrics(query=query, limit=50)
         except ksoftapi.NoResults:
             raise exceptions.ArgumentError(f'No results were found for the query `{query}`.')
         except ksoftapi.APIError:

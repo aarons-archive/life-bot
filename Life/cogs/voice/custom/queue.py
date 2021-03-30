@@ -32,4 +32,3 @@ class Queue(slate.Queue):
 
         self.player.queue_add_event.set()
         self.player.queue_add_event.clear()
-

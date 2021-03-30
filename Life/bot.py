@@ -13,19 +13,21 @@
 import collections
 import logging
 import time
-import traceback
 from typing import List, Optional, Union
 
 import aiohttp
 import aredis
 import asyncpg
 import discord
+import ksoftapi
 import mystbin
 import psutil
+import spotify
 from discord.ext import commands
 
 import config
-from managers import guild_manager, reminder_manager, tag_manager, user_manager, todo_manager
+import slate
+from managers import guild_manager, reminder_manager, tag_manager, todo_manager, user_manager
 from utilities import context, help
 
 __log__ = logging.getLogger(__name__)
@@ -58,6 +60,10 @@ class Life(commands.AutoShardedBot):
 
         self.db: Optional[asyncpg.Pool] = None
         self.redis: Optional[aredis.StrictRedis] = None
+        self.ksoft: Optional[ksoftapi.Client] = ksoftapi.Client(config.KSOFT_TOKEN)
+        self.slate: Optional[slate.Client] = slate.Client(bot=self, session=self.session)
+        self.spotify: Optional[spotify.Client] = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
+        self.spotify_http: Optional[spotify.HTTPClient] = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
 
         self.mystbin: mystbin.Client = mystbin.Client()
         self.user_manager: user_manager.UserManager = user_manager.UserManager(bot=self)
