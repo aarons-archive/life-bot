@@ -55,7 +55,7 @@ class Kross(commands.Cog):
         `house`: The house to add points too, can be one of `phoenix`, `leviathan`, `kodama` or `sylph`.
         `operation`: The point operation to perform. Can be `add`, `minus`, `subtract` or `remove`.
         `points`: The amount of points to add or subtract.
-         """
+        """
 
         guild = ctx.bot.get_guild(self.KROSS_GUILD_ID)
         if ctx.guild != guild:
