@@ -69,7 +69,7 @@ def format_datetime(*, datetime: Union[dt.datetime, DateTime], seconds: bool = F
 
 
 def format_date(*, datetime: Union[dt.datetime, DateTime]) -> str:
-    return convert_datetime(datetime=datetime).format(f'dddd MMMM Do YYYY')
+    return convert_datetime(datetime=datetime).format('dddd MMMM Do YYYY')
 
 
 def format_difference(*, datetime: Union[dt.datetime, DateTime], suppress=None) -> str:
@@ -149,7 +149,7 @@ def activities(*, person: discord.Member) -> str:
     for activity in person.activities:
 
         if activity.type == discord.ActivityType.custom:
-            message += f'• '
+            message += '• '
             if activity.emoji:
                 message += f'{activity.emoji} '
             if activity.name:
