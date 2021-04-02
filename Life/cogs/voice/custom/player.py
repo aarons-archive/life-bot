@@ -13,7 +13,7 @@
 import asyncio
 import logging
 import re
-from typing import Optional, Set
+from typing import Optional
 
 import async_timeout
 import discord
@@ -41,7 +41,7 @@ class Player(slate.Player):
         self.track_start_event = asyncio.Event()
         self.track_end_event = asyncio.Event()
 
-        self.skip_request_ids: Set[int] = set()
+        self.skip_request_ids: set[int] = set()
 
         self.text_channel: Optional[discord.TextChannel] = None
         self.task: Optional[asyncio.Task] = None

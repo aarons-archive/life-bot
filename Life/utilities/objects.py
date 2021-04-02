@@ -11,7 +11,7 @@
 #
 import asyncio
 import math
-from typing import Dict, List, Optional
+from typing import Optional
 
 import discord
 import pendulum
@@ -53,8 +53,8 @@ class DefaultUserConfig:
         self.monthly_collected: DateTime = pendulum.now(tz='UTC')
         self.monthly_streak: int = 0
 
-        self.todos: Dict[int, Todo] = {}
-        self.reminders: Dict[int, Reminder] = {}
+        self.todos: dict[int, Todo] = {}
+        self.reminders: dict[int, Reminder] = {}
         self.requires_db_update = set()
 
     def __repr__(self) -> str:
@@ -94,8 +94,8 @@ class UserConfig:
         self.monthly_collected: DateTime = pendulum.instance(data.get('monthly_collected'), tz='UTC')
         self.monthly_streak: int = data.get('monthly_streak')
 
-        self.todos: Dict[int, Todo] = {}
-        self.reminders: Dict[int, Reminder] = {}
+        self.todos: dict[int, Todo] = {}
+        self.reminders: dict[int, Reminder] = {}
         self.requires_db_update = set()
 
     def __repr__(self) -> str:
@@ -141,9 +141,9 @@ class DefaultGuildConfig:
 
         self.colour: discord.Colour = discord.Colour.gold()
         self.embed_size: enums.EmbedSize = enums.EmbedSize(0)
-        self.prefixes: List[str] = []
+        self.prefixes: list[str] = []
 
-        self.tags: Dict[str, Tag] = {}
+        self.tags: dict[str, Tag] = {}
         self.requires_db_update = []
 
     def __repr__(self) -> str:
@@ -165,9 +165,9 @@ class GuildConfig:
 
         self.colour: discord.Colour = discord.Colour(int(data.get('colour'), 16))
         self.embed_size = enums.EmbedSize(data.get('embed_size'))
-        self.prefixes: List[str] = data.get('prefixes')
+        self.prefixes: list[str] = data.get('prefixes')
 
-        self.tags: Dict[str, Tag] = {}
+        self.tags: dict[str, Tag] = {}
         self.requires_db_update = []
 
     def __repr__(self) -> str:

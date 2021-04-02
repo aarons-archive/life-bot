@@ -16,7 +16,7 @@ import io
 import logging
 import math
 import os
-from typing import List, Literal, TYPE_CHECKING, Union
+from typing import Literal, TYPE_CHECKING, Union
 
 import discord
 import pendulum
@@ -270,7 +270,7 @@ class UserManager:
 
     #
 
-    def leaderboard(self, *, guild_id: int = None, lb_type: Literal['level', 'xp', 'coins']) -> List[objects.UserConfig]:
+    def leaderboard(self, *, guild_id: int = None, lb_type: Literal['level', 'xp', 'coins']) -> list[objects.UserConfig]:
 
         if not guild_id:
             configs = filter(lambda kv: self.bot.get_user(kv[1].id) is not None and getattr(kv[1], lb_type) != 0, self.configs.items())

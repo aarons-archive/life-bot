@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING, Union
 
 import slate
 
@@ -27,7 +27,7 @@ class Queue(slate.Queue):
 
         self.player: Player = player
 
-    def put(self, *, items: Union[List[Any], Any], position: int = None) -> None:
+    def put(self, *, items: Union[list[Any], Any], position: int = None) -> None:
         super().put(items=items, position=position)
 
         self.player.queue_add_event.set()

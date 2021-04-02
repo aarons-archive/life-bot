@@ -10,7 +10,7 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from typing import List, Union
+from typing import Union
 
 import slate
 import spotify
@@ -20,8 +20,8 @@ class SearchResult:
 
     __slots__ = 'source', 'search_type', 'search_result', 'tracks'
 
-    def __init__(self, source: str, search_type: str, search_result: Union[spotify.Album, spotify.Playlist, spotify.Track, List[slate.Track], slate.Playlist],
-                 tracks: List[slate.Track]) -> None:
+    def __init__(self, source: str, search_type: str, search_result: Union[spotify.Album, spotify.Playlist, spotify.Track, list[slate.Track], slate.Playlist],
+                 tracks: list[slate.Track]) -> None:
 
         self.source = source
         self.search_type = search_type

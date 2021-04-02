@@ -13,7 +13,7 @@
 import collections
 import logging
 import time
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import aiohttp
 import aredis
@@ -78,7 +78,7 @@ class Life(commands.AutoShardedBot):
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
         return user.id in config.OWNER_IDS
 
-    async def get_prefix(self, message: discord.Message) -> List[str]:
+    async def get_prefix(self, message: discord.Message) -> list[str]:
 
         if not message.guild:
             return commands.when_mentioned_or(config.PREFIX, 'I-', '')(self, message)

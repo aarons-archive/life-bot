@@ -17,7 +17,7 @@ import datetime as dt
 import logging
 import os
 import pathlib
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Union
 
 import discord
 import humanize
@@ -84,7 +84,7 @@ def person_avatar(*, person: Union[discord.User, discord.Member]) -> str:
     return str(person.avatar_url_as(format='gif' if person.is_avatar_animated() else 'png'))
 
 
-def line_count() -> Tuple[int, int, int, int]:
+def line_count() -> tuple[int, int, int, int]:
 
     files, functions, lines, classes = 0, 0, 0, 0
     is_docstring = False

@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, TYPE_CHECKING, List
+from typing import Optional, TYPE_CHECKING
 
 from utilities import objects, exceptions
 
@@ -70,7 +70,7 @@ class TodoManager:
         await self.bot.db.execute('DELETE FROM todos WHERE id = $1', todo_id)
         del user_config.todos[todo_id]
 
-    async def delete_todos(self, user_id: int, todo_ids: List[int]) -> None:
+    async def delete_todos(self, user_id: int, todo_ids: list[int]) -> None:
 
         user_config = await self.bot.user_manager.get_or_create_config(user_id=user_id)
 

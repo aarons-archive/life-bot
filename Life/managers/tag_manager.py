@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import discord
 import rapidfuzz
@@ -51,19 +51,19 @@ class TagManager:
         guild_config = await self.bot.guild_manager.get_or_create_config(guild_id=guild_id)
         return guild_config.tags.get(name)
 
-    async def get_tags(self, *, guild_id: int) -> Optional[List[objects.Tag]]:
+    async def get_tags(self, *, guild_id: int) -> Optional[list[objects.Tag]]:
 
         guild_config = await self.bot.guild_manager.get_or_create_config(guild_id=guild_id)
         return list(guild_config.tags.values())
 
-    async def get_tags_matching(self, *, guild_id: int, name: str, limit: int = 5) -> Optional[List[objects.Tag]]:
+    async def get_tags_matching(self, *, guild_id: int, name: str, limit: int = 5) -> Optional[list[objects.Tag]]:
 
         guild_config = await self.bot.guild_manager.get_or_create_config(guild_id=guild_id)
 
         matches = [match[0] for match in rapidfuzz.process.extract(query=name, choices=guild_config.tags.keys(), limit=limit, processor=lambda s: s)]
         return [guild_config.tags[tag_name] for tag_name in matches]
 
-    async def get_tags_owned_by(self, *, guild_id: int, member: discord.Member) -> Optional[List[objects.Tag]]:
+    async def get_tags_owned_by(self, *, guild_id: int, member: discord.Member) -> Optional[list[objects.Tag]]:
 
         guild_config = await self.bot.guild_manager.get_or_create_config(guild_id=guild_id)
         return [tag for tag in guild_config.tags.values() if tag.user_id == member.id]
