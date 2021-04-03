@@ -187,7 +187,7 @@ class Music(commands.Cog):
             ctx.voice_client.queue.put(items=tracks)
             await ctx.send(message)
 
-    @commands.command(name='playtop', aliases=['ptop', 'playnext', 'pnext'])
+    @commands.command(name='playnext', aliases=['pnext', 'playtop', 'ptop'])
     @is_connected(same_channel=True)
     @has_voice_client(try_join=True)
     async def playtop(self, ctx: context.Context, *, query: str) -> None:
@@ -227,7 +227,7 @@ class Music(commands.Cog):
             ctx.voice_client.queue.put(items=tracks, position=0)
             await ctx.send(message)
 
-    @commands.command(name='playskip', aliases=['pskip', 'playnow', 'pnow'])
+    @commands.command(name='playnow', aliases=['pnow', 'playskip', 'pskip'])
     @is_connected(same_channel=True)
     @has_voice_client(try_join=True)
     async def playskip(self, ctx: context.Context, *, query: str) -> None:
@@ -294,22 +294,22 @@ class Music(commands.Cog):
         await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.destroy()
 
-    @commands.command(name='voteskip', aliases=['skip', 'next', 'stop', 's'])
+    @commands.command(name='skip', aliases=['next', 'stop', 's'])
     @is_voice_client_playing()
     @is_connected(same_channel=True)
     @has_voice_client()
-    async def voteskip(self, ctx: context.Context, amount: int = 1) -> None:
+    async def skip(self, ctx: context.Context, amount: int = 1) -> None:
         """
-        Votes to skip tracks in the queue.
+        Skips one, or an optional amount of tracks.
 
-        `amount`: The amount of tracks to skip. Defaults to 1. You can not skip more than 1 track if you are not the requester of the current track.
+        `amount`: The amount of tracks to skip. Defaults to 1.
         """
         # sourcery no-metrics
 
         if ctx.voice_client.current.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
 
             if ctx.author not in ctx.voice_client.listeners:
-                raise exceptions.VoiceError('You can not vote to skip as you are currently deafened or server deafened.')
+                raise exceptions.VoiceError('You can not vote to skip as you are currently deafened.')
 
             if ctx.author.id in ctx.voice_client.skip_request_ids:
                 ctx.voice_client.skip_request_ids.remove(ctx.author.id)
@@ -339,6 +339,8 @@ class Music(commands.Cog):
                 for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
                     if track.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
                         raise exceptions.VoiceError(f'You are not the requester of all `{amount}` of the next tracks in the queue.')
+
+                for _ in enumerate(ctx.voice_client.queue[:amount - 1]):
                     ctx.voice_client.queue.get()
 
                 await ctx.voice_client.stop()
@@ -444,6 +446,54 @@ class Music(commands.Cog):
 
         await ctx.voice_client.invoke_controller()
 
+    @commands.command(name='lyrics')
+    async def lyrics(self, ctx: context.Context, *, query: str = 'spotify') -> None:
+
+        if query == 'spotify':
+
+            query = 'player'
+            if (spotify_activity := discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)) is not None:
+                query = f'{spotify_activity.title} - {spotify_activity.artist}'
+
+        elif query == 'player':
+
+            if not ctx.voice_client or not ctx.voice_client.is_connected:
+                raise exceptions.VoiceError('I am not connected to any voice channels.')
+            if not ctx.voice_client.is_playing:
+                raise exceptions.VoiceError('There are no tracks playing.')
+
+            query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
+
+        try:
+            results = await self.bot.ksoft.music.lyrics(query=query, limit=50)
+        except ksoftapi.NoResults:
+            raise exceptions.ArgumentError(f'No results were found for the query `{query}`.')
+        except ksoftapi.APIError:
+            raise exceptions.VoiceError('The API used to fetch lyrics is currently down/broken.')
+
+        choice = await ctx.paginate_choice(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
+                                           header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
+        result = results[choice]
+
+        entries = []
+        for line in result.lyrics.split('\n'):
+
+            if not entries:
+                entries.append(line)
+                continue
+
+            last_entry = entries[-1]
+            if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
+                entries.append(line)
+                continue
+
+            entries[-1] += f'\n{line}'
+
+        await ctx.paginate_embed(
+                entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.'
+        )
+
+
     #
 
     @commands.group(name='queue', aliases=['q'], invoke_without_command=True)
@@ -531,23 +581,6 @@ class Music(commands.Cog):
             entries.append(embed)
 
         await ctx.paginate_embeds(entries=entries)
-
-    @queue_history.command(name='clear', aliases=['c'])
-    @is_connected(same_channel=True)
-    @has_voice_client()
-    async def queue_history_clear(self, ctx: context.Context) -> None:
-        """
-        Clears the queue history.
-        """
-
-        history = list(ctx.voice_client.queue.history)
-        if not history:
-            raise exceptions.VoiceError('The queue history is empty.')
-
-        ctx.voice_client.queue.clear_history()
-        await ctx.send('The queue history has been cleared.')
-
-    #
 
     @commands.group(name='loop', invoke_without_command=True)
     @is_connected(same_channel=True)
@@ -678,55 +711,6 @@ class Music(commands.Cog):
         track = ctx.voice_client.queue.get(position=entry_1 - 1, put_history=False)
         ctx.voice_client.queue.put(items=track, position=entry_2 - 1)
         await ctx.send(f'Moved `{track.title}` from position `{entry_1}` to position `{entry_2}`.')
-
-    #
-
-    @commands.command(name='lyrics')
-    async def lyrics(self, ctx: context.Context, *, query: str = 'spotify') -> None:
-
-        if query == 'spotify':
-
-            query = 'player'
-            if (spotify_activity := discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)) is not None:
-                query = f'{spotify_activity.title} - {spotify_activity.artist}'
-
-        elif query == 'player':
-
-            if not ctx.voice_client or not ctx.voice_client.is_connected:
-                raise exceptions.VoiceError('I am not connected to any voice channels.')
-            if not ctx.voice_client.is_playing:
-                raise exceptions.VoiceError('There are no tracks playing.')
-
-            query = f'{ctx.voice_client.current.title} - {ctx.voice_client.current.requester}'
-
-        try:
-            results = await self.bot.ksoft.music.lyrics(query=query, limit=50)
-        except ksoftapi.NoResults:
-            raise exceptions.ArgumentError(f'No results were found for the query `{query}`.')
-        except ksoftapi.APIError:
-            raise exceptions.VoiceError('The API used to fetch lyrics is currently down/broken.')
-
-        choice = await ctx.paginate_choice(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
-                                           header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
-        result = results[choice]
-
-        entries = []
-        for line in result.lyrics.split('\n'):
-
-            if not entries:
-                entries.append(line)
-                continue
-
-            last_entry = entries[-1]
-            if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
-                entries.append(line)
-                continue
-
-            entries[-1] += f'\n{line}'
-
-        await ctx.paginate_embed(
-                entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.'
-        )
 
 
 def setup(bot: Life):
