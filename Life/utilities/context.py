@@ -10,17 +10,24 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
+from __future__ import annotations
 
 import asyncio
-from typing import Any, Optional, Union
-
+from typing import Any, Optional, Union,  TYPE_CHECKING
 import discord
 from discord.ext import commands
 
 from utilities import exceptions, objects, paginators
 
+if TYPE_CHECKING:
+    from cogs.voice.custom.player import Player
+
 
 class Context(commands.Context):
+
+    @property
+    def voice_client(self) -> Player:
+        return self.guild.voice_client if self.guild else None
 
     @property
     def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
