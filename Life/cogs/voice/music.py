@@ -148,12 +148,12 @@ class Music(commands.Cog):
 
         ctx.voice_client.text_channel = ctx.channel
 
-    @commands.command(name='play', aliases=['p'])
+    @commands.group(name='play', aliases=['p'], invoke_without_command=True)
     @is_connected(same_channel=True)
     @has_voice_client(try_join=True)
     async def play(self, ctx: context.Context, *, query: str) -> None:
         """
-        Plays/queues a track with the given name or url.
+        Queues a track with the given name or url.
 
         `query`: The query to search for tracks with.
 
@@ -168,21 +168,74 @@ class Music(commands.Cog):
                 raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
 
             if search.source == 'spotify':
+                tracks = search.tracks
 
                 message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the queue.'
                 if search.search_type in ('album', 'playlist'):
                     message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
 
-                tracks = search.tracks
-
             else:
 
                 if search.search_type == 'track':
-                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the queue.'
                     tracks = [search.tracks[0]]
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the queue.'
                 else:
-                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
                     tracks = search.tracks
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
+
+            ctx.voice_client.queue.put(items=tracks)
+            await ctx.send(message)
+
+    @play.command(name='soundcloud', aliases=['sc'])
+    @is_connected(same_channel=True)
+    @has_voice_client(try_join=True)
+    async def play_soundcloud(self, ctx: context.Context, *, query: str) -> None:
+        """
+        Queues a track from soundcloud with the given name/url.
+
+        `query`: The query to search for tracks with.
+        """
+
+        async with ctx.channel.typing():
+
+            search = await ctx.voice_client.search(query=f'soundcloud:{query}', ctx=ctx)
+
+            if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
+                raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
+
+            if search.search_type == 'track':
+                tracks = [search.tracks[0]]
+                message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the queue.'
+            else:
+                tracks = search.tracks
+                message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
+
+            ctx.voice_client.queue.put(items=tracks)
+            await ctx.send(message)
+
+    @play.command(name='music', aliases=['m'])
+    @is_connected(same_channel=True)
+    @has_voice_client(try_join=True)
+    async def play_music(self, ctx: context.Context, *, query: str) -> None:
+        """
+        Queues a track from youtube music with the given name/url.
+
+        `query`: The query to search for tracks with.
+        """
+
+        async with ctx.channel.typing():
+
+            search = await ctx.voice_client.search(query=f'ytmsearch:{query}', ctx=ctx)
+
+            if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
+                raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
+
+            if search.search_type == 'track':
+                tracks = [search.tracks[0]]
+                message = f'Added the Youtube Music {search.search_type} `{search.tracks[0].title}` to the queue.'
+            else:
+                tracks = search.tracks
+                message = f'Added the Youtube Music {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks)
             await ctx.send(message)
@@ -207,22 +260,21 @@ class Music(commands.Cog):
                 raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
 
             if search.source == 'spotify':
+                tracks = search.tracks
 
                 message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the beginning of the queue.'
                 if search.search_type in ('album', 'playlist'):
                     message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
 
-                tracks = search.tracks
-
             else:
 
                 if search.search_type == 'track':
-                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                     tracks = [search.tracks[0]]
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                 else:
+                    tracks = search.tracks
                     message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
                               f'of **{len(search.tracks)}** tracks.'
-                    tracks = search.tracks
 
             ctx.voice_client.queue.put(items=tracks, position=0)
             await ctx.send(message)
@@ -247,22 +299,21 @@ class Music(commands.Cog):
                 raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
 
             if search.source == 'spotify':
+                tracks = search.tracks
 
                 message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the beginning of the queue.'
                 if search.search_type in ('album', 'playlist'):
                     message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
 
-                tracks = search.tracks
-
             else:
 
                 if search.search_type == 'track':
-                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                     tracks = [search.tracks[0]]
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                 else:
+                    tracks = search.tracks
                     message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
                               f'of **{len(search.tracks)}** tracks.'
-                    tracks = search.tracks
 
             ctx.voice_client.queue.put(items=tracks, position=0)
             await ctx.send(message)
@@ -323,13 +374,13 @@ class Music(commands.Cog):
 
             if len(ctx.voice_client.skip_request_ids) >= (len(ctx.voice_client.listeners) // 2) + 1:
                 await ctx.voice_client.stop()
-                await ctx.send(f'Skipped the current track.')
+                await ctx.send('Skipped the current track.')
 
         else:
 
             if amount == 1:
                 await ctx.voice_client.stop()
-                await ctx.send(f'Skipped the current track.')
+                await ctx.send('Skipped the current track.')
 
             else:
 
@@ -492,7 +543,6 @@ class Music(commands.Cog):
         await ctx.paginate_embed(
                 entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.'
         )
-
 
     #
 

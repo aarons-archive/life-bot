@@ -229,10 +229,10 @@ class Player(slate.Player):
 
             url = yarl.URL(query)
             if not url.host or not url.scheme:
-                if query.startswith('soundcloud'):
+                if query.startswith('soundcloud:'):
                     query = f'scsearch:{query[11:]}'
-                elif query.startswith('ytmusic'):
-                    query = f'ytmsearch:{query[8:]}'
+                elif query.startswith('ytmsearch:'):
+                    query = f'ytmsearch:{query[10:]}'
                 else:
                     query = f'ytsearch:{query}'
 
