@@ -22,11 +22,11 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
+import slate
 import spotify
 from discord.ext import commands
 
 import config
-import slate
 from managers import guild_manager, reminder_manager, tag_manager, todo_manager, user_manager
 from utilities import context, help
 
@@ -134,19 +134,23 @@ class Life(commands.AutoShardedBot):
 
     async def close(self) -> None:
 
+        __log__.info('[BOT] Closing aiohttp client sessions.')
+        print('\n[CS] Closing aiohttp client sessions.')
+        await self.mystbin.close()
+        await self.ksoft.close()
+        await self.session.close()
+        await self.spotify.close()
+        await self.spotify_http.close()
+
         __log__.info('[BOT] Closing bot down.')
-        print('\n[BOT] Closing bot down.')
+        print('[BOT] Closing bot down.')
 
         __log__.info('[BOT] Closing database connection.')
         print('[DB] Closing database connection.')
         await self.db.close()
 
-        __log__.info('[BOT] Closing aiohttp client session.')
-        print('[CS] Closing aiohttp client session.')
-        await self.session.close()
-
         __log__.info('[BOT] Bot has shutdown.')
-        print('Bye bye!')
+        print('\nBye bye!')
         await super().close()
 
     #
