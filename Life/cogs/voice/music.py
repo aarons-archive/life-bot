@@ -14,13 +14,50 @@ from typing import Literal
 
 import discord
 import ksoftapi
+import slate
 from discord.ext import commands
 
 import config
-import slate
 from bot import Life
 from cogs.voice.custom.player import Player
 from utilities import context, exceptions, utils
+
+
+def is_connected(same_channel: bool = False):
+
+    async def predicate(ctx) -> bool:
+        channel = getattr(ctx.author.voice, 'channel', None)
+        if not channel:
+            message = 'You must be connected to a voice channel to use this command.'
+            if same_channel and getattr(channel, 'id', None) != getattr(getattr(ctx.voice_client, 'channel', None), 'id', None):
+                message = 'You must be connected to the same voice channel as me to use this command.'
+            raise exceptions.VoiceError(message)
+        return True
+
+    return commands.check(predicate)
+
+
+def has_voice_client(try_join: bool = False):
+
+    async def predicate(ctx) -> bool:
+        if not ctx.voice_client or not ctx.voice_client.is_connected:
+            if try_join:
+                await ctx.invoke(ctx.bot.get_command('join'))
+            else:
+                raise exceptions.VoiceError('I am not connected to any voice channels.')
+        return True
+
+    return commands.check(predicate)
+
+
+def is_voice_client_playing():
+
+    async def predicate(ctx) -> bool:
+        if not ctx.voice_client or not ctx.voice_client.is_playing:
+            raise exceptions.VoiceError('No tracks are currently playing.')
+        return True
+
+    return commands.check(predicate)
 
 
 class Music(commands.Cog):
@@ -61,7 +98,7 @@ class Music(commands.Cog):
 
         track = None
         try:
-            track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
+            track = await event.player.node.decode_track(track_id=event.track_id)
         except slate.HTTPError:
             pass
 
@@ -78,7 +115,7 @@ class Music(commands.Cog):
 
         track = None
         try:
-            track = await event.player.node.decode_tracks(track_id=event.track, retry=False)
+            track = await event.player.node.decode_track(track_id=event.track_id)
         except slate.HTTPError:
             pass
 
@@ -92,50 +129,43 @@ class Music(commands.Cog):
 
     #
 
-    @commands.command(name='join', aliases=['connect'])
+    @commands.command(name='join', aliases=['connect', 'summon'])
+    @is_connected()
     async def join(self, ctx: context.Context) -> None:
         """
-        Joins your voice channel.
+        Summons the bot to the voice channel that you are in.
         """
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel:
-            raise exceptions.VoiceError('You must be in a voice channel to use this command.')
 
         if ctx.voice_client and ctx.voice_client.is_connected:
             raise exceptions.VoiceError('I am already in a voice channel.')
 
         if ctx.voice_client:
-            await ctx.voice_client.reconnect(channel=channel)
+            await ctx.voice_client.reconnect(channel=ctx.author.voice.channel)
+            await ctx.send(f'Reconnected to the voice channel `{ctx.author.voice.channel}`')
         else:
-            await self.bot.slate.create_player(channel=channel, cls=Player)
+            await self.bot.slate.create_player(channel=ctx.author.voice.channel, cls=Player)
+            await ctx.send(f'Joined the voice channel `{ctx.author.voice.channel}`.')
 
         ctx.voice_client.text_channel = ctx.channel
-        await ctx.send(f'Joined the voice channel `{channel}`.')
 
     @commands.command(name='play', aliases=['p'])
+    @is_connected(same_channel=True)
+    @has_voice_client(try_join=True)
     async def play(self, ctx: context.Context, *, query: str) -> None:
         """
-        Plays or queues a track with the given search.
+        Plays/queues a track with the given name or url.
 
-        `query`: The search term to find tracks for. You can prepend this query with soundcloud to search for tracks on soundcloud.
+        `query`: The query to search for tracks with.
 
         This command supports youtube/soundcloud searching or youtube, soundcloud, spotify, bandcamp, beam, twitch, and vimeo links.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            await ctx.invoke(self.join)
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         async with ctx.channel.typing():
 
             search = await ctx.voice_client.search(query=query, ctx=ctx)
 
             if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
-                raise exceptions.VoiceError('You are unable to play HTTP links.')
+                raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
 
             if search.source == 'spotify':
 
@@ -150,103 +180,177 @@ class Music(commands.Cog):
                 if search.search_type == 'track':
                     message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the queue.'
                     tracks = [search.tracks[0]]
-                elif search.search_type == 'playlist':
-                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** track(s)'
+                else:
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
                     tracks = search.tracks
 
             ctx.voice_client.queue.put(items=tracks)
             await ctx.send(message)
 
-    @commands.command(name='leave', aliases=['disconnect', 'dc'])
-    async def leave(self, ctx: context.Context) -> None:
+    @commands.command(name='playtop', aliases=['ptop', 'playnext', 'pnext'])
+    @is_connected(same_channel=True)
+    @has_voice_client(try_join=True)
+    async def playtop(self, ctx: context.Context, *, query: str) -> None:
         """
-        Leaves the voice channel.
+        Queues a track at the beginning of the queue.
+
+        `query`: The query to search for tracks with.
+
+        This command supports youtube/soundcloud searching or youtube, soundcloud, spotify, bandcamp, beam, twitch, and vimeo links.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
+        async with ctx.channel.typing():
 
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
+            search = await ctx.voice_client.search(query=query, ctx=ctx)
 
-        await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
+            if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
+                raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
+
+            if search.source == 'spotify':
+
+                message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the beginning of the queue.'
+                if search.search_type in ('album', 'playlist'):
+                    message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
+
+                tracks = search.tracks
+
+            else:
+
+                if search.search_type == 'track':
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
+                    tracks = [search.tracks[0]]
+                else:
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
+                              f'of **{len(search.tracks)}** tracks.'
+                    tracks = search.tracks
+
+            ctx.voice_client.queue.put(items=tracks, position=0)
+            await ctx.send(message)
+
+    @commands.command(name='playskip', aliases=['pskip', 'playnow', 'pnow'])
+    @is_connected(same_channel=True)
+    @has_voice_client(try_join=True)
+    async def playskip(self, ctx: context.Context, *, query: str) -> None:
+        """
+        Plays/queues a track and skips the current track.
+
+        `query`: The query to search for tracks with.
+
+        This command supports youtube/soundcloud searching or youtube, soundcloud, spotify, bandcamp, beam, twitch, and vimeo links.
+        """
+
+        async with ctx.channel.typing():
+
+            search = await ctx.voice_client.search(query=query, ctx=ctx)
+
+            if search.source == 'HTTP' and ctx.author.id not in config.OWNER_IDS:
+                raise exceptions.VoiceError('You are not able to play tracks from `HTTP` sources.')
+
+            if search.source == 'spotify':
+
+                message = f'Added the Spotify {search.search_type} `{search.search_result.name}` to the beginning of the queue.'
+                if search.search_type in ('album', 'playlist'):
+                    message = f'{message[:-1]} with a total of `{len(search.tracks)}` tracks.'
+
+                tracks = search.tracks
+
+            else:
+
+                if search.search_type == 'track':
+                    message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
+                    tracks = [search.tracks[0]]
+                else:
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
+                              f'of **{len(search.tracks)}** tracks.'
+                    tracks = search.tracks
+
+            ctx.voice_client.queue.put(items=tracks, position=0)
+            await ctx.send(message)
+            await ctx.voice_client.stop()
+            await ctx.send('Skipped the current track.')
+
+    @commands.command(name='disconnect', aliases=['dc', 'leave'])
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def disconnect(self, ctx: context.Context) -> None:
+        """
+        Disconnects the bot from the voice channel that it is in.
+
+        This command only temporarily disconnects the player, the current queue and other settings will remain after the bot has joined back.
+        """
+
+        await ctx.send(f'Temporarily left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
 
     @commands.command(name='destroy')
+    @is_connected(same_channel=True)
+    @has_voice_client()
     async def destroy(self, ctx: context.Context) -> None:
         """
-        Completely destroys the guilds player.
+        Destroys the player.
         """
 
-        if not ctx.voice_client:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        await ctx.send('Destroyed this guilds player.')
+        await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.destroy()
 
-    @commands.command(name='skip', aliases=['stop', 'next'])
-    async def skip(self, ctx: context.Context, amount: int = 1) -> None:
+    @commands.command(name='voteskip', aliases=['skip', 'next', 'stop', 's'])
+    @is_voice_client_playing()
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def voteskip(self, ctx: context.Context, amount: int = 1) -> None:
         """
-        Skips an amount of tracks.
+        Votes to skip tracks in the queue.
 
-        `amount`: The amount of tracks to skip. Defaults to 1
+        `amount`: The amount of tracks to skip. Defaults to 1. You can not skip more than 1 track if you are not the requester of the current track.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
-        if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError('There are no tracks playing.')
+        # sourcery no-metrics
 
         if ctx.voice_client.current.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
-            amount = 1
 
             if ctx.author not in ctx.voice_client.listeners:
                 raise exceptions.VoiceError('You can not vote to skip as you are currently deafened or server deafened.')
 
             if ctx.author.id in ctx.voice_client.skip_request_ids:
                 ctx.voice_client.skip_request_ids.remove(ctx.author.id)
-                raise exceptions.VoiceError('Removed your vote to skip.')
-
-            ctx.voice_client.skip_request_ids.append(ctx.author.id)
-            await ctx.send('Added your vote to skip.')
+                message = 'Removed your vote to skip.'
+            else:
+                ctx.voice_client.skip_request_ids.add(ctx.author.id)
+                message = 'Added your vote to skip.'
 
             skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
-            if len(ctx.voice_client.skip_request_ids) < skips_needed:
-                raise exceptions.VoiceError(f'Currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.')
+            await ctx.send(f'{message} Currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.')
 
-        if amount != 1:
+            if len(ctx.voice_client.skip_request_ids) >= (len(ctx.voice_client.listeners) // 2) + 1:
+                await ctx.voice_client.stop()
+                await ctx.send(f'Skipped the current track.')
 
-            if amount <= 0 or amount > len(ctx.voice_client.queue) + 1:
-                raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and `{len(ctx.voice_client.queue) + 1}`.')
+        else:
 
-            for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
-                if track.requester.id != ctx.author.id:
-                    raise exceptions.VoiceError(f'You only skipped `{index + 1}` out of the next `{amount}` tracks because you were not the requester of all them.')
+            if amount == 1:
+                await ctx.voice_client.stop()
+                await ctx.send(f'Skipped the current track.')
 
-                ctx.voice_client.queue.get()
+            else:
 
-        await ctx.voice_client.stop()
-        await ctx.send(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
+                if amount <= 0 or amount > len(ctx.voice_client.queue) + 1:
+                    raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and `{len(ctx.voice_client.queue) + 1}`.')
+
+                for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
+                    if track.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
+                        raise exceptions.VoiceError(f'You are not the requester of all `{amount}` of the next tracks in the queue.')
+                    ctx.voice_client.queue.get()
+
+                await ctx.voice_client.stop()
+                await ctx.send(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
 
     @commands.command(name='pause')
+    @is_connected(same_channel=True)
+    @has_voice_client()
     async def pause(self, ctx: context.Context) -> None:
         """
-        Pauses the player.
+        Pauses the current track.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.is_paused:
             raise exceptions.VoiceError('The player is already paused.')
@@ -254,18 +358,13 @@ class Music(commands.Cog):
         await ctx.voice_client.set_pause(pause=True)
         await ctx.send('The player is now paused.')
 
-    @commands.command(name='unpause', aliases=['resume'])
-    async def unpause(self, ctx: context.Context) -> None:
+    @commands.command(name='resume', aliases=['continue', 'unpause'])
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def resume(self, ctx: context.Context) -> None:
         """
-        Resumes the player.
+        Resumes the current track.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if ctx.voice_client.is_paused is False:
             raise exceptions.VoiceError('The player is not paused.')
@@ -274,28 +373,21 @@ class Music(commands.Cog):
         await ctx.send('The player is now resumed.')
 
     @commands.command(name='seek')
+    @is_voice_client_playing()
+    @is_connected(same_channel=True)
+    @has_voice_client()
     async def seek(self, ctx: context.Context, seconds: int = None) -> None:
         """
-        Changes the position of the player.
+        Seeks to a position on the current track.
 
-        `position`: The position to seek too, in seconds.
+        `seconds`: The position to seek too, in seconds.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
-        if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError('There are no tracks playing.')
 
         if not ctx.voice_client.current.is_seekable:
             raise exceptions.VoiceError('The current track is not seekable.')
 
         if not seconds and seconds != 0:
-            await ctx.send(f'The players position is `{utils.format_seconds(seconds=ctx.voice_client.position / 1000)}`')
+            await ctx.send(f'The players position is `{utils.format_seconds(seconds=round(ctx.voice_client.position // 1000))}`')
             return
 
         milliseconds = seconds * 1000
@@ -305,20 +397,32 @@ class Music(commands.Cog):
         await ctx.voice_client.set_position(position=milliseconds)
         await ctx.send(f'The players position is now `{utils.format_seconds(seconds=milliseconds // 1000)}`.')
 
+    @commands.command(name='replay')
+    @is_voice_client_playing()
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def replay(self, ctx: context.Context) -> None:
+        """
+        Seeks to the start of the current track.
+
+        `seconds`: The position to seek too, in seconds.
+        """
+
+        if not ctx.voice_client.current.is_seekable:
+            raise exceptions.VoiceError('The current track is not seekable.')
+
+        await ctx.voice_client.set_position(position=0)
+        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=0)}`.')
+
     @commands.command(name='volume', aliases=['vol'])
+    @is_connected(same_channel=True)
+    @has_voice_client()
     async def volume(self, ctx: context.Context, volume: int = None) -> None:
         """
         Changes the volume of the player.
 
         `volume`: The volume to change too, between 0 and 100.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         if not volume and volume != 0:
             await ctx.send(f'The players volume is `{ctx.voice_client.volume}%`.')
@@ -330,30 +434,27 @@ class Music(commands.Cog):
         await ctx.voice_client.set_volume(volume=volume)
         await ctx.send(f'The players volume is now `{ctx.voice_client.volume}%`.')
 
-    @commands.command(name='now_playing', aliases=['np'])
-    async def now_playing(self, ctx: context.Context) -> None:
+    @commands.command(name='nowplaying', aliases=['np'])
+    @is_voice_client_playing()
+    @has_voice_client()
+    async def nowplaying(self, ctx: context.Context) -> None:
         """
-        Displays the player controller.
+        Displays information about the current track.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        if not ctx.voice_client.is_playing:
-            raise exceptions.VoiceError('There are no tracks playing.')
 
         await ctx.voice_client.invoke_controller()
 
+    #
+
     @commands.group(name='queue', aliases=['q'], invoke_without_command=True)
+    @has_voice_client()
     async def queue(self, ctx: context.Context) -> None:
         """
         Displays the queue.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
         if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
+            raise exceptions.VoiceError('The queue is empty.')
 
         time = utils.format_seconds(seconds=round(sum(track.length for track in ctx.voice_client.queue)) // 1000, friendly=True)
         header = f'Showing `{min([10, len(ctx.voice_client.queue)])}` out of `{len(ctx.voice_client.queue)}` track(s) in the queue. Total queue time is `{time}`.\n\n'
@@ -366,15 +467,14 @@ class Music(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue:', header=header)
 
     @queue.command(name='detailed', aliases=['d'])
+    @has_voice_client()
     async def queue_detailed(self, ctx: context.Context) -> None:
         """
         Displays detailed information about the queue.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
         if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
+            raise exceptions.VoiceError('The queue is empty.')
 
         entries = []
         for index, track in enumerate(ctx.voice_client.queue):
@@ -388,33 +488,12 @@ class Music(commands.Cog):
 
         await ctx.paginate_embeds(entries=entries)
 
-    @queue.command(name='clear', aliases=['c'])
-    async def queue_clear(self, ctx: context.Context) -> None:
-        """
-        Clears the queue.
-        """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
-        if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
-
-        ctx.voice_client.queue.clear()
-        await ctx.send('The queue has been cleared.')
-
     @queue.group(name='history', aliases=['h'], invoke_without_command=True)
+    @has_voice_client()
     async def queue_history(self, ctx: context.Context) -> None:
         """
         Displays the queue history.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         history = list(ctx.voice_client.queue.history)
         if not history:
@@ -431,13 +510,11 @@ class Music(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=10, title='Queue history:', header=header)
 
     @queue_history.command(name='detailed', aliases=['d'])
+    @has_voice_client()
     async def queue_history_detailed(self, ctx: context.Context) -> None:
         """
-        Displays detailed information about the queues history.
+        Displays detailed information about the queue history.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
 
         history = list(ctx.voice_client.queue.history)
         if not history:
@@ -456,17 +533,12 @@ class Music(commands.Cog):
         await ctx.paginate_embeds(entries=entries)
 
     @queue_history.command(name='clear', aliases=['c'])
+    @is_connected(same_channel=True)
+    @has_voice_client()
     async def queue_history_clear(self, ctx: context.Context) -> None:
         """
         Clears the queue history.
         """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
 
         history = list(ctx.voice_client.queue.history)
         if not history:
@@ -475,78 +547,76 @@ class Music(commands.Cog):
         ctx.voice_client.queue.clear_history()
         await ctx.send('The queue history has been cleared.')
 
-    @queue.command(name='shuffle')
-    async def queue_shuffle(self, ctx: context.Context) -> None:
-        """
-        Shuffles the queue.
-        """
+    #
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
-        if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
-
-        ctx.voice_client.queue.shuffle()
-        await ctx.send('The queue has been shuffled.')
-
-    @queue.command(name='reverse')
-    async def queue_reverse(self, ctx: context.Context) -> None:
-        """
-        Reverses the queue.
-        """
-
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
-        if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
-
-        ctx.voice_client.queue.reverse()
-        await ctx.send('The queue has been reversed.')
-
-    @queue.group(name='loop', aliases=['l'], invoke_without_command=True)
-    async def queue_loop(self, ctx: context.Context) -> None:
+    @commands.group(name='loop', invoke_without_command=True)
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def loop(self, ctx: context.Context) -> None:
         """
         Loops the whole queue.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
         ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=False)
         await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the whole queue.')
 
-    @queue_loop.command(name='current', aliases=['c'])
-    async def queue_loop_current(self, ctx: context.Context) -> None:
+    @loop.command(name='current')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def loop_current(self, ctx: context.Context) -> None:
         """
         Loops the current track.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
+        ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=not ctx.voice_client.queue.is_looping_current)
+        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping_current else "stop"} looping the current track.')
 
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
+    @commands.command(name='clear')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def clear(self, ctx: context.Context) -> None:
+        """
+        Clears the queue.
+        """
 
-        ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=True)
-        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the current track.')
+        if ctx.voice_client.queue.is_empty:
+            raise exceptions.VoiceError('The queue is empty.')
 
-    @queue.command(name='sort')
-    async def queue_sort(self, ctx: context.Context, method: Literal['title', 'length', 'author'], reverse: bool = False) -> None:
+        ctx.voice_client.queue.clear()
+        await ctx.send('The queue has been cleared.')
+
+    @commands.command(name='shuffle')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def shuffle(self, ctx: context.Context) -> None:
+        """
+        Shuffles the queue.
+        """
+
+        if ctx.voice_client.queue.is_empty:
+            raise exceptions.VoiceError('The queue is empty.')
+
+        ctx.voice_client.queue.shuffle()
+        await ctx.send('The queue has been shuffled.')
+
+    @commands.command(name='reverse')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def reverse(self, ctx: context.Context) -> None:
+        """
+        Reverses the queue.
+        """
+
+        if ctx.voice_client.queue.is_empty:
+            raise exceptions.VoiceError('The queue is empty.')
+
+        ctx.voice_client.queue.reverse()
+        await ctx.send('The queue has been reversed.')
+
+    @commands.command(name='sort')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def sort(self, ctx: context.Context, method: Literal['title', 'length', 'author'], reverse: bool = False) -> None:
         """
         Sorts the queue.
 
@@ -554,15 +624,8 @@ class Music(commands.Cog):
         `reverse`: Whether or not to reverse the sort, as in `5, 3, 2, 4, 1` -> `5, 4, 3, 2, 1` instead of `5, 3, 2, 4, 1` -> `1, 2, 3, 4, 5`.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
         if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
+            raise exceptions.VoiceError('The queue is empty.')
 
         if method == 'title':
             ctx.voice_client.queue._queue.sort(key=lambda track: track.title, reverse=reverse)
@@ -573,23 +636,18 @@ class Music(commands.Cog):
 
         await ctx.send(f'The queue has been sorted with method `{method}`.')
 
-    @queue.command(name='remove')
-    async def queue_remove(self, ctx: context.Context, entry: int = 0) -> None:
+    @commands.command(name='remove')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def remove(self, ctx: context.Context, entry: int = 0) -> None:
         """
         Removes a track from the queue.
 
         `entry`: The position of the track you want to remove.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
         if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
+            raise exceptions.VoiceError('The queue is empty.')
 
         if entry <= 0 or entry > len(ctx.voice_client.queue):
             raise exceptions.VoiceError(f'That was not a valid track entry. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
@@ -597,8 +655,10 @@ class Music(commands.Cog):
         item = ctx.voice_client.queue.get(position=entry - 1, put_history=False)
         await ctx.send(f'Removed `{item.title}` from the queue.')
 
-    @queue.command(name='move')
-    async def queue_move(self, ctx: context.Context, entry_1: int = 0, entry_2: int = 0) -> None:
+    @commands.command(name='move')
+    @is_connected(same_channel=True)
+    @has_voice_client()
+    async def move(self, ctx: context.Context, entry_1: int = 0, entry_2: int = 0) -> None:
         """
         Move a track in the queue to a different position.
 
@@ -606,15 +666,8 @@ class Music(commands.Cog):
         `entry_2`: The position of the track you want to move too.
         """
 
-        if not ctx.voice_client or not ctx.voice_client.is_connected:
-            raise exceptions.VoiceError('I am not connected to any voice channels.')
-
-        channel = getattr(ctx.author.voice, 'channel', None)
-        if not channel or channel.id != ctx.voice_client.channel.id:
-            raise exceptions.VoiceError('You must be connected to the same voice channel as me to use this command.')
-
         if ctx.voice_client.queue.is_empty:
-            raise exceptions.VoiceError('The players queue is empty.')
+            raise exceptions.VoiceError('The queue is empty.')
 
         if entry_1 <= 0 or entry_1 > len(ctx.voice_client.queue):
             raise exceptions.VoiceError(f'That was not a valid track entry to move from. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
@@ -626,6 +679,8 @@ class Music(commands.Cog):
         ctx.voice_client.queue.put(items=track, position=entry_2 - 1)
         await ctx.send(f'Moved `{track.title}` from position `{entry_1}` to position `{entry_2}`.')
 
+    #
+
     @commands.command(name='lyrics')
     async def lyrics(self, ctx: context.Context, *, query: str = 'spotify') -> None:
 
@@ -633,9 +688,9 @@ class Music(commands.Cog):
 
             query = 'player'
             if (spotify_activity := discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)) is not None:
-                query = f'{spotify_activity.title} - {spotify_activity.album} - {spotify_activity.artist}'
+                query = f'{spotify_activity.title} - {spotify_activity.artist}'
 
-        if query == 'player':
+        elif query == 'player':
 
             if not ctx.voice_client or not ctx.voice_client.is_connected:
                 raise exceptions.VoiceError('I am not connected to any voice channels.')
