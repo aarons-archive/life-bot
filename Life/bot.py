@@ -60,12 +60,13 @@ class Life(commands.AutoShardedBot):
 
         self.db: Optional[asyncpg.Pool] = None
         self.redis: Optional[aredis.StrictRedis] = None
+
+        self.mystbin: mystbin.Client = mystbin.Client()
         self.ksoft: Optional[ksoftapi.Client] = ksoftapi.Client(config.KSOFT_TOKEN)
         self.slate: Optional[slate.Client] = slate.Client(bot=self, session=self.session)
         self.spotify: Optional[spotify.Client] = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.spotify_http: Optional[spotify.HTTPClient] = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
 
-        self.mystbin: mystbin.Client = mystbin.Client()
         self.user_manager: user_manager.UserManager = user_manager.UserManager(bot=self)
         self.guild_manager: guild_manager.GuildManager = guild_manager.GuildManager(bot=self)
         self.reminder_manager: reminder_manager.ReminderManager = reminder_manager.ReminderManager(bot=self)

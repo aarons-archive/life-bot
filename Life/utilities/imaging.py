@@ -10,7 +10,6 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-
 import io
 import multiprocessing
 import sys

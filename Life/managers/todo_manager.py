@@ -38,8 +38,8 @@ class TodoManager:
             user_config = await self.bot.user_manager.get_or_create_config(user_id=todo_data['user_id'])
             user_config.todos[todo.id] = todo
 
-        __log__.info(f'[TODO MANAGER] Loaded reminders. [{len(todos)} todos]')
-        print(f'[TODO MANAGER] Loaded reminders. [{len(todos)} todos]')
+        __log__.info(f'[TODO MANAGER] Loaded todos. [{len(todos)} todos]')
+        print(f'[TODO MANAGER] Loaded todos. [{len(todos)} todos]')
 
     #
 
