@@ -132,7 +132,7 @@ def badges(*, bot: Life, person: Union[discord.User, discord.Member]) -> str:
     if person.is_avatar_animated() or any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
         badges_list.append('<:nitro:738961134958149662>')
 
-    elif member := discord.utils.get(bot.get_all_members(), id=person.id): # skipcq: PTC-W0048
+    elif member := discord.utils.get(bot.get_all_members(), id=person.id):  # skipcq: PTC-W0048
         if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
             if activity.emoji and activity.emoji.is_custom_emoji():
                 badges_list.append('<:nitro:738961134958149662>')

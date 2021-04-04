@@ -28,7 +28,7 @@ from discord.ext import commands
 
 import config
 from managers import guild_manager, reminder_manager, tag_manager, todo_manager, user_manager
-from utilities import context, help
+from utilities import context, help # skipcq: PYL-W0622
 
 __log__ = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class Life(commands.AutoShardedBot):
         current_permissions = dict(ctx.me.permissions_in(ctx.channel))
         needed_permissions = {permission: value for permission, value in self.text_permissions if value is True}
 
-        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}: # skipcq: PTC-W0048
+        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:  # skipcq: PTC-W0048
             if (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
                 needed_permissions.update({permission: value for permission, value in self.voice_permissions if value is True})
                 current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})
