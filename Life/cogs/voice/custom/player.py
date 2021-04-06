@@ -118,7 +118,7 @@ class Player(slate.Player):
             if track.source == 'Spotify':
                 for retry in range(2):
                     try:
-                        search = await self.search(query=f'{"ytmusic " if retry == 0 else ""}{track.author} - {track.title}', ctx=track.ctx)
+                        search = await self.search(query=f'{"ytmsearch:" if retry == 0 else ""}{track.author} - {track.title}', ctx=track.ctx)
                     except exceptions.VoiceError as error:
                         if retry == 1:
                             await self.send(f'{error}')
