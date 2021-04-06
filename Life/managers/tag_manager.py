@@ -60,7 +60,7 @@ class TagManager:
 
         guild_config = await self.bot.guild_manager.get_or_create_config(guild_id=guild_id)
 
-        matches = [match[0] for match in rapidfuzz.process.extract(query=name, choices=guild_config.tags.keys(), limit=limit, processor=lambda s: s)]
+        matches = [match[0] for match in rapidfuzz.process.extract(query=name, choices=list(guild_config.tags.keys()), limit=limit, processor=lambda s: s)]
         return [guild_config.tags[tag_name] for tag_name in matches]
 
     async def get_tags_owned_by(self, *, guild_id: int, member: discord.Member) -> Optional[list[objects.Tag]]:

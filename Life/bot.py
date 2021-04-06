@@ -28,7 +28,7 @@ from discord.ext import commands
 
 import config
 from managers import guild_manager, reminder_manager, tag_manager, todo_manager, user_manager
-from utilities import context, help # skipcq: PYL-W0622
+from utilities import context, help  # skipcq: PYL-W0622
 
 __log__ = logging.getLogger(__name__)
 
