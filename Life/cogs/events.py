@@ -167,14 +167,14 @@ class Events(commands.Cog):
 
         embed = discord.Embed(colour=ctx.colour, description=f'{ctx.message.content}')
         embed.add_field(name='Info:', value=info)
-        await self.bot.ERROR_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.person_avatar(person=ctx.author))
+        await self.bot.ERROR_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
         if len(error_traceback) < 2000:
             error_traceback = f'```py\n{error_traceback}\n```'
         else:
             error_traceback = await utils.safe_text(mystbin_client=self.bot.mystbin, text=error_traceback)
 
-        await self.bot.ERROR_WEBHOOK.send(content=f'{error_traceback}', username=f'{ctx.author}', avatar_url=utils.person_avatar(person=ctx.author))
+        await self.bot.ERROR_WEBHOOK.send(content=f'{error_traceback}', username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
     #
 
@@ -202,7 +202,7 @@ class Events(commands.Cog):
         embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
         info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
         embed.add_field(name='Info:', value=info)
-        await self.bot.DM_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.person_avatar(person=ctx.author))
+        await self.bot.DM_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:

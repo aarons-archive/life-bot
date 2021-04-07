@@ -17,7 +17,7 @@ from typing import Literal, Optional
 from discord.ext import commands
 
 from bot import Life
-from utilities import context, converters, exceptions, imaging
+from utilities import context, converters, exceptions, imaging, utils
 
 _old_transform = commands.Command.transform
 
@@ -29,8 +29,7 @@ def _transform(self, ctx, param):
         if ctx.message.attachments:
             param = Parameter(param.name, param.kind, default=ctx.message.attachments[0].url, annotation=param.annotation)
         else:
-            default = str(ctx.author.avatar_url_as(format='gif' if ctx.author.is_avatar_animated() is True else 'png'))
-            param = Parameter(param.name, param.kind, default=default, annotation=param.annotation)
+            param = Parameter(param.name, param.kind, default=utils.avatar(person=ctx.author), annotation=param.annotation)
 
     return _old_transform(self, ctx, param)
 

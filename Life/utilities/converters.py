@@ -11,7 +11,6 @@
 #
 
 from abc import ABC
-from typing import Union
 
 import dateparser.search
 import discord
@@ -23,28 +22,7 @@ from discord.ext import commands
 from pendulum.tz.timezone import Timezone
 
 import config
-from utilities import context, exceptions
-
-
-class ChannelEmojiConverter(commands.Converter, ABC):
-
-    async def convert(self, ctx: context.Context, argument: Union[discord.TextChannel, discord.VoiceChannel, discord.CategoryChannel]) -> str:
-
-        if isinstance(argument, discord.VoiceChannel):
-            emoji = 'voice_locked' if argument.overwrites_for(argument.guild.default_role).connect is False else 'voice'
-
-        elif isinstance(argument, discord.TextChannel):
-            if argument.is_news():
-                emoji = 'news_locked' if argument.overwrites_for(argument.guild.default_role).read_messages is False else 'news'
-            elif argument.is_nsfw():
-                emoji = 'text_nsfw'
-            else:
-                emoji = 'text_locked' if argument.overwrites_for(argument.guild.default_role).read_messages is False else 'text'
-
-        else:
-            emoji = 'unknown'
-
-        return config.CHANNEL_EMOJIS[emoji]
+from utilities import context, exceptions, utils
 
 
 class UserConverter(commands.UserConverter):
@@ -141,7 +119,7 @@ class ImageConverter(commands.Converter, ABC):
             pass
         else:
             await ctx.send(f'Editing the avatar of `{member}`. If this is a mistake please specify the user/image you would like to edit before any extra arguments.')
-            return str(member.avatar_url_as(format='gif' if member.is_avatar_animated() is True else 'png'))
+            return utils.avatar(person=member)
 
         if (check := yarl.URL(argument)) and check.scheme and check.host:
             return argument

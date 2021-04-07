@@ -33,23 +33,40 @@ if TYPE_CHECKING:
 __log__ = logging.getLogger(__name__)
 
 
-async def safe_text(*, mystbin_client: mystbin.Client, text: str, max_characters: int = 1024) -> str:
+async def safe_text(text: str, mystbin_client: mystbin.Client, max_characters: int = 1024, syntax: str = 'python') -> str:
 
     if len(text) <= max_characters:
         return text
 
     try:
-        return await mystbin_client.post(text, syntax='python')
+        return await mystbin_client.post(text, syntax=syntax)
     except mystbin.APIError as error:
         __log__.warning(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
-        return f'{text[:1024]}'
+        return f'{text[:max_characters]}'  # Not the best solution.
 
 
-def convert_datetime(*, datetime: Union[dt.datetime, DateTime]) -> DateTime:
+def convert_datetime(datetime: Union[dt.datetime, DateTime]) -> DateTime:
     return pendulum.instance(datetime, tz='UTC') if isinstance(datetime, dt.datetime) else datetime
 
 
-def format_seconds(*, seconds: int, friendly: bool = False) -> str:
+def format_datetime(datetime: Union[dt.datetime, DateTime], *, seconds: bool = False) -> str:
+    datetime = convert_datetime(datetime=datetime)
+    return datetime.format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zz{"ZZ" if datetime.timezone.name != "UTC" else ""}')
+
+
+def format_date(datetime: Union[dt.datetime, DateTime]) -> str:
+    return convert_datetime(datetime=datetime).format('dddd MMMM Do YYYY')
+
+
+def format_difference(datetime: Union[dt.datetime, DateTime], *, suppress=None) -> str:
+
+    if suppress is None:
+        suppress = ['seconds']
+
+    return humanize.precisedelta(pendulum.now(tz='UTC').diff(convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
+
+
+def format_seconds(seconds: int, *, friendly: bool = False) -> str:
 
     minute, second = divmod(seconds, 60)
     hour, minute = divmod(minute, 60)
@@ -61,27 +78,6 @@ def format_seconds(*, seconds: int, friendly: bool = False) -> str:
         return f'{f"{days}d " if not days == 0 else ""}{f"{hours}h " if not hours == 0 or not days == 0 else ""}{minutes}m {seconds}s'
 
     return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
-
-
-def format_datetime(*, datetime: Union[dt.datetime, DateTime], seconds: bool = False) -> str:
-    datetime = convert_datetime(datetime=datetime)
-    return datetime.format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zz{"ZZ" if datetime.timezone.name != "UTC" else ""}')
-
-
-def format_date(*, datetime: Union[dt.datetime, DateTime]) -> str:
-    return convert_datetime(datetime=datetime).format('dddd MMMM Do YYYY')
-
-
-def format_difference(*, datetime: Union[dt.datetime, DateTime], suppress=None) -> str:
-
-    if suppress is None:
-        suppress = ['seconds']
-
-    return humanize.precisedelta(pendulum.now(tz='UTC').diff(convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
-
-
-def person_avatar(*, person: Union[discord.User, discord.Member]) -> str:
-    return str(person.avatar_url_as(format='gif' if person.is_avatar_animated() else 'png'))
 
 
 def line_count() -> tuple[int, int, int, int]:
@@ -120,7 +116,7 @@ def line_count() -> tuple[int, int, int, int]:
     return files, functions, lines, classes
 
 
-def badges(*, bot: Life, person: Union[discord.User, discord.Member]) -> str:
+def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
 
     badges_list = [badge for name, badge in config.BADGE_EMOJIS.items() if dict(person.public_flags)[name] is True]
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
@@ -140,7 +136,11 @@ def badges(*, bot: Life, person: Union[discord.User, discord.Member]) -> str:
     return ' '.join(badges_list) if badges_list else 'N/A'
 
 
-def activities(*, person: discord.Member) -> str:
+def avatar(person: Union[discord.User, discord.Member]) -> str:
+    return str(person.avatar_url_as(format='gif' if person.is_avatar_animated() else 'png'))
+
+
+def activities(person: discord.Member) -> str:  # sourcery no-metrics
 
     if not person.activities:
         return 'N/A'
@@ -184,3 +184,20 @@ def activities(*, person: discord.Member) -> str:
                 message += f'• Listening to **{activity.name}**\n'
 
     return message
+
+
+def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel]) -> str:
+
+    overwrites = channel.overwrites_for(channel.guild.default_role)
+
+    if isinstance(channel, discord.VoiceChannel):
+        emoji = 'voice' if overwrites.connect else 'voice_locked'
+    else:
+        if channel.is_news():
+            emoji = 'news' if overwrites.read_messages else 'news_locked'
+        elif channel.is_nsfw():
+            emoji = 'text_nsfw'
+        else:
+            emoji = 'text' if overwrites.read_messages else 'text_locked'
+
+    return config.CHANNEL_EMOJIS[emoji]
