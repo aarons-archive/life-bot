@@ -19,7 +19,7 @@ from utilities import context, exceptions
 
 class Todo(commands.Cog):
 
-    def __init__(self, bot: Life):
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
@@ -138,5 +138,5 @@ class Todo(commands.Cog):
         await ctx.send(f'Edited todo with id `{todo_id}`.')
 
 
-def setup(bot: Life):
-    bot.add_cog(Todo(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Todo(bot=bot))

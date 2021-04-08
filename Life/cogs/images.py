@@ -39,7 +39,7 @@ commands.Command.transform = _transform
 
 class Images(commands.Cog):
 
-    def __init__(self, bot: Life):
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -669,5 +669,5 @@ class Images(commands.Cog):
             await ctx.reply(embed=embed)
 
 
-def setup(bot: Life):
-    bot.add_cog(Images(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Images(bot=bot))

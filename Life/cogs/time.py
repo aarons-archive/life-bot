@@ -283,5 +283,5 @@ class Time(commands.Cog):
         await ctx.send(embed=embed)
 
 
-def setup(bot: Life):
-    bot.add_cog(Time(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Time(bot=bot))

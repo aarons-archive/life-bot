@@ -235,5 +235,5 @@ class Events(commands.Cog):
         await self.bot.LOGGING_WEBHOOK.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
 
-def setup(bot: Life):
-    bot.add_cog(Events(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Events(bot=bot))

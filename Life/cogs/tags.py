@@ -245,4 +245,4 @@ class Tags(commands.Cog):
 
 
 def setup(bot: Life) -> None:
-    bot.add_cog(Tags(bot))
+    bot.add_cog(Tags(bot=bot))

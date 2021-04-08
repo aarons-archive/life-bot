@@ -244,5 +244,5 @@ class Dev(commands.Cog):
         await ctx.send(f'Unblacklisted guild `{guild_id}`.')
 
 
-def setup(bot: Life):
-    bot.add_cog(Dev(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Dev(bot=bot))

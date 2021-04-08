@@ -170,5 +170,5 @@ class Kross(commands.Cog):
         return await channel.send(f'`{member}` just left. I have saved their roles and if they rejoin i will give them back.')
 
 
-def setup(bot: Life):
-    bot.add_cog(Kross(bot))
+def setup(bot: Life) -> None:
+    bot.add_cog(Kross(bot=bot))
