@@ -27,7 +27,7 @@ from colorthief import ColorThief
 from discord.ext import tasks
 from pendulum import DateTime
 
-from utilities import enums, exceptions, objects
+from utilities import enums, exceptions, objects, utils
 
 if TYPE_CHECKING:
     from bot import Life
@@ -374,31 +374,41 @@ class UserManager:
                 name_fontsize -= 1
                 name_font = ImageFont.truetype(self.KABEL_BLACK_FONT, name_fontsize)
 
-            draw.text((300, 22), name_text, font=name_font, fill=colour)
+            draw.text((300, 22 - name_font.getoffset(name_text)[1]), name_text, font=name_font, fill=colour)
 
             # Level
 
             level_text = f'Level: {user_config.level}'
             level_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 40)
 
-            draw.text((300, 82), level_text, font=level_font, fill='#1F1E1C')
+            draw.text((300, 72 - level_font.getoffset(level_text)[1]), level_text, font=level_font, fill='#1F1E1C')
 
             # XP
 
             xp_text = f'XP: {user_config.xp} / {user_config.xp + user_config.next_level_xp}'
             xp_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 40)
 
-            draw.text((300, 122), xp_text, font=xp_font, fill='#1F1E1C')
+            draw.text((300, 112 - xp_font.getoffset(xp_text)[1]), xp_text, font=xp_font, fill='#1F1E1C')
 
             # XP BAR
 
             bar_len = 678
-            filled_len = int(round(bar_len * user_config.xp / float(user_config.xp + user_config.next_level_xp)))
+            outline = utils.darken_colour(*colour, 0.2)
 
-            draw.rounded_rectangle(((300, 200), (300 + bar_len, 250)), radius=10, outline=colour, width=5)
+            draw.rounded_rectangle(((300, 152), (300 + bar_len, 192)), radius=10, outline=outline, fill='#1F1E1C', width=5)
 
             if user_config.xp > 0:
-                draw.rounded_rectangle(((300, 200), (300 + filled_len, 250)), radius=10, outline=colour, fill=colour, width=5)
+                filled_len = int(round(bar_len * user_config.xp / float(user_config.xp + user_config.next_level_xp)))
+                draw.rounded_rectangle(((300, 152), (300 + filled_len, 192)), radius=10, outline=outline, fill=colour, width=5)
+
+            # Rank
+
+            rank_text = f'#{self.rank(member.id)}'
+            rank_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 110)
+
+            draw.text((300, 202 - rank_font.getoffset(rank_text)[1]), rank_text, font=rank_font, fill='#1F1E1C')
+
+            #
 
             image.save(buffer, 'png')
 

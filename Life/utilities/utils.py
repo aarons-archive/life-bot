@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import codecs
+import colorsys
 import datetime as dt
 import logging
 import os
@@ -201,3 +202,16 @@ def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel]) -> 
             emoji = 'text' if overwrites.read_messages else 'text_locked'
 
     return config.CHANNEL_EMOJIS[emoji]
+
+
+def darken_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
+
+    h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
+    r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
+    return int(r * 255), int(g * 255), int(b * 255)
+
+
+def lighten_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
+    h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
+    r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
+    return int(r * 255), int(g * 255), int(b * 255)
