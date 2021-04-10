@@ -44,7 +44,7 @@ class Time(commands.Cog):
             except exceptions.ArgumentError as error:
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
-                    user_config = self.bot.user_manager.get_config(user_id=member.id)
+                    user_config = self.bot.user_manager.get_config(member.id)
                     if user_config.timezone_private is True and member.id != ctx.author.id:
                         raise exceptions.ArgumentError('That users timezone is private.')
                     timezone = user_config.timezone
@@ -89,8 +89,8 @@ class Time(commands.Cog):
         """
 
         async with ctx.typing():
-            buffer = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
-            await ctx.send(file=discord.File(fp=buffer, filename='timecard.png'))
+            file = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
+            await ctx.send(file=file)
 
     #
 
@@ -111,7 +111,7 @@ class Time(commands.Cog):
         `timezone`: The timezone to use. See `!timezones` for a list of timezones.
         """
 
-        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, timezone=str(timezone))
+        await self.bot.user_manager.set_timezone(ctx.author.id, timezone=timezone.name)
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='reset', aliases=['default'])
@@ -120,7 +120,7 @@ class Time(commands.Cog):
         Sets your timezone back to the default (UTC).
         """
 
-        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, timezone='UTC')
+        await self.bot.user_manager.set_timezone(ctx.author.id)
         await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='private')
@@ -132,7 +132,7 @@ class Time(commands.Cog):
         if ctx.user_config.timezone_private is True:
             raise exceptions.ArgumentError('Your timezone is already private.')
 
-        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, private=True)
+        await self.bot.user_manager.set_timezone(ctx.author.id, timezone=ctx.user_config.timezone.name, private=True)
         await ctx.send('Your timezone is now private.')
 
     @_timezone.command(name='public')
@@ -144,7 +144,7 @@ class Time(commands.Cog):
         if ctx.user_config.timezone_private is False:
             raise exceptions.ArgumentError('Your timezone is already public.')
 
-        await self.bot.user_manager.set_timezone(user_id=ctx.author.id, private=False)
+        await self.bot.user_manager.set_timezone(ctx.author.id, timezone=ctx.user_config.timezone.name)
         await ctx.send('Your timezone is now public.')
 
     #
@@ -171,7 +171,7 @@ class Time(commands.Cog):
         datetime_difference = utils.format_difference(datetime=result[1], suppress=[])
         content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder['argument'], max_characters=1800)
 
-        reminder = await self.bot.reminder_manager.create_reminder(user_id=ctx.author.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
+        reminder = await self.bot.reminder_manager.create_reminder(ctx.author.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
         await ctx.send(f'Created a reminder with ID `{reminder.id}` for `{datetime}`, `{datetime_difference}` from now.')
 
     @reminders.command(name='list')
@@ -232,14 +232,14 @@ class Time(commands.Cog):
             if reminder_id in reminder_ids_to_remove:
                 raise exceptions.ArgumentError(f'You provided the reminder id `{reminder_id}` more than once.')
 
-            reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+            reminder = await self.bot.reminder_manager.get_reminder(ctx.author.id, reminder_id=reminder_id)
             if not reminder:
                 raise exceptions.ArgumentError(f'You do not have a reminder with the id `{reminder_id}`.')
 
             reminder_ids_to_remove.append(reminder.id)
 
         for reminder_id in reminder_ids_to_remove:
-            await self.bot.reminder_manager.delete_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+            await self.bot.reminder_manager.delete_reminder(ctx.author.id, reminder_id=reminder_id)
 
         s = 's' if len(reminder_ids_to_remove) > 1 else ''
         await ctx.send(f'Deleted `{len(reminder_ids_to_remove)}` reminder{s} with id{s} {", ".join(f"`{reminder_id}`" for reminder_id in reminder_ids_to_remove)}.')
@@ -253,12 +253,12 @@ class Time(commands.Cog):
         `content`: The content to edit the reminder with.
         """
 
-        reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+        reminder = await self.bot.reminder_manager.get_reminder(ctx.author.id, reminder_id=reminder_id)
         if not reminder:
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800)
-        await self.bot.reminder_manager.edit_reminder_content(user_id=ctx.author.id, reminder_id=reminder.id, content=content, jump_url=ctx.message.jump_url)
+        await self.bot.reminder_manager.edit_reminder_content(ctx.author.id, reminder_id=reminder.id, content=content, jump_url=ctx.message.jump_url)
 
         await ctx.send(f'Edited reminder id `{reminder.id}`\'s content.')
 
@@ -268,7 +268,7 @@ class Time(commands.Cog):
         Display information about the reminder with the given id.
         """
 
-        reminder = await self.bot.reminder_manager.get_reminder(user_id=ctx.author.id, reminder_id=reminder_id)
+        reminder = await self.bot.reminder_manager.get_reminder(ctx.author.id, reminder_id=reminder_id)
         if not reminder:
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 

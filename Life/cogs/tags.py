@@ -26,7 +26,7 @@ class Tags(commands.Cog):
     @commands.group(name='tag', aliases=['tags'], invoke_without_command=True)
     async def tag(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
         """
-        Get a tag by it's name or alias.
+        Get a tag by its name or alias.
 
         `name`: The name or alias of the tag you want to find.
         """
@@ -104,7 +104,7 @@ class Tags(commands.Cog):
     @tag.command(name='claim')
     async def tag_claim(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
         """
-        Claim a tag if it's owner has left the server.
+        Claim a tag if its owner has left the server.
 
         `name`: The name of the tag to claim.
         """
@@ -196,7 +196,7 @@ class Tags(commands.Cog):
     @tag.command(name='list')
     async def tag_list(self, ctx: context.Context, *, member: discord.Member = None) -> None:
         """
-        Get a list of yours or someones else's tags.
+        Get a list of yours or someone else's tags.
 
         `member`: The member to get a tag list for. Can be their ID, Username, Nickname or @Mention.
         """

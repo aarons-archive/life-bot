@@ -60,7 +60,7 @@ class Todo(commands.Cog):
         if len(content) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
-        todo = await self.bot.todo_manager.create_todo(user_id=ctx.author.id, content=content, jump_url=ctx.message.jump_url)
+        todo = await self.bot.todo_manager.create_todo(ctx.author.id, content=content, jump_url=ctx.message.jump_url)
         await ctx.send(f'Todo with id `{todo.id}` was created.')
 
     @todo.command(name='delete', aliases=['remove'])
@@ -93,7 +93,7 @@ class Todo(commands.Cog):
         embed.add_field(name='Contents: ', value='\n'.join(f'[`{ctx.user_config.todos[todo_id].id}`]({ctx.user_config.todos[todo_id].jump_url}) '
                                                            f'{ctx.user_config.todos[todo_id].content}' for todo_id in todo_ids_to_delete))
 
-        await self.bot.todo_manager.delete_todos(user_id=ctx.author.id, todo_ids=todo_ids_to_delete)
+        await self.bot.todo_manager.delete_todos(ctx.author.id, todo_ids=todo_ids_to_delete)
         await ctx.send(embed=embed)
 
     @todo.command(name='clear')
@@ -106,7 +106,7 @@ class Todo(commands.Cog):
             raise exceptions.GeneralError('You do not have any todos.')
 
         todo_ids = list(ctx.user_config.todos.keys())
-        await self.bot.todo_manager.delete_todos(user_id=ctx.author.id, todo_ids=todo_ids)
+        await self.bot.todo_manager.delete_todos(ctx.author.id, todo_ids=todo_ids)
         await ctx.send(f'Cleared your todo list of `{len(todo_ids)}` todo{"s" if len(todo_ids) > 1 else ""}.')
 
     @todo.command(name='edit', aliases=['update'])
@@ -134,7 +134,7 @@ class Todo(commands.Cog):
         if not todo:
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
-        await self.bot.todo_manager.edit_todo_content(user_id=ctx.author.id, todo_id=todo.id, content=content, jump_url=ctx.message.jump_url)
+        await self.bot.todo_manager.edit_todo_content(ctx.author.id, todo_id=todo.id, content=content, jump_url=ctx.message.jump_url)
         await ctx.send(f'Edited todo with id `{todo_id}`.')
 
 

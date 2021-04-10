@@ -13,45 +13,52 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Optional, Union,  TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Union
+
 import discord
 from discord.ext import commands
 
+import config
 from utilities import exceptions, objects, paginators
 
 if TYPE_CHECKING:
     from cogs.voice.custom.player import Player
+    from bot import Life
 
 
 class Context(commands.Context):
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        self.bot: Life = kwargs.get('bot')
+
+    #
 
     @property
     def voice_client(self) -> Player:
         return self.guild.voice_client if self.guild else None
 
+    #
+
     @property
     def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
-
-        if not self.author:
-            return self.bot.user_manager.default_config
-
-        return self.bot.user_manager.get_config(user_id=self.author.id)
+        return self.bot.user_manager.configs.get(getattr(self.author, 'id', None), self.bot.user_manager.default_config)
 
     @property
     def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
-
-        if not self.guild:
-            return self.bot.guild_manager.default_config
-
-        return self.bot.guild_manager.get_config(guild_id=self.guild.id)
+        return self.bot.guild_manager.configs.get(getattr(self.guild, 'id', None), self.bot.guild_manager.default_config)
 
     @property
     def colour(self) -> discord.Colour:
 
-        if str(self.user_config.colour) == str(discord.Colour(int('f1c40f', 16))):
-            return self.guild_config.colour
+        if isinstance(self.author, discord.Member):
+            if roles := list(reversed([role for role in self.author.roles if role.colour.value != 0])):
+                return roles[0].colour
 
-        return self.user_config.colour
+        return discord.Colour(config.COLOUR)
+
+    #
 
     async def paginate(self, **kwargs) -> paginators.Paginator:
         paginator = paginators.Paginator(ctx=self, **kwargs)

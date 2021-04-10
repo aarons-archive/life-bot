@@ -75,7 +75,7 @@ class HelpCommand(commands.HelpCommand):
     async def send_cog_help(self, cog: commands.Cog) -> None:
 
         if (cog_commands := self.get_cog_commands(cog=cog)) is None:
-            raise exceptions.ArgumentError('This cog has no commands. (Or you are not allowed to see them.')
+            raise exceptions.ArgumentError('This cog has no commands. (Or you are not allowed to see them).')
 
         entries = self.format_commands(unformatted_command=cog_commands)
         title = f'__**{cog.qualified_name} help page:**__\n'

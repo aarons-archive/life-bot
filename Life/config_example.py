@@ -1,19 +1,8 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
 
 # Bot
 TOKEN = ''
-PREFIX = ''
-CLIENT_ID = ''
+PREFIX = 'l-'
 EXTENSIONS = [
     'jishaku',
     'cogs.dev',
@@ -22,24 +11,22 @@ EXTENSIONS = [
     'cogs.time',
     'cogs.kross',
     'cogs.images',
-    'cogs.config',
     'cogs.events',
     'cogs.economy',
+    'cogs.settings',
     'cogs.birthdays',
     'cogs.information',
     'cogs.voice.music',
-    'cogs.voice.radio',
     'cogs.systemcollapse',
 ]
 OWNER_IDS = {
-    0
+    238356301439041536, 440113725970710528, 718259605523660870
 }
 
 
 # Tokens
 AXEL_WEB_TOKEN = ''
 KSOFT_TOKEN = ''
-WOLFRAM_ALPHA_TOKEN = ''
 SPOTIFY_CLIENT_ID = ''
 SPOTIFY_CLIENT_SECRET = ''
 
@@ -53,7 +40,7 @@ POSTGRESQL = {
 }
 REDIS = {
     'host':     '',
-    'port':     0,
+    'port':     0000,
     'password': '',
     'db':       0,
 }
@@ -73,13 +60,56 @@ NODES = [
         'type':       '',
     },
 ]
-WEB_ADDRESS = '127.0.0.1'
-WEB_PORT = 8080
-WEB_URL = f'{WEB_ADDRESS}:{WEB_PORT}'
-SPOTIFY_CALLBACK_URI = 'http://127.0.0.1'
 
 
 # Webhook URL's
 ERROR_WEBHOOK_URL = ''
 LOGGING_WEBHOOK_URL = ''
 DM_WEBHOOK_URL = ''
+
+
+# Custom values
+COLOUR = 0xF1C40F
+ZWSP = '\u200b'
+NL = '\n'
+
+
+# Emoji mappings
+CHANNEL_EMOJIS = {
+    'text':         '<:text:739399497200697465>',
+    'text_locked':  '<:text_locked:739399496953364511>',
+    'text_nsfw':    '<:text_nsfw:739399497251160115>',
+    'news':         '<:news:739399496936718337>',
+    'news_locked':  '<:news_locked:739399497062416435>',
+    'voice':        '<:voice:739399497221931058>',
+    'voice_locked': '<:voice_locked:739399496924135476>',
+    'category':     '<:category:738960756233601097>'
+}
+BADGE_EMOJIS = {
+    'staff':                  '<:staff:738961032109752441>',
+    'partner':                '<:partner:738961058613559398>',
+    'hypesquad':              '<:hypesquad:738960840375664691>',
+    'bug_hunter':             '<:bug_hunter:738961014275571723>',
+    'bug_hunter_level_2':     '<:bug_hunter_level_2:739390267949580290>',
+    'hypesquad_bravery':      '<:hypesquad_bravery:738960831596855448>',
+    'hypesquad_brilliance':   '<:hypesquad_brilliance:738960824327995483>',
+    'hypesquad_balance':      '<:hypesquad_balance:738960813460684871>',
+    'early_supporter':        '<:early_supporter:738961113219203102>',
+    'system':                 '<:system_1:738960703284576378><:system_2:738960703288770650>',
+    'verified_bot':           '<:verified_bot_1:738960728022581258><:verified_bot_2:738960728102273084>',
+    'verified_bot_developer': '<:verified_bot_developer:738961212250914897>',
+}
+COMMON_EMOJIS = {
+    'loading': '<a:loading:817924889271992320>'
+}
+
+
+# Dateparser settings
+DATEPARSER_SETTINGS = {
+    'DATE_ORDER':               'DMY',
+    'TIMEZONE':                 'UTC',
+    'RETURN_AS_TIMEZONE_AWARE': False,
+    'PREFER_DAY_OF_MONTH':      'current',
+    'PREFER_DATES_FROM':        'future',
+    'PARSERS':                  ['relative-time', 'absolute-time', 'timestamp', 'custom-formats']
+}

@@ -50,7 +50,7 @@ class Kross(commands.Cog):
         """
         Command to manage house points.
 
-        If all 3 parameters are left blank it will display how many points each house currently has.
+        If all 3 parameters are left blank, it will display how many points each house currently has.
 
         `house`: The house to add points too, can be one of `phoenix`, `leviathan`, `kodama` or `sylph`.
         `operation`: The point operation to perform. Can be `add`, `minus`, `subtract` or `remove`.

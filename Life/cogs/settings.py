@@ -49,7 +49,7 @@ class Settings(commands.Cog):
 
         Please note that to view the colour, no permissions are needed, however to change it you require the `manage_guild` permission.
 
-        `operation`: The operation to perform, `set` to set the colour, `reset` to revert back to the default. If not provided the current colour will be displayed.
+        `operation`: The operation to perform, `set` to set the colour, `reset` to revert to the default. If not provided the current colour will be displayed.
         `colour`: The colour to set. Possible formats include `0x<hex>`, `#<hex>`, `0x#<hex>` and `rgb(<number>, <number>, <number>)`. `<number>` can be `0 - 255` or `0% to 100%` and `<hex>` can be `#FFF` or `#FFFFFF`.
         """
 
@@ -63,7 +63,7 @@ class Settings(commands.Cog):
         old_colour = ctx.guild_config.colour
 
         if operation == 'reset':
-            await self.bot.guild_manager.set_colour(guild_id=ctx.guild.id)
+            await self.bot.guild_manager.set_colour(ctx.guild.id)
 
         elif operation == 'set':
 
@@ -72,7 +72,7 @@ class Settings(commands.Cog):
             if colour == ctx.guild_config.colour:
                 raise exceptions.ArgumentError(f'This servers embed colour is already `{str(colour).upper()}`.')
 
-            await self.bot.guild_manager.set_colour(guild_id=ctx.guild.id, colour=str(colour))
+            await self.bot.guild_manager.set_colour(ctx.guild.id, colour=str(colour))
 
         await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
@@ -82,7 +82,7 @@ class Settings(commands.Cog):
         """
         Manage this servers embed size settings.
 
-        Please note that to view the the current size, no permissions are needed, however to change it you require the `manage_guild` permission.
+        Please note that to view the current size, no permissions are needed, however to change it you require the `manage_guild` permission.
 
         `operation`: The operation to perform, `set` to change it or `reset` to revert it to the default. If not provided the current size will be displayed.
         `size`: The size to set embeds too. Can be `large`, `medium` or `small`.
@@ -90,8 +90,9 @@ class Settings(commands.Cog):
 
         if not operation:
             await ctx.send(f'This servers embed size is `{ctx.guild_config.embed_size.name.title()}`.')
+            return
 
-        if await self.bot.is_owner(ctx.author) is False:
+        if await self.bot.is_owner(user=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
         if operation == 'set':
@@ -99,12 +100,12 @@ class Settings(commands.Cog):
             if not size:
                 raise exceptions.ArgumentError('You did not provide a valid size. Available sizes are `large`, `medium` or `small`.')
 
-            await self.bot.guild_manager.set_embed_size(guild_id=ctx.guild.id, embed_size=getattr(enums.EmbedSize, size.upper()))
+            await self.bot.guild_manager.set_embed_size(ctx.guild.id, embed_size=getattr(enums.EmbedSize, size.upper()))
             await ctx.send(f'Set this servers embed size to `{size.title()}`.')
 
         elif operation == 'reset':
 
-            await self.bot.guild_manager.set_embed_size(guild_id=ctx.guild.id)
+            await self.bot.guild_manager.set_embed_size(ctx.guild.id)
             await ctx.send('Set this servers embed size to `Large`.')
 
     @settings.command(name='prefix', aliases=['prefixes'])
@@ -130,25 +131,25 @@ class Settings(commands.Cog):
         if operation == 'add':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less then 15 characters and contain no backtick `\`` characters.')
+                raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less than 15 characters and contain no backtick `\`` characters.')
 
             if len(ctx.guild_config.prefixes) > 20:
                 raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
             if prefix in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
-            await self.bot.guild_manager.set_prefixes(guild_id=ctx.guild.id, prefix=str(prefix))
+            await self.bot.guild_manager.set_prefixes(ctx.guild.id, prefix=str(prefix))
             await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
         elif operation == 'remove':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less then 15 characters and contain no backtick (`) characters.')
+                raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less than 15 characters and contain no backtick (`) characters.')
 
             if prefix not in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{prefix}`.')
 
-            await self.bot.guild_manager.set_prefixes(guild_id=ctx.guild.id, operation=enums.Operation.REMOVE, prefix=str(prefix))
+            await self.bot.guild_manager.set_prefixes(ctx.guild.id, operation=enums.Operation.REMOVE, prefix=str(prefix))
             await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
@@ -156,7 +157,7 @@ class Settings(commands.Cog):
             if not ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
-            await self.bot.guild_manager.set_prefixes(guild_id=ctx.guild.id, operation=enums.Operation.RESET)
+            await self.bot.guild_manager.set_prefixes(ctx.guild.id, operation=enums.Operation.RESET)
             await ctx.send('Cleared this servers prefixes.')
 
 

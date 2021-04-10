@@ -114,7 +114,7 @@ class Dev(commands.Cog):
     @dev.command(name='socketstats', aliases=['ss'], hidden=True)
     async def dev_socket_stats(self, ctx: context.Context) -> None:
         """
-        Displays a list of socket event counts since startup.
+        Displays a list of socket event counts since bot startup.
         """
 
         event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
@@ -166,11 +166,11 @@ class Dev(commands.Cog):
         if reason == 'No reason':
             reason = f'{user.name} - No reason'
 
-        user_config = self.bot.user_manager.get_config(user_id=user.id)
+        user_config = self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is True:
             raise exceptions.ArgumentError('That user is already blacklisted.')
 
-        await self.bot.user_manager.set_blacklisted(user_id=user.id, reason=reason)
+        await self.bot.user_manager.set_blacklisted(user.id, reason=reason)
         await ctx.send(f'Blacklisted user `{user.id}` with reason:\n\n`{reason}`')
 
     @dev_blacklist_users.command(name='remove', hidden=True)
@@ -181,11 +181,11 @@ class Dev(commands.Cog):
         `user`: The user to remove from the blacklist.
         """
 
-        user_config = self.bot.user_manager.get_config(user_id=user.id)
+        user_config = self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is False:
             raise exceptions.ArgumentError('That user is not blacklisted.')
 
-        await self.bot.user_manager.set_blacklisted(user_id=user.id, blacklisted=False)
+        await self.bot.user_manager.set_blacklisted(user.id, blacklisted=False)
         await ctx.send(f'Unblacklisted user `{user.id}`.')
 
     @dev_blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
@@ -218,11 +218,11 @@ class Dev(commands.Cog):
             reason = f'{guild.name} - No reason'
             await guild.leave()
 
-        guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
+        guild_config = self.bot.guild_manager.get_config(guild_id)
         if guild_config.blacklisted is True:
             raise exceptions.ArgumentError('The guild is already blacklisted.')
 
-        await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, reason=reason)
+        await self.bot.guild_manager.set_blacklisted(guild_id, reason=reason)
         await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
 
     @dev_blacklist_guilds.command(name='remove', hidden=True)
@@ -236,11 +236,11 @@ class Dev(commands.Cog):
         if 17 > guild_id > 20:
             raise exceptions.ArgumentError('That is not a valid guild id.')
 
-        guild_config = self.bot.guild_manager.get_config(guild_id=guild_id)
+        guild_config = self.bot.guild_manager.get_config(guild_id)
         if guild_config.blacklisted is False:
             raise exceptions.ArgumentError('That guild is not blacklisted.')
 
-        await self.bot.guild_manager.set_blacklisted(guild_id=guild_id, blacklisted=False)
+        await self.bot.guild_manager.set_blacklisted(guild_id, blacklisted=False)
         await ctx.send(f'Unblacklisted guild `{guild_id}`.')
 
 

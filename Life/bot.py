@@ -39,7 +39,7 @@ class Life(commands.AutoShardedBot):
         super().__init__(
                 command_prefix=self.get_prefix, help_command=help.HelpCommand(), owner_ids=config.OWNER_IDS, intents=discord.Intents.all(),
                 activity=discord.Activity(type=discord.ActivityType.playing, name='the game of life'), max_messages=10000,
-                allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
+                allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False)
         )
 
         self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True,
@@ -84,7 +84,7 @@ class Life(commands.AutoShardedBot):
         if not message.guild:
             return commands.when_mentioned_or(config.PREFIX, 'I-', '')(self, message)
 
-        guild_config = self.guild_manager.get_config(guild_id=message.guild.id)
+        guild_config = self.guild_manager.get_config(message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
 
     async def start(self, *args, **kwargs) -> None:
@@ -130,7 +130,6 @@ class Life(commands.AutoShardedBot):
                 print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
 
         print('')
-
         await super().start(*args, **kwargs)
 
     async def close(self) -> None:
@@ -178,17 +177,17 @@ class Life(commands.AutoShardedBot):
         if ctx.guild_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
             raise commands.CheckFailure(f'This guild is blacklisted from using this bot with the reason:\n\n`{ctx.guild_config.blacklisted_reason}`')
 
-        current_permissions = dict(ctx.me.permissions_in(ctx.channel))
         needed_permissions = {permission: value for permission, value in self.text_permissions if value is True}
+        current_permissions = dict(ctx.me.permissions_in(ctx.channel))
+        if not ctx.guild:
+            current_permissions['read_messages'] = True
 
         if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:  # skipcq: PTC-W0048
             if (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
-                needed_permissions.update({permission: value for permission, value in self.voice_permissions if value is True})
+                needed_permissions = {permission: value for permission, value in self.voice_permissions if value is True}
                 current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})
 
-        missing = [permissions for permissions, value in needed_permissions.items() if current_permissions[permissions] != value]
-
-        if missing:
+        if missing := [permissions for permissions, value in needed_permissions.items() if current_permissions[permissions] != value]:
             raise commands.BotMissingPermissions(missing)
 
         return True

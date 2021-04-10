@@ -482,7 +482,7 @@ class Music(commands.Cog):
             return
 
         if volume < 0 or volume > 100 and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.VoiceError('That was not a valid volume, Please choose a value between `0` and and `100`.')
+            raise exceptions.VoiceError('That was not a valid volume, Please choose a value between `0` and `100`.')
 
         await ctx.voice_client.set_volume(volume=volume)
         await ctx.send(f'The players volume is now `{ctx.voice_client.volume}%`.')
@@ -704,7 +704,7 @@ class Music(commands.Cog):
         Sorts the queue.
 
         `method`: The method to sort the queue with. Can be `title`, `length` or `author`.
-        `reverse`: Whether or not to reverse the sort, as in `5, 3, 2, 4, 1` -> `5, 4, 3, 2, 1` instead of `5, 3, 2, 4, 1` -> `1, 2, 3, 4, 5`.
+        `reverse`: Whether to reverse the sort, as in `5, 3, 2, 4, 1` -> `5, 4, 3, 2, 1` instead of `5, 3, 2, 4, 1` -> `1, 2, 3, 4, 5`.
         """
 
         if ctx.voice_client.queue.is_empty:

@@ -97,7 +97,7 @@ class Images(commands.Cog):
         """
 
         if factor < 0 or factor > 20:
-            raise exceptions.ArgumentError('Factor must be be between `0` and `20`.')
+            raise exceptions.ArgumentError('Factor must be between `0` and `20`.')
 
         async with ctx.channel.typing():
             embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='blueshift', factor=factor)
@@ -148,7 +148,7 @@ class Images(commands.Cog):
     @commands.command(name='edge')
     async def edge(self, ctx: context.Context, image: Optional[converters.ImageConverter], radius: float = 0, sigma: float = 1) -> None:
         """
-        Outlines edges within an image.
+        Outline edges within an image.
 
         `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
 
@@ -344,7 +344,7 @@ class Images(commands.Cog):
         Pulls or pushes pixels from the center the image.
 
         `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        `amount`: The factor to push or pull pixels by, negative values will push, positives will pull. Best results are -1.0 to 1.0.
+        `amount`: The factor to push or pull pixels by, negative values will push, positives will pull. For the best results use -1.0 to 1.0.
         """
 
         if amount < -20 or amount > 20:

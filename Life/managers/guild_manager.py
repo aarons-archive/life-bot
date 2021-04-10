@@ -10,19 +10,25 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
+from __future__ import annotations
+
 import logging
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import discord
 
 from utilities import enums, objects
+
+if TYPE_CHECKING:
+    from bot import Life
+
 
 __log__ = logging.getLogger(__name__)
 
 
 class GuildManager:
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: Life) -> None:
         self.bot = bot
 
         self.default_config = objects.DefaultGuildConfig()
@@ -39,9 +45,12 @@ class GuildManager:
 
         await self.bot.tag_manager.load()
 
-    #
+    # Guild management
 
-    async def create_config(self, *, guild_id: int) -> objects.GuildConfig:
+    def get_config(self, guild_id: int) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+        return self.configs.get(guild_id, self.default_config)
+
+    async def create_config(self, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO guilds (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', guild_id)
         self.configs[guild_id] = objects.GuildConfig(data=data)
@@ -49,45 +58,42 @@ class GuildManager:
         __log__.info(f'[GUILD MANAGER] Created config for guild with id \'{guild_id}\'')
         return self.configs[guild_id]
 
-    async def get_or_create_config(self, *, guild_id: int) -> objects.GuildConfig:
+    async def get_or_create_config(self, guild_id: int) -> objects.GuildConfig:
 
-        if isinstance(guild_config := self.get_config(guild_id=guild_id), objects.DefaultGuildConfig):
-            guild_config = await self.create_config(guild_id=guild_id)
+        if isinstance(guild_config := self.get_config(guild_id), objects.DefaultGuildConfig):
+            guild_config = await self.create_config(guild_id)
 
         return guild_config
 
-    def get_config(self, *, guild_id: int) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
-        return self.configs.get(guild_id, self.default_config)
+    # Regular settings
 
-    #
+    async def set_blacklisted(self, guild_id: int, *, blacklisted: bool = True, reason: str = None) -> None:
 
-    async def set_blacklisted(self, *, guild_id: int, blacklisted: bool = True, reason: str = None) -> None:
-
-        guild_config = await self.get_or_create_config(guild_id=guild_id)
+        guild_config = await self.get_or_create_config(guild_id)
 
         query = 'UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
         data = await self.bot.db.fetchrow(query, blacklisted, reason, guild_id)
         guild_config.blacklisted = data['blacklisted']
         guild_config.blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, *, guild_id: int, colour: str = str(discord.Colour.gold())) -> None:
+    async def set_colour(self, guild_id: int, *, colour: str = str(discord.Colour.gold())) -> None:
 
-        guild_config = await self.get_or_create_config(guild_id=guild_id)
+        guild_config = await self.get_or_create_config(guild_id)
 
         data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{colour.strip("#")}', guild_id)
         guild_config.colour = discord.Colour(int(data['colour'], 16))
 
-    async def set_embed_size(self, *, guild_id: int, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
+    async def set_embed_size(self, guild_id: int, *, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
-        guild_config = await self.get_or_create_config(guild_id=guild_id)
+        guild_config = await self.get_or_create_config(guild_id)
 
         data = await self.bot.db.fetchrow('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', embed_size.value, guild_id)
         # noinspection PyArgumentList
         guild_config.embed_size = enums.EmbedSize(data['embed_size'])
 
-    async def set_prefixes(self, *, guild_id: int, operation: enums.Operation = enums.Operation.ADD, prefix: str = None) -> None:
+    async def set_prefixes(self, guild_id: int, *, operation: enums.Operation = enums.Operation.ADD, prefix: str = None) -> None:
 
-        guild_config = await self.get_or_create_config(guild_id=guild_id)
+        guild_config = await self.get_or_create_config(guild_id)
 
         if operation in [enums.Operation.ADD, enums.Operation.REMOVE]:
             op = 'array_append' if operation == enums.Operation.ADD else 'array_remove'

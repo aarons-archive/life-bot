@@ -44,7 +44,7 @@ class Information(commands.Cog):
             'ANIMATED_ICON':                    'Can have animated icon',
             'PUBLIC_DISABLED':                  'Can not be public',
             'WELCOME_SCREEN_ENABLED':           'Can have welcome screen',
-            'MEMBER_VERIFICATION_GATE_ENABLED': 'Has member verify gate',
+            'MEMBER_VERIFICATION_GATE_ENABLED': 'Has a member verify gate',
             'PREVIEW_ENABLED':                  'Is previewable',
         }
 
@@ -65,10 +65,10 @@ class Information(commands.Cog):
             discord.VerificationLevel.none:    'None - No criteria set.',
             discord.VerificationLevel.low:     'Low - Must have a verified email.',
             discord.VerificationLevel.medium:  'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
-            discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more then 10 '
+            discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more than 10 '
                                                'minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more then 10 '
-                                               'minutes and a have a verified phone number.'
+            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more than 10 '
+                                               'minutes, and a have a verified phone number.'
         }
 
         self.CONTENT_FILTER_LEVELS = {
@@ -106,7 +106,7 @@ class Information(commands.Cog):
     @commands.command(name='system', aliases=['sys'])
     async def system(self, ctx: context.Context) -> None:
         """
-        Display the bots system stats.
+        Display the bot's system stats.
         """
 
         embed = discord.Embed(colour=ctx.colour)
@@ -131,7 +131,7 @@ class Information(commands.Cog):
     @commands.command(name='ping')
     async def ping(self, ctx: context.Context) -> None:
         """
-        Display the bots latency.
+        Display the bot's latency.
         """
 
         await ctx.send(f'{round(self.bot.latency * 1000)}ms')
@@ -141,7 +141,7 @@ class Information(commands.Cog):
         """
         Display information about a server.
 
-        `guild`: The server of which to get information for. Can be it's ID or Name. Defaults to the current server.
+        `guild`: The server of which to get information for. Can be its ID or Name. Defaults to the current server.
         """
 
         if not guild:
@@ -256,9 +256,9 @@ class Information(commands.Cog):
     @commands.command(name='icon')
     async def icon(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
         """
-        Displays a servers icon.
+        Displays a server's icon.
 
-        `guild`: The server of which to get the icon for. Can be it's ID or Name. Defaults to the current server.
+        `guild`: The server of which to get the icon for. Can be its ID or Name. Defaults to the current server.
         """
 
         if not guild:
@@ -282,7 +282,7 @@ class Information(commands.Cog):
         """
         Displays a servers banner.
 
-        `guild`: The server of which to get the banner for. Can be it's ID or Name. Defaults to the current server.
+        `guild`: The server of which to get the banner for. Can be its ID or Name. Defaults to the current server.
         """
 
         if not guild:
@@ -302,7 +302,7 @@ class Information(commands.Cog):
         """
         Displays a servers splash.
 
-        `guild`: The server of which to get the splash for. Can be it's ID or Name. Defaults to the current server.
+        `guild`: The server of which to get the splash for. Can be its ID or Name. Defaults to the current server.
         """
 
         if not guild:

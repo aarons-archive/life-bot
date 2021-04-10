@@ -84,7 +84,7 @@ class Events(commands.Cog):
             commands.CheckFailure:                  '{error}',
             commands.PrivateMessageOnly:            'The command `{command}` can only be used in private messages',
             commands.NoPrivateMessage:              'The command `{command}` can not be used in private messages.',
-            commands.NotOwner:                      'The command `{command}` is owner only.',
+            commands.NotOwner:                      'The command `{command}` can only be used by owners.',
             commands.NSFWChannelRequired:           'The command `{command}` can only be run in a NSFW channel.',
 
             commands.DisabledCommand:               'The command `{command}` has been disabled.',

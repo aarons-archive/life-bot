@@ -20,13 +20,17 @@ from pendulum.tz.timezone import Timezone
 
 from utilities import enums
 
+__all__ = ['DefaultUserConfig', 'UserConfig', 'DefaultGuildConfig', 'GuildConfig', 'Reminder', 'Todo', 'Tag']
+
 
 class DefaultUserConfig:
 
-    __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'coins', 'xp', \
-                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'todos', 'requires_db_update'
+    __slots__ = 'data', 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'xp', 'coins', \
+                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'notifications', 'reminders', 'todos', \
+                'requires_db_update'
 
     def __init__(self) -> None:
+        self.data = None
 
         self.id: int = 0
         self.created_at: DateTime = pendulum.now(tz='UTC')
@@ -42,8 +46,8 @@ class DefaultUserConfig:
         self.birthday: DateTime = pendulum.DateTime(2020, 1, 1, tzinfo=pendulum.timezone('UTC'))
         self.birthday_private: bool = False
 
-        self.coins: int = 0
         self.xp: int = 0
+        self.coins: int = 0
 
         self.daily_collected: DateTime = pendulum.now(tz='UTC')
         self.daily_streak: int = 0
@@ -54,9 +58,12 @@ class DefaultUserConfig:
         self.monthly_collected: DateTime = pendulum.now(tz='UTC')
         self.monthly_streak: int = 0
 
-        self.todos: dict[int, Todo] = {}
+        self.notifications: Notifications = Notifications(data={})
+
         self.reminders: dict[int, Reminder] = {}
-        self.requires_db_update = set()
+        self.todos: dict[int, Todo] = {}
+
+        self.requires_db_update: set = set()
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig id=\'{self.id}\'>'
@@ -64,10 +71,12 @@ class DefaultUserConfig:
 
 class UserConfig:
 
-    __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'coins', 'xp', \
-                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'reminders', 'todos', 'requires_db_update'
+    __slots__ = 'data', 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'timezone', 'timezone_private', 'birthday', 'birthday_private', 'xp', 'coins', \
+                'daily_collected', 'daily_streak', 'weekly_collected', 'weekly_streak', 'monthly_collected', 'monthly_streak', 'notifications', 'reminders', 'todos', \
+                'requires_db_update'
 
     def __init__(self, data: dict) -> None:
+        self.data = data
 
         self.id: int = data.get('id')
         self.created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
@@ -83,8 +92,8 @@ class UserConfig:
         self.birthday: DateTime = pendulum.parse(data.get('birthday').isoformat(), tz='UTC')
         self.birthday_private: bool = data.get('birthday_private')
 
-        self.coins: int = data.get('coins')
         self.xp: int = data.get('xp')
+        self.coins: int = data.get('coins')
 
         self.daily_collected: DateTime = pendulum.instance(data.get('daily_collected'), tz='UTC')
         self.daily_streak: int = data.get('daily_streak')
@@ -95,9 +104,12 @@ class UserConfig:
         self.monthly_collected: DateTime = pendulum.instance(data.get('monthly_collected'), tz='UTC')
         self.monthly_streak: int = data.get('monthly_streak')
 
+        self.notifications: Optional[Notifications] = None
+
         self.todos: dict[int, Todo] = {}
         self.reminders: dict[int, Reminder] = {}
-        self.requires_db_update = set()
+
+        self.requires_db_update: set = set()
 
     def __repr__(self) -> str:
         return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour={self.colour} xp={self.xp} level={self.level}>'
@@ -127,12 +139,12 @@ class UserConfig:
         return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
 
 
-# noinspection PyArgumentList
 class DefaultGuildConfig:
 
-    __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'embed_size', 'prefixes', 'tags', 'requires_db_update'
+    __slots__ = 'data', 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'embed_size', 'prefixes', 'tags'
 
     def __init__(self) -> None:
+        self.data = None
 
         self.id: int = 0
         self.created_at: DateTime = pendulum.now(tz='UTC')
@@ -145,18 +157,17 @@ class DefaultGuildConfig:
         self.prefixes: list[str] = []
 
         self.tags: dict[str, Tag] = {}
-        self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<DefaultGuildConfig id=\'{self.id}\'>'
 
 
-# noinspection PyArgumentList
 class GuildConfig:
 
-    __slots__ = 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'embed_size', 'prefixes', 'tags', 'requires_db_update'
+    __slots__ = 'data', 'id', 'created_at', 'blacklisted', 'blacklisted_reason', 'colour', 'embed_size', 'prefixes', 'tags'
 
     def __init__(self, data: dict) -> None:
+        self.data = data
 
         self.id: int = data.get('id')
         self.created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
@@ -169,7 +180,6 @@ class GuildConfig:
         self.prefixes: list[str] = data.get('prefixes')
 
         self.tags: dict[str, Tag] = {}
-        self.requires_db_update = []
 
     def __repr__(self) -> str:
         return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour={self.colour}>'
@@ -177,9 +187,10 @@ class GuildConfig:
 
 class Reminder:
 
-    __slots__ = 'id', 'user_id', 'created_at', 'datetime', 'content', 'jump_url', 'task'
+    __slots__ = 'data', 'id', 'user_id', 'created_at', 'datetime', 'content', 'jump_url', 'task'
 
     def __init__(self, data: dict) -> None:
+        self.data = data
 
         self.id: int = data.get('id')
         self.user_id: int = data.get('user_id')
@@ -200,9 +211,10 @@ class Reminder:
 
 class Tag:
 
-    __slots__ = 'id', 'user_id', 'guild_id', 'created_at', 'name', 'alias', 'content', 'jump_url'
+    __slots__ = 'data', 'id', 'user_id', 'guild_id', 'created_at', 'name', 'alias', 'content', 'jump_url'
 
     def __init__(self, data: dict) -> None:
+        self.data = data
 
         self.id: int = data.get('id')
         self.user_id: int = data.get('user_id')
@@ -217,11 +229,13 @@ class Tag:
         return f'<Tag id=\'{self.id}\' user_id=\'{self.user_id}\' guild_id=\'{self.guild_id}\' name=\'{self.name}\' alias=\'{self.alias}\'>'
 
 
+
 class Todo:
 
-    __slots__ = 'id', 'user_id', 'created_at', 'content', 'jump_url'
+    __slots__ = 'data', 'id', 'user_id', 'created_at', 'content', 'jump_url'
 
     def __init__(self, data: dict) -> None:
+        self.data = data
 
         self.id: int = data.get('id')
         self.user_id: int = data.get('user_id')
@@ -231,3 +245,19 @@ class Todo:
 
     def __repr__(self) -> str:
         return f'<Todo id=\'{self.id}\' user_id=\'{self.user_id}\'>'
+
+
+class Notifications:
+
+    __slots__ = 'data', 'id', 'user_id', 'level_ups'
+
+    def __init__(self, data: dict) -> None:
+        self.data = data
+
+        self.id: int = data.get('id')
+        self.user_id: int = data.get('user_id')
+
+        self.level_ups: bool = data.get('level_ups', False)
+
+    def __repr__(self) -> str:
+        return f'<Notifications id={self.id} user_id={self.user_id} level_ups={self.level_ups}>'

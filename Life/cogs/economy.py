@@ -67,22 +67,42 @@ class Economy(commands.Cog):
         if await self.bot.redis.exists(f'{message.author.id}_xp_gain') is True:
             return
 
-        user_config = await self.bot.user_manager.get_or_create_config(user_id=message.author.id)
+        user_config = await self.bot.user_manager.get_or_create_config(message.author.id)
 
         xp = random.randint(10, 25)
 
         if xp >= user_config.next_level_xp:
-            self.bot.dispatch('xp_level_up', user_config)
+            self.bot.dispatch('xp_level_up', user_config, message)
 
-        await self.bot.user_manager.set_xp(user_id=message.author.id, xp=xp)
+        await self.bot.user_manager.set_xp(message.author.id, xp=xp)
         await self.bot.redis.setex(name=f'{message.author.id}_xp_gain', time=60, value=None)
 
     @commands.Cog.listener()
-    async def on_xp_level_up(self, user_config: objects.UserConfig) -> None:
-        pass
-        # TODO Implement notifications stuff.
+    async def on_xp_level_up(self, user_config: objects.UserConfig, message: discord.Message) -> None:
+
+        if not user_config.notifications.level_ups:
+            return
+
+        await message.reply(f'You are now level `{user_config.level}`!')
 
     #
+
+    @commands.command(name='level', aliases=['xp', 'score'])
+    async def level(self, ctx: context.Context, *, member: discord.Member = None) -> None:
+        """
+        Display yours, or someone else's level / xp information.
+
+        `member`: The member of which to get the level for. Can be their ID, Username, Nickname or @Mention. Defaults to you.
+        """
+
+        if not member:
+            member = ctx.author
+
+        async with ctx.typing():
+            file = await self.bot.user_manager.create_level_card(member.id, guild_id=getattr(ctx.guild, 'id', None))
+            await ctx.send(file=file)
+
+    # Old
 
     @commands.command(name='claim')
     async def claim(self, ctx: context.Context, claim: Literal['daily', 'weekly', 'monthly'] = 'daily') -> None:
@@ -92,7 +112,7 @@ class Economy(commands.Cog):
         `claim`: The type of bundle to claim, can be `daily`, `weekly` or `monthly`.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(user_id=ctx.author.id)
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
         now = pendulum.now(tz='UTC')
 
         time_when_claimable = getattr(user_config, self.claims[claim]['collected'].value).add(days=self.claims[claim]['days_before_claimable'])
@@ -111,24 +131,22 @@ class Economy(commands.Cog):
         if now < time_when_streak_expires:
 
             if getattr(user_config, self.claims[claim]['streak'].value) + 1 >= self.claims[claim]['streak_threshold']:
-                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
+                await self.bot.user_manager.set_bundle_streak(ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
                 embed.description += f'You were awarded an extra `{self.claims[claim]["streak_coins"] - self.claims[claim]["base_coins"]}` coins for maintaining your ' \
                                      f'`{claim.title()}` streak which has now been reset to 0.\n\n'
             else:
-                await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.ADD, count=1)
+                await self.bot.user_manager.set_bundle_streak(ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.ADD, count=1)
                 embed.description += f'You are now on a `{getattr(user_config, self.claims[claim]["streak"].value)}` out of `{self.claims[claim]["streak_threshold"]}` ' \
                                      f'`{claim.title()}` streak.\n\n'
 
         else:
 
-            await self.bot.user_manager.set_bundle_streak(user_id=ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
+            await self.bot.user_manager.set_bundle_streak(ctx.author.id, bundle_type=self.claims[claim]['streak'], operation=enums.Operation.RESET)
             embed.description += f'Your `{claim.title()}` streak is over because you didnt claim your bundle within {self.claims[claim]["expired_reason"]} of the last claim.'
 
-        await self.bot.user_manager.set_coins(user_id=ctx.author.id, coins=coins)
-        await self.bot.user_manager.set_bundle_collection(user_id=ctx.author.id, collection_type=self.claims[claim]['collected'])
+        await self.bot.user_manager.set_coins(ctx.author.id, coins=coins)
+        await self.bot.user_manager.set_bundle_collection(ctx.author.id, collection_type=self.claims[claim]['collected'])
         await ctx.send(embed=embed)
-
-    #
 
     @commands.command(name='profile')
     async def profile(self, ctx: context.Context, member: discord.Member = None) -> None:
@@ -141,7 +159,7 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        user_config = self.bot.user_manager.get_config(user_id=member.id)
+        user_config = self.bot.user_manager.get_config(member.id)
 
         embed = discord.Embed(
                 colour=user_config.colour, title=f'{member}\'s profile',
@@ -149,8 +167,8 @@ class Economy(commands.Cog):
                             f'`Next level xp:` {user_config.next_level_xp}\n'
                             f'`Level:` {user_config.level}\n'
                             f'`Coins:` {user_config.coins}\n'
-                            f'`Rank (server):` {self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)}\n'
-                            f'`Rank (global):` {self.bot.user_manager.rank(user_id=member.id)}'
+                            f'`Rank (server):` {self.bot.user_manager.rank(member.id, guild_id=ctx.guild.id)}\n'
+                            f'`Rank (global):` {self.bot.user_manager.rank(member.id)}'
         )
         await ctx.send(embed=embed)
 
@@ -196,8 +214,6 @@ class Economy(commands.Cog):
         header = f'Rank   |{lb_type.title():<10} |Name\n'
         await ctx.paginate_embed(entries=entries, per_page=10, title=title, header=header, codeblock=True)
 
-    #
-
     @commands.command(name='rank', aliases=['r'])
     async def rank(self, ctx: context.Context, member: Optional[discord.Member]) -> None:
         """
@@ -209,7 +225,7 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        rank = self.bot.user_manager.rank(user_id=member.id, guild_id=ctx.guild.id)
+        rank = self.bot.user_manager.rank(member.id, guild_id=ctx.guild.id)
         await ctx.send(f'`{member}` is rank `{rank}` in this server.')
 
     @commands.command(name='global-rank', aliases=['gr'])
@@ -223,10 +239,8 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        rank = self.bot.user_manager.rank(user_id=member.id)
+        rank = self.bot.user_manager.rank(member.id)
         await ctx.send(f'`{member}` is rank `{rank}` across the whole bot.')
-
-    #
 
     @commands.command(name='coins', aliases=['money', 'cash'])
     async def coins(self, ctx: context.Context, member: discord.Member = None) -> None:
@@ -239,33 +253,8 @@ class Economy(commands.Cog):
         if not member:
             member = ctx.author
 
-        await ctx.send(f'{member} has `{self.bot.user_manager.get_config(user_id=member.id).coins}` coins.')
+        await ctx.send(f'{member} has `{self.bot.user_manager.get_config(member.id).coins}` coins.')
 
-    @commands.command(name='xp')
-    async def xp(self, ctx: context.Context, member: discord.Member = None) -> None:
-        """
-        Display how much xp you or someone else has.
-
-        `member`: The member of which to get the amount of xp for. Can be their ID, Username, Nickname or @Mention. Defaults to you.
-        """
-
-        if not member:
-            member = ctx.author
-
-        await ctx.send(f'{member} has `{self.bot.user_manager.get_config(user_id=member.id).xp}` xp.')
-
-    @commands.command(name='level')
-    async def level(self, ctx: context.Context, member: discord.Member = None) -> None:
-        """
-        Display yours, or someone else's level.
-
-        `member`: The member of which to get the level for. Can be their ID, Username, Nickname or @Mention. Defaults to you.
-        """
-
-        if not member:
-            member = ctx.author
-
-        await ctx.send(f'{member} is level `{self.bot.user_manager.get_config(user_id=member.id).level}`.')
 
 
 def setup(bot: Life) -> None:
