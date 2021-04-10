@@ -256,6 +256,5 @@ class Economy(commands.Cog):
         await ctx.send(f'{member} has `{self.bot.user_manager.get_config(member.id).coins}` coins.')
 
 
-
 def setup(bot: Life) -> None:
     bot.add_cog(Economy(bot=bot))

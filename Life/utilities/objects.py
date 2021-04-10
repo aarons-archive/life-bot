@@ -229,7 +229,6 @@ class Tag:
         return f'<Tag id=\'{self.id}\' user_id=\'{self.user_id}\' guild_id=\'{self.guild_id}\' name=\'{self.name}\' alias=\'{self.alias}\'>'
 
 
-
 class Todo:
 
     __slots__ = 'data', 'id', 'user_id', 'created_at', 'content', 'jump_url'

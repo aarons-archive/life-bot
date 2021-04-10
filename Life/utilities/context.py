@@ -52,7 +52,7 @@ class Context(commands.Context):
     @property
     def colour(self) -> discord.Colour:
 
-        if isinstance(self.author, discord.Member):
+        if isinstance(self.author, discord.Member):  # skipcq: PTC-W0048
             if roles := list(reversed([role for role in self.author.roles if role.colour.value != 0])):
                 return roles[0].colour
 

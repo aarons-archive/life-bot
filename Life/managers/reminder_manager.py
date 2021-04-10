@@ -66,11 +66,12 @@ class ReminderManager:
             __log__.warning(f'[REMINDER MANAGER] Attempted reminder with id \'{reminder.id}\' but user with \'{reminder.user_id}\' was not found.')
             return
 
-        embed = discord.Embed(colour=discord.Colour(config.COLOUR),
-                              description=f'**Reminder:**\n'
-                                          f'You said this `{utils.format_difference(datetime=reminder.created_at, suppress=[])}` ago:\n'
-                                          f'{reminder.content}\n\n'
-                                          f'**[Jump to message]({reminder.jump_url})**'
+        embed = discord.Embed(
+                colour=discord.Colour(config.COLOUR),
+                description=f'**Reminder:**\n'
+                            f'You said this `{utils.format_difference(datetime=reminder.created_at, suppress=[])}` ago:\n'
+                            f'{reminder.content}\n\n'
+                            f'**[Jump to message]({reminder.jump_url})**'
         )
 
         try:
