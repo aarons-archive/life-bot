@@ -105,10 +105,15 @@ class UserManager:
     async def create_config(self, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
-        self.configs[user_id] = objects.UserConfig(data=data)
+        notifications = await self.bot.db.fetchrow('INSERT INTO notifications (user_id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.user_id RETURNING *', user_id)
 
+        user_config = objects.UserConfig(data=data)
+        user_config.notifications = objects.Notifications(data=notifications)
+
+        self.configs[user_id] = user_config
         __log__.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
-        return self.configs[user_id]
+
+        return user_config
 
     async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
 
