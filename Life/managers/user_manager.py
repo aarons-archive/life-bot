@@ -213,7 +213,7 @@ class UserManager:
         data = await self.bot.db.fetchrow(f'UPDATE users SET {bundle_type.value} = $1 WHERE id = $2 RETURNING {bundle_type.value}', streak, user_id)
         setattr(user_config, bundle_type.value, data[bundle_type.value])
 
-    # Timecard images
+    # Timecard image
 
     async def create_timecard(self, *, guild_id: int) -> discord.File:
 
@@ -330,7 +330,7 @@ class UserManager:
         except ValueError:
             raise exceptions.ArgumentError('That user does not have a rank yet.')
 
-    # Level images
+    # Level image
 
     async def create_level_card(self, user_id: int, *, guild_id: int) -> discord.File:
 
@@ -351,9 +351,9 @@ class UserManager:
     def create_level_card_image(self, member: Union[discord.Member, discord.User], user_config: objects.UserConfig, avatar_bytes: io.BytesIO) -> io.BytesIO:
 
         buffer = io.BytesIO()
-        card = random.choice(self.IMAGES['SAI']['level_cards'])
+        card_image = random.choice(self.IMAGES['SAI']['level_cards'])
 
-        with Image.open(card) as image:
+        with Image.open(card_image) as image:
 
             draw = ImageDraw.Draw(image)
 
