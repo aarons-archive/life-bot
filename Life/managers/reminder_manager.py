@@ -19,8 +19,7 @@ import aioscheduler
 import discord
 from pendulum.datetime import DateTime
 
-import config
-from utilities import objects, utils
+from utilities import enums, exceptions, objects, utils
 
 if TYPE_CHECKING:
     from bot import Life
@@ -35,6 +34,27 @@ class ReminderManager:
 
         self.scheduler = aioscheduler.Manager(2)
 
+        self.REPEAT_TYPE_TIMES = {
+            1: lambda dt: dt.add(minutes=30),
+            2: lambda dt: dt.add(hours=1),
+            3: lambda dt: dt.add(hours=2),
+
+            4: lambda dt: dt.add(hours=12),
+            5: lambda dt: dt.add(days=1),
+            6: lambda dt: dt.add(days=2),
+
+            7: lambda dt: dt.add(days=7),
+            8: lambda dt: dt.add(days=14),
+
+            9: lambda dt: dt.add(weeks=2),
+            10: lambda dt: dt.add(months=1),
+            11: lambda dt: dt.add(months=2),
+
+            12: lambda dt: dt.add(months=6),
+            13: lambda dt: dt.add(years=1),
+            14: lambda dt: dt.add(years=2)
+        }
+
     async def load(self) -> None:
 
         self.scheduler.start()
@@ -44,7 +64,7 @@ class ReminderManager:
 
             reminder = objects.Reminder(data=reminder_data)
             if not reminder.done:
-                await self.schedule_reminder(reminder=reminder)
+                await self.schedule_reminder(reminder)
 
             user_config = await self.bot.user_manager.get_or_create_config(reminder.user_id)
             user_config.reminders[reminder.id] = reminder
@@ -54,20 +74,19 @@ class ReminderManager:
 
     #
 
-    async def schedule_reminder(self, *, reminder: objects.Reminder) -> None:
+    async def schedule_reminder(self, reminder: objects.Reminder) -> None:
 
-        reminder.task = self.scheduler.schedule(self.do_reminder(reminder=reminder), when=reminder.datetime.naive())
+        reminder.task = self.scheduler.schedule(self.do_reminder(reminder), when=reminder.datetime.naive())
         __log__.info(f'[REMINDER MANAGER] Scheduled reminder with id \'{reminder.id}\' for \'{reminder.datetime}\'')
 
-    async def do_reminder(self, *, reminder: objects.Reminder) -> None:
+    async def do_reminder(self, reminder: objects.Reminder) -> None:
 
         user = self.bot.get_user(reminder.user_id)
-        if not user:
-            __log__.warning(f'[REMINDER MANAGER] Attempted reminder with id \'{reminder.id}\' but user with \'{reminder.user_id}\' was not found.')
-            return
+        channel = self.bot.get_channel(reminder.channel_id)
+        user_config = self.bot.user_manager.get_config(reminder.user_id)
 
         embed = discord.Embed(
-                colour=discord.Colour(config.COLOUR),
+                colour=user_config.colour,
                 description=f'**Reminder:**\n'
                             f'You said this `{utils.format_difference(datetime=reminder.created_at, suppress=[])}` ago:\n'
                             f'{reminder.content}\n\n'
@@ -75,9 +94,21 @@ class ReminderManager:
         )
 
         try:
-            await user.send(embed=embed)
-        except discord.Forbidden:
-            __log__.warning(f'[REMINDER MANAGER] Attempted reminder with id \'{reminder.id}\' but user with \'{reminder.user_id}\' was not able to be DM\'ed.')
+            await channel.send(embed=embed)
+        except (discord.Forbidden, AttributeError):
+            try:
+                await user.send(embed=embed)
+            except (discord.Forbidden, AttributeError):
+                __log__.warning(f'[REMINDER MANAGER] Attempted reminder with id \'{reminder.id}\' but channel or user did not exist.')
+
+        await self.bot.db.execute('UPDATE reminders SET notified = true WHERE id = $1', reminder.id)
+        reminder.notified = True
+
+        if reminder.repeat_type != enums.ReminderRepeatType.NEVER:
+            await self.create_reminder(
+                    reminder.user_id, channel_id=reminder.channel_id, datetime= self.REPEAT_TYPE_TIMES[reminder.repeat_type](reminder.datetime), content=reminder.content,
+                    jump_url=reminder.jump_url, repeat_type=reminder.repeat_type
+            )
 
     #
 
@@ -86,28 +117,30 @@ class ReminderManager:
         user_config = await self.bot.user_manager.get_or_create_config(user_id)
         return user_config.reminders.get(reminder_id)
 
-    async def create_reminder(self, user_id: int, *, datetime: DateTime, content: str, jump_url: str = None) -> objects.Reminder:
+    async def create_reminder(
+            self, user_id: int, *, channel_id: int, datetime: DateTime, content: str, jump_url: str = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
+    ) -> objects.Reminder:
 
         user_config = await self.bot.user_manager.get_or_create_config(user_id)
 
-        data = await self.bot.db.fetchrow('INSERT INTO reminders (user_id, datetime, content, jump_url) VALUES ($1, $2, $3, $4) RETURNING *', user_id, datetime, content, jump_url)
-        reminder = objects.Reminder(data=data)
+        query = 'INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *'
+        data = await self.bot.db.fetchrow(query, user_id, channel_id, datetime, content, jump_url, repeat_type.value)
 
-        __log__.info(f'[REMINDER MANAGER] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'')
+        reminder = objects.Reminder(data=data)
+        user_config.reminders[reminder.id] = reminder
 
         if not reminder.done:
-            await self.schedule_reminder(reminder=reminder)
+            await self.schedule_reminder(reminder)
 
-        user_config.reminders[reminder.id] = reminder
+        __log__.info(f'[REMINDER MANAGER] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'.')
         return reminder
 
     async def delete_reminder(self, user_id: int, *, reminder_id: int) -> None:
 
         user_config = await self.bot.user_manager.get_or_create_config(user_id)
 
-        reminder = await self.get_reminder(user_id, reminder_id=reminder_id)
-        if not reminder:
-            return
+        if not (reminder := await self.get_reminder(user_id, reminder_id=reminder_id)):
+            raise exceptions.NotFound(f'You do not have a reminder with that id.')
 
         if reminder.task:
             self.scheduler.cancel(reminder.task)
@@ -115,14 +148,19 @@ class ReminderManager:
         await self.bot.db.execute('DELETE FROM reminders WHERE id = $1', reminder.id)
         del user_config.reminders[reminder_id]
 
-    async def edit_reminder_content(self, user_id: int, *, reminder_id: int, content: str, jump_url: str = None) -> None:
+    async def change_reminder_content(self, user_id: int, *, reminder_id: int, content: str, jump_url: str = None) -> None:
 
-        reminder = await self.get_reminder(user_id, reminder_id=reminder_id)
-        if not reminder:
-            return
+        if not (reminder := await self.get_reminder(user_id, reminder_id=reminder_id)):
+            raise exceptions.NotFound(f'You do not have a reminder with that id.')
 
         await self.bot.db.execute('UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3', content, jump_url, reminder.id)
         reminder.content = content
+        reminder.jump_url = jump_url if jump_url else reminder.jump_url
 
-        if jump_url:
-            reminder.jump_url = jump_url
+    async def change_reminder_repeat_type(self, user_id: int, *, reminder_id: int, repeat_type: enums.ReminderRepeatType) -> None:
+
+        if not (reminder := await self.get_reminder(user_id, reminder_id=reminder_id)):
+            raise exceptions.NotFound(f'You do not have a reminder with that id.')
+
+        await self.bot.db.execute('UPDATE reminders SET repeat_type = $1 WHERE id = $2', repeat_type.value, reminder.id)
+        reminder.repeat_type = repeat_type

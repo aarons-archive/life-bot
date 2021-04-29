@@ -31,3 +31,7 @@ class VoiceError(LifeError):
 
 class GeneralError(LifeError):
     pass
+
+
+class NotFound(LifeError):
+    pass

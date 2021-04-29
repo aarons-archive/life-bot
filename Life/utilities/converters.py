@@ -22,7 +22,7 @@ from discord.ext import commands
 from pendulum.tz.timezone import Timezone
 
 import config
-from utilities import context, exceptions, utils
+from utilities import context, enums, exceptions, utils
 
 
 class UserConverter(commands.UserConverter):
@@ -160,3 +160,14 @@ class PrefixConverter(commands.clean_content, ABC):
             raise exceptions.ArgumentError('Your prefix can not be more than 15 characters.')
 
         return argument
+
+
+class ReminderRepeatTypeConverter(commands.Converter, ABC):
+
+    async def convert(self, ctx: context.Context, argument: str) -> enums.ReminderRepeatType:
+
+        if enum := getattr(enums.ReminderRepeatType, argument.replace(' ', '_').upper(), None):
+            return enum
+
+        valid = [f"{repeat_type.name.replace('_', ' ').lower()}" for repeat_type in enums.ReminderRepeatType]
+        raise exceptions.ArgumentError(f'Repeat type must be one of:\n{f"{config.NL}".join([f"- {v}" for v in valid])}')
