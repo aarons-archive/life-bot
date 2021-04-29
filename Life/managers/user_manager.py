@@ -223,67 +223,59 @@ class UserManager:
     async def create_timecard(self, *, guild_id: int) -> discord.File:
 
         guild = self.bot.get_guild(guild_id)
-        user_configs = sorted(self.configs.items(), key=lambda kv: kv[1].time.offset_hours)
 
-        user_timezones = {}
+        user_configs = dict(filter(
+                lambda kv: guild.get_member(kv[0]) is not None and not kv[1].timezone_private and not kv[1].timezone == pendulum.timezone('UTC'),
+                sorted(self.configs.items(), key=lambda kv: kv[1].time.offset_hours)
+        ))
+        timezone_avatars = {}
 
-        for user_id, user_config in user_configs:
+        for user_config in user_configs.values():
 
-            if not (member := guild.get_member(user_id)):
-                continue
-            if user_config.timezone_private or user_config.timezone == pendulum.timezone('UTC'):
-                continue
+            avatar_bytes = io.BytesIO(await guild.get_member(user_config.id).avatar_url_as(format='png', size=256).read())
+            timezone = user_config.time.format('HH:mm (ZZ)')
 
-            avatar_bytes = io.BytesIO(await member.avatar_url_as(format='png', size=256).read())
-            time_format = user_config.time.format('HH:mm (ZZ)')
+            if users := timezone_avatars.get(timezone, []):
+                if len(users) > 36:
+                    break
+                timezone_avatars[timezone].append(avatar_bytes)
+            else:
+                timezone_avatars[timezone] = [avatar_bytes]
 
-            if (users := user_timezones.get(time_format)) is None:
-                user_timezones[time_format] = [avatar_bytes]
-                continue
-
-            if len(users) > 36:
-                break
-            user_timezones[time_format].append(avatar_bytes)
-
-        if not user_timezones:
+        if not timezone_avatars:
             raise exceptions.ArgumentError('There are no users with timezones set in this server.')
 
-        buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, user_timezones)
+        buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_avatars)
         file = discord.File(fp=buffer, filename='level.png')
 
         buffer.close()
-        for avatar_bytes_list in user_timezones.values():
-            [avatar_bytes.close() for avatar_bytes in avatar_bytes_list]
+        for avatar_bytes in timezone_avatars.values():
+            [buffer.close() for buffer in avatar_bytes]
 
         return file
 
     def create_timecard_image(self, timezone_users: dict) -> io.BytesIO:
 
         buffer = io.BytesIO()
+        width_x, height_y = (1600 * (len(timezone_users) if len(timezone_users) < 5 else 5)) + 100, (1800 * math.ceil(len(timezone_users) / 5)) + 100
 
-        width_x = (1600 * (len(timezone_users.keys()) if len(timezone_users.keys()) < 5 else 5)) + 100
-        height_y = (1800 * math.ceil(len(timezone_users.keys()) / 5)) + 100
+        with Image.new(mode='RGBA', size=(width_x, height_y), color='#F1C30F') as image:
 
-        with Image.new('RGBA', (width_x, height_y), color='#F1C30F') as image:
+            draw = ImageDraw.Draw(im=image)
+            font = ImageFont.truetype(font=self.ARIAL_FONT, size=120)
 
-            draw = ImageDraw.Draw(image)
-            font = ImageFont.truetype(self.ARIAL_FONT, 120)
-
-            x = 100
-            y = 100
+            x, y = 100, 100
 
             for timezone, avatars in timezone_users.items():
 
-                draw.text((x, y), timezone, font=font, fill='#1B1A1C')
+                draw.text(xy=(x, y), text=timezone, font=font, fill='#1B1A1C')
+                user_x, user_y = x, y + 200
 
-                user_x = x
-                user_y = y + 200
+                for avatar_bytes in avatars:
 
-                for avatar in avatars[:36]:
-
-                    with Image.open(avatar) as avatar_image:
-                        avatar_image = avatar_image.resize((250, 250))
-                        image.paste(avatar_image, (user_x, user_y), avatar_image.convert('RGBA'))
+                    with Image.open(fp=avatar_bytes) as avatar:
+                        avatar = avatar.resize(size=(250, 250), resample=Image.LANCZOS)
+                        image.paste(im=avatar, box=(user_x, user_y), mask=avatar.convert(mode='RGBA'))
 
                     if user_x < x + 1200:
                         user_x += 250
@@ -297,7 +289,7 @@ class UserManager:
                 else:
                     x += 1600
 
-            image.save(buffer, 'png')
+            image.save(fp=buffer, format='png')
 
         buffer.seek(0)
         return buffer

@@ -62,7 +62,7 @@ class Time(commands.Cog):
 
     #
 
-    @commands.group(name='timezone', aliases='time', invoke_without_command=True)
+    @commands.group(name='timezone', aliases=['time'], invoke_without_command=True)
     async def _timezone(self, ctx: context.Context, *, timezone: str = None) -> None:
         """
         Displays the time of the member or timezone provided.
@@ -94,8 +94,8 @@ class Time(commands.Cog):
         embed = discord.Embed(colour=ctx.colour, title=f'Time in {timezone.name}{f" ({member})" if member else ""}:', description=f'```py\n{datetime}\n```')
         await ctx.send(embed=embed)
 
-    @commands.group(name='timezones', aliases=['timezones', 'tzs'])
-    async def _timezone(self, ctx: context.Context) -> None:
+    @_timezone.command(name='timezones', aliases=['tzs'])
+    async def _timezones(self, ctx: context.Context) -> None:
         """
         Displays a list of timezones that can be used with the bot.
         """
