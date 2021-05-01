@@ -38,14 +38,6 @@ class Updateable(enum.Enum):
     COINS = 'coins'
     XP = 'xp'
 
-    DAILY_COLLECTED = 'daily_collected'
-    WEEKLY_COLLECTED = 'weekly_collected'
-    MONTHLY_COLLECTED = 'monthly_collected'
-
-    DAILY_STREAK = 'daily_streak'
-    WEEKLY_STREAK = 'weekly_streak'
-    MONTHLY_STREAK = 'monthly_streak'
-
 
 class EmbedSize(enum.Enum):
 

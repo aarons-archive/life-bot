@@ -25,14 +25,28 @@ import pendulum
 from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
-from pendulum import DateTime
 
-from utilities import enums, exceptions, objects, utils
+from utilities import exceptions, objects, utils
 
 if TYPE_CHECKING:
     from bot import Life
 
-__log__ = logging.getLogger(__name__)
+
+__log__ = logging.getLogger('utilities.managers.users')
+
+IMAGES = {
+    'SAI': {
+        'level_cards': [
+            pathlib.Path('./resources/SAI/level_cards/1.png'),
+            pathlib.Path('./resources/SAI/level_cards/2.png'),
+            pathlib.Path('./resources/SAI/level_cards/3.png'),
+            pathlib.Path('./resources/SAI/level_cards/4.png'),
+        ]
+    }
+}
+
+ARIAL_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/arial.ttf'))
+KABEL_BLACK_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/kabel_black.otf'))
 
 
 class UserManager:
@@ -40,183 +54,101 @@ class UserManager:
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.default_config = objects.DefaultUserConfig()
-        self.configs = {}
-
-        self.update_database.start()
-
-        self.IMAGES = {
-            'SAI': {
-                'level_cards': [
-                    pathlib.Path('./resources/SAI/level_cards/1.png'),
-                    pathlib.Path('./resources/SAI/level_cards/2.png'),
-                    pathlib.Path('./resources/SAI/level_cards/3.png'),
-                    pathlib.Path('./resources/SAI/level_cards/4.png'),
-                ]
-            }
-        }
-
-        self.ARIAL_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/arial.ttf'))
-        self.KABEL_BLACK_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/kabel_black.otf'))
+        self.default_config = objects.UserConfig(bot=self.bot, data={})
+        self.configs: dict[int, objects.UserConfig] = {}
 
     async def load(self) -> None:
 
         configs = await self.bot.db.fetch('SELECT * FROM users')
-        notifications = await self.bot.db.fetch('SELECT * FROM notifications')
 
-        for config_data, notification_data in zip(configs, notifications):
-            user_config = objects.UserConfig(data=config_data)
-            user_config.notifications = objects.Notifications(data=notification_data)
-            self.configs[user_config.id] = user_config
+        for config in configs:
+            self.configs[config['id']] = objects.UserConfig(bot=self.bot, data=config)
 
         __log__.info(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
         print(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
 
-        await self.bot.reminder_manager.load()
-        await self.bot.todo_manager.load()
+        await self.load_notifications()
+        await self.load_reminders()
+        await self.load_todos()
 
-    # Background tasks.
+        self.update_database_task.start()
+
+    async def load_notifications(self) -> None:
+
+        notifications = await self.bot.db.fetch('SELECT * FROM notifications')
+
+        for notification in notifications:
+            user_config = self.get_config(notification['user_id'])
+            user_config._notifications = objects.Notifications(bot=self.bot, user_config=user_config, data=notification)
+
+    async def load_reminders(self) -> None:
+
+        reminders = await self.bot.db.fetch('SELECT * FROM reminders')
+
+        for reminder in reminders:
+            user_config = self.get_config(reminder['user_id'])
+            reminder = objects.Reminder(bot=self.bot, user_config=user_config, data=reminder)
+            user_config._reminders[reminder.id] = reminder
+
+        __log__.info(f'[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
+        print(f'[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
+
+    async def load_todos(self) -> None:
+
+        todos = await self.bot.db.fetch('SELECT * FROM todos')
+
+        for todo in todos:
+            user_config = self.get_config(todo['user_id'])
+            todo = objects.Todo(bot=self.bot, user_config=user_config, data=todo)
+            user_config._todos[todo.id] = todo
+
+        __log__.info(f'[USER MANAGER] Loaded todos. [{len(todos)} todos]')
+        print(f'[USER MANAGER] Loaded todos. [{len(todos)} todos]')
+
+    # Background task
 
     @tasks.loop(seconds=60)
-    async def update_database(self) -> None:
-
-        if not self.configs:
-            return
-
-        need_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config.requires_db_update) >= 1}
+    async def update_database_task(self) -> None:
 
         async with self.bot.db.acquire(timeout=300) as db:
-            for user_id, user_config in need_updating.items():
 
-                query = ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
-                await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *[getattr(user_config, attribute.value) for attribute in user_config.requires_db_update])
+            requires_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config._requires_db_update) >= 1}
+            for user_id, user_config in requires_updating.items():
+
+                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
+                args = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
+                await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *args)
 
                 user_config.requires_db_update = set()
 
-    @update_database.before_loop
-    async def before_update_database(self) -> None:
-        await self.bot.wait_until_ready()
-
-    # User management
-
-    def get_config(self, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
-        return self.configs.get(user_id, self.default_config)
+    # Config management
 
     async def create_config(self, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
         notifications = await self.bot.db.fetchrow('INSERT INTO notifications (user_id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.user_id RETURNING *', user_id)
 
-        user_config = objects.UserConfig(data=data)
-        user_config.notifications = objects.Notifications(data=notifications)
+        user_config = objects.UserConfig(bot=self.bot, data=data)
+        user_config._notifications = objects.Notifications(bot=self.bot, user_config=user_config, data=notifications)
 
-        self.configs[user_id] = user_config
-        __log__.info(f'[USER MANAGER] Created config for user with id \'{user_id}\'')
+        self.configs[user_config.id] = user_config
 
+        __log__.info(f'[USER MANAGER] Created config for user with id \'{user_config.id}\'.')
         return user_config
 
-    async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
+    def get_config(self, user_id: int) -> objects.UserConfig:
+        return self.configs.get(user_id, self.default_config)
 
-        if isinstance(user_config := self.get_config(user_id), objects.DefaultUserConfig):
-            user_config = await self.create_config(user_id)
+    async def delete_config(self, user_id: int) -> None:
 
-        return user_config
+        if not (config := self.get_config(user_id)):
+            return
 
-    # Regular settings
+        await config.delete()
 
-    async def set_blacklisted(self, user_id: int, *, blacklisted: bool = True, reason: str = None) -> None:
 
-        user_config = await self.get_or_create_config(user_id)
 
-        query = 'UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason'
-        data = await self.bot.db.fetchrow(query, blacklisted, reason, user_id)
-        user_config.blacklisted = data['blacklisted']
-        user_config.blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, user_id: int, *, colour: str = str(discord.Colour.gold())) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-
-        data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{colour.strip("#")}', user_id)
-        user_config.colour = discord.Colour(int(data['colour'], 16))
-
-    async def set_timezone(self, user_id: int, *, timezone: str = None, private: bool = None) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-        timezone = str(user_config.timezone) if timezone is None else timezone
-        private = user_config.timezone_private if private is None else private
-
-        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone, private, user_id)
-        user_config.timezone = pendulum.timezone(data['timezone'])
-        user_config.timezone_private = private
-
-    async def set_birthday(self,  user_id: int, *, birthday: pendulum.datetime = None, private: bool = None) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-        birthday = user_config.birthday if birthday is None else birthday
-        private = user_config.timezone_private if private is None else private
-
-        data = await self.bot.db.fetchrow('UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private', birthday, private, user_id)
-        user_config.birthday = pendulum.parse(data['birthday'].isoformat(), tz='UTC')
-        user_config.birthday_private = private
-
-    # Economy stuff
-
-    async def set_coins(self, user_id: int, *, coins: int, operation: enums.Operation = enums.Operation.ADD) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-
-        if operation == enums.Operation.SET:
-            user_config.coins = coins
-        elif operation == enums.Operation.ADD:
-            user_config.coins += coins
-        elif operation == enums.Operation.MINUS:
-            user_config.coins -= coins
-
-        user_config.requires_db_update.add(enums.Updateable.COINS)
-
-    async def set_xp(self, user_id: int, *, xp: int, operation: enums.Operation = enums.Operation.ADD) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-
-        if operation == enums.Operation.SET:
-            user_config.xp = xp
-        elif operation == enums.Operation.ADD:
-            user_config.xp += xp
-        elif operation == enums.Operation.MINUS:
-            user_config.xp -= xp
-
-        user_config.requires_db_update.add(enums.Updateable.XP)
-
-    async def set_bundle_collection(
-            self, user_id: int, *, collection_type: Union[enums.Updateable.DAILY_COLLECTED, enums.Updateable.WEEKLY_COLLECTED, enums.Updateable.MONTHLY_COLLECTED],
-            when: DateTime = pendulum.now(tz='UTC')
-    ) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-
-        data = await self.bot.db.fetchrow(f'UPDATE users SET {collection_type.value} = $1 WHERE id = $2 RETURNING {collection_type.value}', when, user_id)
-        setattr(user_config, collection_type.value, pendulum.instance(data[collection_type.value], tz='UTC'))
-
-    async def set_bundle_streak(
-            self, user_id: int, *, bundle_type: Union[enums.Updateable.DAILY_STREAK, enums.Updateable.WEEKLY_STREAK, enums.Updateable.MONTHLY_STREAK],
-            operation: enums.Operation = enums.Operation.SET, count: int = 0
-    ) -> None:
-
-        user_config = await self.get_or_create_config(user_id)
-
-        streak = None
-        if operation == enums.Operation.SET:
-            streak = count
-        elif operation == enums.Operation.ADD:
-            streak = getattr(user_config, bundle_type.value) + count
-        elif operation == enums.Operation.MINUS:
-            streak = getattr(user_config, bundle_type.value) - count
-        elif operation == enums.Operation.RESET:
-            streak = 0
-
-        data = await self.bot.db.fetchrow(f'UPDATE users SET {bundle_type.value} = $1 WHERE id = $2 RETURNING {bundle_type.value}', streak, user_id)
-        setattr(user_config, bundle_type.value, data[bundle_type.value])
 
     # Timecard image
 
