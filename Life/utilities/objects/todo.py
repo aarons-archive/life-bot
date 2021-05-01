@@ -29,7 +29,7 @@ __log__ = logging.getLogger('utilities.objects.todo')
 
 class Todo:
 
-    __slots__ =  '_bot', '_user_config', '_id', '_user_id', '_created_at', '_content', '_jump_url'
+    __slots__ = '_bot', '_user_config', '_id', '_user_id', '_created_at', '_content', '_jump_url'
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict) -> None:
 

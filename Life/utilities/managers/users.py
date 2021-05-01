@@ -146,10 +146,6 @@ class UserManager:
 
         await config.delete()
 
-
-
-
-
     # Timecard image
 
     async def create_timecard(self, *, guild_id: int) -> discord.File:

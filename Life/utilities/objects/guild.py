@@ -122,9 +122,9 @@ class GuildConfig:
     async def change_prefixes(self, prefix: str = None, *, operation: enums.Operation = enums.Operation.ADD) -> None:
 
         if operation == enums.Operation.ADD:
-            data = await self.bot.db.fetchrow(f'UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
+            data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
         elif operation == enums.Operation.REMOVE:
-            data = await self.bot.db.fetchrow(f'UPDATE guilds SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
+            data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
         elif operation == enums.Operation.RESET:
             data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes', [], self.id)
         else:
