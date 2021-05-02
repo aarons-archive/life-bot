@@ -71,10 +71,6 @@ class Life(commands.AutoShardedBot):
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
         self.guild_manager: managers.GuildManager = managers.GuildManager(bot=self)
 
-        #self.reminder_manager: reminder_manager.ReminderManager = reminder_manager.ReminderManager(bot=self)
-        #self.tag_manager: tag_manager.TagManager = tag_manager.TagManager(bot=self)
-        #self.todo_manager: todo_manager.TodoManager = todo_manager.TodoManager(bot=self)
-
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message, cls=cls)
 
