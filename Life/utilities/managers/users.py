@@ -45,8 +45,8 @@ IMAGES = {
     }
 }
 
-ARIAL_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/arial.ttf'))
-KABEL_BLACK_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../resources/fonts/kabel_black.otf'))
+ARIAL_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../resources/fonts/arial.ttf'))
+KABEL_BLACK_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../resources/fonts/kabel_black.otf'))
 
 
 class UserManager:
@@ -146,19 +146,142 @@ class UserManager:
 
         await config.delete()
 
+    # Ranking
+
+    def leaderboard(self, *, guild_id: int = None, leaderboard_type: Literal['level', 'xp', 'coins']) -> list[objects.UserConfig]:
+
+        if not guild_id:
+            configs = filter(lambda user_config: self.bot.get_user(user_config.id) is not None and getattr(user_config, leaderboard_type) != 0, self.configs.values())
+
+        else:
+            if not (guild := self.bot.get_guild(guild_id)):
+                raise ValueError(f'guild with id \'{guild_id}\' was not found.')
+            configs = filter(lambda user_config: guild.get_member(user_config) is not None and getattr(user_config, leaderboard_type) != 0, self.configs.values())
+
+        return sorted(configs, key=lambda user_config: getattr(user_config, leaderboard_type), reverse=True)
+
+    def rank(self, user_id: int, *, guild_id: int = None) -> int:
+
+        if not guild_id:
+            configs = sorted(
+                    filter(lambda user_config: self.bot.get_user(user_config.id) is not None and user_config.xp != 0, self.configs.values()),
+                    key=lambda user_config: user_config.xp, reverse=True
+            )
+
+        else:
+
+            if not (guild := self.bot.get_guild(guild_id)):
+                raise ValueError(f'guild with id \'{guild_id}\' was not found.')
+
+            configs = sorted(
+                    filter(lambda user_config: guild.get_member(user_config.id) is not None and user_config.xp != 0, self.configs.values()),
+                    key=lambda user_config: user_config.xp, reverse=True
+            )
+
+        try:
+            return configs.index(self.get_config(user_id)) + 1
+        except ValueError:
+            raise exceptions.ArgumentError('That user does not have any XP yet, so they have not been ranked.')
+
+    # Level image
+
+    async def create_level_card(self, user_id: int, *, guild_id: int) -> discord.File:
+
+        guild = self.bot.get_guild(guild_id)
+        user = guild.get_member(user_id)
+        user_config = self.get_config(user_id)
+
+        avatar_bytes = io.BytesIO(await user.avatar_url_as(format='png', size=256).read())
+
+        buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, user, user_config, avatar_bytes)
+        file = discord.File(fp=buffer, filename='level.png')
+
+        buffer.close()
+        avatar_bytes.close()
+
+        return file
+
+    def create_level_card_image(self, member: Union[discord.Member, discord.User], user_config: objects.UserConfig, avatar_bytes: io.BytesIO) -> io.BytesIO:
+
+        buffer = io.BytesIO()
+        card_image = random.choice(IMAGES['SAI']['level_cards'])
+
+        with Image.open(card_image) as image:
+
+            draw = ImageDraw.Draw(image)
+
+            with Image.open(avatar_bytes) as avatar:
+
+                avatar = avatar.resize((256, 256), resample=Image.LANCZOS) if avatar.size != (256, 256) else avatar
+                image.paste(avatar, (22, 22), avatar.convert('RGBA'))
+
+                colour = ColorThief(avatar_bytes).get_color(quality=1)
+
+            # Username
+
+            name_text = getattr(member, 'nick', None) or member.name
+            name_fontsize = 56
+            name_font = ImageFont.truetype(KABEL_BLACK_FONT, name_fontsize)
+
+            while draw.textsize(name_text, font=name_font) > (690, 45):
+                name_fontsize -= 1
+                name_font = ImageFont.truetype(KABEL_BLACK_FONT, name_fontsize)
+
+            draw.text((300, 22 - name_font.getoffset(name_text)[1]), name_text, font=name_font, fill=colour)
+
+            # Level
+
+            level_text = f'Level: {user_config.level}'
+            level_font = ImageFont.truetype(KABEL_BLACK_FONT, 40)
+
+            draw.text((300, 72 - level_font.getoffset(level_text)[1]), level_text, font=level_font, fill='#1F1E1C')
+
+            # XP
+
+            xp_text = f'XP: {user_config.xp} / {user_config.xp + user_config.next_level_xp}'
+            xp_font = ImageFont.truetype(KABEL_BLACK_FONT, 40)
+
+            draw.text((300, 112 - xp_font.getoffset(xp_text)[1]), xp_text, font=xp_font, fill='#1F1E1C')
+
+            # XP BAR
+
+            bar_len = 678
+            outline = utils.darken_colour(*colour, 0.2)
+
+            draw.rounded_rectangle(((300, 152), (300 + bar_len, 192)), radius=10, outline=outline, fill='#1F1E1C', width=5)
+
+            if user_config.xp > 0:
+                filled_len = int(round(bar_len * user_config.xp / float(user_config.xp + user_config.next_level_xp)))
+                draw.rounded_rectangle(((300, 152), (300 + filled_len, 192)), radius=10, outline=outline, fill=colour, width=5)
+
+            # Rank
+
+            rank_text = f'#{self.rank(member.id)}'
+            rank_font = ImageFont.truetype(KABEL_BLACK_FONT, 110)
+
+            draw.text((300, 202 - rank_font.getoffset(rank_text)[1]), rank_text, font=rank_font, fill='#1F1E1C')
+
+            #
+
+            image.save(buffer, 'png')
+
+        buffer.seek(0)
+        return buffer
+
     # Timecard image
 
     async def create_timecard(self, *, guild_id: int) -> discord.File:
 
         guild = self.bot.get_guild(guild_id)
 
-        user_configs = dict(filter(
-                lambda kv: guild.get_member(kv[0]) is not None and not kv[1].timezone_private and not kv[1].timezone == pendulum.timezone('UTC'),
-                sorted(self.configs.items(), key=lambda kv: kv[1].time.offset_hours)
-        ))
+        user_configs = filter(
+                lambda kv: guild.get_member(kv[0]) is not None and not kv[1].timezone_private and kv[1].timezone != pendulum.timezone('UTC'),
+                sorted(self.bot.user_manager.configs.items(), key=lambda kv: kv[1].time.offset_hours)
+        )
         timezone_avatars = {}
 
-        for user_config in user_configs.values():
+        # noinspection PyTypeChecker
+        for user_config in dict(user_configs).values():
 
             avatar_bytes = io.BytesIO(await guild.get_member(user_config.id).avatar_url_as(format='png', size=256).read())
             timezone = user_config.time.format('HH:mm (ZZ)')
@@ -182,7 +305,8 @@ class UserManager:
 
         return file
 
-    def create_timecard_image(self, timezone_users: dict) -> io.BytesIO:
+    @staticmethod
+    def create_timecard_image(timezone_users: dict) -> io.BytesIO:
 
         buffer = io.BytesIO()
         width_x, height_y = (1600 * (len(timezone_users) if len(timezone_users) < 5 else 5)) + 100, (1800 * math.ceil(len(timezone_users) / 5)) + 100
@@ -190,7 +314,7 @@ class UserManager:
         with Image.new(mode='RGBA', size=(width_x, height_y), color='#F1C30F') as image:
 
             draw = ImageDraw.Draw(im=image)
-            font = ImageFont.truetype(font=self.ARIAL_FONT, size=120)
+            font = ImageFont.truetype(font=ARIAL_FONT, size=120)
 
             x, y = 100, 100
 
@@ -218,124 +342,6 @@ class UserManager:
                     x += 1600
 
             image.save(fp=buffer, format='png')
-
-        buffer.seek(0)
-        return buffer
-
-    # Ranking
-
-    def leaderboard(self, *, guild_id: int = None, lb_type: Literal['level', 'xp', 'coins']) -> list[objects.UserConfig]:
-
-        if not guild_id:
-            configs = filter(lambda kv: self.bot.get_user(kv[1].id) is not None and getattr(kv[1], lb_type) != 0, self.configs.items())
-
-        else:
-            guild = self.bot.get_guild(guild_id)
-            if not guild:
-                raise exceptions.ArgumentError('Guild with that id not found.')
-
-            configs = filter(lambda kv: guild.get_member(kv[1].id) is not None and getattr(kv[1], lb_type) != 0, self.configs.items())
-
-        return sorted(configs, key=lambda kv: getattr(kv[1], lb_type), reverse=True)
-
-    def rank(self, user_id: int, *, guild_id: int = None) -> int:
-
-        if not guild_id:
-            configs = dict(sorted(self.configs.items(), key=lambda kv: kv[1].xp, reverse=True))
-
-        else:
-            guild = self.bot.get_guild(guild_id)
-            if not guild:
-                raise exceptions.ArgumentError('Guild with that id not found.')
-
-            configs = dict(sorted(filter(lambda kv: guild.get_member(kv[1].id) is not None and kv[1].xp != 0, self.configs.items()), key=lambda kv: kv[1].xp, reverse=True))
-
-        try:
-            return list(configs.keys()).index(user_id) + 1
-        except ValueError:
-            raise exceptions.ArgumentError('That user does not have a rank yet.')
-
-    # Level image
-
-    async def create_level_card(self, user_id: int, *, guild_id: int) -> discord.File:
-
-        guild = self.bot.get_guild(guild_id)
-        user = guild.get_member(user_id)
-        user_config = self.get_config(user_id)
-
-        avatar_bytes = io.BytesIO(await user.avatar_url_as(format='png', size=256).read())
-
-        buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, user, user_config, avatar_bytes)
-        file = discord.File(fp=buffer, filename='level.png')
-
-        buffer.close()
-        avatar_bytes.close()
-
-        return file
-
-    def create_level_card_image(self, member: Union[discord.Member, discord.User], user_config: objects.UserConfig, avatar_bytes: io.BytesIO) -> io.BytesIO:
-
-        buffer = io.BytesIO()
-        card_image = random.choice(self.IMAGES['SAI']['level_cards'])
-
-        with Image.open(card_image) as image:
-
-            draw = ImageDraw.Draw(image)
-
-            with Image.open(avatar_bytes) as avatar:
-
-                avatar = avatar.resize((256, 256), resample=Image.LANCZOS) if avatar.size != (256, 256) else avatar
-                image.paste(avatar, (22, 22), avatar.convert('RGBA'))
-
-                colour = ColorThief(avatar_bytes).get_color(quality=1)
-
-            # Username
-
-            name_text = getattr(member, 'nick', None) or member.name
-            name_fontsize = 56
-            name_font = ImageFont.truetype(self.KABEL_BLACK_FONT, name_fontsize)
-
-            while draw.textsize(name_text, font=name_font) > (690, 45):
-                name_fontsize -= 1
-                name_font = ImageFont.truetype(self.KABEL_BLACK_FONT, name_fontsize)
-
-            draw.text((300, 22 - name_font.getoffset(name_text)[1]), name_text, font=name_font, fill=colour)
-
-            # Level
-
-            level_text = f'Level: {user_config.level}'
-            level_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 40)
-
-            draw.text((300, 72 - level_font.getoffset(level_text)[1]), level_text, font=level_font, fill='#1F1E1C')
-
-            # XP
-
-            xp_text = f'XP: {user_config.xp} / {user_config.xp + user_config.next_level_xp}'
-            xp_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 40)
-
-            draw.text((300, 112 - xp_font.getoffset(xp_text)[1]), xp_text, font=xp_font, fill='#1F1E1C')
-
-            # XP BAR
-
-            bar_len = 678
-            outline = utils.darken_colour(*colour, 0.2)
-
-            draw.rounded_rectangle(((300, 152), (300 + bar_len, 192)), radius=10, outline=outline, fill='#1F1E1C', width=5)
-
-            if user_config.xp > 0:
-                filled_len = int(round(bar_len * user_config.xp / float(user_config.xp + user_config.next_level_xp)))
-                draw.rounded_rectangle(((300, 152), (300 + filled_len, 192)), radius=10, outline=outline, fill=colour, width=5)
-
-            # Rank
-
-            rank_text = f'#{self.rank(member.id)}'
-            rank_font = ImageFont.truetype(self.KABEL_BLACK_FONT, 110)
-
-            draw.text((300, 202 - rank_font.getoffset(rank_text)[1]), rank_text, font=rank_font, fill='#1F1E1C')
-
-            #
-
-            image.save(buffer, 'png')
 
         buffer.seek(0)
         return buffer
