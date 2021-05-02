@@ -74,3 +74,5 @@ class ReminderRepeatType(enum.Enum):
     EVERY_YEAR = 13
     EVERY_OTHER_YEAR = 14
     BI_YEARLY = EVERY_OTHER_YEAR
+
+    EVERY_30_SECONDS = 15

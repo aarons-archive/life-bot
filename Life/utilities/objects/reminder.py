@@ -42,7 +42,8 @@ REPEAT_TYPES = {
     11: lambda dt: dt.add(months=2),
     12: lambda dt: dt.add(months=6),
     13: lambda dt: dt.add(years=1),
-    14: lambda dt: dt.add(years=2)
+    14: lambda dt: dt.add(years=2),
+    15: lambda dt: dt.add(seconds=30)
 }
 
 
@@ -198,4 +199,4 @@ class Reminder:
     async def change_repeat_type(self, repeat_type: enums.ReminderRepeatType) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE reminders SET repeat_type = $1 WHERE id = $2 RETURNING repeat_type', repeat_type.value, self.id)
-        self._repeat_type = data['repeat_type']
+        self._repeat_type = enums.ReminderRepeatType(data['repeat_type'])
