@@ -139,7 +139,7 @@ class Reminder:
 
     # Handling
 
-    async def schedule(self) -> None:
+    def schedule(self) -> None:
 
         self._task = self.bot.scheduler.schedule(self.handle_notification(), when=self.datetime.naive())
         __log__.info(f'[REMINDER] Scheduled reminder with id \'{self.id}\' for \'{self.datetime}\'.')
@@ -176,7 +176,7 @@ class Reminder:
         await self.change_datetime(REPEAT_TYPES[self.repeat_type.value](self._datetime))
         await self.set_notified(False)
 
-        await self.schedule()
+        self.schedule()
 
     # Config
 
