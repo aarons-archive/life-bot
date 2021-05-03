@@ -237,7 +237,7 @@ class UserConfig:
         self._reminders[reminder.id] = reminder
 
         if not reminder.done:
-            await reminder.schedule()
+            reminder.schedule()
 
         __log__.info(f'[REMINDERS] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'.')
         return reminder
