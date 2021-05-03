@@ -239,7 +239,7 @@ class UserConfig:
         if not reminder.done:
             await reminder.schedule()
 
-        __log__.info(f'[REMINDER MANAGER] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'.')
+        __log__.info(f'[REMINDERS] Created reminder with id \'{reminder.id}\'for user with id \'{reminder.user_id}\'.')
         return reminder
 
     def get_reminder(self, reminder_id: int) -> Optional[objects.Reminder]:
@@ -253,3 +253,23 @@ class UserConfig:
         await reminder.delete()
 
     # Todos
+
+    async def create_todo(self, *, content: str, jump_url: str = None) -> objects.Todo:
+
+        data = await self.bot.db.fetchrow('INSERT INTO todos (user_id, content, jump_url) VALUES ($1, $2, $3) RETURNING *', self.id, content, jump_url)
+
+        todo = objects.Todo(bot=self.bot, user_config=self, data=data)
+        self._todos[todo.id] = todo
+
+        __log__.info(f'[TODOS] Created todo with id \'{todo.id}\'for user with id \'{todo.user_id}\'.')
+        return todo
+
+    def get_todo(self, todo_id: int) -> Optional[objects.Todo]:
+        return self.todos.get(todo_id)
+
+    async def delete_todo(self, todo_id: int) -> None:
+
+        if not (todo := self.get_todo(todo_id)):
+            return
+
+        await todo.delete()
