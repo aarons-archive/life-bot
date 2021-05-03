@@ -87,7 +87,11 @@ class UserManager:
 
         for reminder in reminders:
             user_config = self.get_config(reminder['user_id'])
+
             reminder = objects.Reminder(bot=self.bot, user_config=user_config, data=reminder)
+            if not reminder.done:
+                reminder.schedule()
+
             user_config._reminders[reminder.id] = reminder
 
         __log__.info(f'[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
