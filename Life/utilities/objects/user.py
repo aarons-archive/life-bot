@@ -230,8 +230,10 @@ class UserConfig:
             self, *, channel_id: int, datetime: DateTime, content: str, jump_url: str = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
     ) -> objects.Reminder:
 
-        query = 'INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *'
-        data = await self.bot.db.fetchrow(query, self.id, channel_id, datetime, content, jump_url, repeat_type.value)
+        data = await self.bot.db.fetchrow(
+                'INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                self.id, channel_id, datetime, content, jump_url, repeat_type
+        )
 
         reminder = objects.Reminder(bot=self.bot, user_config=self, data=data)
         self._reminders[reminder.id] = reminder

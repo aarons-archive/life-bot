@@ -288,7 +288,7 @@ class Time(commands.Cog):
         content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800)
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
-        await ctx.send(f'Edited reminder id `{reminder.id}`\'s content.')
+        await ctx.send(f'Edited content of reminder with id `{reminder.id}`.')
 
     @reminders.group(name='repeat')
     async def reminder_repeat(self, ctx: context.Context, reminder_id: int, *, repeat_type: converters.ReminderRepeatTypeConverter) -> None:
@@ -303,7 +303,7 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         await reminder.change_repeat_type(repeat_type)
-        await ctx.send(f'Edited reminder id `{reminder.id}`\'s repeat type.')
+        await ctx.send(f'Edited repeat type of reminder with id `{reminder.id}`.')
 
 
 def setup(bot: Life) -> None:
