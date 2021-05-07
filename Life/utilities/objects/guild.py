@@ -17,6 +17,7 @@ from typing import Optional, TYPE_CHECKING
 
 import discord
 import pendulum
+import rapidfuzz
 from pendulum import DateTime
 
 from utilities import enums, objects
@@ -84,11 +85,11 @@ class GuildConfig:
         return self._embed_size
 
     @property
-    def prefixes(self):
+    def prefixes(self) -> list[str]:
         return self._prefixes
 
     @property
-    def tags(self):
+    def tags(self) -> dict[str, objects.Tag]:
         return self._tags
 
     # Misc
@@ -133,3 +134,61 @@ class GuildConfig:
         self._prefixes = data['prefixes']
 
     # Tags
+
+    async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: str = None) -> objects.Tag:
+
+        data = await self.bot.db.fetchrow(
+                'INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                user_id, self.id, name, content, jump_url
+        )
+
+        tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
+        self._tags[tag.name] = tag
+
+        __log__.info(f'[TAGS] Created tag with id \'{tag.id}\' for guild with id \'{tag.guild_id}\'.')
+        return tag
+
+    async def create_tag_alias(self, *, user_id: int, name: str, original: int,  jump_url: str = None) -> objects.Tag:
+
+        data = await self.bot.db.fetchrow(
+                'INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                user_id, self.id, name, original, jump_url
+        )
+
+        tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
+        self._tags[tag.name] = tag
+
+        __log__.info(f'[TAGS] Created tag alias with id \'{tag.id}\' for guild with id \'{tag.guild_id}\'.')
+        return tag
+
+    def get_tag(self, *, tag_name: str = None, tag_id: int = None) -> Optional[objects.Tag]:
+
+        if tag_name:
+            tag = self.tags.get(tag_name)
+        elif tag_id:
+            if not (tags := [tag for tag in self.tags.values() if tag.id == tag_id]):
+                return
+            tag = tags[0]
+        else:
+            raise ValueError('\'tag_name\' or \'tag_id\' parameter must be specified.')
+
+        return tag
+
+    def get_all_tags(self) -> Optional[list[objects.Tag]]:
+        return list(self.tags.values())
+
+    def get_user_tags(self, user_id: int) -> Optional[list[objects.Tag]]:
+        return [tag for tag in self.tags.values() if tag.user_id == user_id]
+
+    def get_tags_matching(self, name: str, *, limit: int = 5) -> Optional[list[objects.Tag]]:
+        return [self.get_tag(tag_name=match[0]) for match in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
+
+    async def delete_tag(self, *, tag_name: str = None, tag_id: int = None) -> None:
+
+        if not tag_name or not tag_id:
+            raise ValueError('\'tag_name\' or \'tag_id\' parameter must be specified.')
+
+        if not (tag := self.get_tag(tag_name=tag_name, tag_id=tag_id)):
+            return
+
+        await tag.delete()
