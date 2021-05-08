@@ -15,5 +15,5 @@ from utilities.converters.discord import UserConverter
 from utilities.converters.image import ImageConverter
 from utilities.converters.prefix import PrefixConverter
 from utilities.converters.reminder import ReminderRepeatTypeConverter
-from utilities.converters.tags import TagContentConverter, TagNameConverter
+from utilities.converters.tag import TagContentConverter, TagNameConverter
 from utilities.converters.timezone import TimezoneConverter
