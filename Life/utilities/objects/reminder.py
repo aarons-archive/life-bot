@@ -27,17 +27,16 @@ if TYPE_CHECKING:
 
 __log__ = logging.getLogger('utilities.objects.reminder')
 
-# skipcq: FLK-E272
 REPEAT_TYPES = {
-    1:  lambda dt: dt.add(minutes=30),
-    2:  lambda dt: dt.add(hours=1),
-    3:  lambda dt: dt.add(hours=2),
-    4:  lambda dt: dt.add(hours=12),
-    5:  lambda dt: dt.add(days=1),
-    6:  lambda dt: dt.add(days=2),
-    7:  lambda dt: dt.add(days=7),
-    8:  lambda dt: dt.add(days=14),
-    9:  lambda dt: dt.add(weeks=2),
+    1: lambda dt: dt.add(minutes=30),
+    2: lambda dt: dt.add(hours=1),
+    3: lambda dt: dt.add(hours=2),
+    4: lambda dt: dt.add(hours=12),
+    5: lambda dt: dt.add(days=1),
+    6: lambda dt: dt.add(days=2),
+    7: lambda dt: dt.add(days=7),
+    8: lambda dt: dt.add(days=14),
+    9: lambda dt: dt.add(weeks=2),
     10: lambda dt: dt.add(months=1),
     11: lambda dt: dt.add(months=2),
     12: lambda dt: dt.add(months=6),
