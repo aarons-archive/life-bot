@@ -247,8 +247,8 @@ class Tags(commands.Cog):
                 description=f'`Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})\n'
                             f'`Claimable:` {owner is None}\n'
                             f'`Alias:` {ctx.guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n'
-                            f'`Created on:` {utils.format_datetime(datetime=tag.created_at)}\n'
-                            f'`Created:` {utils.format_difference(datetime=tag.created_at, suppress=[])} ago'
+                            f'`Created on:` {utils.format_datetime(tag.created_at)}\n'
+                            f'`Created:` {utils.format_difference(tag.created_at, suppress=[])} ago'
         )
         await ctx.send(embed=embed)
 

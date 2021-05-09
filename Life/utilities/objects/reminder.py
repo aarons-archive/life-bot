@@ -18,7 +18,6 @@ from typing import Optional, TYPE_CHECKING
 import aioscheduler.task
 import discord
 import pendulum
-from pendulum import DateTime
 
 from utilities import enums, objects, utils
 
@@ -59,12 +58,12 @@ class Reminder:
         self._id: int = data.get('id')
         self._user_id: int = data.get('user_id')
         self._channel_id: int = data.get('channel_id')
-        self._created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
+        self._created_at: pendulum.datetime = pendulum.instance(data.get('created_at'), tz='UTC')
         self._content: str = data.get('content')
         self._jump_url: str = data.get('jump_url')
         self._repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType(value=data.get('repeat_type'))
         self._notified: bool = data.get('notified')
-        self._datetime: DateTime = pendulum.instance(data.get('datetime'), tz='UTC')
+        self._datetime: pendulum.datetime = pendulum.instance(data.get('datetime'), tz='UTC')
 
         self._task: Optional[aioscheduler.task.Task] = None
 
@@ -94,7 +93,7 @@ class Reminder:
         return self._channel_id
 
     @property
-    def created_at(self) -> DateTime:
+    def created_at(self) -> pendulum.datetime:
         return self._created_at
 
     @property
@@ -114,7 +113,7 @@ class Reminder:
         return self._notified
 
     @property
-    def datetime(self) -> DateTime:
+    def datetime(self) -> pendulum.datetime:
         return self._datetime
 
     @property
@@ -154,7 +153,7 @@ class Reminder:
         embed = discord.Embed(
                 colour=self.user_config.colour,
                 title='Reminder:',
-                description=f'[`{utils.format_difference(datetime=self.created_at, suppress=[])} ago:`]({self.jump_url})\n\n{self.content}'
+                description=f'[`{utils.format_difference(self.created_at, suppress=[])} ago:`]({self.jump_url})\n\n{self.content}'
         )
 
         try:
@@ -185,7 +184,7 @@ class Reminder:
         data = await self.bot.db.fetchrow('UPDATE reminders SET notified = $1 WHERE id = $2 RETURNING notified', notified, self.id)
         self._notified = data['notified']
 
-    async def change_datetime(self, datetime: DateTime) -> None:
+    async def change_datetime(self, datetime: pendulum.datetime) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE reminders SET datetime = $1 WHERE id = $2 RETURNING datetime', datetime, self.id)
         self._datetime = pendulum.instance(data['datetime'], tz='UTC')

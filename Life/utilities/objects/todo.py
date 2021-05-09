@@ -16,7 +16,6 @@ import logging
 from typing import Optional, TYPE_CHECKING
 
 import pendulum
-from pendulum import DateTime
 
 from utilities import objects
 
@@ -38,7 +37,7 @@ class Todo:
 
         self._id: int = data.get('id')
         self._user_id: int = data.get('user_id')
-        self._created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
+        self._created_at: pendulum.datetime = pendulum.instance(data.get('created_at'), tz='UTC')
         self._content: str = data.get('content')
         self._jump_url: Optional[str] = data.get('jump_url')
 
@@ -64,7 +63,7 @@ class Todo:
         return self._user_id
 
     @property
-    def created_at(self) -> DateTime:
+    def created_at(self) -> pendulum.datetime:
         return self._created_at
 
     @property

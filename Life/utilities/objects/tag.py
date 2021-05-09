@@ -16,7 +16,6 @@ import logging
 from typing import Optional, TYPE_CHECKING
 
 import pendulum
-from pendulum import DateTime
 
 from utilities import objects
 
@@ -39,7 +38,7 @@ class Tag:
         self._id: int = data.get('id')
         self._user_id: int = data.get('user_id')
         self._guild_id: int = data.get('guild_id')
-        self._created_at: DateTime = pendulum.instance(data.get('created_at'), tz='UTC')
+        self._created_at: pendulum.datetime = pendulum.instance(data.get('created_at'), tz='UTC')
         self._name: str = data.get('name')
         self._alias: Optional[int] = data.get('alias')
         self._content: Optional[str] = data.get('content')
@@ -71,7 +70,7 @@ class Tag:
         return self._guild_id
 
     @property
-    def created_at(self) -> DateTime:
+    def created_at(self) -> pendulum.datetime:
         return self._created_at
 
     @property

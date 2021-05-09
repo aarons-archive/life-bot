@@ -18,7 +18,6 @@ from typing import Optional, TYPE_CHECKING
 import discord
 import pendulum
 import rapidfuzz
-from pendulum import DateTime
 
 from utilities import enums, objects
 
@@ -38,7 +37,7 @@ class GuildConfig:
         self._bot = bot
 
         self._id: int = data.get('id', 0)
-        self._created_at: DateTime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
+        self._created_at: pendulum.datetime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
 
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
@@ -65,7 +64,7 @@ class GuildConfig:
         return self._id
 
     @property
-    def created_at(self) -> DateTime:
+    def created_at(self) -> pendulum.datetime:
         return self._created_at
 
     @property
