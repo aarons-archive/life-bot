@@ -85,10 +85,11 @@ class Dev(commands.Cog):
         else:
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
-        await ctx.send(f'Found and deleted `{len(messages)}` of my message(s) out of the last `{limit}` message(s).', delete_after=3)
+        s = 's' if len(messages) > 1 else ''
+        await ctx.send(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=3)
 
     @commands.is_owner()
-    @dev.command(name='guilds', hidden=True)
+    @dev.command(name='guilds', aliases=['g'], hidden=True)
     async def dev_guilds(self, ctx: context.Context, guilds: int = 20) -> None:
         """
         Display a list of guilds the bot is in.
@@ -132,16 +133,20 @@ class Dev(commands.Cog):
         embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=ctx.colour, description='\n'.join(description))
         await ctx.send(embed=embed)
 
-    @dev.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
-    async def dev_blacklist(self, ctx: context.Context) -> None:
+    #
+
+    @commands.is_owner()
+    @commands.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
+    async def blacklist(self, ctx: context.Context) -> None:
         """
         Base command for blacklisting.
         """
 
         await ctx.send(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
 
-    @dev_blacklist.group(name='users', aliases=['user', 'u'], hidden=True, invoke_without_command=True)
-    async def dev_blacklist_users(self, ctx: context.Context) -> None:
+    @commands.is_owner()
+    @blacklist.group(name='users', aliases=['user', 'u'], hidden=True, invoke_without_command=True)
+    async def blacklist_users(self, ctx: context.Context) -> None:
         """
         Display a list of blacklisted users.
         """
@@ -154,8 +159,9 @@ class Dev(commands.Cog):
         header = 'User id             | Reason\n'
         await ctx.paginate(entries=entries, per_page=15, header=header, codeblock=True)
 
-    @dev_blacklist_users.command(name='add', hidden=True)
-    async def dev_blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
+    @commands.is_owner()
+    @blacklist_users.command(name='add', hidden=True)
+    async def blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
         """
         Blacklist a user.
 
@@ -170,11 +176,12 @@ class Dev(commands.Cog):
         if user_config.blacklisted is True:
             raise exceptions.ArgumentError('That user is already blacklisted.')
 
-        await self.bot.user_manager.set_blacklisted(user.id, reason=reason)
+        await ctx.user_config.set_blacklisted(True, reason=reason)
         await ctx.send(f'Blacklisted user `{user.id}` with reason:\n\n`{reason}`')
 
-    @dev_blacklist_users.command(name='remove', hidden=True)
-    async def dev_blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
+    @commands.is_owner()
+    @blacklist_users.command(name='remove', hidden=True)
+    async def blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
         """
         Unblacklist a user.
 
@@ -185,11 +192,12 @@ class Dev(commands.Cog):
         if user_config.blacklisted is False:
             raise exceptions.ArgumentError('That user is not blacklisted.')
 
-        await self.bot.user_manager.set_blacklisted(user.id, blacklisted=False)
+        await ctx.user_config.set_blacklisted(False)
         await ctx.send(f'Unblacklisted user `{user.id}`.')
 
-    @dev_blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
-    async def dev_blacklist_guilds(self, ctx: context.Context) -> None:
+    @commands.is_owner()
+    @blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
+    async def blacklist_guilds(self, ctx: context.Context) -> None:
         """
         Display a list of blacklisted guilds.
         """
@@ -202,8 +210,9 @@ class Dev(commands.Cog):
         header = 'Guild id            | Reason\n'
         await ctx.paginate(entries=entries, per_page=10, header=header, codeblock=True)
 
-    @dev_blacklist_guilds.command(name='add', hidden=True)
-    async def dev_blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: str = 'No reason') -> None:
+    @commands.is_owner()
+    @blacklist_guilds.command(name='add', hidden=True)
+    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: str = 'No reason') -> None:
         """
         Blacklist a guild.
 
@@ -222,11 +231,12 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is True:
             raise exceptions.ArgumentError('The guild is already blacklisted.')
 
-        await self.bot.guild_manager.set_blacklisted(guild_id, reason=reason)
+        await ctx.guild_config.set_blacklisted(True, reason=reason)
         await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
 
-    @dev_blacklist_guilds.command(name='remove', hidden=True)
-    async def dev_blacklist_guilds_remove(self, ctx: context.Context, guild_id: int) -> None:
+    @commands.is_owner()
+    @blacklist_guilds.command(name='remove', hidden=True)
+    async def blacklist_guilds_remove(self, ctx: context.Context, guild_id: int) -> None:
         """
         Unblacklist a guild.
 
@@ -240,7 +250,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is False:
             raise exceptions.ArgumentError('That guild is not blacklisted.')
 
-        await self.bot.guild_manager.set_blacklisted(guild_id, blacklisted=False)
+        await ctx.guild_config.set_blacklisted(False)
         await ctx.send(f'Unblacklisted guild `{guild_id}`.')
 
 
