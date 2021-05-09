@@ -21,7 +21,6 @@ import random
 from typing import Literal, TYPE_CHECKING, Union
 
 import discord
-import pendulum
 from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
@@ -119,11 +118,11 @@ class UserManager:
             requires_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config._requires_db_update) >= 1}
             for user_id, user_config in requires_updating.items():
 
-                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config.requires_db_update))
-                args = [getattr(user_config, attribute.value) for attribute in user_config.requires_db_update]
+                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config._requires_db_update))
+                args = [getattr(user_config, attribute.value) for attribute in user_config._requires_db_update]
                 await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *args)
 
-                user_config.requires_db_update = set()
+                user_config._requires_db_update = set()
 
     # Config management
 
@@ -278,10 +277,13 @@ class UserManager:
 
         guild = self.bot.get_guild(guild_id)
 
-        user_configs = filter(
-                lambda kv: guild.get_member(kv[0]) is not None and not kv[1].timezone_private and kv[1].timezone != pendulum.timezone('UTC'),
-                sorted(self.bot.user_manager.configs.items(), key=lambda kv: kv[1].time.offset_hours)
+        user_configs = sorted(
+                filter(lambda kv: guild.get_member(kv[0]) is not None and not kv[1].timezone_private and kv[1].timezone is not None, self.bot.user_manager.configs.items()),
+                key=lambda kv: kv[1].time.offset_hours
         )
+        if not user_configs:
+            raise exceptions.ArgumentError('There are no users who have set their timezone, or everyone has set them to be private.')
+
         timezone_avatars = {}
 
         # noinspection PyTypeChecker
@@ -296,9 +298,6 @@ class UserManager:
                 timezone_avatars[timezone].append(avatar_bytes)
             else:
                 timezone_avatars[timezone] = [avatar_bytes]
-
-        if not timezone_avatars:
-            raise exceptions.ArgumentError('There are no users with timezones set in this server.')
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_avatars)
         file = discord.File(fp=buffer, filename='level.png')

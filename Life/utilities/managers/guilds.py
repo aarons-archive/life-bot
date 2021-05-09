@@ -70,11 +70,11 @@ class GuildManager:
             requires_updating = {guild_id: guild_config for guild_id, guild_config in self.configs.items() if len(guild_config._requires_db_update) >= 1}
             for guild_id, guild_config in requires_updating.items():
 
-                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(guild_config.requires_db_update))
-                args = [getattr(guild_config, attribute.value) for attribute in guild_config.requires_db_update]
+                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(guild_config._requires_db_update))
+                args = [getattr(guild_config, attribute.value) for attribute in guild_config._requires_db_update]
                 await db.execute(f'UPDATE users SET {query} WHERE id = $1', guild_id, *args)
 
-                guild_config.requires_db_update = set()
+                guild_config._requires_db_update = set()
 
     # Config management
 
