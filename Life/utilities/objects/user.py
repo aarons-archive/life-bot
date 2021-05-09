@@ -18,8 +18,6 @@ from typing import Optional, TYPE_CHECKING
 
 import discord
 import pendulum
-from pendulum import DateTime
-from pendulum.tz.timezone import Timezone
 
 from utilities import enums, objects
 
@@ -40,17 +38,17 @@ class UserConfig:
         self._bot = bot
 
         self._id: int = data.get('id', 0)
-        self._created_at: DateTime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
+        self._created_at: pendulum.datetime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
 
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
 
         self._colour: discord.Colour = discord.Colour(int(data.get('colour', '0xF1C40F'), 16))
 
-        self._timezone: Timezone = pendulum.timezone(data.get('timezone', 'UTC'))
+        self._timezone: Optional[pendulum.timezone] = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
         self._timezone_private: bool = data.get('timezone_private', False)
 
-        self._birthday: DateTime = pendulum.parse(data.get('birthday', pendulum.now()).isoformat(), tz='UTC')
+        self._birthday: Optional[pendulum.datetime] = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
         self._birthday_private: bool = data.get('birthday_private', False)
 
         self._xp: int = data.get('xp', 0)
@@ -63,7 +61,7 @@ class UserConfig:
         self._requires_db_update: set = set()
 
     def __repr__(self) -> str:
-        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone.name}\' colour={self.colour} xp={self.xp} coins={self.colour} ' \
+        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} ' \
                f'level={self.level}>'
 
     # Properties
@@ -77,7 +75,7 @@ class UserConfig:
         return self._id
 
     @property
-    def created_at(self) -> DateTime:
+    def created_at(self) -> pendulum.datetime:
         return self._created_at
 
     @property
@@ -93,7 +91,7 @@ class UserConfig:
         return self._colour
 
     @property
-    def timezone(self) -> Timezone:
+    def timezone(self) -> Optional[pendulum.timezone]:
         return self._timezone
 
     @property
@@ -101,7 +99,7 @@ class UserConfig:
         return self._timezone_private
 
     @property
-    def birthday(self) -> DateTime:
+    def birthday(self) -> Optional[pendulum.timezone]:
         return self._birthday
 
     @property
@@ -131,20 +129,34 @@ class UserConfig:
     #
 
     @property
-    def age(self) -> int:
+    def age(self) -> Optional[int]:
+
+        if not self.birthday:
+            return None
+
         return (pendulum.now(tz='UTC') - self.birthday).in_years()
 
     @property
-    def next_birthday(self) -> DateTime:
+    def next_birthday(self) -> Optional[pendulum.datetime]:
+
+        if not self.birthday:
+            return None
 
         now = pendulum.now(tz='UTC')
-        year = now.year + 1 if now > self.birthday.add(years=self.age) else now.year
-        now.replace(year=year, month=self.birthday.month, day=self.birthday.day + 1, hour=0, minute=0, second=0, microsecond=0)
 
-        return now
+        return now.replace(
+                year=now.year + 1 if now > self.birthday.add(years=self.age) else now.year,
+                month=self.birthday.month,
+                day=self.birthday.day,
+                hour=12, minute=0, second=0, microsecond=0
+        )
 
     @property
-    def time(self) -> DateTime:
+    def time(self) -> Optional[pendulum.datetime]:
+
+        if not self.timezone:
+            return None
+
         return pendulum.now(tz=self.timezone)
 
     @property
@@ -184,22 +196,20 @@ class UserConfig:
         data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{colour.strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
 
-    async def set_timezone(self, timezone: str = None, *, private: bool = None) -> None:
+    async def set_timezone(self, timezone: str, *, private: bool = None) -> None:
 
-        timezone = timezone or self.timezone
         private = private or self.timezone_private
 
         data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone, private, self.id)
-        self._timezone = pendulum.timezone(data['timezone'])
+        self._timezone = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
         self._timezone_private = private
 
-    async def set_birthday(self,  birthday: pendulum.datetime = None, *, private: bool = None) -> None:
+    async def set_birthday(self, birthday: pendulum.datetime, *, private: bool = None) -> None:
 
-        birthday = birthday or self.birthday
         private = private or self.birthday_private
 
         data = await self.bot.db.fetchrow('UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private', birthday, private, self.id)
-        self._birthday = pendulum.instance(data['birthday'], tz='UTC')
+        self._birthday = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
         self._birthday_private = private
 
     async def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
@@ -227,12 +237,12 @@ class UserConfig:
     # Reminders
 
     async def create_reminder(
-            self, *, channel_id: int, datetime: DateTime, content: str, jump_url: str = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
+            self, *, channel_id: int, datetime: pendulum.datetime, content: str, jump_url: str = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
     ) -> objects.Reminder:
 
         data = await self.bot.db.fetchrow(
                 'INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-                self.id, channel_id, datetime, content, jump_url, repeat_type
+                self.id, channel_id, datetime, content, jump_url, repeat_type.value
         )
 
         reminder = objects.Reminder(bot=self.bot, user_config=self, data=data)
