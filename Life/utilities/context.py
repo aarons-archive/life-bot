@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -42,11 +42,11 @@ class Context(commands.Context):
     #
 
     @property
-    def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+    def user_config(self) -> objects.UserConfig:
         return self.bot.user_manager.configs.get(getattr(self.author, 'id', None), self.bot.user_manager.default_config)
 
     @property
-    def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    def guild_config(self) -> objects.GuildConfig:
         return self.bot.guild_manager.configs.get(getattr(self.guild, 'id', None), self.bot.guild_manager.default_config)
 
     @property

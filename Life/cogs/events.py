@@ -163,7 +163,7 @@ class Events(commands.Cog):
         info = f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}\n' \
                f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n' \
                f'`Author:` {ctx.author} `{ctx.author.id}`\n' \
-               f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
+               f'`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
 
         embed = discord.Embed(colour=ctx.colour, description=f'{ctx.message.content}')
         embed.add_field(name='Info:', value=info)
@@ -200,7 +200,7 @@ class Events(commands.Cog):
 
         ctx = await self.bot.get_context(message)
         embed = discord.Embed(colour=ctx.colour, description=f'{message.content}')
-        info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}'
+        info = f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n`Author:` {ctx.author} `{ctx.author.id}`\n`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
         embed.add_field(name='Info:', value=info)
         await self.bot.DM_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
@@ -217,7 +217,7 @@ class Events(commands.Cog):
 
         __log__.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
@@ -228,7 +228,7 @@ class Events(commands.Cog):
 
         __log__.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
 
-        time = utils.format_datetime(datetime=pendulum.now(tz='UTC'))
+        time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))

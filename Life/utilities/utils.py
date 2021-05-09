@@ -24,7 +24,7 @@ import discord
 import humanize
 import mystbin
 import pendulum
-from pendulum.datetime import DateTime
+from discord.ext import commands
 
 import config
 
@@ -46,25 +46,25 @@ async def safe_text(text: str, mystbin_client: mystbin.Client, max_characters: i
         return f'{text[:max_characters]}'  # Not the best solution.
 
 
-def convert_datetime(datetime: Union[dt.datetime, DateTime]) -> DateTime:
+def convert_datetime(datetime: Union[dt.datetime, pendulum.datetime]) -> pendulum.datetime:
     return pendulum.instance(datetime, tz='UTC') if isinstance(datetime, dt.datetime) else datetime
 
 
-def format_datetime(datetime: Union[dt.datetime, DateTime], *, seconds: bool = False) -> str:
-    datetime = convert_datetime(datetime=datetime)
+def format_datetime(datetime: Union[dt.datetime, pendulum.datetime], *, seconds: bool = False) -> str:
+    datetime = convert_datetime(datetime)
     return datetime.format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zz{"ZZ" if datetime.timezone.name != "UTC" else ""}')
 
 
-def format_date(datetime: Union[dt.datetime, DateTime]) -> str:
-    return convert_datetime(datetime=datetime).format('dddd MMMM Do YYYY')
+def format_date(datetime: Union[dt.datetime, pendulum.datetime]) -> str:
+    return convert_datetime(datetime).format('dddd MMMM Do YYYY')
 
 
-def format_difference(datetime: Union[dt.datetime, DateTime], *, suppress=None) -> str:
+def format_difference(datetime: Union[dt.datetime, pendulum.datetime], *, suppress=None) -> str:
 
     if suppress is None:
         suppress = ['seconds']
 
-    return humanize.precisedelta(pendulum.now(tz='UTC').diff(convert_datetime(datetime=datetime)), format='%0.0f', suppress=suppress)
+    return humanize.precisedelta(pendulum.now(tz='UTC').diff(convert_datetime(datetime)), format='%0.0f', suppress=suppress)
 
 
 def format_seconds(seconds: int, *, friendly: bool = False) -> str:
@@ -215,3 +215,7 @@ def lighten_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
     h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
     r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
     return int(r * 255), int(g * 255), int(b * 255)
+
+
+def format_command(command: commands.Command) -> str:
+    return f'{config.PREFIX}{command.qualified_name}'

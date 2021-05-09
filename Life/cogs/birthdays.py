@@ -23,70 +23,67 @@ class Birthdays(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.default_birthday = pendulum.DateTime(2020, 1, 1, tzinfo=pendulum.timezone('UTC'))
-
-    @commands.group(name='birthdays', aliases=['birthday', 'bd'], invoke_without_command=True)
-    async def birthdays(self, ctx: context.Context, *, person: discord.Member = None) -> None:
+    @commands.group(name='birthday', aliases=['birthdays', 'bd'], invoke_without_command=True)
+    async def birthday(self, ctx: context.Context, *, person: discord.Member = None) -> None:
         """
-        Display the birthday of you, or the member provided.
+        Display yours or another members birthday.
 
-        `person`: The person to display the birthday of. Can be their name, id or mention, If this argument is not passed the command will display your birthday.
+        `person`: The person to display the birthday of. Can be their ID, Username, Nickname or @Mention, If not provided than your birthday will be displayed.
         """
 
-        if person is None:
-            person = ctx.author
-
+        person = person or ctx.author
         user_config = self.bot.user_manager.get_config(person.id)
 
-        if user_config.birthday == self.default_birthday:
-            raise exceptions.ArgumentError(f'`{person}` has not set their birthday.')
+        if not user_config.birthday:
+            raise exceptions.ArgumentError(f'`{person}` has not set their birthday. Use `{utils.format_command(self.bot.get_command("birthday set"))}` to set it.')
         if user_config.birthday_private and ctx.author.id != person.id:
-            raise exceptions.ArgumentError(f'`{person}` has their birthday set as private.')
+            raise exceptions.ArgumentError(f'`{person}` has their birthday set as private. Use `{utils.format_command(self.bot.get_command("birthday public"))}` to change this.')
 
         embed = discord.Embed(
                 colour=ctx.colour,
-                title=f'`{person.name}`\'s birthday information:',
-                description=f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
-                            f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
-                            f'`Age:` {user_config.age}\n',
+                title=f'{person}\'s birthday information:',
+                description=f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
+                            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
+                            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
+                            f'`Age:` {user_config.age}',
         )
         await ctx.send(embed=embed)
 
-    @birthdays.command(name='set')
-    async def birthdays_set(self, ctx: context.Context, *, date: converters.DatetimeConverter) -> None:
+    @birthday.command(name='set')
+    async def birthday_set(self, ctx: context.Context, *, date: converters.DatetimeConverter) -> None:
         """
         Set your birthday.
 
-        `date`: Your birthday. This should include some form of date such as `tomorrow`, `in 3 weeks` or `1st january 2020`. Your birthday must allow you to be at least 13 years old and not more than 150.
+        `date`: Your birthday. This should include some form of date such as `tomorrow`, `in 3 weeks` or `1st january 2020`.
         """
 
         entries = {index: (date_phrase, datetime) for index, (date_phrase, datetime) in enumerate(date['found'].items())}
         if len(entries) != 1:
             choice = await ctx.paginate_choice(
-                    entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_date(datetime=datetime)}`' for index, (phrase, datetime) in entries.items()],
-                    per_page=10, header='**Multiple dates were detected within your query, please select the one that best matches your birthday:**\n\n'
+                    entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_date(datetime)}`' for index, (phrase, datetime) in entries.items()],
+                    per_page=5, title='Multiple dates were detected within your query:', header='Please select the number that best matches your birthday:\n\n'
             )
             result = entries[choice]
         else:
             result = entries[0]
 
-        if result[1] > pendulum.now(tz='UTC').subtract(years=13) or result[1] < pendulum.now(tz='UTC').subtract(years=150):
-            raise exceptions.ArgumentError('You must be more than 13 (As per discord TOS) and less than 150 years old.')
+        if result[1] > pendulum.now(tz='UTC').subtract(years=13) or result[1] < pendulum.now(tz='UTC').subtract(years=200):
+            raise exceptions.ArgumentError('You must be more than 13 and less than 200 years old.')
 
-        await self.bot.user_manager.set_birthday(ctx.author.id, birthday=result[1])
-        await ctx.send(f'Your birthday has been set to `{utils.format_date(datetime=ctx.user_config.birthday)}`.')
+        await ctx.user_config.set_birthday(result[1])
+        await ctx.send(f'Your birthday has been set to `{utils.format_date(ctx.user_config.birthday)}`.')
 
-    @birthdays.command(name='reset')
-    async def birthdays_reset(self, ctx: context.Context) -> None:
+    @birthday.command(name='reset')
+    async def birthday_reset(self, ctx: context.Context) -> None:
         """
-        Reset your birthday.
+        Resets your birthday information.
         """
 
-        await self.bot.user_manager.set_birthday(ctx.author.id, birthday=pendulum.date(2020, 1, 1))
+        await ctx.user_config.set_birthday(None)
         await ctx.send('Your birthday was reset.')
 
-    @birthdays.command(name='private')
-    async def birthdays_private(self, ctx: context.Context) -> None:
+    @birthday.command(name='private')
+    async def birthday_private(self, ctx: context.Context) -> None:
         """
         Make your birthday private.
         """
@@ -94,11 +91,11 @@ class Birthdays(commands.Cog):
         if ctx.user_config.birthday_private is True:
             raise exceptions.GeneralError('Your birthday is already private.')
 
-        await self.bot.user_manager.set_birthday(ctx.author.id, private=True)
+        await ctx.user_config.set_birthday(ctx.user_config.birthday, private=True)
         await ctx.send('Your birthday is now private.')
 
-    @birthdays.command(name='public')
-    async def birthdays_public(self, ctx: context.Context) -> None:
+    @birthday.command(name='public')
+    async def birthday_public(self, ctx: context.Context) -> None:
         """
         Make your birthday public.
         """
@@ -106,93 +103,58 @@ class Birthdays(commands.Cog):
         if ctx.user_config.birthday_private is False:
             raise exceptions.GeneralError('Your birthday is already public.')
 
-        await self.bot.user_manager.set_birthday(ctx.author.id, private=False)
+        await ctx.user_config.set_birthday(ctx.user_config.birthday, private=False)
         await ctx.send('Your birthday is now public.')
 
-    @birthdays.command(name='upcoming')
-    async def birthdays_upcoming(self, ctx: context.Context) -> None:
+    @birthday.command(name='list', aliases=['upcoming'])
+    async def birthday_upcoming(self, ctx: context.Context) -> None:
         """
-        Display a list of upcoming birthdays within the server.
+        Display a list of upcoming birthdays in the server.
         """
 
-        configs = dict(
-                sorted(
-                        filter(
-                                lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
-                                self.bot.user_manager.configs.items()
-                        ),
-                        key=lambda config: config[1].next_birthday
-                )
+        configs = sorted(
+                filter(lambda kv: ctx.guild.get_member(kv[0]) is not None and not kv[1].birthday_private and kv[1].birthday is not None, self.bot.user_manager.configs.items()),
+                key=lambda kv: kv[1].next_birthday
         )
         if not configs:
-            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
+            raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
-        embed = discord.Embed(colour=ctx.colour, title='Upcoming birthdays (First 3): ')
-        for user_id, user_config in list(configs.items())[:3]:
-            embed.add_field(
-                    name=f'{ctx.guild.get_member(user_id)}',
-                    value=f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
-                          f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
-                          f'`Current age:` {user_config.age}',
-                    inline=False
-            )
-
-        await ctx.send(embed=embed)
-
-    @birthdays.command(name='list')
-    async def birthdays_list(self, ctx: context.Context) -> None:
-        """
-        Display a list of birthdays within the server.
-        """
-
-        configs = dict(
-                sorted(
-                        filter(
-                                lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
-                                self.bot.user_manager.configs.items()
-                        ),
-                        key=lambda config: config[1].next_birthday
-                )
-        )
-        if not configs:
-            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
-
+        # noinspection PyTypeChecker
         entries = [
-            f'**{ctx.guild.get_member(user_id)}**\n'
-            f'`Birthday:` {utils.format_date(datetime=user_config.birthday)}\n'
-            f'`Next birthday:` In {utils.format_difference(datetime=user_config.next_birthday.subtract(days=1), suppress=[])}\n'
-            f'`Current age:` {user_config.age}\n'
-            for user_id, user_config in configs.items()
+            f'__**{ctx.guild.get_member(user_config.id)}:**__\n'
+            f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
+            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
+            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
+            f'`Age:` {user_config.age}\n'
+            for user_config in dict(configs).values()
         ]
-        await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays: ')
+        await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays:')
 
-    @birthdays.command(name='next')
-    async def birthdays_next(self, ctx: context.Context) -> None:
+    @birthday.command(name='next')
+    async def birthday_next(self, ctx: context.Context) -> None:
         """
-        Display the next person to have a birthday within the server.
+        Display the next person to have a birthday in the server.
         """
 
-        configs = dict(
-                sorted(
-                        filter(
-                                lambda c: ctx.guild.get_member(c[1].id) is not None and (c[1].birthday_private is False and c[1].birthday != self.default_birthday),
-                                self.bot.user_manager.configs.items()
-                        ),
-                        key=lambda config: config[1].next_birthday
-                )
+        configs = sorted(
+                filter(lambda kv: ctx.guild.get_member(kv[0]) is not None and not kv[1].birthday_private and kv[1].birthday is not None, self.bot.user_manager.configs.items()),
+                key=lambda kv: kv[1].next_birthday
         )
-
         if not configs:
-            raise exceptions.ArgumentError('There are no users who have set their birthday in this server, or everyone has them private.')
+            raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
-        first = list(configs.items())[0]
-        member = ctx.guild.get_member(first[0])
+        # noinspection PyUnresolvedReferences
+        user_config = configs[0][1]
+        member = ctx.guild.get_member(user_config.id)
 
-        embed = discord.Embed(colour=ctx.colour, title='The next person to have a birthday is:')
-        embed.add_field(name=f'**{member}**',
-                        value=f'`Birthday:` {utils.format_date(datetime=first[1].birthday)}\n'
-                              f'`Next birthday:` In {utils.format_difference(datetime=first[1].next_birthday.subtract(days=1), suppress=[])}\n'
-                              f'`Age:` {first[1].age}\n')
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'{member}\'s birthday information:',
+                description=f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
+                            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
+                            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
+                            f'`Age:` {user_config.age}',
+        )
         await ctx.send(embed=embed)
 
 

@@ -215,6 +215,7 @@ class Player(slate.Player):
             if not search_tracks:
                 raise exceptions.VoiceError('No results were found for your Spotify link.')
 
+            # noinspection PyTypeChecker
             tracks = [
                 slate.Track(
                         track_id='',

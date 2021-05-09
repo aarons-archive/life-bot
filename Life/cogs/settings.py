@@ -27,23 +27,22 @@ class Settings(commands.Cog):
 
     @commands.group(name='settings', aliases=['config'], invoke_without_command=True)
     async def settings(self, ctx: context.Context) -> None:
-        """
-        Display this servers settings.
-        """
+        pass
 
-        prefixes = ', '.join(f'`{prefix}`' for prefix in ctx.guild_config.prefixes)
+    #
 
-        embed = discord.Embed(
-                colour=ctx.guild_config.colour,
-                title='Guild settings:',
-                description=f'`Prefixes:` {prefixes}\n'
-                            f'`Embed size:` {ctx.guild_config.embed_size.name.upper()}'
-        )
-        embed.add_field(name='Embed colour:', value=f'`<---` `{str(ctx.guild_config.colour).upper()}`')
-        await ctx.send(embed=embed)
+    @settings.group(name='user', invoke_without_command=True)
+    async def settings_user(self, ctx: context.Context) -> None:
+        pass
 
-    @settings.command(name='colour', aliases=['color'])
-    async def settings_colour(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, *, colour: commands.ColourConverter = None) -> None:
+    #
+
+    @settings.group(name='guild', invoke_without_command=True)
+    async def settings_guild(self, ctx: context.Context) -> None:
+        pass
+
+    @settings_guild.command(name='colour', aliases=['color'])
+    async def settings_guild_colour(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, *, colour: commands.ColourConverter = None) -> None:
         """
         Manage this servers colour settings.
 
@@ -63,22 +62,27 @@ class Settings(commands.Cog):
         old_colour = ctx.guild_config.colour
 
         if operation == 'reset':
-            await self.bot.guild_manager.set_colour(ctx.guild.id)
+
+            if ctx.guild_config.colour == discord.Colour(config.COLOUR):
+                raise exceptions.ArgumentError('This servers colour is already the default.')
+
+            await ctx.guild_config.set_colour()
 
         elif operation == 'set':
 
             if not colour:
-                raise exceptions.ArgumentError(f'You did not provide a valid colour argument. See `{config.PREFIX}help settings colour` for possible formats.')
-            if colour == ctx.guild_config.colour:
-                raise exceptions.ArgumentError(f'This servers embed colour is already `{str(colour).upper()}`.')
+                raise exceptions.ArgumentError('You did not provide a valid colour argument.')
+            if ctx.guild_config.colour == colour:
+                raise exceptions.ArgumentError(f'This servers colour is already `{str(colour).upper()}`.')
 
-            await self.bot.guild_manager.set_colour(ctx.guild.id, colour=str(colour))
+            # noinspection PyTypeChecker
+            await ctx.guild_config.set_colour(colour)
 
         await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
         await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
 
-    @settings.command(name='embed-size', aliases=['embedsize', 'es'])
-    async def config_embed_size(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, size: Literal['large', 'medium', 'small'] = None) -> None:
+    @settings_guild.command(name='embed-size', aliases=['embedsize', 'es'])
+    async def settings_guild_embed_size(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, size: Literal['large', 'medium', 'small'] = None) -> None:
         """
         Manage this servers embed size settings.
 
@@ -95,21 +99,26 @@ class Settings(commands.Cog):
         if await self.bot.is_owner(user=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
-        if operation == 'set':
+        if operation == 'reset':
+
+            if ctx.guild_config.embed_size == enums.EmbedSize.LARGE:
+                raise exceptions.ArgumentError('This servers embed size is already the default.')
+
+            await ctx.guild_config.set_embed_size()
+            await ctx.send('Reset this servers embed size.')
+
+        elif operation == 'set':
 
             if not size:
-                raise exceptions.ArgumentError('You did not provide a valid size. Available sizes are `large`, `medium` or `small`.')
+                raise exceptions.ArgumentError('You did not provide a valid size.')
+            if ctx.guild_config.embed_size == getattr(enums.EmbedSize, size.upper()):
+                raise exceptions.ArgumentError(f'This servers embed size is already `{ctx.guild_config.embed_size.name.title()}`.')
 
-            await self.bot.guild_manager.set_embed_size(ctx.guild.id, embed_size=getattr(enums.EmbedSize, size.upper()))
-            await ctx.send(f'Set this servers embed size to `{size.title()}`.')
+            await ctx.guild_config.set_embed_size(getattr(enums.EmbedSize, size.upper()))
+            await ctx.send(f'Set this servers embed size to `{ctx.guild_config.embed_size.name.title()}`.')
 
-        elif operation == 'reset':
-
-            await self.bot.guild_manager.set_embed_size(ctx.guild.id)
-            await ctx.send('Set this servers embed size to `Large`.')
-
-    @settings.command(name='prefix', aliases=['prefixes'])
-    async def config_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
+    @settings_guild.command(name='prefix', aliases=['prefixes'])
+    async def settings_guild_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
         """
         Manage this servers prefix settings.
 
@@ -131,25 +140,24 @@ class Settings(commands.Cog):
         if operation == 'add':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less than 15 characters and contain no backtick `\`` characters.')
-
-            if len(ctx.guild_config.prefixes) > 20:
-                raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
+                raise exceptions.ArgumentError('You did not provide a prefix to add.')
             if prefix in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
-            await self.bot.guild_manager.set_prefixes(ctx.guild.id, prefix=str(prefix))
+            if len(ctx.guild_config.prefixes) > 20:
+                raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
+
+            await ctx.guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
             await ctx.send(f'Added `{prefix}` to this servers prefixes.')
 
         elif operation == 'remove':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less than 15 characters and contain no backtick (`) characters.')
-
+                raise exceptions.ArgumentError('You did not provide a prefix to remove.')
             if prefix not in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{prefix}`.')
 
-            await self.bot.guild_manager.set_prefixes(ctx.guild.id, operation=enums.Operation.REMOVE, prefix=str(prefix))
+            await ctx.guild_config.change_prefixes(enums.Operation.REMOVE, prefix=str(prefix))
             await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
@@ -157,7 +165,7 @@ class Settings(commands.Cog):
             if not ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
-            await self.bot.guild_manager.set_prefixes(ctx.guild.id, operation=enums.Operation.RESET)
+            await ctx.guild_config.change_prefixes(enums.Operation.RESET)
             await ctx.send('Cleared this servers prefixes.')
 
 
