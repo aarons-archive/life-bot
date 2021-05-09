@@ -191,9 +191,9 @@ class UserConfig:
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, colour: str = str(discord.Colour.gold())) -> None:
+    async def set_colour(self, colour: discord.Colour = discord.Colour.gold()) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{colour.strip("#")}', self.id)
+        data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
 
     async def set_timezone(self, timezone: str, *, private: bool = None) -> None:

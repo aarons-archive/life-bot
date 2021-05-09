@@ -109,9 +109,9 @@ class GuildConfig:
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, colour: str = str(discord.Colour.gold())) -> None:
+    async def set_colour(self, colour: discord.Colour = discord.Colour.gold()) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2', f'0x{colour.strip("#")}', self.id)
+        data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
 
     async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
@@ -119,7 +119,7 @@ class GuildConfig:
         data = await self.bot.db.fetchrow('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', embed_size.value, self.id)
         self._embed_size = enums.EmbedSize(data['embed_size'])
 
-    async def change_prefixes(self, prefix: str = None, *, operation: enums.Operation = enums.Operation.ADD) -> None:
+    async def change_prefixes(self, operation: enums.Operation, *, prefix: str = None) -> None:
 
         if operation == enums.Operation.ADD:
             data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
