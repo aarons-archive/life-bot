@@ -41,7 +41,7 @@ class Economy(commands.Cog):
         if xp >= user_config.next_level_xp:
             self.bot.dispatch('xp_level_up', user_config, message)
 
-        await user_config.change_xp(xp)
+        user_config.change_xp(xp)
         await self.bot.redis.setex(name=f'{message.author.id}_xp_gain', time=60, value=None)
 
     @commands.Cog.listener()

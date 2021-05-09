@@ -137,8 +137,12 @@ def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
     return ' '.join(badges_list) if badges_list else 'N/A'
 
 
-def avatar(person: Union[discord.User, discord.Member]) -> str:
-    return str(person.avatar_url_as(format='gif' if person.is_avatar_animated() else 'png'))
+def avatar(person: Union[discord.User, discord.Member], img_format: str = None) -> str:
+    return str(person.avatar_url_as(format=img_format or 'gif' if person.is_avatar_animated() else 'png'))
+
+
+def icon(guild: discord.Guild, img_format: str = None) -> str:
+    return str(guild.icon_url_as(format=img_format or 'gif' if guild.is_icon_animated() else 'png'))
 
 
 def activities(person: discord.Member) -> str:  # sourcery no-metrics
@@ -219,3 +223,18 @@ def lighten_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
 
 def format_command(command: commands.Command) -> str:
     return f'{config.PREFIX}{command.qualified_name}'
+
+
+def voice_region(x: Union[discord.VoiceChannel, discord.StageChannel, discord.Guild]) -> str:
+
+    x = x.rtc_region if isinstance(x, (discord.VoiceChannel, discord.StageChannel)) else x.region
+    if not x:
+        return 'Automatic'
+
+    region = x.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
+    if x == discord.VoiceRegion.hongkong:
+        region = 'Hong Kong'
+    if x == discord.VoiceRegion.southafrica:
+        region = 'South Africa'
+
+    return region

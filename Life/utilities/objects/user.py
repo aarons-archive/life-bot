@@ -212,7 +212,7 @@ class UserConfig:
         self._birthday = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
         self._birthday_private = private
 
-    async def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
+    def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
 
         if operation == enums.Operation.SET:
             self._coins = coins
@@ -223,7 +223,7 @@ class UserConfig:
 
         self._requires_db_update.add(enums.Updateable.COINS)
 
-    async def change_xp(self, xp: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
+    def change_xp(self, xp: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
 
         if operation == enums.Operation.SET:
             self._xp = xp

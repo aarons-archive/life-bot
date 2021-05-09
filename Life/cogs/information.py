@@ -147,12 +147,6 @@ class Information(commands.Cog):
         if not guild:
             guild = ctx.guild
 
-        region = guild.region.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
-        if guild.region == discord.VoiceRegion.hongkong:
-            region = 'Hong Kong'
-        if guild.region == discord.VoiceRegion.southafrica:
-            region = 'South Africa'
-
         statuses = collections.Counter([member.status for member in guild.members])
 
         features = []
@@ -180,7 +174,7 @@ class Information(commands.Cog):
                               f'`Animated emoji:` {sum([1 for emoji in guild.emojis if emoji.animated])}')
 
         embed.add_field(name='Channels:',
-                        value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | `AFK channel:` {ctx.guild.afk_channel}\n `Voice region:` {region} | '
+                        value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | `AFK channel:` {ctx.guild.afk_channel}\n `Voice region:` {utils.voice_region(x=ctx.guild)} | '
                               f'`Text channels:` {len(ctx.guild.text_channels)} | `Voice channels:` {len(ctx.guild.voice_channels)}\n', inline=False)
 
         embed.add_field(name='Features:', value='\n'.join(features[0:8]))

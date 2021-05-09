@@ -144,6 +144,8 @@ class Dev(commands.Cog):
 
         await ctx.send(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
 
+    #
+
     @commands.is_owner()
     @blacklist.group(name='users', aliases=['user', 'u'], hidden=True, invoke_without_command=True)
     async def blacklist_users(self, ctx: context.Context) -> None:
