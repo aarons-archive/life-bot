@@ -12,7 +12,6 @@
 
 from abc import ABC
 
-import discord
 from discord.ext import commands
 
 from utilities import context, exceptions
@@ -21,9 +20,9 @@ from utilities import context, exceptions
 class PrefixConverter(commands.clean_content, ABC):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
+        self.escape_markdown = True
 
-        argument = discord.utils.escape_markdown(await super().convert(ctx, argument))
-        if not argument:
+        if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument
 
         if '`' in argument:

@@ -140,12 +140,12 @@ class Settings(commands.Cog):
         if operation == 'add':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to add. Valid prefixes are less than 15 characters and contain no backtick `\`` characters.')
+                raise exceptions.ArgumentError('You did not provide a prefix to add.')
+            if prefix in ctx.guild_config.prefixes:
+                raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
             if len(ctx.guild_config.prefixes) > 20:
                 raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
-            if prefix in ctx.guild_config.prefixes:
-                raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
             await ctx.guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
             await ctx.send(f'Added `{prefix}` to this servers prefixes.')
@@ -153,8 +153,7 @@ class Settings(commands.Cog):
         elif operation == 'remove':
 
             if not prefix:
-                raise exceptions.ArgumentError('You did not provide a prefix to remove. Valid prefixes are less than 15 characters and contain no backtick (`) characters.')
-
+                raise exceptions.ArgumentError('You did not provide a prefix to remove.')
             if prefix not in ctx.guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{prefix}`.')
 
