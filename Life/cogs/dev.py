@@ -151,8 +151,7 @@ class Dev(commands.Cog):
         Display a list of blacklisted users.
         """
 
-        blacklisted = [user_config for user_config in self.bot.user_manager.configs.values() if user_config.blacklisted is True]
-        if not blacklisted:
+        if not (blacklisted := [user_config for user_config in self.bot.user_manager.configs.values() if user_config.blacklisted is True]):
             raise exceptions.ArgumentError('There are no blacklisted users.')
 
         entries = [f'{user_config.id:<19} | {user_config.blacklisted_reason}' for user_config in blacklisted]
@@ -176,8 +175,8 @@ class Dev(commands.Cog):
         if user_config.blacklisted is True:
             raise exceptions.ArgumentError('That user is already blacklisted.')
 
-        await ctx.user_config.set_blacklisted(True, reason=reason)
-        await ctx.send(f'Blacklisted user `{user.id}` with reason:\n\n`{reason}`')
+        await user_config.set_blacklisted(True, reason=reason)
+        await ctx.send(f'Added user `{user.id}` to the blacklist with reason:\n\n`{reason}`')
 
     @commands.is_owner()
     @blacklist_users.command(name='remove', hidden=True)
@@ -192,8 +191,10 @@ class Dev(commands.Cog):
         if user_config.blacklisted is False:
             raise exceptions.ArgumentError('That user is not blacklisted.')
 
-        await ctx.user_config.set_blacklisted(False)
-        await ctx.send(f'Unblacklisted user `{user.id}`.')
+        await user_config.set_blacklisted(False)
+        await ctx.send(f'Removed user `{user.id}` from the blacklist.')
+
+    #
 
     @commands.is_owner()
     @blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
@@ -202,8 +203,7 @@ class Dev(commands.Cog):
         Display a list of blacklisted guilds.
         """
 
-        blacklisted = [guild_config for guild_config in self.bot.guild_manager.configs.values() if guild_config.blacklisted is True]
-        if not blacklisted:
+        if not (blacklisted := [guild_config for guild_config in self.bot.guild_manager.configs.values() if guild_config.blacklisted is True]):
             raise exceptions.ArgumentError('There are no blacklisted guilds.')
 
         entries = [f'{guild_config.id:<19} | {guild_config.blacklisted_reason}' for guild_config in blacklisted]
@@ -216,7 +216,7 @@ class Dev(commands.Cog):
         """
         Blacklist a guild.
 
-        `guild`: The guild to add to the blacklist.
+        `guild`: The guild id to add to the blacklist.
         `reason`: Reason why the guild is being blacklisted.
         """
 
@@ -231,7 +231,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is True:
             raise exceptions.ArgumentError('The guild is already blacklisted.')
 
-        await ctx.guild_config.set_blacklisted(True, reason=reason)
+        await guild_config.set_blacklisted(True, reason=reason)
         await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
 
     @commands.is_owner()
@@ -240,7 +240,7 @@ class Dev(commands.Cog):
         """
         Unblacklist a guild.
 
-        `guild`: The guild to remove from the blacklist.
+        `guild`: The guild id to remove from the blacklist.
         """
 
         if 17 > guild_id > 20:
@@ -250,7 +250,7 @@ class Dev(commands.Cog):
         if guild_config.blacklisted is False:
             raise exceptions.ArgumentError('That guild is not blacklisted.')
 
-        await ctx.guild_config.set_blacklisted(False)
+        await guild_config.set_blacklisted(False)
         await ctx.send(f'Unblacklisted guild `{guild_id}`.')
 
 
