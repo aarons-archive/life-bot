@@ -123,7 +123,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError('The owner of that tag is still in this server.')
 
         await tag.change_owner(ctx.author.id)
-        await ctx.send(f'Transferred tag to you.')
+        await ctx.send('Transferred tag to you.')
 
     @tag.command(name='transfer')
     async def tag_transfer(self, ctx: context.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
@@ -141,7 +141,7 @@ class Tags(commands.Cog):
         if not (tag := ctx.guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
-            raise exceptions.ArgumentError(f'You do not own that tag.')
+            raise exceptions.ArgumentError('You do not own that tag.')
         if tag.user_id == member.id:
             raise exceptions.ArgumentError('You can not transfer tags to yourself.')
 
@@ -162,7 +162,7 @@ class Tags(commands.Cog):
         if not (tag := ctx.guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
-            raise exceptions.ArgumentError(f'You do not own that tag.')
+            raise exceptions.ArgumentError('You do not own that tag.')
 
         await tag.change_content(content)
         await ctx.send(f'Edited content of tag with name `{name}`.')
@@ -179,7 +179,7 @@ class Tags(commands.Cog):
         if not (tag := ctx.guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
-            raise exceptions.ArgumentError(f'You do not own that tag.')
+            raise exceptions.ArgumentError('You do not own that tag.')
 
         await tag.delete()
         await ctx.send(f'Deleted tag with name `{name}`.')

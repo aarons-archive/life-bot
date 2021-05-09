@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 __log__ = logging.getLogger('utilities.objects.reminder')
 
+# skipcq: FLK-E272
 REPEAT_TYPES = {
     1:  lambda dt: dt.add(minutes=30),
     2:  lambda dt: dt.add(hours=1),

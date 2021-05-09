@@ -118,7 +118,7 @@ class UserManager:
             requires_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config._requires_db_update) >= 1}
             for user_id, user_config in requires_updating.items():
 
-                query= ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config._requires_db_update))
+                query = ','.join(f'{editable.value} = ${index + 2}' for index, editable in enumerate(user_config._requires_db_update))
                 args = [getattr(user_config, attribute.value) for attribute in user_config._requires_db_update]
                 await db.execute(f'UPDATE users SET {query} WHERE id = $1', user_id, *args)
 

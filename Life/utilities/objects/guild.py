@@ -164,10 +164,12 @@ class GuildConfig:
 
         if tag_name:
             tag = self.tags.get(tag_name)
+
         elif tag_id:
             if not (tags := [tag for tag in self.tags.values() if tag.id == tag_id]):
-                return
+                return None
             tag = tags[0]
+
         else:
             raise ValueError('\'tag_name\' or \'tag_id\' parameter must be specified.')
 

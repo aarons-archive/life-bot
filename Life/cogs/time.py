@@ -174,7 +174,7 @@ class Time(commands.Cog):
         if len(entries) != 1:
             choice = await ctx.paginate_choice(
                      entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime)}`' for index, (phrase, datetime) in entries.items()],
-                    per_page=10, title='Multiple datetimes were detected within your query:', header='Please select the number that best matches your intention:\n\n'
+                     per_page=10, title='Multiple datetimes were detected within your query:', header='Please select the number that best matches your intention:\n\n'
             )
             result = entries[choice]
         else:
@@ -259,11 +259,11 @@ class Time(commands.Cog):
 
         embed = discord.Embed(
                 colour=ctx.colour, title=f'Reminder `{reminder.id}`:',
-                description=f'[__**{"In " if reminder.done is False else ""}{difference}{" ago" if reminder.done else ""}:**__]({reminder.jump_url})\n' \
-                            f'`Created:` {utils.format_datetime(reminder.created_at, seconds=True)}\n' \
+                description=f'[__**{"In " if reminder.done is False else ""}{difference}{" ago" if reminder.done else ""}:**__]({reminder.jump_url})\n'
+                            f'`Created:` {utils.format_datetime(reminder.created_at, seconds=True)}\n'
                             f'`Scheduled for:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-                            f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n' \
-                            f'`Done:` {reminder.done}\n\n' \
+                            f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
+                            f'`Done:` {reminder.done}\n\n'
                             f'`Content:`\n {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=1800, syntax="txt")}\n'
         )
 
@@ -281,7 +281,7 @@ class Time(commands.Cog):
         entries = [
             f'`{reminder.id}`: [__**In {utils.format_difference(reminder.datetime, suppress=[])}**__]({reminder.jump_url})\n'
             f'`When:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n' \
+            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n'
             f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
             for reminder in sorted(reminders, key=lambda reminder: reminder.datetime)
         ]
@@ -298,10 +298,10 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('You do not have any reminders.')
 
         entries = [
-            f'`{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**__]' \
+            f'`{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**__]'
             f'({reminder.jump_url})\n'
             f'`When:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n' \
+            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n'
             f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
             f'`Done:` {reminder.done}\n'
             for reminder in sorted(ctx.user_config.reminders.values(), key=lambda reminder: reminder.datetime)
