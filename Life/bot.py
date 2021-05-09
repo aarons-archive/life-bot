@@ -61,7 +61,7 @@ class Life(commands.AutoShardedBot):
         self.db: Optional[asyncpg.Pool] = None
         self.redis: Optional[aredis.StrictRedis] = None
 
-        self.mystbin: mystbin.Client = mystbin.Client()
+        self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: Optional[ksoftapi.Client] = ksoftapi.Client(config.KSOFT_TOKEN)
         self.slate: Optional[slate.Client] = slate.Client(bot=self, session=self.session)
         self.spotify: Optional[spotify.Client] = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
@@ -134,9 +134,8 @@ class Life(commands.AutoShardedBot):
 
         __log__.info('[BOT] Closing aiohttp client sessions.')
         print('\n[CS] Closing aiohttp client sessions.')
-        await self.mystbin.close()
-        await self.ksoft.close()
         await self.session.close()
+        await self.ksoft.close()
         await self.spotify.close()
         await self.spotify_http.close()
 
