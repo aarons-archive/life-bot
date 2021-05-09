@@ -33,14 +33,15 @@ class Economy(commands.Cog):
         if await self.bot.redis.exists(f'{message.author.id}_xp_gain') is True:
             return
 
-        user_config = await self.bot.user_manager.get_or_create_config(message.author.id)
+        if not (user_config := self.bot.user_manager.get_config(message.author.id)):
+            user_config = await self.bot.user_manager.create_config(message.author.id)
 
         xp = random.randint(10, 25)
 
         if xp >= user_config.next_level_xp:
             self.bot.dispatch('xp_level_up', user_config, message)
 
-        await self.bot.user_manager.set_xp(message.author.id, xp=xp)
+        await user_config.change_xp(xp)
         await self.bot.redis.setex(name=f'{message.author.id}_xp_gain', time=60, value=None)
 
     @commands.Cog.listener()
