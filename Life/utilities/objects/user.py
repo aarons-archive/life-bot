@@ -99,7 +99,7 @@ class UserConfig:
         return self._timezone_private
 
     @property
-    def birthday(self) -> Optional[pendulum.timezone]:
+    def birthday(self) -> Optional[pendulum.datetime]:
         return self._birthday
 
     @property
@@ -143,13 +143,9 @@ class UserConfig:
             return None
 
         now = pendulum.now(tz='UTC')
+        year = now.year if now < self.birthday.add(years=self.age) else self.birthday.year + self.age + 1
 
-        return now.replace(
-                year=now.year + 1 if now > self.birthday.add(years=self.age) else now.year,
-                month=self.birthday.month,
-                day=self.birthday.day,
-                hour=12, minute=0, second=0, microsecond=0
-        )
+        return now.replace(year=year, month=self.birthday.month, day=self.birthday.day, hour=0, minute=0, second=0, microsecond=0)
 
     @property
     def time(self) -> Optional[pendulum.datetime]:
