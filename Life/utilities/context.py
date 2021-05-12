@@ -101,6 +101,6 @@ class Context(commands.Context):
             return await self.author.send(**kwargs)
         except discord.Forbidden:
             try:
-                return await self.channel.send(**kwargs)
+                return await self.reply(**kwargs)
             except discord.Forbidden:
                 return None

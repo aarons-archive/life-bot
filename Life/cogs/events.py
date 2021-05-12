@@ -90,6 +90,10 @@ class Events(commands.Cog):
             commands.DisabledCommand:               'The command `{command}` has been disabled.',
         }
 
+        self.RED = discord.Colour(0xFF0000)
+        self.ORANGE = discord.Colour(0xFAA61A)
+        self.GREEN = discord.Colour(0x00FF00)
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx: context.Context, error: Any) -> Optional[discord.Message]:
 
@@ -146,15 +150,15 @@ class Events(commands.Cog):
             message = f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.'
 
         if message:
-            await ctx.send(message)
+            await ctx.reply(message)
         elif (message := self.OTHER_ERRORS.get(type(error))) is not None:
-            await ctx.send(message.format(command=ctx.command.qualified_name, error=error, prefix=config.PREFIX))
+            await ctx.reply(message.format(command=ctx.command.qualified_name, error=error, prefix=config.PREFIX))
         else:
             await self.handle_traceback(ctx=ctx, error=error)
 
     async def handle_traceback(self, *, ctx: context.Context, error) -> None:
 
-        await ctx.send('Something went wrong while executing that command.')
+        await ctx.reply('Something went wrong while executing that command.')
 
         error_traceback = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         print(f'\n{error_traceback}\n', file=sys.stderr)
@@ -165,7 +169,7 @@ class Events(commands.Cog):
                f'`Author:` {ctx.author} `{ctx.author.id}`\n' \
                f'`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
 
-        embed = discord.Embed(colour=ctx.colour, description=f'{ctx.message.content}')
+        embed = discord.Embed(colour=ctx.colour, description=ctx.message.content)
         embed.add_field(name='Info:', value=info)
         await self.bot.ERROR_WEBHOOK.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
@@ -174,9 +178,9 @@ class Events(commands.Cog):
         else:
             error_traceback = await utils.safe_text(mystbin_client=self.bot.mystbin, text=error_traceback)
 
-        await self.bot.ERROR_WEBHOOK.send(content=f'{error_traceback}', username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
+        await self.bot.ERROR_WEBHOOK.send(content=error_traceback, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
-    #
+    # Bot events
 
     @commands.Cog.listener()
     async def on_socket_response(self, message: dict) -> None:

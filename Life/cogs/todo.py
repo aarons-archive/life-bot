@@ -61,7 +61,7 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         todo = await ctx.user_config.create_todo(content=content, jump_url=ctx.message.jump_url)
-        await ctx.send(f'Todo with id `{todo.id}` was created.')
+        await ctx.reply(f'Todo with id `{todo.id}` was created.')
 
     @todo.command(name='delete', aliases=['remove'])
     async def todo_delete(self, ctx: context.Context, *, todo_ids: str) -> None:
@@ -95,7 +95,7 @@ class Todo(commands.Cog):
         for todo in todos_to_delete:
             await todo.delete()
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @todo.command(name='clear')
     async def todo_clear(self, ctx: context.Context) -> None:
@@ -110,7 +110,7 @@ class Todo(commands.Cog):
         for todo in ctx.user_config.todos.copy().values():
             await todo.delete()
 
-        await ctx.send(f'Cleared your todo list of `{count}` todo{"s" if count > 1 else ""}.')
+        await ctx.reply(f'Cleared your todo list of `{count}` todo{"s" if count > 1 else ""}.')
 
     @todo.command(name='edit', aliases=['update'])
     async def todo_edit(self, ctx: context.Context, todo_id: str, *, content: commands.clean_content) -> None:
@@ -137,7 +137,7 @@ class Todo(commands.Cog):
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
         await todo.change_content(content=content, jump_url=ctx.message.jump_url)
-        await ctx.send(f'Edited content of todo with id `{todo_id}`.')
+        await ctx.reply(f'Edited content of todo with id `{todo_id}`.')
 
 
 def setup(bot: Life) -> None:

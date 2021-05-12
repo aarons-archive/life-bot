@@ -141,10 +141,10 @@ class Music(commands.Cog):
 
         if ctx.voice_client:
             await ctx.voice_client.reconnect(channel=ctx.author.voice.channel)
-            await ctx.send(f'Reconnected to the voice channel `{ctx.author.voice.channel}`')
+            await ctx.reply(f'Reconnected to the voice channel `{ctx.author.voice.channel}`')
         else:
             await self.bot.slate.create_player(channel=ctx.author.voice.channel, cls=Player)
-            await ctx.send(f'Joined the voice channel `{ctx.author.voice.channel}`.')
+            await ctx.reply(f'Joined the voice channel `{ctx.author.voice.channel}`.')
 
         ctx.voice_client.text_channel = ctx.channel
 
@@ -184,7 +184,7 @@ class Music(commands.Cog):
                     message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks)
-            await ctx.send(message)
+            await ctx.reply(message)
 
     @play.command(name='soundcloud', aliases=['sc'])
     @is_connected(same_channel=True)
@@ -211,7 +211,7 @@ class Music(commands.Cog):
                 message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks)
-            await ctx.send(message)
+            await ctx.reply(message)
 
     @play.command(name='music', aliases=['m'])
     @is_connected(same_channel=True)
@@ -238,7 +238,7 @@ class Music(commands.Cog):
                 message = f'Added the Youtube Music {search.search_type} `{search.search_result.name}` to the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks)
-            await ctx.send(message)
+            await ctx.reply(message)
 
     @commands.command(name='playnext', aliases=['pnext', 'playtop', 'ptop'])
     @is_connected(same_channel=True)
@@ -277,7 +277,7 @@ class Music(commands.Cog):
                               f'of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks, position=0)
-            await ctx.send(message)
+            await ctx.reply(message)
 
     @commands.command(name='playnow', aliases=['pnow', 'playskip', 'pskip'])
     @is_connected(same_channel=True)
@@ -316,9 +316,9 @@ class Music(commands.Cog):
                               f'of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks, position=0)
-            await ctx.send(message)
+            await ctx.reply(message)
             await ctx.voice_client.stop()
-            await ctx.send('Skipped the current track.')
+            await ctx.reply('Skipped the current track.')
 
     @commands.command(name='disconnect', aliases=['dc', 'leave'])
     @is_connected(same_channel=True)
@@ -330,7 +330,7 @@ class Music(commands.Cog):
         This command only temporarily disconnects the player, the current queue and other settings will remain after the bot has joined back.
         """
 
-        await ctx.send(f'Temporarily left the voice channel `{ctx.voice_client.channel}`.')
+        await ctx.reply(f'Temporarily left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
 
@@ -342,7 +342,7 @@ class Music(commands.Cog):
         Destroys the player.
         """
 
-        await ctx.send(f'Left the voice channel `{ctx.voice_client.channel}`.')
+        await ctx.reply(f'Left the voice channel `{ctx.voice_client.channel}`.')
         await ctx.voice_client.destroy()
 
     @commands.command(name='skip', aliases=['next', 'stop', 's'])
@@ -370,17 +370,17 @@ class Music(commands.Cog):
                 message = 'Added your vote to skip.'
 
             skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
-            await ctx.send(f'{message} Currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.')
+            await ctx.reply(f'{message} Currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.')
 
             if len(ctx.voice_client.skip_request_ids) >= (len(ctx.voice_client.listeners) // 2) + 1:
                 await ctx.voice_client.stop()
-                await ctx.send('Skipped the current track.')
+                await ctx.reply('Skipped the current track.')
 
         else:
 
             if amount == 1:
                 await ctx.voice_client.stop()
-                await ctx.send('Skipped the current track.')
+                await ctx.reply('Skipped the current track.')
 
             else:
 
@@ -395,7 +395,7 @@ class Music(commands.Cog):
                     ctx.voice_client.queue.get()
 
                 await ctx.voice_client.stop()
-                await ctx.send(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
+                await ctx.reply(f'Skipped `{amount}` {"track." if amount == 1 else "tracks."}')
 
     @commands.command(name='pause')
     @is_connected(same_channel=True)
@@ -409,7 +409,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The player is already paused.')
 
         await ctx.voice_client.set_pause(pause=True)
-        await ctx.send('The player is now paused.')
+        await ctx.reply('The player is now paused.')
 
     @commands.command(name='resume', aliases=['continue', 'unpause'])
     @is_connected(same_channel=True)
@@ -423,7 +423,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The player is not paused.')
 
         await ctx.voice_client.set_pause(pause=False)
-        await ctx.send('The player is now resumed.')
+        await ctx.reply('The player is now resumed.')
 
     @commands.command(name='seek')
     @is_voice_client_playing()
@@ -440,7 +440,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The current track is not seekable.')
 
         if not seconds and seconds != 0:
-            await ctx.send(f'The players position is `{utils.format_seconds(seconds=round(ctx.voice_client.position // 1000))}`')
+            await ctx.reply(f'The players position is `{utils.format_seconds(seconds=round(ctx.voice_client.position // 1000))}`')
             return
 
         milliseconds = seconds * 1000
@@ -448,7 +448,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid position. Please choose a value between `0` and `{round(ctx.voice_client.current.length / 1000)}`.')
 
         await ctx.voice_client.set_position(position=milliseconds)
-        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=milliseconds // 1000)}`.')
+        await ctx.reply(f'The players position is now `{utils.format_seconds(seconds=milliseconds // 1000)}`.')
 
     @commands.command(name='replay')
     @is_voice_client_playing()
@@ -465,7 +465,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The current track is not seekable.')
 
         await ctx.voice_client.set_position(position=0)
-        await ctx.send(f'The players position is now `{utils.format_seconds(seconds=0)}`.')
+        await ctx.reply(f'The players position is now `{utils.format_seconds(seconds=0)}`.')
 
     @commands.command(name='volume', aliases=['vol'])
     @is_connected(same_channel=True)
@@ -478,14 +478,14 @@ class Music(commands.Cog):
         """
 
         if not volume and volume != 0:
-            await ctx.send(f'The players volume is `{ctx.voice_client.volume}%`.')
+            await ctx.reply(f'The players volume is `{ctx.voice_client.volume}%`.')
             return
 
         if volume < 0 or volume > 100 and ctx.author.id not in config.OWNER_IDS:
             raise exceptions.VoiceError('That was not a valid volume, Please choose a value between `0` and `100`.')
 
         await ctx.voice_client.set_volume(volume=volume)
-        await ctx.send(f'The players volume is now `{ctx.voice_client.volume}%`.')
+        await ctx.reply(f'The players volume is now `{ctx.voice_client.volume}%`.')
 
     @commands.command(name='nowplaying', aliases=['np'])
     @is_voice_client_playing()
@@ -502,9 +502,10 @@ class Music(commands.Cog):
 
         if query == 'spotify':
 
-            query = 'player'
             if (spotify_activity := discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), ctx.author.activities)) is not None:
                 query = f'{spotify_activity.title} - {spotify_activity.artist}'
+            else:
+                raise exceptions.VoiceError('You do not have an active spotify status to get the current track from.')
 
         elif query == 'player':
 
@@ -641,7 +642,7 @@ class Music(commands.Cog):
         """
 
         ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=False)
-        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the whole queue.')
+        await ctx.reply(f'I will {"start" if ctx.voice_client.queue.is_looping else "stop"} looping the whole queue.')
 
     @loop.command(name='current')
     @is_connected(same_channel=True)
@@ -652,7 +653,7 @@ class Music(commands.Cog):
         """
 
         ctx.voice_client.queue.set_looping(looping=not ctx.voice_client.queue.is_looping, current=not ctx.voice_client.queue.is_looping_current)
-        await ctx.send(f'I will {"start" if ctx.voice_client.queue.is_looping_current else "stop"} looping the current track.')
+        await ctx.reply(f'I will {"start" if ctx.voice_client.queue.is_looping_current else "stop"} looping the current track.')
 
     @commands.command(name='clear')
     @is_connected(same_channel=True)
@@ -666,7 +667,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The queue is empty.')
 
         ctx.voice_client.queue.clear()
-        await ctx.send('The queue has been cleared.')
+        await ctx.reply('The queue has been cleared.')
 
     @commands.command(name='shuffle')
     @is_connected(same_channel=True)
@@ -680,7 +681,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The queue is empty.')
 
         ctx.voice_client.queue.shuffle()
-        await ctx.send('The queue has been shuffled.')
+        await ctx.reply('The queue has been shuffled.')
 
     @commands.command(name='reverse')
     @is_connected(same_channel=True)
@@ -694,7 +695,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError('The queue is empty.')
 
         ctx.voice_client.queue.reverse()
-        await ctx.send('The queue has been reversed.')
+        await ctx.reply('The queue has been reversed.')
 
     @commands.command(name='sort')
     @is_connected(same_channel=True)
@@ -717,7 +718,7 @@ class Music(commands.Cog):
         elif method == 'length':
             ctx.voice_client.queue._queue.sort(key=lambda track: track.length, reverse=reverse)
 
-        await ctx.send(f'The queue has been sorted with method `{method}`.')
+        await ctx.reply(f'The queue has been sorted with method `{method}`.')
 
     @commands.command(name='remove')
     @is_connected(same_channel=True)
@@ -736,7 +737,7 @@ class Music(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid track entry. Choose a number between `1` and `{len(ctx.voice_client.queue)}` ')
 
         item = ctx.voice_client.queue.get(position=entry - 1, put_history=False)
-        await ctx.send(f'Removed `{item.title}` from the queue.')
+        await ctx.reply(f'Removed `{item.title}` from the queue.')
 
     @commands.command(name='move')
     @is_connected(same_channel=True)
@@ -760,7 +761,7 @@ class Music(commands.Cog):
 
         track = ctx.voice_client.queue.get(position=entry_1 - 1, put_history=False)
         ctx.voice_client.queue.put(items=track, position=entry_2 - 1)
-        await ctx.send(f'Moved `{track.title}` from position `{entry_1}` to position `{entry_2}`.')
+        await ctx.reply(f'Moved `{track.title}` from position `{entry_1}` to position `{entry_2}`.')
 
 
 def setup(bot: Life) -> None:

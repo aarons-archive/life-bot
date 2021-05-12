@@ -63,7 +63,7 @@ class Time(commands.Cog):
 
         async with ctx.typing():
             file = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
-            await ctx.send(file=file)
+            await ctx.reply(file=file)
 
     @commands.command(name='timezones', aliases=['tzs'])
     async def _timezones(self, ctx: context.Context) -> None:
@@ -114,7 +114,7 @@ class Time(commands.Cog):
                 title=f'Time in `{timezone.name}`{f" for `{member}`" if member else ""}:',
                 description=f'```\n{utils.format_datetime(pendulum.now(tz=timezone))}\n```'
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @_timezone.command(name='set')
     async def _timezone_set(self, ctx: context.Context, *, timezone: converters.TimezoneConverter) -> None:
@@ -125,7 +125,7 @@ class Time(commands.Cog):
         """
 
         await ctx.user_config.set_timezone(timezone.name)
-        await ctx.send(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
+        await ctx.reply(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='reset')
     async def _timezone_reset(self, ctx: context.Context) -> None:
@@ -134,7 +134,7 @@ class Time(commands.Cog):
         """
 
         await ctx.user_config.set_timezone('UTC')
-        await ctx.send(f'Your timezone has been reset back to `{ctx.user_config.timezone.name}`.')
+        await ctx.reply(f'Your timezone has been reset back to `{ctx.user_config.timezone.name}`.')
 
     @_timezone.command(name='private')
     async def _timezone_private(self, ctx: context.Context) -> None:
@@ -146,7 +146,7 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('Your timezone is already private.')
 
         await ctx.user_config.set_timezone(ctx.user_config.timezone, private=True)
-        await ctx.send('Your timezone is now private.')
+        await ctx.reply('Your timezone is now private.')
 
     @_timezone.command(name='public')
     async def _timezone_public(self, ctx: context.Context) -> None:
@@ -158,7 +158,7 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('Your timezone is already public.')
 
         await ctx.user_config.set_timezone(ctx.user_config.timezone, private=False)
-        await ctx.send('Your timezone is now public.')
+        await ctx.reply('Your timezone is now public.')
 
     #
 
@@ -186,7 +186,7 @@ class Time(commands.Cog):
 
         datetime = utils.format_datetime(reminder.datetime, seconds=True)
         datetime_difference = utils.format_difference(reminder.datetime, suppress=[])
-        await ctx.send(f'Created a reminder with ID `{reminder.id}` for `{datetime}`, `{datetime_difference}` from now.')
+        await ctx.reply(f'Created a reminder with ID `{reminder.id}` for `{datetime}`, `{datetime_difference}` from now.')
 
     @reminders.command(name='edit')
     async def reminders_edit(self, ctx: context.Context, reminder_id: int, *, content: str) -> None:
@@ -203,7 +203,7 @@ class Time(commands.Cog):
         content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800, syntax='txt')
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
-        await ctx.send(f'Edited content of reminder with id `{reminder.id}`.')
+        await ctx.reply(f'Edited content of reminder with id `{reminder.id}`.')
 
     # noinspection PyTypeChecker
     @reminders.group(name='repeat')
@@ -219,7 +219,7 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         await reminder.change_repeat_type(repeat_type)
-        await ctx.send(f'Edited repeat type of reminder with id `{reminder.id}`.')
+        await ctx.reply(f'Edited repeat type of reminder with id `{reminder.id}`.')
 
     @reminders.command(name='delete')
     async def reminders_delete(self, ctx: context.Context, reminder_ids: commands.Greedy[int]) -> None:
@@ -244,7 +244,7 @@ class Time(commands.Cog):
             await reminder.delete()
 
         s = 's' if len(reminders_to_delete) > 1 else ''
-        await ctx.send(f'Deleted `{len(reminders_to_delete)}` reminder{s} with id{s} {", ".join(f"`{reminder.id}`" for reminder in reminders_to_delete)}.')
+        await ctx.reply(f'Deleted `{len(reminders_to_delete)}` reminder{s} with id{s} {", ".join(f"`{reminder.id}`" for reminder in reminders_to_delete)}.')
 
     @reminders.command(name='info')
     async def reminders_info(self, ctx: context.Context, reminder_id: int) -> None:
@@ -267,7 +267,7 @@ class Time(commands.Cog):
                             f'`Content:`\n {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=1800, syntax="txt")}\n'
         )
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @reminders.command(name='list', aliases=['active'])
     async def reminders_list(self, ctx: context.Context) -> None:

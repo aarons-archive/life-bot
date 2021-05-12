@@ -101,7 +101,7 @@ class Information(commands.Cog):
                         value=f'`Latency:` {round(self.bot.latency * 1000)}ms')
 
         embed.set_footer(text=f'Created on {utils.format_datetime(self.bot.user.created_at)}')
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='system', aliases=['sys'])
     async def system(self, ctx: context.Context) -> None:
@@ -126,7 +126,7 @@ class Information(commands.Cog):
                         value=f'`Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent(interval=None)}%\n'
                               f'`Threads:` {self.bot.process.num_threads()}')
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='ping')
     async def ping(self, ctx: context.Context) -> None:
@@ -134,7 +134,7 @@ class Information(commands.Cog):
         Display the bot's latency.
         """
 
-        await ctx.send(f'{round(self.bot.latency * 1000)}ms')
+        await ctx.reply(f'{round(self.bot.latency * 1000)}ms')
 
     @commands.command(name='server', aliases=['serverinfo'])
     async def server(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
@@ -180,7 +180,7 @@ class Information(commands.Cog):
         embed.add_field(name='Features:', value='\n'.join(features[0:8]))
         embed.add_field(name='\u200b', value='\n'.join(features[8:16]))
         embed.set_footer(text=f'ID: {guild.id} | Owner ID: {guild.owner.id}')
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='role', aliases=['roleinfo'])
     async def role(self, ctx: context.Context, *, role: discord.Role = None) -> None:
@@ -206,7 +206,7 @@ class Information(commands.Cog):
                             f'`Created at:` {utils.format_datetime(role.created_at)}\n' \
                             f'`Members with this role:` {len(role.members)}'
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='rolecounts', aliases=['rcs', 'roles'])
     async def role_counts(self, ctx: context.Context) -> None:
@@ -269,7 +269,7 @@ class Information(commands.Cog):
             embed.description += f' | [GIF]({guild.icon_url_as(format="gif")})'
             embed.set_image(url=str(guild.icon_url_as(format='gif')))
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='banner')
     async def banner(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
@@ -289,7 +289,7 @@ class Information(commands.Cog):
         embed.description = f'[PNG]({guild.banner_url_as(format="png")}) | [JPEG]({guild.banner_url_as(format="jpeg")}) | [WEBP]({guild.banner_url_as()})'
         embed.set_image(url=str(guild.banner_url_as(format='png')))
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='splash')
     async def splash(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
@@ -309,7 +309,7 @@ class Information(commands.Cog):
         embed.description = f'[PNG]({guild.splash_url_as(format="png")}) | [JPEG]({guild.splash_url_as(format="jpeg")}) | [WEBP]({guild.splash_url_as()})'
         embed.set_image(url=str(guild.splash_url_as(format='png')))
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='member', aliases=['memberinfo'])
     async def member(self, ctx: context.Context, *, member: discord.Member = None) -> None:
@@ -340,7 +340,7 @@ class Information(commands.Cog):
                               f'`Role count:` {len(member.roles) - 1}', inline=False)
 
         embed.set_footer(text=f'ID: {member.id}')
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='user', aliases=['userinfo'])
     async def user(self, ctx: context.Context, *, user: converters.UserConverter = None) -> None:
@@ -361,7 +361,7 @@ class Information(commands.Cog):
                             f'`Bot:` {str(user.bot).replace("True", "Yes").replace("False", "No")}'
 
         embed.set_footer(text=f'ID: {user.id}')
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.command(name='avatar', aliases=['avy'])
     async def avatar(self, ctx: context.Context, *, user: converters.UserConverter = None) -> None:
@@ -382,7 +382,7 @@ class Information(commands.Cog):
             embed.description += f' | [GIF]({user.avatar_url_as(format="gif")})'
             embed.set_image(url=str(user.avatar_url_as(format='gif')))
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
 
 def setup(bot: Life) -> None:

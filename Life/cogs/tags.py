@@ -43,7 +43,7 @@ class Tags(commands.Cog):
         if tag.alias:
             tag = ctx.guild_config.get_tag(tag_id=tag.alias)
 
-        await ctx.send(tag.content)
+        await ctx.reply(tag.content)
 
     @tag.command(name='raw')
     async def tag_raw(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -65,7 +65,7 @@ class Tags(commands.Cog):
         if tag.alias:
             tag = ctx.guild_config.get_tag(tag_id=tag.alias)
 
-        await ctx.send(discord.utils.escape_markdown(tag.content))
+        await ctx.reply(discord.utils.escape_markdown(tag.content))
 
     @tag.command(name='create', aliases=['make'])
     async def tag_create(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
@@ -82,7 +82,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There is already a tag with the name `{tag_check.name}`.')
 
         tag = await ctx.guild_config.create_tag(user_id=ctx.author.id, name=name, content=content, jump_url=ctx.message.jump_url)
-        await ctx.send(f'Created tag with name `{tag.name}`.')
+        await ctx.reply(f'Created tag with name `{tag.name}`.')
 
     @tag.command(name='alias')
     async def tag_alias(self, ctx: context.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
@@ -105,7 +105,7 @@ class Tags(commands.Cog):
             original_tag = ctx.guild_config.get_tag(tag_id=original_tag.alias)
 
         tag = await ctx.guild_config.create_tag_alias(user_id=ctx.author.id, name=alias, original=original_tag.id, jump_url=ctx.message.jump_url)
-        await ctx.send(f'Tag alias from `{tag.name}` to `{original}` was created.')
+        await ctx.reply(f'Tag alias from `{tag.name}` to `{original}` was created.')
 
     @tag.command(name='claim')
     async def tag_claim(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -123,7 +123,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError('The owner of that tag is still in this server.')
 
         await tag.change_owner(ctx.author.id)
-        await ctx.send('Transferred tag to you.')
+        await ctx.reply('Transferred tag to you.')
 
     @tag.command(name='transfer')
     async def tag_transfer(self, ctx: context.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
@@ -146,7 +146,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError('You can not transfer tags to yourself.')
 
         await tag.change_owner(user_id=member.id)
-        await ctx.send(f'Transferred tag from `{ctx.author}` to `{ctx.guild.get_member(tag.user_id)}`.')
+        await ctx.reply(f'Transferred tag from `{ctx.author}` to `{ctx.guild.get_member(tag.user_id)}`.')
 
     @tag.command(name='edit')
     async def tag_edit(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
@@ -165,7 +165,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError('You do not own that tag.')
 
         await tag.change_content(content)
-        await ctx.send(f'Edited content of tag with name `{name}`.')
+        await ctx.reply(f'Edited content of tag with name `{name}`.')
 
     @tag.command(name='delete', aliases=['remove'])
     async def tag_delete(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -182,7 +182,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError('You do not own that tag.')
 
         await tag.delete()
-        await ctx.send(f'Deleted tag with name `{name}`.')
+        await ctx.reply(f'Deleted tag with name `{name}`.')
 
     @tag.command(name='search')
     async def tag_search(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -250,7 +250,7 @@ class Tags(commands.Cog):
                             f'`Created on:` {utils.format_datetime(tag.created_at)}\n'
                             f'`Created:` {utils.format_difference(tag.created_at, suppress=[])} ago'
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
 
 def setup(bot: Life) -> None:

@@ -47,7 +47,7 @@ class Birthdays(commands.Cog):
                             f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
                             f'`Age:` {user_config.age}',
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @birthday.command(name='set')
     async def birthday_set(self, ctx: context.Context, *, date: converters.DatetimeConverter) -> None:
@@ -71,7 +71,7 @@ class Birthdays(commands.Cog):
             raise exceptions.ArgumentError('You must be more than 13 and less than 200 years old.')
 
         await ctx.user_config.set_birthday(result[1])
-        await ctx.send(f'Your birthday has been set to `{utils.format_date(ctx.user_config.birthday)}`.')
+        await ctx.reply(f'Your birthday has been set to `{utils.format_date(ctx.user_config.birthday)}`.')
 
     @birthday.command(name='reset')
     async def birthday_reset(self, ctx: context.Context) -> None:
@@ -80,7 +80,7 @@ class Birthdays(commands.Cog):
         """
 
         await ctx.user_config.set_birthday(None)
-        await ctx.send('Your birthday was reset.')
+        await ctx.reply('Your birthday was reset.')
 
     @birthday.command(name='private')
     async def birthday_private(self, ctx: context.Context) -> None:
@@ -92,7 +92,7 @@ class Birthdays(commands.Cog):
             raise exceptions.GeneralError('Your birthday is already private.')
 
         await ctx.user_config.set_birthday(ctx.user_config.birthday, private=True)
-        await ctx.send('Your birthday is now private.')
+        await ctx.reply('Your birthday is now private.')
 
     @birthday.command(name='public')
     async def birthday_public(self, ctx: context.Context) -> None:
@@ -104,7 +104,7 @@ class Birthdays(commands.Cog):
             raise exceptions.GeneralError('Your birthday is already public.')
 
         await ctx.user_config.set_birthday(ctx.user_config.birthday, private=False)
-        await ctx.send('Your birthday is now public.')
+        await ctx.reply('Your birthday is now public.')
 
     @birthday.command(name='list', aliases=['upcoming'])
     async def birthday_upcoming(self, ctx: context.Context) -> None:
@@ -155,7 +155,7 @@ class Birthdays(commands.Cog):
                             f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
                             f'`Age:` {user_config.age}',
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
 
 def setup(bot: Life) -> None:

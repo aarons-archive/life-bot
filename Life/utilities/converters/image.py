@@ -27,7 +27,7 @@ class ImageConverter(commands.Converter, ABC):
         except commands.BadArgument:
             pass
         else:
-            await ctx.send(f'Editing the avatar of `{member}`. If this is a mistake please specify the user/image you would like to edit before any extra arguments.')
+            await ctx.reply(f'Editing the avatar of `{member}`. If this is a mistake please specify the user/image you would like to edit before any extra arguments.')
             return utils.avatar(person=member)
 
         if (check := yarl.URL(argument)) and check.scheme and check.host:

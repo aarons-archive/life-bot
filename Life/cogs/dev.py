@@ -69,7 +69,7 @@ class Dev(commands.Cog):
         embed = discord.Embed(title=f'{self.bot.user.name} bot information page.', colour=0xF5F5F5)
         embed.description = '\n\n'.join(description)
 
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     @commands.is_owner()
     @dev.command(name='cleanup', aliases=['clean'], hidden=True)
@@ -86,7 +86,7 @@ class Dev(commands.Cog):
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
         s = 's' if len(messages) > 1 else ''
-        await ctx.send(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=3)
+        await ctx.reply(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=3)
 
     @commands.is_owner()
     @dev.command(name='guilds', aliases=['g'], hidden=True)
@@ -131,7 +131,7 @@ class Dev(commands.Cog):
         description.append('```')
 
         embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=ctx.colour, description='\n'.join(description))
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
     #
 
@@ -142,7 +142,7 @@ class Dev(commands.Cog):
         Base command for blacklisting.
         """
 
-        await ctx.send(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
+        await ctx.reply(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
 
     #
 
@@ -178,7 +178,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('That user is already blacklisted.')
 
         await user_config.set_blacklisted(True, reason=reason)
-        await ctx.send(f'Added user `{user.id}` to the blacklist with reason:\n\n`{reason}`')
+        await ctx.reply(f'Added user `{user.id}` to the blacklist with reason:\n\n`{reason}`')
 
     @commands.is_owner()
     @blacklist_users.command(name='remove', hidden=True)
@@ -194,7 +194,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('That user is not blacklisted.')
 
         await user_config.set_blacklisted(False)
-        await ctx.send(f'Removed user `{user.id}` from the blacklist.')
+        await ctx.reply(f'Removed user `{user.id}` from the blacklist.')
 
     #
 
@@ -234,7 +234,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('The guild is already blacklisted.')
 
         await guild_config.set_blacklisted(True, reason=reason)
-        await ctx.send(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
+        await ctx.reply(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
 
     @commands.is_owner()
     @blacklist_guilds.command(name='remove', hidden=True)
@@ -253,7 +253,7 @@ class Dev(commands.Cog):
             raise exceptions.ArgumentError('That guild is not blacklisted.')
 
         await guild_config.set_blacklisted(False)
-        await ctx.send(f'Unblacklisted guild `{guild_id}`.')
+        await ctx.reply(f'Unblacklisted guild `{guild_id}`.')
 
 
 def setup(bot: Life) -> None:

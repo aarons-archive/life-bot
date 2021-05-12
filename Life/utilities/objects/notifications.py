@@ -24,6 +24,7 @@ __log__ = logging.getLogger('utilities.objects.notifications')
 
 
 class Notifications:
+
     __slots__ = '_bot', '_user_config', '_id', '_user_id', '_level_ups'
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict) -> None:

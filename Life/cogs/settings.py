@@ -53,7 +53,7 @@ class Settings(commands.Cog):
         """
 
         if not operation:
-            await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=str(ctx.guild_config.colour).upper()))
+            await ctx.reply(embed=discord.Embed(colour=ctx.guild_config.colour, title=str(ctx.guild_config.colour).upper()))
             return
 
         if await self.bot.is_owner(ctx.author) is False:
@@ -93,7 +93,7 @@ class Settings(commands.Cog):
         """
 
         if not operation:
-            await ctx.send(f'This servers embed size is `{ctx.guild_config.embed_size.name.title()}`.')
+            await ctx.reply(f'This servers embed size is `{ctx.guild_config.embed_size.name.title()}`.')
             return
 
         if await self.bot.is_owner(user=ctx.author) is False:
@@ -105,7 +105,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError('This servers embed size is already the default.')
 
             await ctx.guild_config.set_embed_size()
-            await ctx.send('Reset this servers embed size.')
+            await ctx.reply('Reset this servers embed size.')
 
         elif operation == 'set':
 
@@ -115,7 +115,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError(f'This servers embed size is already `{ctx.guild_config.embed_size.name.title()}`.')
 
             await ctx.guild_config.set_embed_size(getattr(enums.EmbedSize, size.upper()))
-            await ctx.send(f'Set this servers embed size to `{ctx.guild_config.embed_size.name.title()}`.')
+            await ctx.reply(f'Set this servers embed size to `{ctx.guild_config.embed_size.name.title()}`.')
 
     @settings_guild.command(name='prefix', aliases=['prefixes'])
     async def settings_guild_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
@@ -148,7 +148,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
 
             await ctx.guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
-            await ctx.send(f'Added `{prefix}` to this servers prefixes.')
+            await ctx.reply(f'Added `{prefix}` to this servers prefixes.')
 
         elif operation == 'remove':
 
@@ -158,7 +158,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{prefix}`.')
 
             await ctx.guild_config.change_prefixes(enums.Operation.REMOVE, prefix=str(prefix))
-            await ctx.send(f'Removed `{prefix}` from this servers prefixes.')
+            await ctx.reply(f'Removed `{prefix}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
 
@@ -166,7 +166,7 @@ class Settings(commands.Cog):
                 raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
             await ctx.guild_config.change_prefixes(enums.Operation.RESET)
-            await ctx.send('Cleared this servers prefixes.')
+            await ctx.reply('Cleared this servers prefixes.')
 
 
 def setup(bot: Life) -> None:
