@@ -105,6 +105,5 @@ class Economy(commands.Cog):
         await ctx.paginate(entries=entries, per_page=10, header=header, footer=footer, codeblock=True)
 
 
-
 def setup(bot: Life) -> None:
     bot.add_cog(Economy(bot=bot))

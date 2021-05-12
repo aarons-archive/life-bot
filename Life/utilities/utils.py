@@ -119,7 +119,7 @@ def line_count() -> tuple[int, int, int, int]:
 
 def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
 
-    badges_list = [badge for name, badge in config.BADGE_EMOJIS.items() if dict(person.public_flags)[name] is True]
+    badges_list = [badge for badge_name, badge in config.BADGE_EMOJIS.items() if dict(person.public_flags)[badge_name] is True]
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
         badges_list.append('<:bot:738979752244674674>')
 
