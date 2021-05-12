@@ -238,3 +238,12 @@ def voice_region(x: Union[discord.VoiceChannel, discord.StageChannel, discord.Gu
         region = 'South Africa'
 
     return region
+
+
+def name(person: Union[discord.Member, discord.User], *, guild: discord.Guild = None) -> str:
+
+    if guild and isinstance(person, discord.User):
+        member = guild.get_member(person.id)
+        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, 'name', 'Unknown')
+
+    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, 'name', 'Unknown')
