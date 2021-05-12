@@ -52,9 +52,10 @@ class Life(commands.AutoShardedBot):
         self.process = psutil.Process()
         self.socket_stats = collections.Counter()
 
-        self.DM_WEBHOOK = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.DM_WEBHOOK_URL)
-        self.LOGGING_WEBHOOK = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.LOGGING_WEBHOOK_URL)
-        self.ERROR_WEBHOOK = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.ERROR_WEBHOOK_URL)
+        self.ERROR_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.ERROR_WEBHOOK_URL)
+        self.GUILD_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.GUILD_WEBHOOK_URL)
+        self.DMS_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.DM_WEBHOOK_URL)
+        self.COMMON_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.COMMON_WEBHOOK_URL)
 
         self.first_ready: bool = True
 
@@ -181,7 +182,7 @@ class Life(commands.AutoShardedBot):
             current_permissions['read_messages'] = True
 
         if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:  # skipcq: PTC-W0048
-            if (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
+            if isinstance(ctx.author, discord.Member) and (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
                 needed_permissions = {permission: value for permission, value in self.voice_permissions if value is True}
                 current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})
 
