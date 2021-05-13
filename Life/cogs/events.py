@@ -371,7 +371,7 @@ class Events(commands.Cog):
                 id=payload.data['id'], created_at=discord.utils.snowflake_time(int(payload.data['id'])), guild=getattr(channel, 'guild', None),
                 author=self.bot.get_user(int(payload.data.get('author', {}).get('id', 0))), channel=channel, content=payload.data.get('content', None),
                 jump_url=f'https://discord.com/channels/{getattr(guild, "id", "@me")}/{channel.id}/{payload.data["id"]}', pinned=payload.data.get('pinned'),
-                attachments=[discord.Attachment(data=a, state=self.bot._connection) for a in payload.data.get('attachments')],
+                attachments=[discord.Attachment(data=a, state=self.bot._connection) for a in payload.data.get('attachments', [])],
                 embeds=[discord.Embed.from_dict(e) for e in payload.data['embeds']]
         )
 
