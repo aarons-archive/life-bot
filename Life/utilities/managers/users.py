@@ -172,7 +172,7 @@ class UserManager:
         return sorted(
                 filter(
                         lambda user_config: (self.bot.get_user(user_config.id) if not guild else guild.get_member(user_config.id)) is not None
-                                            and getattr(user_config, leaderboard_type) != 0,
+                                             and getattr(user_config, leaderboard_type) != 0,
                         self.configs.values()
                 ),
                 key=lambda user_config: getattr(user_config, leaderboard_type), reverse=True
@@ -317,7 +317,7 @@ class UserManager:
 
             # Title
 
-            title_text = f'XP Leaderboard:'
+            title_text = 'XP Leaderboard:'
             title_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=93)
             draw.text(xy=(10, 10 - title_font.getoffset(title_text)[1]), text=title_text, font=title_font, fill='#1F1E1C')
 
@@ -404,7 +404,7 @@ class UserManager:
         configs = sorted(
                 filter(
                         lambda user_config: (self.bot.get_user(user_config.id) if not guild else guild.get_member(user_config.id)) is not None
-                                            and not user_config.timezone_private and user_config.timezone is not None, self.bot.user_manager.configs.values()),
+                                             and not user_config.timezone_private and user_config.timezone is not None, self.bot.user_manager.configs.values()),
                 key=lambda user_config: user_config.time.offset_hours
         )
         if not configs:

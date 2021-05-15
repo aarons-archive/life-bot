@@ -76,7 +76,7 @@ class Economy(commands.Cog):
         """
 
         boards = (len(list(filter(
-                lambda user_config: (self.bot.get_user(user_config.id) if not ctx.guild else ctx.guild.get_member(user_config.id)) is not None and getattr(user_config, 'xp') != 0,
+                lambda config: (self.bot.get_user(config.id) if not ctx.guild else ctx.guild.get_member(config.id)) is not None and getattr(config, 'xp', 0) != 0,
                 self.bot.user_manager.configs.values()
         ))) // 10) + 1
 
@@ -92,14 +92,15 @@ class Economy(commands.Cog):
         if not (leaderboard := self.bot.user_manager.leaderboard()):
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
-        header =  '╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n' \
-                  '║ Rank  ║ XP        ║ Level ║ Name                                  ║\n' \
-                  '╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n'
+        header = '╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n' \
+                 '║ Rank  ║ XP        ║ Level ║ Name                                  ║\n' \
+                 '╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n'
 
-        footer =  '\n' \
-                  '║       ║           ║       ║                                       ║\n' \
-                 f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {ctx.user_config.xp:<9} ║ {ctx.user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \
-                  '╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n\n'
+        # skipcq: FLK-E127
+        footer = '\n' \
+                 '║       ║           ║       ║                                       ║\n' \
+                f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {ctx.user_config.xp:<9} ║ {ctx.user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \ 
+                 '╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n\n'
 
         entries = [
             f'║ {index + 1:<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {utils.name(person=self.bot.get_user(user_config.id), guild=ctx.guild):<37} ║'

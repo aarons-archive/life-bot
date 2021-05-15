@@ -188,7 +188,7 @@ class Events(commands.Cog):
         embed.add_field(
                 name='Info:', value=f'{f"`Guild:` {message.guild} `{message.guild.id}`{config.NL}" if message.guild else ""}'
                                     f'`Channel:` {message.channel} `{message.channel.id}`\n'
-                                    f'`Author:` {message.author} `{message.author.id}`\n'
+                                    f'`Author:` {message.author} `{getattr(message.author, "id", None)}`\n'
                                     f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
                                     f'`Jump:` [Click here]({message.jump_url})', inline=False
         )
@@ -372,7 +372,7 @@ class Events(commands.Cog):
                 author=self.bot.get_user(int(payload.data.get('author', {}).get('id', 0))), channel=channel, content=payload.data.get('content', None),
                 jump_url=f'https://discord.com/channels/{getattr(guild, "id", "@me")}/{channel.id}/{payload.data["id"]}', pinned=payload.data.get('pinned'),
                 attachments=[discord.Attachment(data=a, state=self.bot._connection) for a in payload.data.get('attachments', [])],
-                embeds=[discord.Embed.from_dict(e) for e in payload.data['embeds']]
+                embeds=[discord.Embed.from_dict(e) for e in payload.data.get('embeds')]
         )
 
         if not (before := payload.cached_message):
@@ -381,7 +381,7 @@ class Events(commands.Cog):
                     jump_url=after.jump_url, pinned=False, attachments=after.attachments, embeds=after.embeds
             )
 
-        if before.author.bot or (getattr(before.guild, 'id', None) not in {config.AXELS_HOUSE_ID} if before.guild else False):
+        if getattr(before.author, 'bot', False) or (getattr(before.guild, 'id', None) not in {config.AXELS_HOUSE_ID} if before.guild else False):
             return
 
         if before.pinned != after.pinned:

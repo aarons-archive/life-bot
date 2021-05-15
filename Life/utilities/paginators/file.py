@@ -44,7 +44,7 @@ class FilePaginator:
 
         self.reaction_event: asyncio.Event = asyncio.Event()
 
-        self.task: Optional[asyncio.Task]= None
+        self.task: Optional[asyncio.Task] = None
         self.message: Optional[discord.Message] = None
 
         self.looping: bool = True
@@ -78,7 +78,7 @@ class FilePaginator:
         if str(payload.emoji).strip('<>') not in self.BUTTONS.keys():
             return False
 
-        if payload.message_id != getattr(self.message, 'id') or payload.channel_id != getattr(getattr(self.message, 'channel'), 'id'):
+        if payload.message_id != getattr(self.message, 'id', None) or payload.channel_id != getattr(getattr(self.message, 'channel', None), 'id', None):
             return False
 
         return payload.user_id in {*config.OWNER_IDS, self.ctx.author.id}

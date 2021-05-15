@@ -325,7 +325,6 @@ VALID_CONTENT_TYPES = ['image/gif', 'image/heic', 'image/jpeg', 'image/png', 'im
 COMMON_GIF_SITES = ['tenor.com', 'giphy.com']
 
 
-
 def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, image_bytes: bytes, **kwargs):
 
     try:

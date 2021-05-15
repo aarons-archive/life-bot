@@ -251,10 +251,10 @@ def name(person: Union[discord.Member, discord.User], *, guild: discord.Guild = 
     return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, 'name', 'Unknown')
 
 
-async def upload_image(bot: Life, file: discord.File, format: str = 'png') -> str:
+async def upload_image(bot: Life, file: discord.File, file_format: str = 'png') -> str:
 
     data = aiohttp.FormData()
-    data.add_field('file', file.fp, filename=f'file.{format.lower()}')
+    data.add_field('file', file.fp, filename=f'file.{file_format.lower()}')
 
     async with bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
 
