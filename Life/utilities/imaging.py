@@ -324,8 +324,6 @@ MAX_CONTENT_SIZE = (2 ** 20) * 25
 VALID_CONTENT_TYPES = ['image/gif', 'image/heic', 'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml']
 COMMON_GIF_SITES = ['tenor.com', 'giphy.com']
 
-CDN_UPLOAD_URL = 'https://media.mrrandom.xyz/api/media'
-CDN_HEADERS = {'Authorization': config.AXEL_WEB_TOKEN}
 
 
 def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, image_bytes: bytes, **kwargs):
@@ -389,7 +387,7 @@ async def _upload_image(*, ctx: context.Context, image: io.BytesIO, image_format
     data = aiohttp.FormData()
     data.add_field('file', image, filename=f'image.{image_format.lower()}')
 
-    async with ctx.bot.session.post(CDN_UPLOAD_URL, headers=CDN_HEADERS, data=data) as response:
+    async with ctx.bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
 
         if response.status == 413:
             raise exceptions.ImageError('The image produced was too large to upload.')

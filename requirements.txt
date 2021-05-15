@@ -1,8 +1,8 @@
-aiodns>=2.0.0
+aiodns>=3.0.0
 aiohttp>=3.7.4post0
 aioscheduler>=1.4.2
 aredis>=1.1.8
-async-timeout>=3.0.1
+async_timeout>=3.0.1
 asyncpg>=0.22.0
 beautifulsoup4>=4.9.3
 cchardet>=2.1.7

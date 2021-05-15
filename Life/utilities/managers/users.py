@@ -164,7 +164,7 @@ class UserManager:
 
     # Ranking
 
-    def leaderboard(self, leaderboard_type: Literal['level', 'xp', 'coins'] = 'xp', *, guild_id: int = None) -> list[objects.UserConfig]:
+    def leaderboard(self, leaderboard_type: Literal['xp', 'coins'] = 'xp', *, guild_id: int = None) -> list[objects.UserConfig]:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -283,7 +283,7 @@ class UserManager:
 
     # Leaderboard image
 
-    async def create_leaderboard(self, page: int = 1, *, guild_id: int = None) -> discord.File:
+    async def create_leaderboard(self, page: int = 0, *, guild_id: int = None) -> discord.File:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -291,7 +291,7 @@ class UserManager:
         leaderboard = self.leaderboard(guild_id=guild.id if guild else None)
         data = []
 
-        for user_config in [leaderboard[index:index + 10] for index in range(0, len(leaderboard), 10)][page - 1]:
+        for user_config in leaderboard[page * 10:page * 10 + 10]:
 
             user = guild.get_member(user_config.id) if guild else self.bot.get_user(user_config.id)
             avatar_bytes = io.BytesIO(await user.avatar_url_as(format='png', size=256).read())

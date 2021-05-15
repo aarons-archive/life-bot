@@ -33,13 +33,13 @@ class Context(commands.Context):
 
         self.bot: Life = kwargs.get('bot')
 
-    #
+    # Properties
 
     @property
     def voice_client(self) -> Player:
         return self.guild.voice_client if self.guild else None
 
-    #
+    # Custom properties
 
     @property
     def user_config(self) -> objects.UserConfig:
@@ -58,10 +58,10 @@ class Context(commands.Context):
 
         return discord.Colour(config.COLOUR)
 
-    #
+    # Main paginators
 
-    async def paginate(self, **kwargs) -> paginators.Paginator:
-        paginator = paginators.Paginator(ctx=self, **kwargs)
+    async def paginate(self, **kwargs) -> paginators.TextPaginator:
+        paginator = paginators.TextPaginator(ctx=self, **kwargs)
         await paginator.paginate()
         return paginator
 
@@ -69,6 +69,13 @@ class Context(commands.Context):
         paginator = paginators.EmbedPaginator(ctx=self, **kwargs)
         await paginator.paginate()
         return paginator
+
+    async def paginate_file(self, **kwargs) -> paginators.FilePaginator:
+        paginator = paginators.FilePaginator(ctx=self, **kwargs)
+        await paginator.paginate()
+        return paginator
+
+    # Other paginators
 
     async def paginate_embeds(self, **kwargs) -> paginators.EmbedsPaginator:
         paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
@@ -94,6 +101,8 @@ class Context(commands.Context):
 
         await paginator.stop()
         return response
+
+    # Other
 
     async def try_dm(self, **kwargs) -> Optional[discord.Message]:
 

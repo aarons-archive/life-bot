@@ -9,7 +9,7 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
-
+import functools
 import random
 
 import discord
@@ -70,14 +70,18 @@ class Economy(commands.Cog):
             await ctx.reply(file=file)
 
     @commands.group(name='leaderboard', aliases=['lb'], invoke_without_command=True)
-    async def leaderboard(self, ctx: context.Context, *, page: int = 1) -> None:
+    async def leaderboard(self, ctx: context.Context) -> None:
         """
         Display the leaderboard for xp, rank, and level.
         """
 
-        async with ctx.typing():
-            file = await self.bot.user_manager.create_leaderboard(page=page, guild_id=getattr(ctx.guild, 'id', None))
-            await ctx.reply(file=file)
+        boards = (len(list(filter(
+                lambda user_config: (self.bot.get_user(user_config.id) if not ctx.guild else ctx.guild.get_member(user_config.id)) is not None and getattr(user_config, 'xp') != 0,
+                self.bot.user_manager.configs.values()
+        ))) // 10) + 1
+
+        entries = [functools.partial(self.bot.user_manager.create_leaderboard, guild_id=getattr(ctx.guild, 'id', None)) for _ in range(boards)]
+        await ctx.paginate_file(entries=entries)
 
     @leaderboard.command(name='text')
     async def leaderboard_text(self, ctx: context.Context) -> None:
