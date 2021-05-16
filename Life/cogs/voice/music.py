@@ -541,9 +541,7 @@ class Music(commands.Cog):
 
             entries[-1] += f'\n{line}'
 
-        await ctx.paginate_embed(
-                entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', embed_add_footer='Lyrics provided by KSoft.Si API.'
-        )
+        await ctx.paginate_embed(entries=entries, per_page=1, header=f'**Lyrics for `{result.name}` by `{result.artist}`:**\n\n', footer='\n*Lyrics provided by KSoft.Si API.*')
 
     #
 
