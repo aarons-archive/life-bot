@@ -39,13 +39,13 @@ class Economy(commands.Cog):
         xp = random.randint(10, 25)
 
         if xp >= user_config.next_level_xp:
-            self.bot.dispatch('xp_level_up', user_config, message)
+            self.bot.dispatch('xp_level_up', message, user_config)
 
         user_config.change_xp(xp)
         await self.bot.redis.setex(name=f'{message.author.id}_xp_gain', time=60, value=None)
 
     @commands.Cog.listener()
-    async def on_xp_level_up(self, user_config: objects.UserConfig, message: discord.Message) -> None:
+    async def on_xp_level_up(self, message: discord.Message, user_config: objects.UserConfig,) -> None:
 
         if not user_config.notifications.level_ups:
             return
@@ -75,12 +75,9 @@ class Economy(commands.Cog):
         Display the leaderboard for xp, rank, and level.
         """
 
-        boards = (len(list(filter(
-                lambda config: (self.bot.get_user(config.id) if not ctx.guild else ctx.guild.get_member(config.id)) is not None and getattr(config, 'xp', 0) != 0,
-                self.bot.user_manager.configs.values()
-        ))) // 10) + 1
+        leaderboards = (len(self.bot.user_manager.leaderboard(guild_id=getattr(ctx.guild, 'id', None))) // 10) + 1
 
-        entries = [functools.partial(self.bot.user_manager.create_leaderboard, guild_id=getattr(ctx.guild, 'id', None)) for _ in range(boards)]
+        entries = [functools.partial(self.bot.user_manager.create_leaderboard, guild_id=getattr(ctx.guild, 'id', None)) for _ in range(leaderboards)]
         await ctx.paginate_file(entries=entries)
 
     @leaderboard.command(name='text')
@@ -99,7 +96,7 @@ class Economy(commands.Cog):
         # skipcq: FLK-E127
         footer = '\n' \
                  '║       ║           ║       ║                                       ║\n' \
-                f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {ctx.user_config.xp:<9} ║ {ctx.user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \ 
+                 f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {ctx.user_config.xp:<9} ║ {ctx.user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \
                  '╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n\n'
 
         entries = [

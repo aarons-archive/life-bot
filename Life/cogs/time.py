@@ -32,25 +32,22 @@ class Time(commands.Cog):
         Displays a list of people and what timezone they are in.
         """
 
-        user_configs = sorted(
-                filter(lambda kv: ctx.guild.get_member(kv[0]) is not None and not kv[1].timezone_private and kv[1].timezone is not None, self.bot.user_manager.configs.items()),
-                key=lambda kv: kv[1].time.offset_hours
-        )
-        if not user_configs:
+        if not (timezones := self.bot.user_manager.timezones(guild_id=getattr(ctx.guild, 'id', None))):
             raise exceptions.ArgumentError('There are no users who have set their timezone, or everyone has set them to be private.')
 
         timezone_users = {}
 
-        # noinspection PyTypeChecker
-        for user_config in dict(user_configs).values():
+        for user_config in timezones:
 
+            user = ctx.guild.get_member(user_config.id) if ctx.guild else self.bot.get_user(user_config.id)
             timezone = user_config.time.format('HH:mm (ZZ)')
-            member = ctx.guild.get_member(user_config.id)
 
-            if timezone_users.get(timezone, []):
-                timezone_users[timezone].append(f'{member} - {user_config.timezone.name}')
+            if users := timezone_users.get(timezone, []):
+                if len(users) > 36:
+                    break
+                timezone_users[timezone].append(f'{user} - {user_config.timezone.name}')
             else:
-                timezone_users[timezone] = [f'{member} - {user_config.timezone.name}']
+                timezone_users[timezone] = [f'{user} - {user_config.timezone.name}']
 
         entries = [f'`{timezone}:`\n{config.NL.join(members)}\n' for timezone, members in timezone_users.items()]
         await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.guild}\'s timezones:')
@@ -62,7 +59,7 @@ class Time(commands.Cog):
         """
 
         async with ctx.typing():
-            file = await self.bot.user_manager.create_timecard(guild_id=ctx.guild.id)
+            file = await self.bot.user_manager.create_timecard(guild_id=getattr(ctx.guild, 'id', None))
             await ctx.reply(file=file)
 
     @commands.command(name='timezones', aliases=['tzs'])
@@ -205,7 +202,6 @@ class Time(commands.Cog):
 
         await ctx.reply(f'Edited content of reminder with id `{reminder.id}`.')
 
-    # noinspection PyTypeChecker
     @reminders.group(name='repeat')
     async def reminder_repeat(self, ctx: context.Context, reminder_id: int, *, repeat_type: converters.ReminderRepeatTypeConverter) -> None:
         """

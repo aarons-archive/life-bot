@@ -171,53 +171,64 @@ class UserManager:
 
         return sorted(
                 filter(
-                        lambda user_config: (self.bot.get_user(user_config.id) if not guild else guild.get_member(user_config.id)) is not None
-                                             and getattr(user_config, leaderboard_type) != 0,
+                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and getattr(config, leaderboard_type) != 0,
                         self.configs.values()
                 ),
-                key=lambda user_config: getattr(user_config, leaderboard_type), reverse=True
+                key=lambda config: getattr(config, leaderboard_type), reverse=True
         )
 
     def rank(self, user_id: int, *, guild_id: int = None) -> int:
 
+        leaderboard = self.leaderboard(guild_id=guild_id)
+        return leaderboard.index(self.get_config(user_id)) + 1
+
+    def timezones(self, *, guild_id: int = None) -> list[objects.UserConfig]:
+
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
 
-        configs = sorted(
-                filter(lambda user_config: (self.bot.get_user(user_config.id) if not guild else guild.get_member(user_config.id)) and user_config.xp != 0, self.configs.values()),
-                key=lambda user_config: user_config.xp, reverse=True
+        return sorted(
+                filter(
+                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.timezone_private and config.timezone is not None,
+                        self.bot.user_manager.configs.values()
+                ),
+                key=lambda config: config.time.offset_hours
         )
 
-        try:
-            return configs.index(self.get_config(user_id)) + 1
-        except ValueError:
-            raise exceptions.ArgumentError('That user does not have any XP yet, so they have not been ranked.')
+    def birthdays(self, *, guild_id: int = None) -> list[objects.UserConfig]:
 
-    # Level image
+        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
+            raise ValueError(f'guild with id \'{guild_id}\' was not found.')
+
+        return sorted(
+                filter(
+                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
+                        self.bot.user_manager.configs.values()),
+                key=lambda kv: kv[1].next_birthday
+        )
+
+    # Images
 
     async def create_level_card(self, user_id: int, *, guild_id: int = None) -> discord.File:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
 
-        user = self.bot.get_user(user_id) if not guild else guild.get_member(user_id)
+        user = guild.get_member(user_id) if guild else self.bot.get_user(user_id)
         user_config = self.get_config(user_id)
+        avatar_bytes = io.BytesIO(await (user.avatar_url_as(format='png', size=512)).read())
 
-        avatar_bytes = io.BytesIO(await user.avatar_url_as(format='png', size=512).read())
         buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, (user, user_config, avatar_bytes), guild)
-
         file = discord.File(fp=buffer, filename='level.png')
 
-        avatar_bytes.close()
         buffer.close()
+        avatar_bytes.close()
 
         return file
 
     def create_level_card_image(self, data: tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO], guild: discord.Guild = None) -> io.BytesIO:
 
         user, user_config, user_avatar_bytes = data
-
-        buffer = io.BytesIO()
 
         with Image.open(random.choice(IMAGES['SAI']['level_cards'])) as image:
 
@@ -276,44 +287,46 @@ class UserManager:
 
             #
 
+            buffer = io.BytesIO()
             image.save(buffer, 'png')
 
         buffer.seek(0)
         return buffer
 
-    # Leaderboard image
+    #
 
     async def create_leaderboard(self, page: int = 0, *, guild_id: int = None) -> discord.File:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
 
-        leaderboard = self.leaderboard(guild_id=guild.id if guild else None)
+        if not (leaderboard := self.leaderboard(guild_id=guild_id)):
+            raise exceptions.ArgumentError('There are no users who have gained any xp yet.')
+
         data = []
 
         for user_config in leaderboard[page * 10:page * 10 + 10]:
 
             user = guild.get_member(user_config.id) if guild else self.bot.get_user(user_config.id)
-            avatar_bytes = io.BytesIO(await user.avatar_url_as(format='png', size=256).read())
+            avatar_bytes = io.BytesIO(await (user.avatar_url_as(format='png', size=256)).read())
 
             data.append((user, user_config, avatar_bytes))
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data, guild)
-        file = discord.File(fp=buffer, filename='level.png')
+        file = discord.File(fp=buffer, filename='leaderboard.png')
 
+        buffer.close()
         for _, _, avatar_bytes in data:
             avatar_bytes.close()
-        buffer.close()
 
         return file
 
     def create_leaderboard_image(self, data: list[tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO]], guild: discord.Guild = None) -> io.BytesIO:
 
-        buffer = io.BytesIO()
-        leaderboard_image = random.choice(IMAGES['SAI']['leaderboard'])
+        with Image.open(random.choice(IMAGES['SAI']['leaderboard'])) as image:
 
-        with Image.open(leaderboard_image) as image:
             draw = ImageDraw.Draw(image)
+            y = 100
 
             # Title
 
@@ -322,8 +335,6 @@ class UserManager:
             draw.text(xy=(10, 10 - title_font.getoffset(title_text)[1]), text=title_text, font=title_font, fill='#1F1E1C')
 
             # Actual content
-
-            y = 100
 
             for user, user_config, user_avatar_bytes in data:
 
@@ -389,32 +400,24 @@ class UserManager:
 
                 y += 45
 
+            buffer = io.BytesIO()
             image.save(buffer, 'png')
 
         buffer.seek(0)
         return buffer
 
-    # Timecard image
+    #
 
     async def create_timecard(self, *, guild_id: int = None) -> discord.File:
 
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
-            raise ValueError(f'guild with id \'{guild_id}\' was not found.')
-
-        configs = sorted(
-                filter(
-                        lambda user_config: (self.bot.get_user(user_config.id) if not guild else guild.get_member(user_config.id)) is not None
-                                             and not user_config.timezone_private and user_config.timezone is not None, self.bot.user_manager.configs.values()),
-                key=lambda user_config: user_config.time.offset_hours
-        )
-        if not configs:
+        if not (timezones := self.timezones(guild_id=guild_id)):
             raise exceptions.ArgumentError('There are no users who have set their timezone, or everyone has set them to be private.')
 
         timezone_avatars = {}
 
-        for config in configs:
+        for config in timezones:
 
-            avatar_bytes = io.BytesIO(await self.bot.get_user(config.id).avatar_url_as(format='png', size=256).read())
+            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar_url_as(format='png', size=256)).read())
             timezone = config.time.format('HH:mm (ZZ)')
 
             if users := timezone_avatars.get(timezone, []):
@@ -425,7 +428,7 @@ class UserManager:
                 timezone_avatars[timezone] = [avatar_bytes]
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_avatars)
-        file = discord.File(fp=buffer, filename='level.png')
+        file = discord.File(fp=buffer, filename='timecard.png')
 
         buffer.close()
         for avatar_bytes in timezone_avatars.values():
@@ -436,7 +439,6 @@ class UserManager:
     @staticmethod
     def create_timecard_image(data: dict[str, io.BytesIO]) -> io.BytesIO:
 
-        buffer = io.BytesIO()
         width_x, height_y = (1600 * (len(data) if len(data) < 5 else 5)) + 100, (1800 * math.ceil(len(data) / 5)) + 100
 
         with Image.new(mode='RGBA', size=(width_x, height_y), color='#F1C30F') as image:
@@ -469,6 +471,7 @@ class UserManager:
                 else:
                     x += 1600
 
+            buffer = io.BytesIO()
             image.save(fp=buffer, format='png')
 
         buffer.seek(0)

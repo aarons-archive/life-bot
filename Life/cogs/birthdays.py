@@ -112,11 +112,7 @@ class Birthdays(commands.Cog):
         Display a list of upcoming birthdays in the server.
         """
 
-        configs = sorted(
-                filter(lambda kv: ctx.guild.get_member(kv[0]) is not None and not kv[1].birthday_private and kv[1].birthday is not None, self.bot.user_manager.configs.items()),
-                key=lambda kv: kv[1].next_birthday
-        )
-        if not configs:
+        if not (birthdays := self.bot.user_manager.birthdays(guild_id=getattr(ctx.guild, 'id', None))):
             raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
         # noinspection PyTypeChecker
@@ -126,7 +122,7 @@ class Birthdays(commands.Cog):
             f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
             f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
             f'`Age:` {user_config.age}\n'
-            for user_config in dict(configs).values()
+            for user_config in birthdays
         ]
         await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays:')
 
@@ -136,15 +132,11 @@ class Birthdays(commands.Cog):
         Display the next person to have a birthday in the server.
         """
 
-        configs = sorted(
-                filter(lambda kv: ctx.guild.get_member(kv[0]) is not None and not kv[1].birthday_private and kv[1].birthday is not None, self.bot.user_manager.configs.items()),
-                key=lambda kv: kv[1].next_birthday
-        )
-        if not configs:
+        if not (birthdays := self.bot.user_manager.birthdays(guild_id=getattr(ctx.guild, 'id', None))):
             raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
         # noinspection PyUnresolvedReferences
-        user_config = configs[0][1]
+        user_config = birthdays[0]
         member = ctx.guild.get_member(user_config.id)
 
         embed = discord.Embed(
