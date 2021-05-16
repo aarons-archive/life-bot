@@ -82,7 +82,7 @@ def colorize(image: Union[Image, SingleImage], colour: str = None) -> Optional[s
 def despeckle(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.despeckle()
-    return
+    return ''
 
 
 def floor(image: Union[Image, SingleImage]) -> Optional[str]:
@@ -94,7 +94,7 @@ def floor(image: Union[Image, SingleImage]) -> Optional[str]:
                  image.width,  image.height, image.width * 0.9, image.height)
     image.distort('perspective', arguments)
 
-    return
+    return ''
 
 
 def emboss(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
@@ -107,7 +107,7 @@ def emboss(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0
 def enhance(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.enhance()
-    return
+    return ''
 
 
 def flip(image: Union[Image, SingleImage]) -> Optional[str]:
@@ -163,7 +163,7 @@ def motion_blur(image: Union[Image, SingleImage], radius: float = 0, sigma: floa
 def negate(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.negate(channel='rgb')
-    return
+    return ''
 
 
 def noise(image: Union[Image, SingleImage], method: str = 'uniform', attenuate: float = 1) -> Optional[str]:
@@ -229,19 +229,19 @@ def transparentize(image: Union[Image, SingleImage], transparency: float) -> Opt
 def transpose(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.transpose()
-    return
+    return ''
 
 
 def transverse(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.transverse()
-    return
+    return ''
 
 
 def wave(image: Union[Image, SingleImage]) -> Optional[str]:
 
     image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
-    return
+    return ''
 
 
 def cube(image: Union[Image, SingleImage]) -> Optional[str]:
