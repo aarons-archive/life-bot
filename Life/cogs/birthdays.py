@@ -149,6 +149,16 @@ class Birthdays(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
+    @birthday.command(name='card', aliases=['c'])
+    async def birthday_card(self, ctx: context.Context) -> None:
+        """
+        Creates an image with the birthday month of all servers members.
+        """
+
+        async with ctx.typing():
+            file = await self.bot.user_manager.create_birthday_card(guild_id=getattr(ctx.guild, 'id', None))
+            await ctx.reply(file=file)
+
 
 def setup(bot: Life) -> None:
     bot.add_cog(Birthdays(bot=bot))

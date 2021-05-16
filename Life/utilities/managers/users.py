@@ -204,7 +204,7 @@ class UserManager:
                 filter(
                         lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
                         self.bot.user_manager.configs.values()),
-                key=lambda kv: kv[1].next_birthday
+                key=lambda config: config.next_birthday
         )
 
     # Images
@@ -427,7 +427,7 @@ class UserManager:
             else:
                 timezone_avatars[timezone] = [avatar_bytes]
 
-        buffer = await self.bot.loop.run_in_executor(None, self.create_timecard_image, timezone_avatars)
+        buffer = await self.bot.loop.run_in_executor(None, self.create_grid_image, timezone_avatars)
         file = discord.File(fp=buffer, filename='timecard.png')
 
         buffer.close()
@@ -436,8 +436,36 @@ class UserManager:
 
         return file
 
+    async def create_birthday_card(self, *, guild_id: int = None) -> discord.File:
+
+        if not (birthdays := self.birthdays(guild_id=guild_id)):
+            raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
+
+        birthday_avatars = {}
+
+        for config in birthdays:
+
+            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar_url_as(format='png', size=256)).read())
+            birthday_month = config.birthday.format('MMMM')
+
+            if users := birthday_avatars.get(birthday_month, []):
+                if len(users) > 36:
+                    break
+                birthday_avatars[birthday_month].append(avatar_bytes)
+            else:
+                birthday_avatars[birthday_month] = [avatar_bytes]
+
+        buffer = await self.bot.loop.run_in_executor(None, self.create_grid_image, birthday_avatars)
+        file = discord.File(fp=buffer, filename='birthday.png')
+
+        buffer.close()
+        for avatar_bytes in birthday_avatars.values():
+            [buffer.close() for buffer in avatar_bytes]
+
+        return file
+
     @staticmethod
-    def create_timecard_image(data: dict[str, io.BytesIO]) -> io.BytesIO:
+    def create_grid_image(data: dict[str, io.BytesIO]) -> io.BytesIO:
 
         width_x, height_y = (1600 * (len(data) if len(data) < 5 else 5)) + 100, (1800 * math.ceil(len(data) / 5)) + 100
 
