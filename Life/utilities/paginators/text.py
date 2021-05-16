@@ -24,12 +24,12 @@ if TYPE_CHECKING:
 class TextPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False,
-            delete_reactions_when_done: bool = True, codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None
+            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
+            codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None
     ) -> None:
         super().__init__(
-                bot=bot, ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done,
-                delete_reactions_when_done=delete_reactions_when_done, codeblock=codeblock, splitter=splitter
+                bot=bot, ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done,
+                codeblock=codeblock, splitter=splitter
         )
 
         self._header: Optional[str] = header

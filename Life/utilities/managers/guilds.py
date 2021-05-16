@@ -57,8 +57,8 @@ class GuildManager:
             tag = objects.Tag(bot=self.bot, guild_config=guild_config, data=tag)
             guild_config._tags[tag.name] = tag
 
-        __log__.info(f'[TAG MANAGER] Loaded tags. [{len(tags)} tags]')
-        print(f'[TAG MANAGER] Loaded tags. [{len(tags)} tags]')
+        __log__.info(f'[GUILD MANAGER] Loaded tags. [{len(tags)} tags]')
+        print(f'[GUILD MANAGER] Loaded tags. [{len(tags)} tags]')
 
     # Background task
 

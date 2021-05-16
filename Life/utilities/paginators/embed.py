@@ -26,14 +26,13 @@ if TYPE_CHECKING:
 class EmbedPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False,
-            delete_reactions_when_done: bool = True, codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None,
-            title: Optional[str] = None, url: Optional[str] = None, colour: Optional[discord.Colour] = None, image: Optional[str] = None, thumbnail: Optional[str] = None,
-            embed_footer: Optional[str] = None
+            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
+            codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,
+            colour: Optional[discord.Colour] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, embed_footer: Optional[str] = None
     ) -> None:
         super().__init__(
-                bot=bot, ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done,
-                delete_reactions_when_done=delete_reactions_when_done, codeblock=codeblock, splitter=splitter
+                bot=bot, ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done,
+                codeblock=codeblock, splitter=splitter
         )
 
         self.header: str = header or ''

@@ -31,8 +31,8 @@ if TYPE_CHECKING:
 class BasePaginator(abc.ABC):
 
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False,
-            delete_reactions_when_done: bool = True, codeblock: bool = False, splitter: str = '\n',
+            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
+            codeblock: bool = False, splitter: str = '\n',
     ) -> None:
 
         self.bot: Life = bot or ctx.bot

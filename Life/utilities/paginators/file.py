@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 class FilePaginator:
 
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[functools.partial], timeout: int = 300, delete_message_when_done: bool = False,
-            delete_reactions_when_done: bool = True, header: Optional[str] = None, footer: Optional[str] = None
+            self, *, bot: Life = None, ctx: context.Context, entries: list[functools.partial], timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
+            header: Optional[str] = None, footer: Optional[str] = None
     ) -> None:
 
         self.bot: Life = bot or ctx.bot
