@@ -86,15 +86,12 @@ class FilePaginator:
     # Listeners
 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
-
-        if not self.check_reaction(payload) or not self.looping:
-            return
-
-        self.reaction_event.set()
-        with contextlib.suppress(paginators.AlreadyOnPage, paginators.PageOutOfBounds):
-            await self.BUTTONS[str(payload.emoji).strip('<>')]()
+        await self.handle_reaction(payload)
 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
+        await self.handle_reaction(payload)
+
+    async def handle_reaction(self, payload: discord.RawReactionActionEvent) -> None:
 
         if not self.check_reaction(payload) or not self.looping:
             return
