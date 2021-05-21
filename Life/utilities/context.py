@@ -92,6 +92,7 @@ class Context(commands.Context):
             self, *, entries: list[functools.partial], timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True, header: Optional[str] = None,
             footer: Optional[str] = None
     ) -> paginators.FilePaginator:
+
         paginator = paginators.FilePaginator(
                 bot=self.bot, ctx=self, entries=entries, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done,
                 header=header, footer=footer
@@ -103,6 +104,7 @@ class Context(commands.Context):
     # Other paginators
 
     async def paginate_embeds(self, **kwargs) -> paginators.EmbedsPaginator:
+
         paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
         await paginator.paginate()
         return paginator

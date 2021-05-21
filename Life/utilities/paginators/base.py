@@ -32,12 +32,12 @@ class BasePaginator(abc.ABC):
 
     def __init__(
             self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
-            codeblock: bool = False, splitter: str = '\n',
+            codeblock: bool = False, splitter: str = '\n'
     ) -> None:
 
         self.bot: Life = bot or ctx.bot
         self.ctx: context.Context = ctx
-        self.entries: list[Any] = list(map(str, entries))
+        self.entries: list[Any] = entries
         self.per_page: int = per_page
 
         self.timeout: int = timeout
@@ -66,7 +66,7 @@ class BasePaginator(abc.ABC):
 
     @functools.cached_property
     def pages(self) -> list[str]:
-        return [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)]
+        return [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
 
     # Checks
 
