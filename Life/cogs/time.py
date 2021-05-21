@@ -69,7 +69,7 @@ class Time(commands.Cog):
         """
 
         await ctx.paginate_embed(
-                entries=pendulum.timezones, per_page=20,
+                entries=list(pendulum.timezones), per_page=20,
                 title='Available timezones:', header='Click [here](https://skeletonclique.mrrandom.xyz/timezones) to view a list of timezones.\n\n'
         )
 
@@ -214,6 +214,7 @@ class Time(commands.Cog):
         if not (reminder := ctx.user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
+        # noinspection PyTypeChecker
         await reminder.change_repeat_type(repeat_type)
         await ctx.reply(f'Edited repeat type of reminder with id `{reminder.id}`.')
 

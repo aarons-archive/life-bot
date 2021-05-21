@@ -1,35 +1,49 @@
+from utilities.enums import Environment
+
+ENV = Environment.DEV
 
 
-# Bot
-TOKEN = ''
-PREFIX = 'l-'
-EXTENSIONS = [
-    'jishaku',
-    'cogs.dev',
-    'cogs.todo',
-    'cogs.tags',
-    'cogs.time',
-    'cogs.kross',
-    'cogs.images',
-    'cogs.events',
-    'cogs.economy',
-    'cogs.settings',
-    'cogs.birthdays',
-    'cogs.information',
-    'cogs.voice.music',
-    'cogs.systemcollapse',
-]
+if ENV == Environment.DEV:
+    TOKEN = 'beta token'
+    PREFIX = 'beta prefix'
+    COLOUR = 0x000000
+else:
+    TOKEN = 'main token'
+    PREFIX = 'main prefix'
+    COLOUR = 0xFFFFFF
+
+# Useful values
+ZWSP = '\u200b'
+NL = '\n'
+
+# Guild IDs
+AXELS_HOUSE_ID = 0
+
+# User IDs
 OWNER_IDS = {
-    238356301439041536, 440113725970710528, 718259605523660870
+    0
 }
 
+# Bot
+EXTENSIONS = [
+    'jishaku',
 
-# Tokens
-AXEL_WEB_TOKEN = ''
-KSOFT_TOKEN = ''
-SPOTIFY_CLIENT_ID = ''
-SPOTIFY_CLIENT_SECRET = ''
+    'cogs.special.kross',
+    'cogs.special.systemcollapse',
 
+    'cogs.voice.music',
+
+    'cogs.birthdays',
+    'cogs.dev',
+    'cogs.economy',
+    'cogs.events',
+    'cogs.images',
+    'cogs.information',
+    'cogs.settings',
+    'cogs.tags',
+    'cogs.time',
+    'cogs.todo',
+]
 
 # Connection information
 POSTGRESQL = {
@@ -40,7 +54,7 @@ POSTGRESQL = {
 }
 REDIS = {
     'host':     '',
-    'port':     0000,
+    'port':     00000,
     'password': '',
     'db':       0,
 }
@@ -61,18 +75,21 @@ NODES = [
     },
 ]
 
+# Tokens
+AXEL_WEB_TOKEN = ''
+KSOFT_TOKEN = ''
+SPOTIFY_CLIENT_ID = ''
+SPOTIFY_CLIENT_SECRET = ''
 
 # Webhook URL's
 ERROR_WEBHOOK_URL = ''
-LOGGING_WEBHOOK_URL = ''
+GUILD_WEBHOOK_URL = ''
 DM_WEBHOOK_URL = ''
+COMMON_WEBHOOK_URL = ''
 
-
-# Custom values
-COLOUR = 0xF1C40F
-ZWSP = '\u200b'
-NL = '\n'
-
+# CDN information
+CDN_UPLOAD_URL = 'https://media.mrrandom.xyz/api/media'
+CDN_HEADERS = {'Authorization': AXEL_WEB_TOKEN}
 
 # Emoji mappings
 CHANNEL_EMOJIS = {
@@ -102,7 +119,6 @@ BADGE_EMOJIS = {
 COMMON_EMOJIS = {
     'loading': '<a:loading:817924889271992320>'
 }
-
 
 # Dateparser settings
 DATEPARSER_SETTINGS = {
