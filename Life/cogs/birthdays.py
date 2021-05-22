@@ -59,7 +59,7 @@ class Birthdays(commands.Cog):
 
         entries = {index: (date_phrase, datetime) for index, (date_phrase, datetime) in enumerate(date['found'].items())}
         if len(entries) != 1:
-            choice = await ctx.paginate_choice(
+            choice = await ctx.choice(
                     entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_date(datetime)}`' for index, (phrase, datetime) in entries.items()],
                     per_page=5, title='Multiple dates were detected within your query:', header='Please select the number that best matches your birthday:\n\n'
             )

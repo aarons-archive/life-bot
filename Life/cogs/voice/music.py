@@ -523,8 +523,10 @@ class Music(commands.Cog):
         except ksoftapi.APIError:
             raise exceptions.VoiceError('The API used to fetch lyrics is currently down/broken.')
 
-        choice = await ctx.paginate_choice(entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
-                                           header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n')
+        choice = await ctx.choice(
+                entries=[f'`{index + 1}.` {result.name} - {result.artist}' for index, result in enumerate(results)], per_page=10,
+                header=f'**__Please choose the number of the track you would like lyrics for:__**\n`Query`: {query}\n\n'
+        )
         result = results[choice]
 
         entries = []

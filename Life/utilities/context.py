@@ -103,28 +103,39 @@ class Context(commands.Context):
 
     # Other paginators
 
-    async def paginate_embeds(self, **kwargs) -> paginators.EmbedsPaginator:
+    async def paginate_embeds(
+            self, *, entries: list[discord.Embed], timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True, content: Optional[str] = None
+    ) -> paginators.EmbedsPaginator:
 
-        paginator = paginators.EmbedsPaginator(ctx=self, **kwargs)
+        paginator = paginators.EmbedsPaginator(
+                bot=self.bot, ctx=self, entries=entries, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done, content=content
+        )
         await paginator.paginate()
+
         return paginator
 
-    async def paginate_choice(self, **kwargs) -> Any:
+    async def choice(
+            self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True, codeblock: bool = False,
+            splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None, colour: Optional[discord.Colour] = None,
+            image: Optional[str] = None, thumbnail: Optional[str] = None, embed_footer: Optional[str] = None
+    ) -> int:
 
-        paginator = await self.paginate_embed(**kwargs)
+        paginator = await self.paginate_embed(
+                entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done, codeblock=codeblock,
+                splitter=splitter, header=header, footer=footer, title=title, url=url, colour=colour, image=image, thumbnail=thumbnail, embed_footer=embed_footer
+        )
 
         try:
             response = await self.bot.wait_for('message', check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
 
-        response = await commands.clean_content().convert(ctx=self, argument=response.content)
         try:
-            response = int(response) - 1
+            response = int(response.content) - 1
         except ValueError:
             raise exceptions.ArgumentError('That was not a valid number.')
-        if response < 0 or response >= len(kwargs.get('entries')):
-            raise exceptions.ArgumentError('That was not one of the available choices.')
+        if response < 0 or response >= len(entries):
+            raise exceptions.ArgumentError('That was not one of the available choices. Retry ')
 
         await paginator.stop()
         return response
