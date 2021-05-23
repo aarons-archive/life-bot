@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 import discord
 from discord.ext import commands
@@ -37,29 +37,32 @@ class Context(commands.Context):
     # Properties
 
     @property
-    def voice_client(self) -> Player:
+    def voice_client(self) -> Optional[Player]:
         return self.guild.voice_client if self.guild else None
 
     # Custom properties
 
     @property
-    def user_config(self) -> objects.UserConfig:
-        return self.bot.user_manager.configs.get(getattr(self.author, 'id', None), self.bot.user_manager.default_config)
+    def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+        return self.bot.user_manager.get_config(getattr(self.author, 'id'))
 
     @property
-    def guild_config(self) -> objects.GuildConfig:
-        return self.bot.guild_manager.configs.get(getattr(self.guild, 'id', None), self.bot.guild_manager.default_config)
+    def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+        return self.bot.guild_manager.get_config(getattr(self.guild, 'id'))
 
     @property
     def colour(self) -> discord.Colour:
 
-        if isinstance(self.author, discord.Member):  # skipcq: PTC-W0048
-            if roles := list(reversed([role for role in self.author.roles if role.colour.value != 0])):
-                return roles[0].colour
+        if self.user_config.colour != config.COLOUR:
+            return self.user_config.colour
+        elif self.guild_config.colour != config.COLOUR:
+            return self.guild_config.colour
+        elif isinstance(self.author, discord.Member) and ((roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))) is not None):  # skipcq: PTC-W0048
+            return roles[0].colour
 
-        return discord.Colour(config.COLOUR)
+        return config.COLOUR
 
-    # Main paginators
+    # Paginators
 
     async def paginate(
             self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True, codeblock: bool = False,
@@ -140,7 +143,7 @@ class Context(commands.Context):
         await paginator.stop()
         return response
 
-    # Other
+    # Miscellaneous
 
     async def try_dm(self, **kwargs) -> Optional[discord.Message]:
 

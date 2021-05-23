@@ -19,6 +19,7 @@ import discord
 import pendulum
 import rapidfuzz
 
+import config
 from utilities import enums, objects
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 __log__ = logging.getLogger('utilities.objects.guild')
 
 
-class GuildConfig:
+class DefaultGuildConfig:
 
     __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
 
@@ -42,7 +43,7 @@ class GuildConfig:
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
 
-        self._colour: discord.Colour = discord.Colour(int(data.get('colour', '0xF1C40F'), 16))
+        self._colour: discord.Colour = discord.Colour(int(colour, 16)) if (colour := data.get('colour')) else config.COLOUR
         self._embed_size: enums.EmbedSize = enums.EmbedSize(data.get('embed_size', 0))
         self._prefixes: list[str] = data.get('prefixes', [])
 
@@ -91,12 +92,16 @@ class GuildConfig:
     def tags(self) -> dict[str, objects.Tag]:
         return self._tags
 
-    # Misc
 
-    async def delete(self) -> None:
+class GuildConfig(DefaultGuildConfig):
 
-        await self.bot.db.execute('DELETE FROM guilds WHERE id = $1', self.id)
-        del self.bot.guild_manager.configs[self.id]
+    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
+
+    def __init__(self, bot: Life, data: dict) -> None:
+        super().__init__(bot, data)
+
+    def __repr__(self) -> str:
+        return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour=\'{self.colour}\' embed_size={self.embed_size}>'
 
     # Config
 
@@ -109,7 +114,7 @@ class GuildConfig:
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, colour: discord.Colour = discord.Colour.gold()) -> None:
+    async def set_colour(self, colour: discord.Colour = config.COLOUR) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
@@ -193,3 +198,10 @@ class GuildConfig:
             return
 
         await tag.delete()
+
+    # Misc
+
+    async def delete(self) -> None:
+
+        await self.bot.db.execute('DELETE FROM guilds WHERE id = $1', self.id)
+        del self.bot.guild_manager.configs[self.id]

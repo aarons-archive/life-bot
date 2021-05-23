@@ -63,7 +63,7 @@ class Settings(commands.Cog):
 
         if operation == 'reset':
 
-            if ctx.guild_config.colour == discord.Colour(config.COLOUR):
+            if ctx.guild_config.colour == config.COLOUR:
                 raise exceptions.ArgumentError('This servers colour is already the default.')
 
             await ctx.guild_config.set_colour()

@@ -19,23 +19,23 @@ from typing import Optional, TYPE_CHECKING
 import discord
 import pendulum
 
+import config
 from utilities import enums, objects
 
 if TYPE_CHECKING:
     from bot import Life
 
-
 __log__ = logging.getLogger('utilities.objects.user')
 
 
-class UserConfig:
+class DefaultUserConfig:
 
     __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_timezone', '_timezone_private', '_birthday', '_birthday_private', \
                 '_xp', '_coins', '_notifications', '_reminders', '_todos', '_requires_db_update'
 
     def __init__(self, bot: Life, data: dict) -> None:
 
-        self._bot = bot
+        self._bot: Life = bot
 
         self._id: int = data.get('id', 0)
         self._created_at: pendulum.datetime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
@@ -43,26 +43,25 @@ class UserConfig:
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
 
-        self._colour: discord.Colour = discord.Colour(int(data.get('colour', '0xF1C40F'), 16))
+        self._colour: discord.Colour = discord.Colour(int(colour, 16)) if (colour := data.get('colour')) else config.COLOUR
 
-        self._timezone: Optional[pendulum.timezone] = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
+        self._timezone: Optional[pendulum.timezone] = pendulum.timezone(timezone) if (timezone := data.get('timezone')) else None
         self._timezone_private: bool = data.get('timezone_private', False)
 
-        self._birthday: Optional[pendulum.datetime] = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
+        self._birthday: Optional[pendulum.datetime] = pendulum.parse(birthday.isoformat(), tz='UTC') if (birthday := data.get('birthday')) else None
         self._birthday_private: bool = data.get('birthday_private', False)
 
         self._xp: int = data.get('xp', 0)
         self._coins: int = data.get('coins', 0)
 
         self._notifications: Optional[objects.Notifications] = None
-        self._todos: dict[int, objects.Todo] = {}
         self._reminders: dict[int, objects.Reminder] = {}
+        self._todos: dict[int, objects.Todo] = {}
 
         self._requires_db_update: set = set()
 
     def __repr__(self) -> str:
-        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} ' \
-               f'level={self.level}>'
+        return f'<DefaultUserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
 
     # Properties
 
@@ -83,7 +82,7 @@ class UserConfig:
         return self._blacklisted
 
     @property
-    def blacklisted_reason(self) -> str:
+    def blacklisted_reason(self) -> Optional[str]:
         return self._blacklisted_reason
 
     @property
@@ -119,14 +118,14 @@ class UserConfig:
         return self._notifications
 
     @property
-    def todos(self) -> dict[int, objects.Todo]:
-        return self._todos
-
-    @property
     def reminders(self) -> dict[int, objects.Reminder]:
         return self._reminders
 
-    #
+    @property
+    def todos(self) -> dict[int, objects.Todo]:
+        return self._todos
+
+    # Dynamic properties
 
     @property
     def age(self) -> Optional[int]:
@@ -163,17 +162,14 @@ class UserConfig:
     def next_level_xp(self) -> int:
         return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
 
-    # Misc
 
-    async def delete(self) -> None:
+class UserConfig(DefaultUserConfig):
 
-        await self.bot.db.execute('DELETE FROM users WHERE id = $1', self.id)
+    def __init__(self, bot: Life, data: dict) -> None:
+        super().__init__(bot, data)
 
-        for reminder in self.reminders.values():
-            if not reminder.done:
-                self.bot.scheduler.cancel(reminder.task)
-
-        del self.bot.user_manager.configs[self.id]
+    def __repr__(self) -> str:
+        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
 
     # Config
 
@@ -187,7 +183,7 @@ class UserConfig:
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
 
-    async def set_colour(self, colour: discord.Colour = discord.Colour.gold()) -> None:
+    async def set_colour(self, colour: discord.Colour = config.COLOUR) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
@@ -281,3 +277,15 @@ class UserConfig:
             return
 
         await todo.delete()
+
+    # Misc
+
+    async def delete(self) -> None:
+
+        await self.bot.db.execute('DELETE FROM users WHERE id = $1', self.id)
+
+        for reminder in self.reminders.values():
+            if not reminder.done:
+                self.bot.scheduler.cancel(reminder.task)
+
+        del self.bot.user_manager.configs[self.id]

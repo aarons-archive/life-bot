@@ -66,7 +66,8 @@ class UserManager:
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-        self.default_config = objects.UserConfig(bot=self.bot, data={})
+        self.DEFAULT_CONFIG = objects.DefaultUserConfig(bot=self.bot, data={})
+
         self.configs: dict[int, objects.UserConfig] = {}
 
     async def load(self) -> None:
@@ -142,7 +143,7 @@ class UserManager:
     async def create_config(self, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow('INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *', user_id)
-        notifications = await self.bot.db.fetchrow('INSERT INTO notifications (user_id) values ($1) ON CONFLICT (id) DO UPDATE SET user_id = excluded.user_id RETURNING *', user_id)
+        notifications = await self.bot.db.fetchrow('INSERT INTO notifications (user_id) values ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *', user_id)
 
         user_config = objects.UserConfig(bot=self.bot, data=data)
         user_config._notifications = objects.Notifications(bot=self.bot, user_config=user_config, data=notifications)
@@ -152,8 +153,15 @@ class UserManager:
         __log__.info(f'[USER MANAGER] Created config for user with id \'{user_config.id}\'.')
         return user_config
 
-    def get_config(self, user_id: int) -> objects.UserConfig:
-        return self.configs.get(user_id, self.default_config)
+    def get_config(self, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+        return self.configs.get(user_id, self.DEFAULT_CONFIG)
+
+    async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
+
+        if isinstance((config := self.get_config(user_id)), objects.DefaultUserConfig):
+            config = await self.create_config(user_id)
+
+        return config
 
     async def delete_config(self, user_id: int) -> None:
 
@@ -207,7 +215,7 @@ class UserManager:
                 key=lambda config: config.next_birthday
         )
 
-    # Images
+    # Level card
 
     async def create_level_card(self, user_id: int, *, guild_id: int = None) -> discord.File:
 
@@ -293,7 +301,7 @@ class UserManager:
         buffer.seek(0)
         return buffer
 
-    #
+    # Leaderboard card
 
     async def create_leaderboard(self, page: int = 0, *, guild_id: int = None) -> discord.File:
 
@@ -406,7 +414,7 @@ class UserManager:
         buffer.seek(0)
         return buffer
 
-    #
+    # Grid cards
 
     async def create_timecard(self, *, guild_id: int = None) -> discord.File:
 
