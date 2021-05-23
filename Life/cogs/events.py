@@ -193,7 +193,7 @@ class Events(commands.Cog):
                                     f'`Jump:` [Click here]({message.jump_url})', inline=False
         )
         embed.set_footer(text=f'ID: {message.id}')
-        await webhook.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author))
+        await webhook.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author) if message.author else None)
 
         await self._log_attachments(webhook=webhook, message=message)
         await self._log_embeds(webhook=webhook, message=message)
@@ -372,7 +372,7 @@ class Events(commands.Cog):
                 author=self.bot.get_user(int(payload.data.get('author', {}).get('id', 0))), channel=channel, content=payload.data.get('content', None),
                 jump_url=f'https://discord.com/channels/{getattr(guild, "id", "@me")}/{channel.id}/{payload.data["id"]}', pinned=payload.data.get('pinned'),
                 attachments=[discord.Attachment(data=a, state=self.bot._connection) for a in payload.data.get('attachments', [])],
-                embeds=[discord.Embed.from_dict(e) for e in payload.data.get('embeds')]
+                embeds=[discord.Embed.from_dict(e) for e in payload.data.get('embeds', [])]
         )
 
         if not (before := payload.cached_message):
