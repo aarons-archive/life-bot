@@ -44,20 +44,20 @@ class Context(commands.Context):
 
     @property
     def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
-        return self.bot.user_manager.get_config(getattr(self.author, 'id'))
+        return self.bot.user_manager.get_config(getattr(self.author, 'id', None))
 
     @property
     def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
-        return self.bot.guild_manager.get_config(getattr(self.guild, 'id'))
+        return self.bot.guild_manager.get_config(getattr(self.guild, 'id', None))
 
     @property
     def colour(self) -> discord.Colour:
 
         if self.user_config.colour != config.COLOUR:
             return self.user_config.colour
-        elif self.guild_config.colour != config.COLOUR:
+        if self.guild_config.colour != config.COLOUR:
             return self.guild_config.colour
-        elif isinstance(self.author, discord.Member) and ((roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))) is not None):  # skipcq: PTC-W0048
+        if isinstance(self.author, discord.Member) and ((roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))) is not None):  # skipcq: PTC-W0048
             return roles[0].colour
 
         return config.COLOUR
