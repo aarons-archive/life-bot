@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 class BasePaginator(abc.ABC):
 
-    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_messages_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
+    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_message_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
                 'page', 'BUTTONS'
 
     def __init__(

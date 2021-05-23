@@ -33,8 +33,7 @@ class Economy(commands.Cog):
         if await self.bot.redis.exists(f'{message.author.id}_xp_gain') is True:
             return
 
-        if not (user_config := self.bot.user_manager.get_config(message.author.id)):
-            user_config = await self.bot.user_manager.create_config(message.author.id)
+        user_config = await self.bot.user_manager.get_or_create_config(message.author.id)
 
         xp = random.randint(10, 25)
 
