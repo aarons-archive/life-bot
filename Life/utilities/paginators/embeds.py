@@ -24,6 +24,9 @@ if TYPE_CHECKING:
 
 class EmbedsPaginator(paginators.BasePaginator):
 
+    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_messages_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
+                'page', 'BUTTONS', '_content'
+
     def __init__(
             self, *, bot: Life = None, ctx: context.Context, entries: list[discord.Embed], timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
             content: Optional[str] = None

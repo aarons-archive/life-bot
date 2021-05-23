@@ -25,6 +25,9 @@ if TYPE_CHECKING:
 
 class EmbedPaginator(paginators.BasePaginator):
 
+    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_messages_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
+                'page', 'BUTTONS', 'header', 'footer', 'embed_title', 'embed_url', 'embed_colour', 'embed_image', 'embed_thumbnail', '_embed_footer', 'embed'
+
     def __init__(
             self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
             codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,

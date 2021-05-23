@@ -11,9 +11,8 @@
 #
 
 from utilities.paginators.base import BasePaginator
-from utilities.paginators.text import TextPaginator
 from utilities.paginators.embed import EmbedPaginator
-from utilities.paginators.file import FilePaginator
 from utilities.paginators.embeds import EmbedsPaginator
-
 from utilities.paginators.exceptions import *
+from utilities.paginators.file import FilePaginator
+from utilities.paginators.text import TextPaginator

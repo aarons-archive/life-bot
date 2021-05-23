@@ -23,6 +23,9 @@ if TYPE_CHECKING:
 
 class FilePaginator(paginators.BasePaginator):
 
+    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_messages_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
+                'page', 'BUTTONS', '_header', '_footer'
+
     def __init__(
             self, *, bot: Life = None, ctx: context.Context, entries: list[functools.partial], timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
             header: Optional[str] = None, footer: Optional[str] = None
