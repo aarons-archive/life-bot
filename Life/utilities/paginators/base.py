@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 class BasePaginator(abc.ABC):
 
     __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_message_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
-                'page', 'BUTTONS'
+                'page', 'BUTTONS', 'pages'
 
     def __init__(
             self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
@@ -65,11 +65,7 @@ class BasePaginator(abc.ABC):
             ':last:737826943520473198':     self.last
         }
 
-    # Properties
-
-    @functools.cached_property
-    def pages(self) -> list[str]:
-        return [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
+        self.pages = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
 
     # Checks
 
