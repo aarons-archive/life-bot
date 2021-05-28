@@ -59,27 +59,29 @@ class Settings(commands.Cog):
         if await self.bot.is_owner(ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
-        old_colour = ctx.guild_config.colour
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        old_colour = guild_config.colour
 
         if operation == 'reset':
 
-            if ctx.guild_config.colour == config.COLOUR:
+            if guild_config.colour == config.COLOUR:
                 raise exceptions.ArgumentError('This servers colour is already the default.')
 
-            await ctx.guild_config.set_colour()
+            await guild_config.set_colour()
 
         elif operation == 'set':
 
             if not colour:
                 raise exceptions.ArgumentError('You did not provide a valid colour argument.')
-            if ctx.guild_config.colour == colour:
+            if guild_config.colour == colour:
                 raise exceptions.ArgumentError(f'This servers colour is already `{str(colour).upper()}`.')
 
             # noinspection PyTypeChecker
-            await ctx.guild_config.set_colour(colour)
+            await guild_config.set_colour(colour)
 
         await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
-        await ctx.send(embed=discord.Embed(colour=ctx.guild_config.colour, title=f'New: {str(ctx.guild_config.colour).upper()}'))
+        await ctx.send(embed=discord.Embed(colour=guild_config.colour, title=f'New: {str(guild_config.colour).upper()}'))
 
     @settings_guild.command(name='embed-size', aliases=['embedsize', 'es'])
     async def settings_guild_embed_size(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, size: Literal['large', 'medium', 'small'] = None) -> None:
@@ -99,23 +101,25 @@ class Settings(commands.Cog):
         if await self.bot.is_owner(user=ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
         if operation == 'reset':
 
-            if ctx.guild_config.embed_size == enums.EmbedSize.LARGE:
+            if guild_config.embed_size == enums.EmbedSize.LARGE:
                 raise exceptions.ArgumentError('This servers embed size is already the default.')
 
-            await ctx.guild_config.set_embed_size()
+            await guild_config.set_embed_size()
             await ctx.reply('Reset this servers embed size.')
 
         elif operation == 'set':
 
             if not size:
                 raise exceptions.ArgumentError('You did not provide a valid size.')
-            if ctx.guild_config.embed_size == getattr(enums.EmbedSize, size.upper()):
-                raise exceptions.ArgumentError(f'This servers embed size is already `{ctx.guild_config.embed_size.name.title()}`.')
+            if guild_config.embed_size == getattr(enums.EmbedSize, size.upper()):
+                raise exceptions.ArgumentError(f'This servers embed size is already `{guild_config.embed_size.name.title()}`.')
 
-            await ctx.guild_config.set_embed_size(getattr(enums.EmbedSize, size.upper()))
-            await ctx.reply(f'Set this servers embed size to `{ctx.guild_config.embed_size.name.title()}`.')
+            await guild_config.set_embed_size(getattr(enums.EmbedSize, size.upper()))
+            await ctx.reply(f'Set this servers embed size to `{guild_config.embed_size.name.title()}`.')
 
     @settings_guild.command(name='prefix', aliases=['prefixes'])
     async def settings_guild_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
@@ -137,35 +141,37 @@ class Settings(commands.Cog):
         if await self.bot.is_owner(ctx.author) is False:
             await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
 
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
         if operation == 'add':
 
             if not prefix:
                 raise exceptions.ArgumentError('You did not provide a prefix to add.')
-            if prefix in ctx.guild_config.prefixes:
+            if prefix in guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server already has the prefix `{prefix}`.')
 
-            if len(ctx.guild_config.prefixes) > 20:
+            if len(guild_config.prefixes) > 20:
                 raise exceptions.ArgumentError('This server can not have more than 20 custom prefixes.')
 
-            await ctx.guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
+            await guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
             await ctx.reply(f'Added `{prefix}` to this servers prefixes.')
 
         elif operation == 'remove':
 
             if not prefix:
                 raise exceptions.ArgumentError('You did not provide a prefix to remove.')
-            if prefix not in ctx.guild_config.prefixes:
+            if prefix not in guild_config.prefixes:
                 raise exceptions.ArgumentError(f'This server does not have the prefix `{prefix}`.')
 
-            await ctx.guild_config.change_prefixes(enums.Operation.REMOVE, prefix=str(prefix))
+            await guild_config.change_prefixes(enums.Operation.REMOVE, prefix=str(prefix))
             await ctx.reply(f'Removed `{prefix}` from this servers prefixes.')
 
         elif operation in {'reset', 'clear'}:
 
-            if not ctx.guild_config.prefixes:
+            if not guild_config.prefixes:
                 raise exceptions.ArgumentError('This server does not have any custom prefixes.')
 
-            await ctx.guild_config.change_prefixes(enums.Operation.RESET)
+            await guild_config.change_prefixes(enums.Operation.RESET)
             await ctx.reply('Cleared this servers prefixes.')
 
 

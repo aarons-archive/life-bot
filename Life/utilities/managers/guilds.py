@@ -19,6 +19,7 @@ from discord.ext import tasks
 
 from utilities import objects
 
+
 if TYPE_CHECKING:
     from bot import Life
 
@@ -94,7 +95,7 @@ class GuildManager:
 
     async def get_or_create_config(self, guild_id: int) -> objects.GuildConfig:
 
-        if isinstance((config := self.get_config(guild_id)), objects.DefaultGuildConfig):
+        if type((config := self.get_config(guild_id))) is objects.DefaultGuildConfig:
             config = await self.create_config(guild_id)
 
         return config

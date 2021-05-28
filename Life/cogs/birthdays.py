@@ -70,8 +70,10 @@ class Birthdays(commands.Cog):
         if result[1] > pendulum.now(tz='UTC').subtract(years=13) or result[1] < pendulum.now(tz='UTC').subtract(years=200):
             raise exceptions.ArgumentError('You must be more than 13 and less than 200 years old.')
 
-        await ctx.user_config.set_birthday(result[1])
-        await ctx.reply(f'Your birthday has been set to `{utils.format_date(ctx.user_config.birthday)}`.')
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        await user_config.set_birthday(result[1])
+        await ctx.reply(f'Your birthday has been set to `{utils.format_date(user_config.birthday)}`.')
 
     @birthday.command(name='reset')
     async def birthday_reset(self, ctx: context.Context) -> None:
@@ -79,7 +81,9 @@ class Birthdays(commands.Cog):
         Resets your birthday information.
         """
 
-        await ctx.user_config.set_birthday(None)
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        await user_config.set_birthday(None)
         await ctx.reply('Your birthday was reset.')
 
     @birthday.command(name='private')
@@ -88,10 +92,12 @@ class Birthdays(commands.Cog):
         Make your birthday private.
         """
 
-        if ctx.user_config.birthday_private is True:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if user_config.birthday_private is True:
             raise exceptions.GeneralError('Your birthday is already private.')
 
-        await ctx.user_config.set_birthday(ctx.user_config.birthday, private=True)
+        await user_config.set_birthday(user_config.birthday, private=True)
         await ctx.reply('Your birthday is now private.')
 
     @birthday.command(name='public')
@@ -100,10 +106,12 @@ class Birthdays(commands.Cog):
         Make your birthday public.
         """
 
-        if ctx.user_config.birthday_private is False:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if user_config.birthday_private is False:
             raise exceptions.GeneralError('Your birthday is already public.')
 
-        await ctx.user_config.set_birthday(ctx.user_config.birthday, private=False)
+        await user_config.set_birthday(user_config.birthday, private=False)
         await ctx.reply('Your birthday is now public.')
 
     @birthday.command(name='list', aliases=['upcoming'])

@@ -121,8 +121,10 @@ class Time(commands.Cog):
         `timezone`: The timezone to use. See [here](https://skeletonclique.mrrandom.xyz/timezones) for a list of timezones in an easier to navigate format.
         """
 
-        await ctx.user_config.set_timezone(timezone.name)
-        await ctx.reply(f'Your timezone has been set to `{ctx.user_config.timezone.name}`.')
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        await user_config.set_timezone(timezone.name)
+        await ctx.reply(f'Your timezone has been set to `{user_config.timezone.name}`.')
 
     @_timezone.command(name='reset')
     async def _timezone_reset(self, ctx: context.Context) -> None:
@@ -130,8 +132,10 @@ class Time(commands.Cog):
         Resets your timezone information.
         """
 
-        await ctx.user_config.set_timezone('UTC')
-        await ctx.reply(f'Your timezone has been reset back to `{ctx.user_config.timezone.name}`.')
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        await user_config.set_timezone('UTC')
+        await ctx.reply(f'Your timezone has been reset back to `{user_config.timezone.name}`.')
 
     @_timezone.command(name='private')
     async def _timezone_private(self, ctx: context.Context) -> None:
@@ -139,10 +143,12 @@ class Time(commands.Cog):
         Make your timezone private.
         """
 
-        if ctx.user_config.timezone_private is True:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if user_config.timezone_private is True:
             raise exceptions.ArgumentError('Your timezone is already private.')
 
-        await ctx.user_config.set_timezone(ctx.user_config.timezone, private=True)
+        await user_config.set_timezone(user_config.timezone, private=True)
         await ctx.reply('Your timezone is now private.')
 
     @_timezone.command(name='public')
@@ -151,10 +157,12 @@ class Time(commands.Cog):
         Make your timezone public.
         """
 
-        if ctx.user_config.timezone_private is False:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if user_config.timezone_private is False:
             raise exceptions.ArgumentError('Your timezone is already public.')
 
-        await ctx.user_config.set_timezone(ctx.user_config.timezone, private=False)
+        await user_config.set_timezone(user_config.timezone, private=False)
         await ctx.reply('Your timezone is now public.')
 
     #
@@ -179,7 +187,8 @@ class Time(commands.Cog):
 
         content = await utils.safe_text(time['argument'], mystbin_client=self.bot.mystbin, max_characters=1800, syntax='txt')
 
-        reminder = await ctx.user_config.create_reminder(channel_id=ctx.channel.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        reminder = await user_config.create_reminder(channel_id=ctx.channel.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
 
         datetime = utils.format_datetime(reminder.datetime, seconds=True)
         datetime_difference = utils.format_difference(reminder.datetime, suppress=[])
@@ -194,7 +203,9 @@ class Time(commands.Cog):
         `content`: The content to edit the reminder with.
         """
 
-        if not (reminder := ctx.user_config.get_reminder(reminder_id)):
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800, syntax='txt')
@@ -211,7 +222,9 @@ class Time(commands.Cog):
         `content`: The repeat type to set on the reminder.
         """
 
-        if not (reminder := ctx.user_config.get_reminder(reminder_id)):
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         # noinspection PyTypeChecker
@@ -226,11 +239,13 @@ class Time(commands.Cog):
         `reminder_ids`: A list of reminders id's to delete, separated by spaces.
         """
 
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
         reminders_to_delete = []
 
         for reminder_id in reminder_ids:
 
-            if not (reminder := ctx.user_config.get_reminder(reminder_id)):
+            if not (reminder := user_config.get_reminder(reminder_id)):
                 raise exceptions.ArgumentError(f'You do not have a reminder with the id `{reminder_id}`.')
             if reminder in reminders_to_delete:
                 raise exceptions.ArgumentError(f'You provided the reminder id `{reminder_id}` more than once.')
@@ -249,7 +264,9 @@ class Time(commands.Cog):
         Display information about a reminder with the given id.
         """
 
-        if not (reminder := ctx.user_config.get_reminder(reminder_id)):
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
         difference = utils.format_difference(reminder.datetime, suppress=[])
@@ -272,7 +289,9 @@ class Time(commands.Cog):
         Display a list of your active reminders.
         """
 
-        if not (reminders := [reminder for reminder in ctx.user_config.reminders.values() if not reminder.done]):
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not (reminders := [reminder for reminder in user_config.reminders.values() if not reminder.done]):
             raise exceptions.ArgumentError('You do not have any active reminders.')
 
         entries = [
@@ -291,7 +310,9 @@ class Time(commands.Cog):
         Display a list of all your reminders.
         """
 
-        if not ctx.user_config.reminders:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not user_config.reminders:
             raise exceptions.ArgumentError('You do not have any reminders.')
 
         entries = [
@@ -301,7 +322,7 @@ class Time(commands.Cog):
             f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n'
             f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
             f'`Done:` {reminder.done}\n'
-            for reminder in sorted(ctx.user_config.reminders.values(), key=lambda reminder: reminder.datetime)
+            for reminder in sorted(user_config.reminders.values(), key=lambda reminder: reminder.datetime)
         ]
 
         await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.author}\'s reminders:')

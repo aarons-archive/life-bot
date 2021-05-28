@@ -159,7 +159,7 @@ class UserManager:
 
     async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
 
-        if type((config := self.get_config(user_id))) == objects.DefaultUserConfig:
+        if type((config := self.get_config(user_id))) is objects.DefaultUserConfig:
             config = await self.create_config(user_id)
 
         return config

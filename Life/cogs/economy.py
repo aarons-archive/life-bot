@@ -88,6 +88,8 @@ class Economy(commands.Cog):
         if not (leaderboard := self.bot.user_manager.leaderboard()):
             raise exceptions.ArgumentError('There are no leaderboard stats.')
 
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
         header = '╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n' \
                  '║ Rank  ║ XP        ║ Level ║ Name                                  ║\n' \
                  '╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n'
@@ -95,7 +97,7 @@ class Economy(commands.Cog):
         # skipcq: FLK-E127
         footer = '\n' \
                  '║       ║           ║       ║                                       ║\n' \
-                 f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {ctx.user_config.xp:<9} ║ {ctx.user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \
+                 f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \
                  '╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n\n'
 
         entries = [

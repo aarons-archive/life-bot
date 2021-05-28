@@ -32,7 +32,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tags := ctx.guild_config.get_tags_matching(name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tags := guild_config.get_tags_matching(name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         tag = tags[0]
 
@@ -41,7 +43,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`. {msg}')
 
         if tag.alias:
-            tag = ctx.guild_config.get_tag(tag_id=tag.alias)
+            tag = guild_config.get_tag(tag_id=tag.alias)
 
         await ctx.reply(tag.content)
 
@@ -54,7 +56,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tags := ctx.guild_config.get_tags_matching(name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tags := guild_config.get_tags_matching(name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         tag = tags[0]
 
@@ -63,7 +67,7 @@ class Tags(commands.Cog):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`. {msg}')
 
         if tag.alias:
-            tag = ctx.guild_config.get_tag(tag_id=tag.alias)
+            tag = guild_config.get_tag(tag_id=tag.alias)
 
         await ctx.reply(discord.utils.escape_markdown(tag.content))
 
@@ -78,10 +82,12 @@ class Tags(commands.Cog):
         name = str(name)
         content = str(content)
 
-        if tag_check := ctx.guild_config.get_tag(tag_name=name):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if tag_check := guild_config.get_tag(tag_name=name):
             raise exceptions.ArgumentError(f'There is already a tag with the name `{tag_check.name}`.')
 
-        tag = await ctx.guild_config.create_tag(user_id=ctx.author.id, name=name, content=content, jump_url=ctx.message.jump_url)
+        tag = await guild_config.create_tag(user_id=ctx.author.id, name=name, content=content, jump_url=ctx.message.jump_url)
         await ctx.reply(f'Created tag with name `{tag.name}`.')
 
     @tag.command(name='alias')
@@ -95,16 +101,18 @@ class Tags(commands.Cog):
         alias = str(alias)
         original = str(original)
 
-        if tag_check := ctx.guild_config.get_tag(tag_name=alias):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if tag_check := guild_config.get_tag(tag_name=alias):
             raise exceptions.ArgumentError(f'There is already a tag with the name `{tag_check.name}`.')
 
-        if not (original_tag := ctx.guild_config.get_tag(tag_name=original)):
+        if not (original_tag := guild_config.get_tag(tag_name=original)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{original}` to alias too.')
 
         if original_tag.alias is not None:
-            original_tag = ctx.guild_config.get_tag(tag_id=original_tag.alias)
+            original_tag = guild_config.get_tag(tag_id=original_tag.alias)
 
-        tag = await ctx.guild_config.create_tag_alias(user_id=ctx.author.id, name=alias, original=original_tag.id, jump_url=ctx.message.jump_url)
+        tag = await guild_config.create_tag_alias(user_id=ctx.author.id, name=alias, original=original_tag.id, jump_url=ctx.message.jump_url)
         await ctx.reply(f'Tag alias from `{tag.name}` to `{original}` was created.')
 
     @tag.command(name='claim')
@@ -116,7 +124,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tag := ctx.guild_config.get_tag(tag_name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
 
         if ctx.guild.get_member(tag.user_id):
@@ -135,10 +145,12 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
         if member.bot:
             raise exceptions.ArgumentError('You can not transfer tags to bots.')
 
-        if not (tag := ctx.guild_config.get_tag(tag_name=name)):
+        if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
             raise exceptions.ArgumentError('You do not own that tag.')
@@ -159,7 +171,9 @@ class Tags(commands.Cog):
         name = str(name)
         content = str(content)
 
-        if not (tag := ctx.guild_config.get_tag(tag_name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
             raise exceptions.ArgumentError('You do not own that tag.')
@@ -176,7 +190,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tag := ctx.guild_config.get_tag(tag_name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
         if tag.user_id != ctx.author.id:
             raise exceptions.ArgumentError('You do not own that tag.')
@@ -193,7 +209,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tags := ctx.guild_config.get_tags_matching(name=name, limit=100)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tags := guild_config.get_tags_matching(name=name, limit=100)):
             raise exceptions.ArgumentError(f'There are no tags similar to the search `{name}`.')
 
         entries = [f'`{index + 1}.` {tag.name}' for index, tag in enumerate(tags)]
@@ -210,7 +228,9 @@ class Tags(commands.Cog):
         if not member:
             member = ctx.author
 
-        if not (tags := ctx.guild_config.get_user_tags(member.id)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tags := guild_config.get_user_tags(member.id)):
             raise exceptions.ArgumentError(f'`{member}` does not have any tags.')
 
         entries = [f'`{index + 1}.` {tag.name}' for index, tag in enumerate(tags)]
@@ -222,7 +242,9 @@ class Tags(commands.Cog):
         Get a list of all tags in this server.
         """
 
-        if not (tags := ctx.guild_config.get_all_tags()):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tags := guild_config.get_all_tags()):
             raise exceptions.ArgumentError('There are no tags.')
 
         entries = [f'`{index + 1}.` {tag.name}' for index, tag in enumerate(tags)]
@@ -237,7 +259,9 @@ class Tags(commands.Cog):
         """
         name = str(name)
 
-        if not (tag := ctx.guild_config.get_tag(tag_name=name)):
+        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+
+        if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`.')
 
         owner = ctx.guild.get_member(tag.user_id)
@@ -246,7 +270,7 @@ class Tags(commands.Cog):
                 colour=ctx.colour, title=f'{tag.name}',
                 description=f'`Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})\n'
                             f'`Claimable:` {owner is None}\n'
-                            f'`Alias:` {ctx.guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n'
+                            f'`Alias:` {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n'
                             f'`Created on:` {utils.format_datetime(tag.created_at)}\n'
                             f'`Created:` {utils.format_difference(tag.created_at, suppress=[])} ago'
         )
