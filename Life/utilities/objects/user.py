@@ -166,9 +166,6 @@ class DefaultUserConfig:
 
 class UserConfig(DefaultUserConfig):
 
-    def __init__(self, bot: Life, data: dict) -> None:
-        super().__init__(bot=bot, data=data)
-
     def __repr__(self) -> str:
         return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
 

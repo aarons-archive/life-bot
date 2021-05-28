@@ -27,6 +27,7 @@ from discord.ext import tasks
 
 from utilities import exceptions, objects, utils
 
+
 if TYPE_CHECKING:
     from bot import Life
 
@@ -158,7 +159,7 @@ class UserManager:
 
     async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
 
-        if isinstance((config := self.get_config(user_id)), objects.DefaultUserConfig):
+        if type((config := self.get_config(user_id))) == objects.DefaultUserConfig:
             config = await self.create_config(user_id)
 
         return config
