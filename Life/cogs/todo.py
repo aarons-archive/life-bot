@@ -32,10 +32,12 @@ class Todo(commands.Cog):
             await ctx.invoke(self.todo_add, content=content)
             return
 
-        if not ctx.user_config.todos:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
-        entries = [f'[`{todo.id}`]({todo.jump_url}) {todo.content}' for todo in ctx.user_config.todos.values()]
+        entries = [f'[`{todo.id}`]({todo.jump_url}) {todo.content}' for todo in user_config.todos.values()]
         await ctx.paginate_embed(entries=entries, per_page=10, title=f'`{ctx.author.name}`\'s todo list:')
 
     @todo.command(name='list')
@@ -53,14 +55,16 @@ class Todo(commands.Cog):
         `content`: The content of your todo. Can not be more than 180 characters.
         """
 
-        if len(ctx.user_config.todos) > 100:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if len(user_config.todos) > 100:
             raise exceptions.GeneralError('You have too many todos. Try doing some of them before adding more.')
 
         content = str(content)
         if len(content) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
-        todo = await ctx.user_config.create_todo(content=content, jump_url=ctx.message.jump_url)
+        todo = await user_config.create_todo(content=content, jump_url=ctx.message.jump_url)
         await ctx.reply(f'Todo with id `{todo.id}` was created.')
 
     @todo.command(name='delete', aliases=['remove'])
@@ -71,7 +75,9 @@ class Todo(commands.Cog):
         `todo_ids`: A list of todo id's to delete, separated by spaces.
         """
 
-        if not ctx.user_config.todos:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
         todos_to_delete = []
@@ -82,7 +88,7 @@ class Todo(commands.Cog):
             except ValueError:
                 raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
 
-            if not (todo := ctx.user_config.get_todo(todo_id)):
+            if not (todo := user_config.get_todo(todo_id)):
                 raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
             if todo in todos_to_delete:
                 raise exceptions.ArgumentError(f'You provided the id `{todo_id}` more than once.')
@@ -103,11 +109,13 @@ class Todo(commands.Cog):
         Clear your todo list.
         """
 
-        if not ctx.user_config.todos:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
-        count = len(ctx.user_config.todos)
-        for todo in ctx.user_config.todos.copy().values():
+        count = len(user_config.todos)
+        for todo in user_config.todos.copy().values():
             await todo.delete()
 
         await ctx.reply(f'Cleared your todo list of `{count}` todo{"s" if count > 1 else ""}.')
@@ -121,7 +129,9 @@ class Todo(commands.Cog):
         `content`: The content of the new todo.
         """
 
-        if not ctx.user_config.todos:
+        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+
+        if not user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
         content = str(content)
@@ -133,7 +143,7 @@ class Todo(commands.Cog):
         except ValueError:
             raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
 
-        if not (todo := ctx.user_config.todos.get(todo_id)):
+        if not (todo := user_config.todos.get(todo_id)):
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
         await todo.change_content(content=content, jump_url=ctx.message.jump_url)
