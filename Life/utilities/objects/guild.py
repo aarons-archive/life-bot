@@ -22,6 +22,7 @@ import rapidfuzz
 import config
 from utilities import enums, objects
 
+
 if TYPE_CHECKING:
     from bot import Life
 
@@ -96,6 +97,9 @@ class DefaultGuildConfig:
 class GuildConfig(DefaultGuildConfig):
 
     __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
+
+    def __init__(self, bot: Life, data: dict) -> None:
+        super().__init__(bot=bot, data=data)
 
     def __repr__(self) -> str:
         return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour=\'{self.colour}\' embed_size={self.embed_size}>'
