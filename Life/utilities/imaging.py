@@ -332,16 +332,23 @@ def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, im
         image_buffer = io.BytesIO(image_bytes)
         image_edited_buffer = io.BytesIO()
 
-        with Image(file=image_buffer) as image:
+        with Image(file=image_buffer) as image, Color('transparent') as colour:
 
-            image_format = image.format
-            if image_format != 'GIF':
+            image.background_color = colour
+
+            if (image_format := image.format) != 'GIF':
                 text = edit_function(image, **kwargs)
+
             else:
                 image.coalesce()
-                for x in image.sequence:
-                    with x as image_frame:
-                        text = edit_function(image_frame, **kwargs)
+                image.iterator_reset()
+
+                text = edit_function(image, **kwargs)
+
+                while image.iterator_next():
+                    image.background_color = colour
+                    edit_function(image, **kwargs)
+
                 image.optimize_transparency()
 
             image.save(file=image_edited_buffer)
