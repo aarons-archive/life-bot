@@ -22,6 +22,7 @@ from discord.ext import commands
 import config
 from utilities import exceptions, objects, paginators
 
+
 if TYPE_CHECKING:
     from cogs.voice.custom.player import Player
     from bot import Life
@@ -57,7 +58,7 @@ class Context(commands.Context):
             return self.user_config.colour
         if self.guild_config.colour != config.COLOUR:
             return self.guild_config.colour
-        if isinstance(self.author, discord.Member) and ((roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))) is not None):  # skipcq: PTC-W0048
+        if isinstance(self.author, discord.Member) and (roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))):  # skipcq: PTC-W0048
             return roles[0].colour
 
         return config.COLOUR
