@@ -95,7 +95,7 @@ class Time(commands.Cog):
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
                 except commands.BadArgument:
-                    msg = '\n'.join(f'- `{match[0]}`' for match in rapidfuzz.process.extract(query=timezone, choices=pendulum.timezones, processor=lambda s: s))
+                    msg = '\n'.join(f'- `{match}`' for match, _, _ in rapidfuzz.process.extract(query=timezone, choices=pendulum.timezones, processor=lambda s: s))
                     raise exceptions.ArgumentError(f'I did not recognise that timezone or member. Maybe you meant one of these?\n{msg}')
                 else:
                     user_config = self.bot.user_manager.get_config(member.id)

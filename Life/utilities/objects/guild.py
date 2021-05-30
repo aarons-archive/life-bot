@@ -185,7 +185,7 @@ class GuildConfig(DefaultGuildConfig):
         return [tag for tag in self.tags.values() if tag.user_id == user_id]
 
     def get_tags_matching(self, name: str, *, limit: int = 5) -> Optional[list[objects.Tag]]:
-        return [self.get_tag(tag_name=match[0]) for match in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
+        return [self.get_tag(tag_name=match) for match, _, _ in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
 
     async def delete_tag(self, *, tag_name: str = None, tag_id: int = None) -> None:
 
