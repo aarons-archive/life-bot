@@ -86,7 +86,7 @@ class Dev(commands.Cog):
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
         s = 's' if len(messages) > 1 else ''
-        await ctx.reply(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=3)
+        await ctx.send(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=5)
 
     @commands.is_owner()
     @dev.command(name='guilds', aliases=['g'], hidden=True)
