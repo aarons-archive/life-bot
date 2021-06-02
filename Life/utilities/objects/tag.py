@@ -94,9 +94,9 @@ class Tag:
 
     async def delete(self) -> None:
 
-        tags = await self.bot.db.fetchrow('DELETE FROM tags WHERE id = $1 or alias = $1 RETURNING name', self.id)
+        tags = await self.bot.db.fetch('DELETE FROM tags WHERE id = $1 or alias = $1 RETURNING name', self.id)
         for tag in tags:
-            del self.guild_config.tags[tag['id']]
+            del self.guild_config.tags[tag['name']]
 
     # Config
 
