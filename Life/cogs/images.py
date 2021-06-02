@@ -8,7 +8,7 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
 
 import random
 from inspect import Parameter
@@ -667,6 +667,22 @@ class Images(commands.Cog):
 
         async with ctx.channel.typing():
             embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='cube')
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='popcorn')
+    async def popcorn(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='popcorn')
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='magik')
+    async def magik(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='magik')
             await ctx.reply(embed=embed)
 
 

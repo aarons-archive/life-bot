@@ -8,11 +8,12 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
 
 import io
 import multiprocessing
 import sys
+import random
 from typing import Callable, Optional, Union
 
 import aiohttp
@@ -282,6 +283,48 @@ def cube(image: Union[Image, SingleImage]) -> Optional[str]:
     return ''
 
 
+def popcorn(image: Union[Image, SingleImage]) -> Optional[str]:
+
+    with Image(filename=r'C:\Users\Axel\Documents\Programming\Python\Life\Life\resources\popcorn.png') as popcorn_image:
+        image.composite(popcorn_image, left=0, top=image.height - 490)
+
+    return 'Popcorn time!'
+
+
+def magik(image: Union[Image, SingleImage]) -> Optional[str]:
+
+    if image.format != 'GIF':
+        image.format = 'GIF'
+
+        for _ in range(1, 10):
+            with Image(image) as new_image:
+
+                new_image.liquid_rescale(
+                        width=int(image.width * random.uniform(0.3, 0.5)),
+                        height=int(image.height * random.uniform(0.3, 0.5)),
+                        delta_x=1,
+                )
+                new_image.liquid_rescale(
+                        width=int(image.width * random.uniform(1.6, 1.8)),
+                        height=int(image.height * random.uniform(1.6, 1.8)),
+                        delta_x=2,
+                )
+                image.sequence.append(new_image)
+
+    image.liquid_rescale(
+            width=int(image.width * 0.4),
+            height=int(image.height * 0.4),
+            delta_x=1,
+    )
+    image.liquid_rescale(
+            width=int(image.width * 1.7),
+            height=int(image.height * 1.7),
+            delta_x=2,
+    )
+
+    return 'spooky magik'
+
+
 IMAGE_OPERATIONS = {
     'adaptive_blur': adaptive_blur,
     'adaptive_sharpen': adaptive_sharpen,
@@ -318,6 +361,8 @@ IMAGE_OPERATIONS = {
     'transverse': transverse,
     'wave': wave,
     'cube': cube,
+    'popcorn': popcorn,
+    'magik': magik,
 }
 
 MAX_CONTENT_SIZE = (2 ** 20) * 25
@@ -336,7 +381,7 @@ def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, im
 
             image.background_color = colour
 
-            if (image_format := image.format) != 'GIF':
+            if image.format != 'GIF':
                 text = edit_function(image, **kwargs)
 
             else:
@@ -351,6 +396,7 @@ def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, im
 
                 image.optimize_transparency()
 
+            image_format = image.format
             image.save(file=image_edited_buffer)
 
         image_edited_buffer.seek(0)
