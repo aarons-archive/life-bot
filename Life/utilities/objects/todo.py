@@ -19,6 +19,7 @@ import pendulum
 
 from utilities import objects
 
+
 if TYPE_CHECKING:
     from bot import Life
 

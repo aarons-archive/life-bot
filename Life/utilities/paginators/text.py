@@ -17,6 +17,7 @@ from typing import Any, Optional, TYPE_CHECKING
 import config
 from utilities import context, paginators
 
+
 if TYPE_CHECKING:
     from bot import Life
 

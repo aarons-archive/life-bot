@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from utilities import objects
 
+
 if TYPE_CHECKING:
     from bot import Life
 

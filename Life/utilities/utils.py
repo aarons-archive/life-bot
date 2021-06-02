@@ -30,6 +30,7 @@ from discord.ext import commands
 import config
 from utilities import exceptions
 
+
 if TYPE_CHECKING:
     from bot import Life
 

@@ -19,6 +19,7 @@ import discord
 import config
 from utilities import context, paginators
 
+
 if TYPE_CHECKING:
     from bot import Life
 

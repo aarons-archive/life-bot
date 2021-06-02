@@ -8,15 +8,17 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import slate
 
+
 if TYPE_CHECKING:
+    from typing import Any, Union
     from cogs.voice.custom.player import Player
 
 

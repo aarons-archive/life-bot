@@ -21,6 +21,7 @@ import pendulum
 
 from utilities import enums, objects, utils
 
+
 if TYPE_CHECKING:
     from bot import Life
 

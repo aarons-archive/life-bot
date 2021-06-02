@@ -15,7 +15,6 @@ from __future__ import annotations
 import abc
 import asyncio
 import contextlib
-import functools
 from typing import Any, Optional, TYPE_CHECKING
 
 import async_timeout
@@ -23,6 +22,7 @@ import discord
 
 import config
 from utilities import context, paginators
+
 
 if TYPE_CHECKING:
     from bot import Life
