@@ -17,11 +17,10 @@ from typing import Any, Optional
 
 import discord
 import pendulum
+import slate
 from discord.ext import commands
-from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 import config
-import slate
 from bot import Life
 from utilities import context, enums, exceptions, utils
 
@@ -154,8 +153,8 @@ class Events(commands.Cog):
 
         message = None
 
-        if isinstance(error, BadLiteralArgument):
-            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.'
+        if isinstance(error, commands.BadLiteralArgument):
+            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.literals])}.'
 
         elif isinstance(error, commands.BadArgument):
             message = self.BAD_ARGUMENT_ERRORS.get(type(error), 'None').format(argument=getattr(error, 'argument', 'None'))
@@ -253,8 +252,8 @@ class Events(commands.Cog):
         time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
@@ -264,8 +263,8 @@ class Events(commands.Cog):
         time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
 
     # DM Logging
 
