@@ -18,6 +18,7 @@ from typing import Optional, TYPE_CHECKING
 
 import discord
 import pendulum
+from pendulum.tz.timezone import Timezone
 
 import config
 from utilities import enums, objects
@@ -186,11 +187,11 @@ class UserConfig(DefaultUserConfig):
         data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
 
-    async def set_timezone(self, timezone: str, *, private: bool = None) -> None:
+    async def set_timezone(self, timezone: Timezone, *, private: bool = None) -> None:
 
         private = private or self.timezone_private
 
-        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone, private, self.id)
+        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone.name, private, self.id)
         self._timezone = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
         self._timezone_private = private
 
