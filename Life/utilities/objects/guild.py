@@ -115,7 +115,7 @@ class GuildConfig(DefaultGuildConfig):
     async def set_colour(self, colour: discord.Colour = config.COLOUR) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(colour).strip("#")}', self.id)
-        self._colour = discord.Colour(int(data['colour'], 16))
+        self._colour = discord.Colour(int(data.get('colour'), 16))
 
     async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
