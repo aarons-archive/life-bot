@@ -13,6 +13,7 @@
 import collections
 import logging
 import time
+import traceback
 from typing import Optional, Union
 
 import aiohttp
@@ -23,12 +24,13 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
-import slate
 import spotify
 from discord.ext import commands
 
 import config
+import slate
 from utilities import context, help, managers  # skipcq: PYL-W0622
+
 
 __log__ = logging.getLogger(__name__)
 
@@ -125,7 +127,7 @@ class Life(commands.AutoShardedBot):
                 __log__.warning(f'[EXTENSIONS] No entry point - {extension}')
                 print(f'\n[EXTENSIONS] No entry point - {extension}\n')
             except commands.ExtensionFailed as error:
-                __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {error}')
+                __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {traceback.print_exception(type(error), error, error.__traceback__)}')
                 print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
 
         print('')
