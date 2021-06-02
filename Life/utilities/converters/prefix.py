@@ -10,14 +10,12 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from abc import ABC
-
 from discord.ext import commands
 
 from utilities import context, exceptions
 
 
-class PrefixConverter(commands.clean_content, ABC):
+class PrefixConverter(commands.clean_content):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
         self.escape_markdown = True

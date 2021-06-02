@@ -10,8 +10,6 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from abc import ABC
-
 import dateparser.search
 import pendulum
 from discord.ext import commands
@@ -20,7 +18,7 @@ import config
 from utilities import context, exceptions
 
 
-class DatetimeConverter(commands.Converter, ABC):
+class DatetimeConverter(commands.Converter):
 
     async def convert(self, ctx: context.Context, argument: str) -> dict:
 

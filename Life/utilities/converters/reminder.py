@@ -10,15 +10,13 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from abc import ABC
-
 from discord.ext import commands
 
 import config
 from utilities import context, enums, exceptions
 
 
-class ReminderRepeatTypeConverter(commands.Converter, ABC):
+class ReminderRepeatTypeConverter(commands.Converter):
 
     async def convert(self, ctx: context.Context, argument: str) -> enums.ReminderRepeatType:
 

@@ -10,14 +10,12 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from abc import ABC
-
 from discord.ext import commands
 
 from utilities import context, exceptions
 
 
-class TagNameConverter(commands.clean_content, ABC):
+class TagNameConverter(commands.clean_content):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
         self.escape_markdown = True
@@ -33,7 +31,7 @@ class TagNameConverter(commands.clean_content, ABC):
         return argument
 
 
-class TagContentConverter(commands.clean_content, ABC):
+class TagContentConverter(commands.clean_content):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
 

@@ -10,8 +10,6 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 #
 
-from abc import ABC
-
 import pendulum
 import rapidfuzz
 from discord.ext import commands
@@ -19,7 +17,7 @@ from discord.ext import commands
 from utilities import context, exceptions
 
 
-class TimezoneConverter(commands.Converter, ABC):
+class TimezoneConverter(commands.Converter):
 
     async def convert(self, ctx: context.Context, argument: str) -> pendulum.timezone:
 
