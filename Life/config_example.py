@@ -85,7 +85,6 @@ SPOTIFY_CLIENT_SECRET = ''
 ERROR_WEBHOOK_URL = ''
 GUILD_WEBHOOK_URL = ''
 DM_WEBHOOK_URL = ''
-COMMON_WEBHOOK_URL = ''
 
 # CDN information
 CDN_UPLOAD_URL = 'https://media.mrrandom.xyz/api/media'
