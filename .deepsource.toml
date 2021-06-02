@@ -5,5 +5,5 @@ name = "python"
 enabled = true
   [analyzers.meta]
   runtime_version = "3.x.x"
-  max_line_length = 180
+  max_line_length = 200
   skip_doc_coverage = ['class', 'module', 'magic', 'init']
