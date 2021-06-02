@@ -67,7 +67,7 @@ class Information(commands.Cog):
             discord.VerificationLevel.medium:  'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
             discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more than 10 '
                                                'minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more than 10 '
+            discord.VerificationLevel.highest: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more than 10 '
                                                'minutes, and a have a verified phone number.'
         }
 
@@ -261,13 +261,15 @@ class Information(commands.Cog):
         if not guild.icon:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an icon.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s icon')
-        embed.description = f'[PNG]({guild.icon_url_as(format="png")}) | [JPEG]({guild.icon_url_as(format="jpeg")}) | [WEBP]({guild.icon_url_as(format="webp")})'
-        embed.set_image(url=str(guild.icon_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Icon for `{guild.name}`:',
+                description=f'[PNG]({utils.icon(guild, format="png")}) | [JPG]({utils.icon(guild, format="jpg")}) | [WEBP]({utils.icon(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.icon(guild))
 
-        if guild.is_icon_animated():
-            embed.description += f' | [GIF]({guild.icon_url_as(format="gif")})'
-            embed.set_image(url=str(guild.icon_url_as(format='gif')))
+        if guild.icon.is_animated():
+            embed.description += f' | [GIF]({utils.icon(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
@@ -285,9 +287,15 @@ class Information(commands.Cog):
         if not guild.banner:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have a banner.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s banner')
-        embed.description = f'[PNG]({guild.banner_url_as(format="png")}) | [JPEG]({guild.banner_url_as(format="jpeg")}) | [WEBP]({guild.banner_url_as()})'
-        embed.set_image(url=str(guild.banner_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Banner for `{guild.name}`:',
+                description=f'[PNG]({utils.banner(guild, format="png")}) | [JPG]({utils.banner(guild, format="jpg")}) | [WEBP]({utils.banner(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.banner(guild))
+
+        if guild.banner.is_animated():
+            embed.description += f' | [GIF]({utils.banner(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
@@ -305,9 +313,15 @@ class Information(commands.Cog):
         if not guild.splash:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an splash.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s splash')
-        embed.description = f'[PNG]({guild.splash_url_as(format="png")}) | [JPEG]({guild.splash_url_as(format="jpeg")}) | [WEBP]({guild.splash_url_as()})'
-        embed.set_image(url=str(guild.splash_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Splash for `{guild.name}`:',
+                description=f'[PNG]({utils.splash(guild, format="png")}) | [JPG]({utils.splash(guild, format="jpg")}) | [WEBP]({utils.splash(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.splash(guild))
+
+        if guild.splash.is_animated():
+            embed.description += f' | [GIF]({utils.splash(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
@@ -374,13 +388,15 @@ class Information(commands.Cog):
         if not user:
             user = ctx.author
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{user}`\'s avatar:')
-        embed.description = f'[PNG]({user.avatar_url_as(format="png")}) | [JPEG]({user.avatar_url_as(format="jpeg")}) | [WEBP]({user.avatar_url_as(format="webp")})'
-        embed.set_image(url=str(user.avatar_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Avatar for `{user}`:',
+                description=f'[PNG]({utils.avatar(user, format="png")}) | [JPG]({utils.avatar(user, format="jpg")}) | [WEBP]({utils.avatar(user, format="webp")})'
+        )
+        embed.set_image(url=utils.avatar(user))
 
-        if user.is_avatar_animated():
-            embed.description += f' | [GIF]({user.avatar_url_as(format="gif")})'
-            embed.set_image(url=str(user.avatar_url_as(format='gif')))
+        if user.avatar.is_animated():
+            embed.description += f' | [GIF]({utils.avatar(user, format="gif")})'
 
         await ctx.reply(embed=embed)
 

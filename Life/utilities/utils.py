@@ -129,7 +129,7 @@ def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
     if any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
         badges_list.append('<:booster_level_4:738961099310760036>')
 
-    if person.is_avatar_animated() or any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
+    if person.avatar.is_animated() or any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
         badges_list.append('<:nitro:738961134958149662>')
 
     elif member := discord.utils.get(bot.get_all_members(), id=person.id):  # skipcq: PTC-W0048
@@ -140,12 +140,20 @@ def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
     return ' '.join(badges_list) if badges_list else 'N/A'
 
 
-def avatar(person: Union[discord.User, discord.Member], img_format: str = None) -> str:
-    return str(person.avatar_url_as(format=img_format or 'gif' if person.is_avatar_animated() else 'png'))
+def avatar(person: Union[discord.User, discord.Member], *, format: str = None, size: int = 1024) -> str:
+    return str(person.avatar.replace(format=format or ('gif' if person.avatar.is_animated() else 'png'), size=size))
 
 
-def icon(guild: discord.Guild, img_format: str = None) -> str:
-    return str(guild.icon_url_as(format=img_format or 'gif' if guild.is_icon_animated() else 'png'))
+def icon(guild: discord.Guild, *, format: str = None, size: int = 1024) -> str:
+    return str(guild.icon.replace(format=format or ('gif' if guild.icon.is_animated() else 'png'), size=size))
+
+
+def banner(guild: discord.Guild, *, format: str = None, size: int = 1024):
+    return str(guild.banner.replace(format=format or ('gif' if guild.banner.is_animated() else 'png'), size=size))
+
+
+def splash(guild: discord.Guild, *, format: str = None, size: int = 1024):
+    return str(guild.splash.replace(format=format or ('gif' if guild.splash.is_animated() else 'png'), size=size))
 
 
 def activities(person: discord.Member) -> str:  # sourcery no-metrics

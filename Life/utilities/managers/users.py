@@ -225,7 +225,7 @@ class UserManager:
 
         user = guild.get_member(user_id) if guild else self.bot.get_user(user_id)
         user_config = self.get_config(user_id)
-        avatar_bytes = io.BytesIO(await (user.avatar_url_as(format='png', size=512)).read())
+        avatar_bytes = io.BytesIO(await (user.avatar.replace(format='png', size=512)).read())
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, (user, user_config, avatar_bytes), guild)
         file = discord.File(fp=buffer, filename='level.png')
@@ -317,7 +317,7 @@ class UserManager:
         for user_config in leaderboard[page * 10:page * 10 + 10]:
 
             user = guild.get_member(user_config.id) if guild else self.bot.get_user(user_config.id)
-            avatar_bytes = io.BytesIO(await (user.avatar_url_as(format='png', size=256)).read())
+            avatar_bytes = io.BytesIO(await (user.avatar.replace(format='png', size=256)).read())
 
             data.append((user, user_config, avatar_bytes))
 
@@ -426,7 +426,7 @@ class UserManager:
 
         for config in timezones:
 
-            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar_url_as(format='png', size=256)).read())
+            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar.replace(format='png', size=256)).read())
             timezone = config.time.format('HH:mm (ZZ)')
 
             if users := timezone_avatars.get(timezone, []):
@@ -454,7 +454,7 @@ class UserManager:
 
         for config in birthdays:
 
-            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar_url_as(format='png', size=256)).read())
+            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar.replace(format='png', size=256)).read())
             birthday_month = config.birthday.format('MMMM')
 
             if users := birthday_avatars.get(birthday_month, []):
