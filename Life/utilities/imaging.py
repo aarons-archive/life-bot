@@ -12,8 +12,8 @@
 
 import io
 import multiprocessing
-import sys
 import random
+import sys
 from typing import Callable, Optional, Union
 
 import aiohttp

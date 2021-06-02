@@ -27,6 +27,7 @@ from bot import Life
 from cogs.voice.custom import objects, queue
 from utilities import context, enums, exceptions, utils
 
+
 __log__ = logging.getLogger('slate.bases.player')
 
 

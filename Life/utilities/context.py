@@ -130,6 +130,7 @@ class Context(commands.Context):
         )
 
         try:
+            # noinspection PyTypeChecker
             response = await self.bot.wait_for('message', check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')
