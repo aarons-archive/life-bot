@@ -26,26 +26,23 @@ from bot import Life
 @contextlib.contextmanager
 def logger():
 
-    loggers = {
-        'discord':   None,
-        'bot':       None,
-        'cogs':      None,
-        'utilities': None,
-        'slate':     None,
+    loggers: dict[str, logging.Logger] = {
+        'discord':   logging.getLogger('discord'),
+        'bot':       logging.getLogger('bot'),
+        'cogs':      logging.getLogger('cogs'),
+        'utilities': logging.getLogger('utilities'),
+        'slate':     logging.getLogger('slate'),
     }
 
-    for log_name in loggers:
+    for name, log in loggers.items():
 
-        log = logging.getLogger(log_name)
-        loggers[log_name] = log
-
-        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{log_name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
+        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
         log.addHandler(handler)
-        if os.path.isfile(f'logs/{log_name}.log'):
+
+        if os.path.isfile(f'logs/{name}.log'):
             handler.doRollover()
 
-        formatter = logging.Formatter(fmt='%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p')
-        handler.setFormatter(formatter)
+        handler.setFormatter(logging.Formatter(fmt='%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p'))
 
     loggers['discord'].setLevel(logging.INFO)
     loggers['bot'].setLevel(logging.DEBUG)
