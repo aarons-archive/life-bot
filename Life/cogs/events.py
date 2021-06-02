@@ -8,26 +8,25 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
-import collections
+
 import contextlib
 import logging
 import sys
 import traceback
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import discord
 import pendulum
-import slate
 from discord.ext import commands
 from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 import config
+import slate
 from bot import Life
 from utilities import context, enums, exceptions, utils
 
+
 __log__ = logging.getLogger(__name__)
-PartialMessage = collections.namedtuple('PartialMessage', 'id created_at guild author channel content jump_url pinned attachments embeds')
 
 
 class Events(commands.Cog):
@@ -133,70 +132,6 @@ class Events(commands.Cog):
 
         await self._log_attachments(webhook=self.bot.DMS_LOG, message=message)
         await self._log_embeds(webhook=self.bot.DMS_LOG, message=message)
-
-    async def _log_delete(self, message: discord.Message) -> None:
-
-        webhook = self.bot.COMMON_LOG if message.guild else self.bot.DMS_LOG
-        content = await utils.safe_text(message.content, mystbin_client=self.bot.mystbin, syntax='txt') if message.content else '*No content*'
-
-        embed = discord.Embed(colour=self.RED, title=f'Message deleted in `{message.channel}`:', description=content)
-        embed.add_field(
-                name='Info:', value=f'{f"`Guild:` {message.guild} `{message.guild.id}`{config.NL}" if message.guild else ""}'
-                                    f'`Channel:` {message.channel} `{message.channel.id}`\n'
-                                    f'`Author:` {message.author} `{message.author.id}`\n'
-                                    f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
-                                    f'`Jump:` [Click here]({message.jump_url})', inline=False
-        )
-        embed.set_footer(text=f'ID: {message.id}')
-        await webhook.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author))
-
-        await self._log_attachments(webhook=webhook, message=message)
-        await self._log_embeds(webhook=webhook, message=message)
-
-    async def _log_update(self, before: Union[PartialMessage, discord.Message], after: Union[PartialMessage, discord.Message]) -> None:
-
-        webhook = self.bot.COMMON_LOG if after.guild else self.bot.DMS_LOG
-        before_content = await utils.safe_text(before.content, mystbin_client=self.bot.mystbin, syntax='txt') if before.content else '*No content*'
-        after_content = await utils.safe_text(after.content, mystbin_client=self.bot.mystbin, syntax='txt') if after.content else '*No content*'
-
-        embed = discord.Embed(colour=self.ORANGE, title=f'Message edited in `{after.channel}`:')
-        embed.add_field(name='Before:', value=before_content, inline=False)
-        embed.add_field(name='After:', value=after_content, inline=False)
-        embed.add_field(
-                name='Info:', value=f'{f"`Guild:` {after.guild} `{after.guild.id}`{config.NL}" if after.guild else ""}'
-                                    f'`Channel:` {after.channel} `{after.channel.id}`\n'
-                                    f'`Author:` {after.author} `{after.author.id}`\n'
-                                    f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
-                                    f'`Jump:` [Click here]({after.jump_url})', inline=False
-        )
-        embed.set_footer(text=f'ID: {after.id}')
-        await webhook.send(embed=embed, username=f'{after.author}', avatar_url=utils.avatar(person=after.author))
-
-        await self._log_attachments(webhook=webhook, message=after)
-        await self._log_embeds(webhook=webhook, message=after)
-
-    async def _log_pin(self, message: Union[PartialMessage, discord.Message]) -> None:
-
-        webhook = self.bot.COMMON_LOG if message.guild else self.bot.DMS_LOG
-        content = await utils.safe_text(message.content, mystbin_client=self.bot.mystbin, syntax='txt') if message.content else '*No content*'
-
-        if message.pinned:
-            embed = discord.Embed(colour=self.GREEN, title=f'Message pinned in `{message.channel}`:', description=content)
-        else:
-            embed = discord.Embed(colour=self.RED, title=f'Message unpinned in `{message.channel}`:', description=content)
-
-        embed.add_field(
-                name='Info:', value=f'{f"`Guild:` {message.guild} `{message.guild.id}`{config.NL}" if message.guild else ""}'
-                                    f'`Channel:` {message.channel} `{message.channel.id}`\n'
-                                    f'`Author:` {message.author} `{getattr(message.author, "id", None)}`\n'
-                                    f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
-                                    f'`Jump:` [Click here]({message.jump_url})', inline=False
-        )
-        embed.set_footer(text=f'ID: {message.id}')
-        await webhook.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author) if message.author else None)
-
-        await self._log_attachments(webhook=webhook, message=message)
-        await self._log_embeds(webhook=webhook, message=message)
 
     # Error handling
 
@@ -308,7 +243,7 @@ class Events(commands.Cog):
         print(f'[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
         __log__.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
-    # Guild logging TODO: Update
+    # Guild logging
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
@@ -332,7 +267,7 @@ class Events(commands.Cog):
         embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
         await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
 
-    # Message logging
+    # DM Logging
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -343,52 +278,7 @@ class Events(commands.Cog):
         if message.guild or message.is_system():
             return
 
-        await self._log_dm(message=message)
-
-    @commands.Cog.listener()
-    async def on_message_delete(self, message: discord.Message) -> None:
-
-        if config.ENV == enums.Environment.DEV:
-            return
-
-        if message.author.bot or (getattr(message.guild, 'id', None) not in {config.AXELS_HOUSE_ID} if message.guild else False):
-            return
-
-        await self._log_delete(message=message)
-
-    @commands.Cog.listener()
-    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent) -> None:
-
-        if config.ENV == enums.Environment.DEV:
-            return
-
-        guild = self.bot.get_guild(payload.guild_id)
-        with contextlib.suppress(discord.HTTPException, discord.NotFound, discord.Forbidden):
-            if not (channel := guild.get_channel(int(payload.data['channel_id'])) if guild else await self.bot.fetch_channel(int(payload.data['channel_id']))):
-                return
-
-        after = PartialMessage(
-                id=payload.data['id'], created_at=discord.utils.snowflake_time(int(payload.data['id'])), guild=getattr(channel, 'guild', None),
-                author=self.bot.get_user(int(payload.data.get('author', {}).get('id', 0))), channel=channel, content=payload.data.get('content', None),
-                jump_url=f'https://discord.com/channels/{getattr(guild, "id", "@me")}/{channel.id}/{payload.data["id"]}', pinned=payload.data.get('pinned'),
-                attachments=[discord.Attachment(data=a, state=self.bot._connection) for a in payload.data.get('attachments', [])],
-                embeds=[discord.Embed.from_dict(e) for e in payload.data.get('embeds', [])]
-        )
-
-        if not (before := payload.cached_message):
-            before = PartialMessage(
-                    id=after.id, created_at=after.created_at, guild=after.guild, author=after.author, channel=after.channel, content='*No content*',
-                    jump_url=after.jump_url, pinned=False, attachments=after.attachments, embeds=after.embeds
-            )
-
-        if getattr(before.author, 'bot', False) or (getattr(before.guild, 'id', None) not in {config.AXELS_HOUSE_ID} if before.guild else False):
-            return
-
-        if before.pinned != after.pinned:
-            await self._log_pin(message=after)
-            return
-
-        await self._log_update(before=before, after=after)
+        await self._log_dm(message)
 
 
 def setup(bot: Life) -> None:
