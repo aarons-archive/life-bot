@@ -63,6 +63,7 @@ if __name__ == '__main__':
 
     os.environ['JISHAKU_NO_UNDERSCORE'] = 'True'
     os.environ['JISHAKU_HIDE'] = 'True'
+    os.environ['JISHAKU_NO_DM_TRACEBACK'] = 'True'
 
     setproctitle.setproctitle('Life')
 
