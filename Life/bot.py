@@ -41,7 +41,7 @@ class Life(commands.AutoShardedBot):
         super().__init__(
                 command_prefix=self.get_prefix, help_command=help.HelpCommand(), owner_ids=config.OWNER_IDS, intents=discord.Intents.all(),
                 activity=discord.Activity(type=discord.ActivityType.playing, name='the game of life'), max_messages=10000,
-                allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False)
+                allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False), case_insensitive=True
         )
 
         self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True,
@@ -57,7 +57,6 @@ class Life(commands.AutoShardedBot):
         self.ERROR_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.ERROR_WEBHOOK_URL)
         self.GUILD_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.GUILD_WEBHOOK_URL)
         self.DMS_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.DM_WEBHOOK_URL)
-        self.COMMON_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.COMMON_WEBHOOK_URL)
 
         self.first_ready: bool = True
 
