@@ -138,11 +138,10 @@ class Images(commands.Cog):
         `height`: The height of the border.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='border', colour=str(colour), width=width, height=height)
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='border', colour=colour_code, width=width, height=height)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -199,11 +198,10 @@ class Images(commands.Cog):
         `colour`: The colour of the border. Possible formats include `0x<hex>`, `#<hex>`, `0x#<hex>` and `rgb(<number>, <number>, <number>)`. `<number>` can be `0 - 255` or `0% to 100%` and `<hex>` can be `#FFF` or `#FFFFFF`.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='colorize', colour=str(colour))
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='colorize', colour=colour_code)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -309,11 +307,10 @@ class Images(commands.Cog):
         `outer`: The outer bevel of the frame.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='frame', matte=str(colour), height=height, width=width, inner_bevel=inner, outer_bevel=outer)
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='frame', matte=colour_code, height=height, width=width, inner_bevel=inner, outer_bevel=outer)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
