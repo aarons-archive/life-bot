@@ -8,7 +8,6 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from typing import Optional, Union
 
@@ -16,18 +15,24 @@ import discord
 from discord.ext import commands
 
 import config
-from utilities import exceptions
+from utilities import context, exceptions
 
 
 class HelpCommand(commands.HelpCommand):
 
     def __init__(self) -> None:
+
+        self.context: Optional[context.Context] = None
+
         super().__init__(command_attrs={
-            'help': 'Shows help for the bot, a category or a command.\n\n'
-                    '**<argument>** means the argument is required.\n'
-                    '**[argument]** means the argument is optional.\n'
-                    '**[a|b]** means it can be "A" or "B".\n'
-                    '**[argument...]** means you can have multiple arguments.'
+            'help': '''
+            Shows help for the bot, a category or a command.
+            
+            **<argument>** means the argument is required.
+            **[argument]** means the argument is optional.
+            **[a|b]** means it can be "A" or "B".
+            **[argument...]** means you can have multiple arguments.
+            '''
         })
 
     def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[Union[commands.Command, commands.Group]]]:
@@ -42,7 +47,7 @@ class HelpCommand(commands.HelpCommand):
         return filtered_commands
 
     @staticmethod
-    def format_commands(*, unformatted_command: list[commands.Command]) -> list[str]:
+    def format_commands(*, unformatted_command: list[Union[commands.Command, commands.Group]]) -> list[str]:
 
         formatted_commands = []
 

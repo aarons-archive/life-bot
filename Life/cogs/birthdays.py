@@ -42,10 +42,12 @@ class Birthdays(commands.Cog):
         embed = discord.Embed(
                 colour=ctx.colour,
                 title=f'{person}\'s birthday information:',
-                description=f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
-                            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
-                            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
-                            f'`Age:` {user_config.age}',
+                description=f'''
+                `Birthday:` {utils.format_date(user_config.birthday)}
+                `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+                `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+                `Age:` {user_config.age}
+                ''',
         )
         await ctx.reply(embed=embed)
 
@@ -125,11 +127,13 @@ class Birthdays(commands.Cog):
 
         # noinspection PyTypeChecker
         entries = [
-            f'__**{ctx.guild.get_member(user_config.id)}:**__\n'
-            f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
-            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
-            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
-            f'`Age:` {user_config.age}\n'
+            f'''
+            __**{ctx.guild.get_member(user_config.id)}:**__
+            `Birthday:` {utils.format_date(user_config.birthday)}
+            `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+            `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+            `Age:` {user_config.age}
+            '''
             for user_config in birthdays
         ]
         await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays:')
@@ -150,10 +154,12 @@ class Birthdays(commands.Cog):
         embed = discord.Embed(
                 colour=ctx.colour,
                 title=f'{member}\'s birthday information:',
-                description=f'`Birthday:` {utils.format_date(user_config.birthday)}\n'
-                            f'`Next birthday date:` {utils.format_date(user_config.next_birthday)}\n'
-                            f'`Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}\n'
-                            f'`Age:` {user_config.age}',
+                description=f'''
+                `Birthday:` {utils.format_date(user_config.birthday)}
+                `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+                `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+                `Age:` {user_config.age}' \
+                f'''
         )
         await ctx.reply(embed=embed)
 

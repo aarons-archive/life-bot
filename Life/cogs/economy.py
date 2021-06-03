@@ -11,6 +11,7 @@
 #
 import functools
 import random
+import textwrap
 
 import discord
 from discord.ext import commands
@@ -90,22 +91,24 @@ class Economy(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
-        header = '╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n' \
-                 '║ Rank  ║ XP        ║ Level ║ Name                                  ║\n' \
-                 '╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n'
+        header = '''
+        ╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗
+        ║ Rank  ║ XP        ║ Level ║ Name                                  ║
+        ╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣
+        '''
 
-        # skipcq: FLK-E127
-        footer = '\n' \
-                 '║       ║           ║       ║                                       ║\n' \
-                 f'║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║\n' \
-                 '╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n\n'
+        footer = f'''
+        ║       ║           ║       ║                                       ║
+        ║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║
+        ╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝
+        '''
 
         entries = [
             f'║ {index + 1:<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {utils.name(person=self.bot.get_user(user_config.id), guild=ctx.guild):<37} ║'
             for index, user_config in enumerate(leaderboard)
         ]
 
-        await ctx.paginate(entries=entries, per_page=10, header=header, footer=footer, codeblock=True)
+        await ctx.paginate(entries=entries, per_page=10, header=textwrap.dedent(header), footer=textwrap.dedent(footer), codeblock=True)
 
 
 def setup(bot: Life) -> None:

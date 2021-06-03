@@ -268,11 +268,13 @@ class Tags(commands.Cog):
 
         embed = discord.Embed(
                 colour=ctx.colour, title=f'{tag.name}',
-                description=f'`Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})\n'
-                            f'`Claimable:` {owner is None}\n'
-                            f'`Alias:` {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n'
-                            f'`Created on:` {utils.format_datetime(tag.created_at)}\n'
-                            f'`Created:` {utils.format_difference(tag.created_at, suppress=[])} ago'
+                description=f'''
+                `Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})
+                `Claimable:` {owner is None}
+                `Alias:` {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}
+                `Created on:` {utils.format_datetime(tag.created_at)}
+                `Created:` {utils.format_difference(tag.created_at, suppress=[])} ago
+                '''
         )
         await ctx.reply(embed=embed)
 

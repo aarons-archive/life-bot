@@ -9,12 +9,12 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
-
 import io
 import multiprocessing
+import multiprocessing.connection
 import random
 import sys
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 import aiohttp
 import bs4
@@ -23,56 +23,55 @@ import humanize
 import yarl
 from wand.color import Color
 from wand.image import Image
-from wand.sequence import SingleImage
 
 import config
 from utilities import context, exceptions
 
 
-def adaptive_blur(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def adaptive_blur(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.adaptive_blur(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def adaptive_sharpen(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def adaptive_sharpen(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def blueshift(image: Union[Image, SingleImage], factor: float = 1.5) -> Optional[str]:
+def blueshift(image: Image, factor: float = 1.5) -> Optional[str]:
 
     image.blue_shift(factor=factor)
     return f'Factor: {factor}'
 
 
-def blur(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def blur(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.blur(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def border(image: Union[Image, SingleImage], colour: str, width: int = 1, height: int = 1) -> Optional[str]:
+def border(image: Image, colour: str, width: int = 1, height: int = 1) -> Optional[str]:
 
     with Color(colour) as color:
         image.border(color=color, width=width, height=height, compose='atop')
     return f'Colour: {colour} | Width: {width} | Height: {height}'
 
 
-def edge(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 1) -> Optional[str]:
+def edge(image: Image, radius: float = 0, sigma: float = 1) -> Optional[str]:
 
     image.canny(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def charcoal(image: Union[Image, SingleImage], radius: float, sigma: float) -> Optional[str]:
+def charcoal(image: Image, radius: float, sigma: float) -> Optional[str]:
 
     image.charcoal(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def colorize(image: Union[Image, SingleImage], colour: str = None) -> Optional[str]:
+def colorize(image: Image, colour: str = None) -> Optional[str]:
 
     with Color(colour) as color, Color('rgb(50%, 50%, 50%)') as alpha:
         image.colorize(color=color, alpha=alpha)
@@ -80,13 +79,13 @@ def colorize(image: Union[Image, SingleImage], colour: str = None) -> Optional[s
     return f'Colour: {colour}'
 
 
-def despeckle(image: Union[Image, SingleImage]) -> Optional[str]:
+def despeckle(image: Image) -> Optional[str]:
 
     image.despeckle()
     return ''
 
 
-def floor(image: Union[Image, SingleImage]) -> Optional[str]:
+def floor(image: Image) -> Optional[str]:
 
     image.virtual_pixel = 'tile'
     arguments = (0,            0,            image.width * 0.2, image.height * 0.5,
@@ -98,32 +97,32 @@ def floor(image: Union[Image, SingleImage]) -> Optional[str]:
     return ''
 
 
-def emboss(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def emboss(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.transform_colorspace('gray')
     image.emboss(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def enhance(image: Union[Image, SingleImage]) -> Optional[str]:
+def enhance(image: Image) -> Optional[str]:
 
     image.enhance()
     return ''
 
 
-def flip(image: Union[Image, SingleImage]) -> Optional[str]:
+def flip(image: Image) -> Optional[str]:
 
     image.flip()
     return None
 
 
-def flop(image: Union[Image, SingleImage]) -> Optional[str]:
+def flop(image: Image) -> Optional[str]:
 
     image.flop()
     return None
 
 
-def frame(image: Union[Image, SingleImage], matte: str, width: int = 10, height: int = 10, inner_bevel: float = 5, outer_bevel: float = 5) -> Optional[str]:
+def frame(image: Image, matte: str, width: int = 10, height: int = 10, inner_bevel: float = 5, outer_bevel: float = 5) -> Optional[str]:
 
     with Color(matte) as color:
         image.frame(matte=color, width=width, height=height, inner_bevel=inner_bevel, outer_bevel=outer_bevel)
@@ -131,121 +130,121 @@ def frame(image: Union[Image, SingleImage], matte: str, width: int = 10, height:
     return f'Colour: {matte} | Width: {width} | Height: {height} | Inner bevel: {inner_bevel} | Outer bevel: {outer_bevel}'
 
 
-def gaussian_blur(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def gaussian_blur(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.gaussian_blur(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def implode(image: Union[Image, SingleImage], amount: float) -> Optional[str]:
+def implode(image: Image, amount: float) -> Optional[str]:
 
     image.implode(amount=amount)
     return f'Amount: {amount}'
 
 
-def kmeans(image: Union[Image, SingleImage], number_colours: int = None) -> Optional[str]:
+def kmeans(image: Image, number_colours: int = None) -> Optional[str]:
 
     image.kmeans(number_colors=number_colours)
     return f'Number of colours: {number_colours}'
 
 
-def kuwahara(image: Union[Image, SingleImage], radius: float = 1, sigma: float = None) -> Optional[str]:
+def kuwahara(image: Image, radius: float = 1, sigma: float = None) -> Optional[str]:
 
     image.kuwahara(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def motion_blur(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0, angle: float = 0) -> Optional[str]:
+def motion_blur(image: Image, radius: float = 0, sigma: float = 0, angle: float = 0) -> Optional[str]:
 
     image.motion_blur(radius=radius, sigma=sigma, angle=angle)
     return f'Radius: {radius} | Sigma: {sigma} | Angle: {angle}'
 
 
-def negate(image: Union[Image, SingleImage]) -> Optional[str]:
+def negate(image: Image) -> Optional[str]:
 
     image.negate(channel='rgb')
     return ''
 
 
-def noise(image: Union[Image, SingleImage], method: str = 'uniform', attenuate: float = 1) -> Optional[str]:
+def noise(image: Image, method: str = 'uniform', attenuate: float = 1) -> Optional[str]:
 
     image.noise(method, attenuate=attenuate)
     return f'Method: {method} | Attenuate: {attenuate}'
 
 
-def oil_paint(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def oil_paint(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.oil_paint(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def polaroid(image: Union[Image, SingleImage], angle: float = 0, caption: str = None) -> Optional[str]:
+def polaroid(image: Image, angle: float = 0, caption: str = None) -> Optional[str]:
 
     image.polaroid(angle=angle, caption=caption)
     return f'Angle: {angle} | Caption: {caption}'
 
 
-def rotate(image: Union[Image, SingleImage], degree: float, reset: bool = True) -> Optional[str]:
+def rotate(image: Image, degree: float, reset: bool = True) -> Optional[str]:
 
     image.rotate(degree=degree, reset_coords=reset)
     return f'Degree: {degree} | Reset: {reset}'
 
 
-def sepia_tone(image: Union[Image, SingleImage], threshold: float = 0.8) -> Optional[str]:
+def sepia_tone(image: Image, threshold: float = 0.8) -> Optional[str]:
 
     image.sepia_tone(threshold=threshold)
     return f'Threshold: {threshold}'
 
 
-def sharpen(image: Union[Image, SingleImage], radius: float = 0, sigma: float = 0) -> Optional[str]:
+def sharpen(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
 
     image.adaptive_sharpen(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def solarize(image: Union[Image, SingleImage], threshold: float = 0.5) -> Optional[str]:
+def solarize(image: Image, threshold: float = 0.5) -> Optional[str]:
 
     image.solarize(threshold=threshold, channel='rgb')
     return f'Threshold: {threshold}'
 
 
-def spread(image: Union[Image, SingleImage], radius: float) -> Optional[str]:
+def spread(image: Image, radius: float) -> Optional[str]:
 
     image.spread(radius=radius)
     return f'Radius: {radius}'
 
 
-def swirl(image: Union[Image, SingleImage], degree: float) -> Optional[str]:
+def swirl(image: Image, degree: float) -> Optional[str]:
 
     image.swirl(degree=degree)
     return f'Degree: {degree}'
 
 
-def transparentize(image: Union[Image, SingleImage], transparency: float) -> Optional[str]:
+def transparentize(image: Image, transparency: float) -> Optional[str]:
 
     image.transparentize(transparency=transparency)
     return f'Transparency: {transparency}'
 
 
-def transpose(image: Union[Image, SingleImage]) -> Optional[str]:
+def transpose(image: Image) -> Optional[str]:
 
     image.transpose()
     return ''
 
 
-def transverse(image: Union[Image, SingleImage]) -> Optional[str]:
+def transverse(image: Image) -> Optional[str]:
 
     image.transverse()
     return ''
 
 
-def wave(image: Union[Image, SingleImage]) -> Optional[str]:
+def wave(image: Image) -> Optional[str]:
 
     image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
     return ''
 
 
-def cube(image: Union[Image, SingleImage]) -> Optional[str]:
+def cube(image: Image) -> Optional[str]:
 
     def d3(x: int):
         return int(x / 3)
@@ -283,7 +282,7 @@ def cube(image: Union[Image, SingleImage]) -> Optional[str]:
     return ''
 
 
-def popcorn(image: Union[Image, SingleImage]) -> Optional[str]:
+def popcorn(image: Image) -> Optional[str]:
 
     with Image(filename=r'C:\Users\Axel\Documents\Programming\Python\Life\Life\resources\popcorn.png') as popcorn_image:
         image.composite(popcorn_image, left=0, top=image.height - 490)
@@ -291,7 +290,7 @@ def popcorn(image: Union[Image, SingleImage]) -> Optional[str]:
     return 'Popcorn time!'
 
 
-def magik(image: Union[Image, SingleImage]) -> Optional[str]:
+def magik(image: Image) -> Optional[str]:
 
     if image.format != 'GIF':
         image.format = 'GIF'
@@ -370,7 +369,7 @@ VALID_CONTENT_TYPES = ['image/gif', 'image/heic', 'image/jpeg', 'image/png', 'im
 COMMON_GIF_SITES = ['tenor.com', 'giphy.com']
 
 
-def _do_edit_image(child_pipe: multiprocessing.Pipe, edit_function: Callable, image_bytes: bytes, **kwargs):
+def _do_edit_image(child_pipe: multiprocessing.connection.Connection, edit_function: Callable[..., str], image_bytes: bytes, **kwargs):
 
     try:
 
@@ -421,8 +420,8 @@ async def _request_image_bytes(*, ctx: context.Context, url: str) -> bytes:
 
         if yarl.URL(url).host in COMMON_GIF_SITES:
             page = bs4.BeautifulSoup(await request.text(), features='html.parser')
-            if (url := page.find("meta",  property="og:url")) is not None:
-                return await _request_image_bytes(ctx=ctx, url=url['content'])
+            if (tag := page.find('meta', property='og:url')) is not None:
+                return await _request_image_bytes(ctx=ctx, url=tag['content'])
 
         if request.status != 200:
             raise exceptions.ImageError('Something went wrong while loading that image, check the url or try again later.')
