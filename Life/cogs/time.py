@@ -8,13 +8,14 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
+from typing import Optional
 
 import discord
 import pendulum
-import pendulum.tz.zoneinfo.exceptions
 import rapidfuzz
 from discord.ext import commands
+from pendulum.tz.zoneinfo.exceptions import InvalidTimezone
 
 import config
 from bot import Life
@@ -52,16 +53,6 @@ class Time(commands.Cog):
         entries = [f'`{timezone}:`\n{config.NL.join(members)}\n' for timezone, members in timezone_users.items()]
         await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.guild}\'s timezones:')
 
-    @commands.command(name='timecard', aliases=['tc'])
-    async def timecard(self, ctx: context.Context) -> None:
-        """
-        Creates an image with the timezones of all servers members.
-        """
-
-        async with ctx.typing():
-            file = await self.bot.user_manager.create_timecard(guild_id=getattr(ctx.guild, 'id', None))
-            await ctx.reply(file=file)
-
     @commands.command(name='timezones', aliases=['tzs'])
     async def _timezones(self, ctx: context.Context) -> None:
         """
@@ -83,35 +74,44 @@ class Time(commands.Cog):
         `timezone`: The timezone or members Name, Nickname, ID, or @Mention that you want to get.
         """
 
-        member = None
+        member: Optional[discord.Member] = None
 
         if not timezone:
             member = ctx.author
-            timezone = ctx.user_config.timezone
+            found_timezone = ctx.user_config.timezone
         else:
             try:
-                timezone = pendulum.timezone(timezone)
-            except pendulum.tz.zoneinfo.exceptions.InvalidTimezone:
+                found_timezone = pendulum.timezone(timezone)
+            except InvalidTimezone:
                 try:
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
                 except commands.BadArgument:
                     msg = '\n'.join(f'- `{match}`' for match, _, _ in rapidfuzz.process.extract(query=timezone, choices=pendulum.timezones, processor=lambda s: s))
                     raise exceptions.ArgumentError(f'I did not recognise that timezone or member. Maybe you meant one of these?\n{msg}')
                 else:
-                    user_config = self.bot.user_manager.get_config(member.id)
-                    if user_config.timezone_private is True and member.id != ctx.author.id:
+                    if (user_config := self.bot.user_manager.get_config(member.id)).timezone_private is True and member.id != ctx.author.id:
                         raise exceptions.ArgumentError('That users timezone is private.')
-                    timezone = user_config.timezone
+                    found_timezone = user_config.timezone
 
-        if not timezone:
+        if not found_timezone:
             raise exceptions.ArgumentError('That user has not set their timezone.')
 
         embed = discord.Embed(
                 colour=ctx.colour,
-                title=f'Time in `{timezone.name}`{f" for `{member}`" if member else ""}:',
-                description=f'```\n{utils.format_datetime(pendulum.now(tz=timezone))}\n```'
+                title=f'Time in `{found_timezone.name}`{f" for `{member}`" if member else ""}:',
+                description=f'```\n{utils.format_datetime(pendulum.now(tz=found_timezone))}\n```'
         )
         await ctx.reply(embed=embed)
+
+    @_timezone.command(name='card')
+    async def timecard(self, ctx: context.Context) -> None:
+        """
+        Creates an image with the timezones of all servers members.
+        """
+
+        async with ctx.typing():
+            file = await self.bot.user_manager.create_timecard(guild_id=getattr(ctx.guild, 'id', None))
+            await ctx.reply(file=file)
 
     @_timezone.command(name='set')
     async def _timezone_set(self, ctx: context.Context, *, timezone: converters.TimezoneConverter) -> None:
@@ -123,7 +123,8 @@ class Time(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
-        await user_config.set_timezone(timezone.name)
+        # noinspection PyTypeChecker
+        await user_config.set_timezone(timezone)
         await ctx.reply(f'Your timezone has been set to `{user_config.timezone.name}`.')
 
     @_timezone.command(name='reset')
@@ -134,7 +135,7 @@ class Time(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
-        await user_config.set_timezone('UTC')
+        await user_config.set_timezone(pendulum.timezone('UTC'))
         await ctx.reply(f'Your timezone has been reset back to `{user_config.timezone.name}`.')
 
     @_timezone.command(name='private')
@@ -185,7 +186,7 @@ class Time(commands.Cog):
         else:
             result = entries[0]
 
-        content = await utils.safe_text(time['argument'], mystbin_client=self.bot.mystbin, max_characters=1800, syntax='txt')
+        content = await utils.safe_content(self.bot.mystbin, time['argument'], max_characters=1500)
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
         reminder = await user_config.create_reminder(channel_id=ctx.channel.id, datetime=result[1], content=content, jump_url=ctx.message.jump_url)
@@ -208,7 +209,7 @@ class Time(commands.Cog):
         if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
-        content = await utils.safe_text(mystbin_client=self.bot.mystbin, text=content, max_characters=1800, syntax='txt')
+        content = await utils.safe_content(self.bot.mystbin, content, max_characters=1500)
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
         await ctx.reply(f'Edited content of reminder with id `{reminder.id}`.')
@@ -273,12 +274,16 @@ class Time(commands.Cog):
 
         embed = discord.Embed(
                 colour=ctx.colour, title=f'Reminder `{reminder.id}`:',
-                description=f'[__**{"In " if reminder.done is False else ""}{difference}{" ago" if reminder.done else ""}:**__]({reminder.jump_url})\n'
-                            f'`Created:` {utils.format_datetime(reminder.created_at, seconds=True)}\n'
-                            f'`Scheduled for:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-                            f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
-                            f'`Done:` {reminder.done}\n\n'
-                            f'`Content:`\n {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=1800, syntax="txt")}\n'
+                description=f'''
+                [__**{"In " if reminder.done is False else ""}{difference}{" ago" if reminder.done else ""}:**__]({reminder.jump_url})
+                `Created:` {utils.format_datetime(reminder.created_at, seconds=True)}
+                `Scheduled for:` {utils.format_datetime(reminder.datetime, seconds=True)}
+                `Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}
+                `Done:` {reminder.done}
+                
+                `Content:`
+                {reminder.content}
+                '''
         )
 
         await ctx.reply(embed=embed)
@@ -295,14 +300,15 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('You do not have any active reminders.')
 
         entries = [
-            f'`{reminder.id}`: [__**In {utils.format_difference(reminder.datetime, suppress=[])}**__]({reminder.jump_url})\n'
-            f'`When:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n'
-            f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
+            f'''
+            `{reminder.id}`: [__**In {utils.format_difference(reminder.datetime, suppress=[])}**__]({reminder.jump_url})
+            `When:` {utils.format_datetime(reminder.datetime, seconds=True)}
+            `Content:` {await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=80)}
+            `Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}'''
             for reminder in sorted(reminders, key=lambda reminder: reminder.datetime)
         ]
 
-        await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.author}\'s active reminders:')
+        await ctx.paginate_embed(entries=entries, per_page=4, title=f'{ctx.author}\'s active reminders:')
 
     @reminders.command(name='all')
     async def reminders_all(self, ctx: context.Context) -> None:
@@ -316,16 +322,16 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('You do not have any reminders.')
 
         entries = [
-            f'`{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**__]'
-            f'({reminder.jump_url})\n'
-            f'`When:` {utils.format_datetime(reminder.datetime, seconds=True)}\n'
-            f'`Content:` {await utils.safe_text(mystbin_client=self.bot.mystbin, text=reminder.content, max_characters=80, syntax="txt")}\n'
-            f'`Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}\n'
-            f'`Done:` {reminder.done}\n'
+            f'''
+            `{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**__]({reminder.jump_url})
+            `When:` {utils.format_datetime(reminder.datetime, seconds=True)}
+            `Content:` {await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=80)}
+            `Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}
+            `Done:` {reminder.done}'''
             for reminder in sorted(user_config.reminders.values(), key=lambda reminder: reminder.datetime)
         ]
 
-        await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.author}\'s reminders:')
+        await ctx.paginate_embed(entries=entries, per_page=4, title=f'{ctx.author}\'s reminders:')
 
 
 def setup(bot: Life) -> None:
