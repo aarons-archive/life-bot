@@ -189,7 +189,7 @@ class UserConfig(DefaultUserConfig):
 
     async def set_timezone(self, timezone: Timezone, *, private: bool = None) -> None:
 
-        private = private or self.timezone_private
+        private = self.timezone_private if private is None else private
 
         data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone.name, private, self.id)
         self._timezone = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
@@ -197,7 +197,7 @@ class UserConfig(DefaultUserConfig):
 
     async def set_birthday(self, birthday: pendulum.datetime, *, private: bool = None) -> None:
 
-        private = private or self.birthday_private
+        private = self.timezone_private if private is None else private
 
         data = await self.bot.db.fetchrow('UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private', birthday, private, self.id)
         self._birthday = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
