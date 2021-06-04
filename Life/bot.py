@@ -23,11 +23,11 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
-import slate
 import spotify
 from discord.ext import commands
 
 import config
+import slate
 from utilities import context, help, managers  # skipcq: PYL-W0622
 
 
@@ -86,7 +86,7 @@ class Life(commands.AutoShardedBot):
         guild_config = self.guild_manager.get_config(message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
 
-    async def start(self, *args, **kwargs) -> None:
+    async def start(self, token: str, *, reconnect: bool = True) -> None:
 
         try:
             __log__.debug('[POSTGRESQL] Attempting connection.')
@@ -129,7 +129,7 @@ class Life(commands.AutoShardedBot):
                 print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
 
         print('')
-        await super().start(*args, **kwargs)
+        await super().start(token=token, reconnect=reconnect)
 
     async def close(self) -> None:
 
