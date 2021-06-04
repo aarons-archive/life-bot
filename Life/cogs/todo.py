@@ -8,7 +8,8 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -23,7 +24,7 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
-    async def todo(self, ctx: context.Context, *, content: str = None) -> None:
+    async def todo(self, ctx: context.Context, *, content: Optional[str]) -> None:
         """
         Display a list of your todos.
         """
@@ -60,11 +61,10 @@ class Todo(commands.Cog):
         if len(user_config.todos) > 100:
             raise exceptions.GeneralError('You have too many todos. Try doing some of them before adding more.')
 
-        content = str(content)
-        if len(content) > 180:
+        if len(str(content)) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
-        todo = await user_config.create_todo(content=content, jump_url=ctx.message.jump_url)
+        todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
         await ctx.reply(f'Todo with id `{todo.id}` was created.')
 
     @todo.command(name='delete', aliases=['remove'])
@@ -134,19 +134,18 @@ class Todo(commands.Cog):
         if not user_config.todos:
             raise exceptions.GeneralError('You do not have any todos.')
 
-        content = str(content)
-        if len(content) > 180:
+        if len(str(content)) > 180:
             raise exceptions.ArgumentError('Your todo can not be more than 180 characters long.')
 
         try:
-            todo_id = int(todo_id)
+            id = int(todo_id)
         except ValueError:
             raise exceptions.ArgumentError(f'`{todo_id}` is not a valid todo id.')
 
-        if not (todo := user_config.todos.get(todo_id)):
+        if not (todo := user_config.todos.get(id)):
             raise exceptions.ArgumentError(f'You do not have a todo with the id `{todo_id}`.')
 
-        await todo.change_content(content=content, jump_url=ctx.message.jump_url)
+        await todo.change_content(content=str(content), jump_url=ctx.message.jump_url)
         await ctx.reply(f'Edited content of todo with id `{todo_id}`.')
 
 

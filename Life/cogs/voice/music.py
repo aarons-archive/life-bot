@@ -65,15 +65,17 @@ class Music(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    async def load(self) -> None:
+    """
+    async def load(self) -> None: 
 
         for node in config.NODES:
             try:
                 await self.bot.slate.create_node(cls=getattr(slate, node.pop('type')), **node)
-            except (slate.NodeConnectionError, slate.NodeCreationError) as e:
+            except slate.NodeConnectionError as e:
                 print(f'[SLATE] {e}')
             else:
                 print(f'[SLATE] Node \'{node["identifier"]}\' connected.')
+    """
 
     #
 
@@ -273,8 +275,7 @@ class Music(commands.Cog):
                     message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                 else:
                     tracks = search.tracks
-                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
-                              f'of **{len(search.tracks)}** tracks.'
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks, position=0)
             await ctx.reply(message)
@@ -312,8 +313,7 @@ class Music(commands.Cog):
                     message = f'Added the {search.source} {search.search_type} `{search.tracks[0].title}` to the beginning of the queue.'
                 else:
                     tracks = search.tracks
-                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total ' \
-                              f'of **{len(search.tracks)}** tracks.'
+                    message = f'Added the {search.source} {search.search_type} `{search.search_result.name}` to the beginning of the queue with a total of **{len(search.tracks)}** tracks.'
 
             ctx.voice_client.queue.put(items=tracks, position=0)
             await ctx.reply(message)
@@ -387,7 +387,7 @@ class Music(commands.Cog):
                 if amount <= 0 or amount > len(ctx.voice_client.queue) + 1:
                     raise exceptions.VoiceError(f'There are not enough tracks in the queue to skip that many. Choose a number between `1` and `{len(ctx.voice_client.queue) + 1}`.')
 
-                for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
+                for track in ctx.voice_client.queue[:amount - 1]:
                     if track.requester.id != ctx.author.id and ctx.author.id not in config.OWNER_IDS:
                         raise exceptions.VoiceError(f'You are not the requester of all `{amount}` of the next tracks in the queue.')
 
@@ -581,10 +581,13 @@ class Music(commands.Cog):
         for index, track in enumerate(ctx.voice_client.queue):
             embed = discord.Embed(colour=ctx.colour)
             embed.set_image(url=track.thumbnail)
-            embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(ctx.voice_client.queue)}` in the queue.\n\n' \
-                                f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
-                                f'`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n' \
-                                f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
+            embed.description = f'''
+            Showing detailed information about track `{index + 1}` out of `{len(ctx.voice_client.queue)}` in the queue.
+            
+            [{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}
+            `Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}
+            `Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}
+            '''
             entries.append(embed)
 
         await ctx.paginate_embeds(entries=entries)
@@ -625,10 +628,15 @@ class Music(commands.Cog):
         for index, track in enumerate(history):
             embed = discord.Embed(colour=ctx.colour)
             embed.set_image(url=track.thumbnail)
-            embed.description = f'Showing detailed information about track `{index + 1}` out of `{len(history)}` in the queue history.\n\n' \
-                                f'[{track.title}]({track.uri})\n\n`Author:` {track.author}\n`Source:` {track.source}\n' \
-                                f'`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n' \
-                                f'`Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}'
+            embed.description = f'''
+            Showing detailed information about track `{index + 1}` out of `{len(history)}` in the queue history.
+            
+            [{track.title}]({track.uri})
+            
+            `Author:` {track.author}\n`Source:` {track.source}
+            `Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}
+            `Live:` {track.is_stream}\n`Seekable:` {track.is_seekable}\n`Requester:` {track.requester.mention}
+            '''
             entries.append(embed)
 
         await ctx.paginate_embeds(entries=entries)

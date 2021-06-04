@@ -17,11 +17,10 @@ from typing import Any, Optional
 
 import discord
 import pendulum
+import slate
 from discord.ext import commands
-from discord.ext.alternatives.literal_converter import BadLiteralArgument
 
 import config
-import slate
 from bot import Life
 from utilities import context, enums, exceptions, utils
 
@@ -118,14 +117,18 @@ class Events(commands.Cog):
 
     async def _log_dm(self, message: discord.Message) -> None:
 
-        content = await utils.safe_text(message.content, mystbin_client=self.bot.mystbin, syntax='txt') if message.content else '*No content*'
+        content = await utils.safe_content(self.bot.mystbin, message.content) if message.content else '*No content*'
 
         embed = discord.Embed(colour=self.GREEN, title=f'DM from `{message.author}`:', description=content)
         embed.add_field(
-                name='Info:', value=f'`Channel:` {message.channel} `{message.channel.id}`\n'
-                                    f'`Author:` {message.author} `{message.author.id}`\n'
-                                    f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
-                                    f'`Jump:` [Click here]({message.jump_url})', inline=False
+                name='Info:',
+                value=f'''
+                `Channel:` {message.channel} `{message.channel.id}`
+                `Author:` {message.author} `{message.author.id}`
+                `Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}
+                `Jump:` [Click here]({message.jump_url})
+                ''',
+                inline=False
         )
         embed.set_footer(text=f'ID: {message.id}')
         await self.bot.DMS_LOG.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author))
@@ -140,8 +143,10 @@ class Events(commands.Cog):
 
         error = getattr(error, 'original', error)
 
-        __log__.error(f'[COMMANDS] Error while running command. Name: {ctx.command} | Error: {type(error)} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id})'
-                      f'{f" | Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}')
+        __log__.error(
+                f'''[COMMANDS] Error while running command. Name: {ctx.command} | Error: {type(error)} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) \
+                {f" | Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}'''
+        )
 
         if isinstance(error, commands.CommandNotFound):
             return
@@ -154,19 +159,21 @@ class Events(commands.Cog):
 
         message = None
 
-        if isinstance(error, BadLiteralArgument):
-            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.valid_arguments])}.'
+        if isinstance(error, commands.BadLiteralArgument):
+            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.literals])}.'
 
         elif isinstance(error, commands.BadArgument):
             message = self.BAD_ARGUMENT_ERRORS.get(type(error), 'None').format(argument=getattr(error, 'argument', 'None'))
 
         elif isinstance(error, commands.CommandOnCooldown):
-            message = f'The command `{ctx.command.qualified_name}` is on cooldown {self.COOLDOWN_BUCKETS.get(error.cooldown.type)}. You can retry in ' \
-                      f'`{utils.format_seconds(seconds=error.retry_after, friendly=True)}`'
+            message = f'''
+            The command `{ctx.command.qualified_name}` is on cooldown {self.COOLDOWN_BUCKETS.get(error.cooldown.type)}. You can retry in `{utils.format_seconds(error.retry_after, friendly=True)}`
+            '''
 
         elif isinstance(error, commands.MaxConcurrencyReached):
-            message = f'The command `{ctx.command.qualified_name}` is being ran at its maximum of {error.number} time{"s" if error.number > 1 else ""} ' \
-                      f'{self.CONCURRENCY_BUCKETS.get(error.per)}. Retry a bit later.'
+            message = f'''
+            The command `{ctx.command.qualified_name}` is being ran at its maximum of {error.number} time{"s" if error.number > 1 else ""} {self.CONCURRENCY_BUCKETS.get(error.per)}. Retry a bit later.
+            '''
 
         elif isinstance(error, commands.MissingPermissions):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
@@ -205,26 +212,24 @@ class Events(commands.Cog):
         print(f'\n{error_traceback}\n', file=sys.stderr)
         __log__.error(f'[COMMANDS]\n\n{traceback}\n\n')
 
-        info = f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}\n' \
-               f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n' \
-               f'`Author:` {ctx.author} `{ctx.author.id}`\n' \
-               f'`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
+        info = f'''
+        {f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}
+        `Channel:` {ctx.channel} `{ctx.channel.id}`
+        `Author:` {ctx.author} `{ctx.author.id}`
+        `Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}
+        '''
 
         embed = discord.Embed(colour=ctx.colour, description=ctx.message.content)
         embed.add_field(name='Info:', value=info)
         await self.bot.ERROR_LOG.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
-        if len(error_traceback) < 2000:
-            error_traceback = f'```py\n{error_traceback}\n```'
-        else:
-            error_traceback = await utils.safe_text(mystbin_client=self.bot.mystbin, text=error_traceback)
-
+        error_traceback = await utils.safe_content(self.bot.mystbin, f'```py{error_traceback}```', syntax='python', max_characters=2000)
         await self.bot.ERROR_LOG.send(content=error_traceback, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
     # Bot events
 
     @commands.Cog.listener()
-    async def on_socket_response(self, message: dict) -> None:
+    async def on_socket_response(self, message: dict[str, Any]) -> None:
 
         if (event := message.get('t')) is not None:
             self.bot.socket_stats[event] += 1
@@ -253,8 +258,8 @@ class Events(commands.Cog):
         time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Joined a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
@@ -264,8 +269,8 @@ class Events(commands.Cog):
         time = utils.format_datetime(pendulum.now(tz='UTC'))
         embed = discord.Embed(colour=discord.Colour.gold(), title='Left a guild',
                               description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon_url_as(format='gif' if guild.is_icon_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon_url_as(format='png'))
+        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
 
     # DM Logging
 

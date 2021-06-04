@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any, Optional, TYPE_CHECKING, Union
 
 import discord
+from discord.embeds import _EmptyEmbed
 
 import config
 from utilities import context, paginators
@@ -42,14 +43,14 @@ class EmbedPaginator(paginators.BasePaginator):
         self.header: str = header or ''
         self.footer: str = footer or ''
 
-        self.embed_title: Union[str, discord.embeds.EmptyEmbed] = title or discord.embeds.EmptyEmbed
-        self.embed_url: Union[str, discord.embeds.EmptyEmbed] = url or discord.embeds.EmptyEmbed
+        self.embed_title: Optional[str] = title
+        self.embed_url: Optional[str] = url
         self.embed_colour = discord.Colour = colour or self.ctx.colour
         self.embed_image: Optional[str] = image
         self.embed_thumbnail: Optional[str] = thumbnail
         self._embed_footer: Optional[str] = embed_footer
 
-        self.embed: discord.Embed = discord.Embed(colour=self.embed_colour, title=self.embed_title, url=self.embed_url)
+        self.embed: discord.Embed = discord.Embed(colour=self.embed_colour, title=self.embed_title or discord.embeds.EmptyEmbed, url=self.embed_url or discord.embeds.EmptyEmbed)
 
         if self.embed_image:
             self.embed.set_image(url=self.embed_image)

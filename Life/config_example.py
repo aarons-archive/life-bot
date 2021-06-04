@@ -1,16 +1,13 @@
+import discord
+
 from utilities.enums import Environment
+
 
 ENV = Environment.DEV
 
-
-if ENV == Environment.DEV:
-    TOKEN = 'beta token'
-    PREFIX = 'beta prefix'
-    COLOUR = 0x000000
-else:
-    TOKEN = 'main token'
-    PREFIX = 'main prefix'
-    COLOUR = 0xFFFFFF
+TOKEN = '' if ENV is Environment.DEV else ''
+PREFIX = '' if ENV is Environment.DEV else ''
+COLOUR = discord.Colour(0x922711) if ENV is Environment.DEV else discord.Colour(0xF8B711)
 
 # Useful values
 ZWSP = '\u200b'

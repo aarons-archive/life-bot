@@ -8,16 +8,16 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
 import logging
 import math
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
 import pendulum
+from pendulum.tz.timezone import Timezone
 
 import config
 from utilities import enums, objects
@@ -31,25 +31,25 @@ __log__ = logging.getLogger('utilities.objects.user')
 
 class DefaultUserConfig:
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_timezone', '_timezone_private', '_birthday', '_birthday_private', \
-                '_xp', '_coins', '_notifications', '_reminders', '_todos', '_requires_db_update'
+    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_timezone', '_timezone_private', '_birthday', '_birthday_private', '_xp', '_coins', \
+                '_notifications', '_reminders', '_todos', '_requires_db_update'
 
-    def __init__(self, bot: Life, data: dict) -> None:
+    def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
         self._bot: Life = bot
 
         self._id: int = data.get('id', 0)
-        self._created_at: pendulum.datetime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
+        self._created_at: pendulum.DateTime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
 
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
 
         self._colour: discord.Colour = discord.Colour(int(colour, 16)) if (colour := data.get('colour')) else config.COLOUR
 
-        self._timezone: Optional[pendulum.timezone] = pendulum.timezone(timezone) if (timezone := data.get('timezone')) else None
+        self._timezone: Optional[Timezone] = pendulum.timezone(timezone) if (timezone := data.get('timezone')) else None
         self._timezone_private: bool = data.get('timezone_private', False)
 
-        self._birthday: Optional[pendulum.datetime] = pendulum.parse(birthday.isoformat(), tz='UTC') if (birthday := data.get('birthday')) else None
+        self._birthday: Optional[pendulum.Date] = pendulum.Date(birthday.year, birthday.month, birthday.day) if (birthday := data.get('birthday')) else None
         self._birthday_private: bool = data.get('birthday_private', False)
 
         self._xp: int = data.get('xp', 0)
@@ -59,7 +59,7 @@ class DefaultUserConfig:
         self._reminders: dict[int, objects.Reminder] = {}
         self._todos: dict[int, objects.Todo] = {}
 
-        self._requires_db_update: set = set()
+        self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
         return f'<DefaultUserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
@@ -75,7 +75,7 @@ class DefaultUserConfig:
         return self._id
 
     @property
-    def created_at(self) -> pendulum.datetime:
+    def created_at(self) -> pendulum.DateTime:
         return self._created_at
 
     @property
@@ -91,7 +91,7 @@ class DefaultUserConfig:
         return self._colour
 
     @property
-    def timezone(self) -> Optional[pendulum.timezone]:
+    def timezone(self) -> Optional[Timezone]:
         return self._timezone
 
     @property
@@ -99,7 +99,7 @@ class DefaultUserConfig:
         return self._timezone_private
 
     @property
-    def birthday(self) -> Optional[pendulum.datetime]:
+    def birthday(self) -> Optional[pendulum.Date]:
         return self._birthday
 
     @property
@@ -134,21 +134,25 @@ class DefaultUserConfig:
         if not self.birthday:
             return None
 
-        return (pendulum.now(tz='UTC') - self.birthday).in_years()
+        now = pendulum.now(tz='UTC')
+        date = pendulum.date(year=now.year, month=now.month, day=now.day)
+
+        return (date - self.birthday).in_years()
 
     @property
-    def next_birthday(self) -> Optional[pendulum.datetime]:
+    def next_birthday(self) -> Optional[pendulum.DateTime]:
 
-        if not self.birthday:
+        if not self.birthday or not self.age:
             return None
 
         now = pendulum.now(tz='UTC')
-        year = now.year if now < self.birthday.add(years=self.age) else self.birthday.year + self.age + 1
+        date = now.date()
 
-        return now.replace(year=year, month=self.birthday.month, day=self.birthday.day, hour=0, minute=0, second=0, microsecond=0)
+        year = date.year if date < self.birthday.add(years=self.age) else self.birthday.year + self.age + 1
+        return now.set(year=year, month=self.birthday.month, day=self.birthday.day, hour=0, minute=0, second=0, microsecond=0)
 
     @property
-    def time(self) -> Optional[pendulum.datetime]:
+    def time(self) -> Optional[pendulum.DateTime]:
 
         if not self.timezone:
             return None
@@ -171,7 +175,7 @@ class UserConfig(DefaultUserConfig):
 
     # Config
 
-    async def set_blacklisted(self, blacklisted: bool, *, reason: str = None) -> None:
+    async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
 
         data = await self.bot.db.fetchrow(
                 'UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason',
@@ -186,20 +190,20 @@ class UserConfig(DefaultUserConfig):
         data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{str(colour).strip("#")}', self.id)
         self._colour = discord.Colour(int(data['colour'], 16))
 
-    async def set_timezone(self, timezone: str, *, private: bool = None) -> None:
+    async def set_timezone(self, timezone: Timezone, *, private: Optional[bool] = None) -> None:
 
-        private = private or self.timezone_private
+        private = self.timezone_private if private is None else private
 
-        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone, private, self.id)
-        self._timezone = pendulum.timezone(data.get('timezone')) if data.get('timezone') else None
+        data = await self.bot.db.fetchrow('UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private', timezone.name, private, self.id)
+        self._timezone = pendulum.timezone(tz) if (tz := data.get('timezone')) else None
         self._timezone_private = private
 
-    async def set_birthday(self, birthday: pendulum.datetime, *, private: bool = None) -> None:
+    async def set_birthday(self, birthday: pendulum.Date, *, private: Optional[bool] = None) -> None:
 
-        private = private or self.birthday_private
+        private = self.timezone_private if private is None else private
 
         data = await self.bot.db.fetchrow('UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private', birthday, private, self.id)
-        self._birthday = pendulum.parse(data.get('birthday').isoformat(), tz='UTC') if data.get('birthday') else None
+        self._birthday = pendulum.Date(year=birthday.year, month=birthday.month, day=birthday.day) if (birthday := data.get('birthday')) else None
         self._birthday_private = private
 
     def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
@@ -227,7 +231,7 @@ class UserConfig(DefaultUserConfig):
     # Reminders
 
     async def create_reminder(
-            self, *, channel_id: int, datetime: pendulum.datetime, content: str, jump_url: str = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
+            self, *, channel_id: int, datetime: pendulum.DateTime, content: str, jump_url: Optional[str] = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
     ) -> objects.Reminder:
 
         data = await self.bot.db.fetchrow(
@@ -256,7 +260,7 @@ class UserConfig(DefaultUserConfig):
 
     # Todos
 
-    async def create_todo(self, *, content: str, jump_url: str = None) -> objects.Todo:
+    async def create_todo(self, *, content: str, jump_url: Optional[str] = None) -> objects.Todo:
 
         data = await self.bot.db.fetchrow('INSERT INTO todos (user_id, content, jump_url) VALUES ($1, $2, $3) RETURNING *', self.id, content, jump_url)
 

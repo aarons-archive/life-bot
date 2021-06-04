@@ -8,9 +8,8 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
-from typing import Literal
+from typing import Literal, Optional
 
 import discord
 from discord.ext import commands
@@ -42,7 +41,7 @@ class Settings(commands.Cog):
         pass
 
     @settings_guild.command(name='colour', aliases=['color'])
-    async def settings_guild_colour(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, *, colour: commands.ColourConverter = None) -> None:
+    async def settings_guild_colour(self, ctx: context.Context, operation: Optional[Literal['set', 'reset']], *, colour: Optional[commands.ColourConverter]) -> None:
         """
         Manage this servers colour settings.
 
@@ -84,7 +83,7 @@ class Settings(commands.Cog):
         await ctx.send(embed=discord.Embed(colour=guild_config.colour, title=f'New: {str(guild_config.colour).upper()}'))
 
     @settings_guild.command(name='embed-size', aliases=['embedsize', 'es'])
-    async def settings_guild_embed_size(self, ctx: context.Context, operation: Literal['set', 'reset'] = None, size: Literal['large', 'medium', 'small'] = None) -> None:
+    async def settings_guild_embed_size(self, ctx: context.Context, operation: Optional[Literal['set', 'reset']], size: Optional[Literal['large', 'medium', 'small']]) -> None:
         """
         Manage this servers embed size settings.
 
@@ -122,7 +121,7 @@ class Settings(commands.Cog):
             await ctx.reply(f'Set this servers embed size to `{guild_config.embed_size.name.title()}`.')
 
     @settings_guild.command(name='prefix', aliases=['prefixes'])
-    async def settings_guild_prefix(self, ctx: context.Context, operation: Literal['add', 'remove', 'reset', 'clear'] = None, prefix: converters.PrefixConverter = None) -> None:
+    async def settings_guild_prefix(self, ctx: context.Context, operation: Optional[Literal['add', 'remove', 'reset', 'clear']], prefix: Optional[converters.PrefixConverter]) -> None:
         """
         Manage this servers prefix settings.
 

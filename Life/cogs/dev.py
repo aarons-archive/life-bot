@@ -46,14 +46,14 @@ class Dev(commands.Cog):
         process_id = self.bot.process.pid
         thread_count = self.bot.process.num_threads()
 
-        description = [f'I am running on the python version **{python_version}** on the OS **{platform}** using the discord.py version **{discordpy_version}**. '
-                       f'The process is running as **{process_name}** on PID **{process_id}** and is using **{thread_count}** threads.']
-
-        if isinstance(self.bot, commands.AutoShardedBot):
-            description.append(f'The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see **{len(self.bot.guilds)}** guilds and '
-                               f'**{len(self.bot.users)}** users.')
-        else:
-            description.append(f'The bot is not sharded and can see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.')
+        description = [
+            f'''
+            I am running on the python version **{python_version}** on the OS **{platform}** using the discord.py version **{discordpy_version}**. The process is running as **{process_name}** \
+            on PID **{process_id}** and is using **{thread_count}** threads. 
+            
+            The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.
+            '''
+        ]
 
         with self.bot.process.oneshot():
 
@@ -63,11 +63,15 @@ class Dev(commands.Cog):
             unique_memory = humanize.naturalsize(memory_info.uss)
             cpu_usage = self.bot.process.cpu_percent(interval=None)
 
-            description.append(f'The process is using **{physical_memory}** of physical memory, **{virtual_memory}** of virtual memory and **{unique_memory}** of memory '
-                               f'that is unique to the process. It is also using **{cpu_usage}%** of CPU.')
+            description.append(
+                    f'''
+                    The process is using **{physical_memory}** of physical memory, **{virtual_memory}** of virtual memory and **{unique_memory}** of memory that is unique to the process. It is \
+                    also using **{cpu_usage}%** of CPU.
+                    '''
+            )
 
         embed = discord.Embed(title=f'{self.bot.user.name} bot information page.', colour=0xF5F5F5)
-        embed.description = '\n\n'.join(description)
+        embed.description = ''.join(description)
 
         await ctx.reply(embed=embed)
 
@@ -86,7 +90,7 @@ class Dev(commands.Cog):
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
         s = 's' if len(messages) > 1 else ''
-        await ctx.reply(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=3)
+        await ctx.send(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=5)
 
     @commands.is_owner()
     @dev.command(name='guilds', aliases=['g'], hidden=True)

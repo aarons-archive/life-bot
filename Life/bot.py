@@ -8,7 +8,6 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 import collections
 import logging
@@ -24,11 +23,11 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
+import slate
 import spotify
 from discord.ext import commands
 
 import config
-import slate
 from utilities import context, help, managers  # skipcq: PYL-W0622
 
 
@@ -54,9 +53,9 @@ class Life(commands.AutoShardedBot):
         self.process = psutil.Process()
         self.socket_stats = collections.Counter()
 
-        self.ERROR_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.ERROR_WEBHOOK_URL)
-        self.GUILD_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.GUILD_WEBHOOK_URL)
-        self.DMS_LOG = discord.Webhook.from_url(adapter=discord.AsyncWebhookAdapter(self.session), url=config.DM_WEBHOOK_URL)
+        self.ERROR_LOG = discord.Webhook.from_url(session=self.session, url=config.ERROR_WEBHOOK_URL)
+        self.GUILD_LOG = discord.Webhook.from_url(session=self.session, url=config.GUILD_WEBHOOK_URL)
+        self.DMS_LOG = discord.Webhook.from_url(session=self.session,  url=config.DM_WEBHOOK_URL)
 
         self.first_ready: bool = True
 
@@ -178,7 +177,7 @@ class Life(commands.AutoShardedBot):
             raise commands.CheckFailure(f'This guild is blacklisted from using this bot with the reason:\n\n`{ctx.guild_config.blacklisted_reason}`')
 
         needed_permissions = {permission: value for permission, value in self.text_permissions if value is True}
-        current_permissions = dict(ctx.me.permissions_in(ctx.channel))
+        current_permissions = dict(ctx.channel.permissions_for(ctx.me))
         if not ctx.guild:
             current_permissions['read_messages'] = True
 

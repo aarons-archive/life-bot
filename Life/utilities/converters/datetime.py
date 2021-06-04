@@ -8,7 +8,8 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
+from typing import Union
 
 import dateparser.search
 import pendulum
@@ -20,17 +21,12 @@ from utilities import context, exceptions
 
 class DatetimeConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> dict:
+    async def convert(self, ctx: context.Context, argument: str) -> dict[str, Union[str, dict[str, pendulum.DateTime]]]:
 
-        searches = dateparser.search.search_dates(argument, languages=['en'], settings=config.DATEPARSER_SETTINGS)
-        if not searches:
+        if not (searches := dateparser.search.search_dates(argument, languages=['en'], settings=config.DATEPARSER_SETTINGS)):
             raise exceptions.ArgumentError('I was unable to find a time and/or date within your query, try to be more explicit or put the time/date first.')
 
-        data = {'argument': argument, 'found': {}}
-
-        for datetime_phrase, datetime in searches:
-            datetime = pendulum.instance(dt=datetime, tz='UTC')
-            data['found'][datetime_phrase] = datetime
+        data = {'argument': argument, 'found': {str(phrase): pendulum.instance(datetime, tz='UTC') for phrase, datetime in searches}}
 
         if not data['found']:
             raise exceptions.ArgumentError('I was able to find a time and/or date within your query, however it seems to be in the past.')

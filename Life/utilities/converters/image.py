@@ -8,7 +8,6 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 import yarl
 from discord.ext import commands
@@ -50,4 +49,4 @@ class ImageConverter(commands.Converter):
             if response.status == 200:
                 return url
 
-        raise commands.ConversionError
+        raise commands.ConversionError(self, original=argument)

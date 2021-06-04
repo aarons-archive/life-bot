@@ -8,15 +8,16 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 import collections
+from typing import Any, Optional
 
 import discord
 import psutil
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
+import config
 import time
 from bot import Life
 from utilities import context, converters, exceptions, utils
@@ -65,10 +66,9 @@ class Information(commands.Cog):
             discord.VerificationLevel.none:    'None - No criteria set.',
             discord.VerificationLevel.low:     'Low - Must have a verified email.',
             discord.VerificationLevel.medium:  'Medium - Must have a verified email and be registered on discord for more than 5 minutes.',
-            discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more than 10 '
-                                               'minutes.',
-            discord.VerificationLevel.extreme: 'Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more than 10 '
-                                               'minutes, and a have a verified phone number.'
+            discord.VerificationLevel.high:    'High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the guild for more than 10 minutes.',
+            discord.VerificationLevel.highest: '''Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the guild for more than 10 minutes, and a 
+                                                  have a verified phone number.'''
         }
 
         self.CONTENT_FILTER_LEVELS = {
@@ -109,22 +109,37 @@ class Information(commands.Cog):
         Display the bot's system stats.
         """
 
+        cpu_freq: Any = psutil.cpu_freq()
         embed = discord.Embed(colour=ctx.colour)
-        embed.add_field(name='System CPU:',
-                        value=f'`Frequency:` {round(psutil.cpu_freq().current, 2)} Mhz\n`Cores:` {psutil.cpu_count()}\n'
-                              f'`Usage:` {psutil.cpu_percent(interval=0.1)}%')
-        embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name='System Memory:',
-                        value=f'`Available:` {round(psutil.virtual_memory().available / 1048576)} MB\n`Total:` {round(psutil.virtual_memory().total / 1048576)} MB\n'
-                              f'`Used:` {round(psutil.virtual_memory().used / 1048576)} MB')
 
-        embed.add_field(name='System Disk:',
-                        value=f'`Total:` {round(psutil.disk_usage("/").total / 1073741824, 2)} GB\n`Used:` {round(psutil.disk_usage("/").used / 1073741824, 2)} GB\n'
-                              f'`Free:` {round(psutil.disk_usage("/").free / 1073741824, 2)} GB')
+        embed.add_field(
+                name='System CPU:',
+                value=f'`Frequency:` {round(cpu_freq.current, 2)} Mhz\n`Cores:` {psutil.cpu_count()}\n`Usage:` {psutil.cpu_percent(interval=0.1)}%'
+        )
         embed.add_field(name='\u200B', value='\u200B')
-        embed.add_field(name='Process information:',
-                        value=f'`Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent(interval=None)}%\n'
-                              f'`Threads:` {self.bot.process.num_threads()}')
+        embed.add_field(
+                name='System Memory:',
+                value=f'''
+                `Available:` {round(psutil.virtual_memory().available / 1048576)} MB\n`Total:` {round(psutil.virtual_memory().total / 1048576)} MB
+                `Used:` {round(psutil.virtual_memory().used / 1048576)} MB
+                '''
+        )
+
+        embed.add_field(
+                name='System Disk:',
+                value=f'''
+                `Total:` {round(psutil.disk_usage("/").total / 1073741824, 2)} GB\n`Used:` {round(psutil.disk_usage("/").used / 1073741824, 2)} GB
+                `Free:` {round(psutil.disk_usage("/").free / 1073741824, 2)} GB
+                '''
+        )
+        embed.add_field(name='\u200B', value='\u200B')
+        embed.add_field(
+                name='Process information:',
+                value=f'''
+                `Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent(interval=None)}% 
+                `Threads:` {self.bot.process.num_threads()}
+                '''
+        )
 
         await ctx.reply(embed=embed)
 
@@ -137,7 +152,7 @@ class Information(commands.Cog):
         await ctx.reply(f'{round(self.bot.latency * 1000)}ms')
 
     @commands.command(name='server', aliases=['serverinfo'])
-    async def server(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
+    async def server(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
         """
         Display information about a server.
 
@@ -152,30 +167,42 @@ class Information(commands.Cog):
         features = []
         for feature, description in sorted(self.FEATURES.items(), key=lambda kv: kv[1][0]):
             if feature in guild.features:
-                features.append(f'<:tick:739315349715026001> {description}')
+                features.append(f'{config.TICK} {description}')
             else:
-                features.append(f'<:cross:739315361811267594> {description}')
+                features.append(f'{config.CROSS} {description}')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s information.')
-        embed.description = f'`Owner:` {guild.owner}\n' \
-                            f'`Created on:` {utils.format_datetime(guild.created_at)}\n' \
-                            f'`Created:` {utils.format_difference(guild.created_at)} ago\n' \
-                            f'`Members:` {guild.member_count} | ' \
-                            f'<:online:737824551471284356>{statuses[discord.Status.online]} | <:away:627627415119724554>{statuses[discord.Status.idle]} | ' \
-                            f'<:dnd:627627404784828416>{statuses[discord.Status.dnd]} | <:offline:627627415144890389>{statuses[discord.Status.offline]}\n' \
-                            f'`Content filter level:` {self.CONTENT_FILTER_LEVELS[ctx.guild.explicit_content_filter]} | ' \
-                            f'`2FA:` {self.MFA_LEVELS[ctx.guild.mfa_level]}\n' \
-                            f'`Verification level:` {self.VERIFICATION_LEVELS[ctx.guild.verification_level]}\n'
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'`{guild.name}`\'s information.',
+                description=f'''
+                `Owner:` {guild.owner}
+                `Created on:` {utils.format_datetime(guild.created_at)}
+                `Created:` {utils.format_difference(guild.created_at)} ago
+                `Members:` {guild.member_count} | {config.ONLINE}{statuses[discord.Status.online]} | {config.IDLE}{statuses[discord.Status.idle]} | {config.DND}{statuses[discord.Status.dnd]} | \
+                {config.OFFLINE}{statuses[discord.Status.offline]}
+                `Content filter level:` {self.CONTENT_FILTER_LEVELS[ctx.guild.explicit_content_filter]} | `2FA:` {self.MFA_LEVELS[ctx.guild.mfa_level]}
+                `Verification level:` {self.VERIFICATION_LEVELS[ctx.guild.verification_level]}
+                '''
+        )
 
-        embed.add_field(name='Boost information:',
-                        value=f'`Nitro Tier:` {ctx.guild.premium_tier} | `Boosters:` {ctx.guild.premium_subscription_count} | '
-                              f'`File Size:` {round(ctx.guild.filesize_limit / 1048576)} MB | `Bitrate:` {round(ctx.guild.bitrate_limit / 1000)} kbps\n'
-                              f'`Emoji limit:` {ctx.guild.emoji_limit} | `Normal emoji:` {sum([1 for emoji in guild.emojis if not emoji.animated])} | '
-                              f'`Animated emoji:` {sum([1 for emoji in guild.emojis if emoji.animated])}')
+        embed.add_field(
+                name='Boost information:',
+                value=f'''
+                `Nitro Tier:` {ctx.guild.premium_tier} | `Boosters:` {ctx.guild.premium_subscription_count} | `File Size:` {round(ctx.guild.filesize_limit / 1048576)} MB | \
+                `Bitrate:` {round(ctx.guild.bitrate_limit / 1000)} kbps
+                `Emoji limit:` {ctx.guild.emoji_limit} | `Normal emoji:` {sum([1 for emoji in guild.emojis if not emoji.animated])} | 
+                `Animated emoji:` {sum([1 for emoji in guild.emojis if emoji.animated])}
+                '''
+        )
 
-        embed.add_field(name='Channels:',
-                        value=f'`AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | `AFK channel:` {ctx.guild.afk_channel}\n `Voice region:` {utils.voice_region(x=ctx.guild)} | '
-                              f'`Text channels:` {len(ctx.guild.text_channels)} | `Voice channels:` {len(ctx.guild.voice_channels)}\n', inline=False)
+        embed.add_field(
+                name='Channels:',
+                value=f'''
+                `AFK timeout:` {int(ctx.guild.afk_timeout / 60)}m | `AFK channel:` {ctx.guild.afk_channel}
+                `Voice region:` {utils.voice_region(ctx.guild)} | `Text channels:` {len(ctx.guild.text_channels)} | `Voice channels:` {len(ctx.guild.voice_channels)}
+                ''',
+                inline=False
+        )
 
         embed.add_field(name='Features:', value='\n'.join(features[0:8]))
         embed.add_field(name='\u200b', value='\n'.join(features[8:16]))
@@ -183,7 +210,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name='role', aliases=['roleinfo'])
-    async def role(self, ctx: context.Context, *, role: discord.Role = None) -> None:
+    async def role(self, ctx: context.Context, *, role: Optional[discord.Role]) -> None:
         """
         Displays information about a role.
 
@@ -195,16 +222,21 @@ class Information(commands.Cog):
                 raise exceptions.ArgumentError('You must be in a guild to use this command without passing the `role` argument.')
             role = ctx.author.top_role
 
-        embed = discord.Embed(colour=ctx.colour, title=f'Information about the role `{role}`')
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Information about the role `{role}`',
+                description=f'''
+                `Name:` {role.name}
+                `Hoisted:` {role.hoist}
+                `Position (from bottom):` {role.position}
+                `Managed:` {role.managed}
+                `Mentionable:` {role.mentionable}
+                `Colour:` {str(role.colour).upper()}
+                `Created at:` {utils.format_datetime(role.created_at)}
+                `Members with this role:` {len(role.members)}
+                '''
+        )
         embed.set_footer(text=f'ID: {role.id}')
-        embed.description = f'`Name:` {role.name}\n' \
-                            f'`Hoisted:` {role.hoist}\n' \
-                            f'`Position (from bottom):` {role.position}\n' \
-                            f'`Managed:` {role.managed}\n' \
-                            f'`Mentionable:` {role.mentionable}\n' \
-                            f'`Colour:` {str(role.colour).upper()}\n' \
-                            f'`Created at:` {utils.format_datetime(role.created_at)}\n' \
-                            f'`Members with this role:` {len(role.members)}'
 
         await ctx.reply(embed=embed)
 
@@ -221,7 +253,7 @@ class Information(commands.Cog):
         await ctx.paginate(entries=roles, per_page=20, codeblock=True)
 
     @commands.command(name='channels')
-    async def channels(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
+    async def channels(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
         """
         Displays a list of a servers channels.
 
@@ -234,21 +266,18 @@ class Information(commands.Cog):
         channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
-        entries = [
-            f'{utils.channel_emoji(channel=channel)}{channel}'
-            for channel in sorted(channels, key=lambda channel: channel.position)
-        ]
+        entries = [f'{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}' for channel in sorted(channels, key=lambda channel: channel.position)]
 
         space = '\u200b ' * 5
         for category in sorted(categories, key=lambda category: category.position):
-            entries.append(f'<:category:738960756233601097> **{category}**')
+            entries.append(f'{config.CHANNELS["CATEGORY"]} **{category}**')
             for channel in category.channels:
-                entries.append(f'{space}{utils.channel_emoji(channel=channel)}{channel}')
+                entries.append(f'{space}{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}')
 
         await ctx.paginate_embed(entries=entries, per_page=30, title=f'`{guild.name}`\'s channels.')
 
     @commands.command(name='icon')
-    async def icon(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
+    async def icon(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
         """
         Displays a server's icon.
 
@@ -261,18 +290,20 @@ class Information(commands.Cog):
         if not guild.icon:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an icon.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s icon')
-        embed.description = f'[PNG]({guild.icon_url_as(format="png")}) | [JPEG]({guild.icon_url_as(format="jpeg")}) | [WEBP]({guild.icon_url_as(format="webp")})'
-        embed.set_image(url=str(guild.icon_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Icon for `{guild.name}`:',
+                description=f'[PNG]({utils.icon(guild, format="png")}) | [JPG]({utils.icon(guild, format="jpg")}) | [WEBP]({utils.icon(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.icon(guild))
 
-        if guild.is_icon_animated():
-            embed.description += f' | [GIF]({guild.icon_url_as(format="gif")})'
-            embed.set_image(url=str(guild.icon_url_as(format='gif')))
+        if guild.icon.is_animated():
+            embed.description += f' | [GIF]({utils.icon(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
     @commands.command(name='banner')
-    async def banner(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
+    async def banner(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
         """
         Displays a servers banner.
 
@@ -285,14 +316,20 @@ class Information(commands.Cog):
         if not guild.banner:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have a banner.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s banner')
-        embed.description = f'[PNG]({guild.banner_url_as(format="png")}) | [JPEG]({guild.banner_url_as(format="jpeg")}) | [WEBP]({guild.banner_url_as()})'
-        embed.set_image(url=str(guild.banner_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Banner for `{guild.name}`:',
+                description=f'[PNG]({utils.banner(guild, format="png")}) | [JPG]({utils.banner(guild, format="jpg")}) | [WEBP]({utils.banner(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.banner(guild))
+
+        if guild.banner.is_animated():
+            embed.description += f' | [GIF]({utils.banner(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
     @commands.command(name='splash')
-    async def splash(self, ctx: context.Context, *, guild: guild_converter.Guild = None) -> None:
+    async def splash(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
         """
         Displays a servers splash.
 
@@ -305,14 +342,20 @@ class Information(commands.Cog):
         if not guild.splash:
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an splash.')
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{guild.name}`\'s splash')
-        embed.description = f'[PNG]({guild.splash_url_as(format="png")}) | [JPEG]({guild.splash_url_as(format="jpeg")}) | [WEBP]({guild.splash_url_as()})'
-        embed.set_image(url=str(guild.splash_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Splash for `{guild.name}`:',
+                description=f'[PNG]({utils.splash(guild, format="png")}) | [JPG]({utils.splash(guild, format="jpg")}) | [WEBP]({utils.splash(guild, format="webp")})'
+        )
+        embed.set_image(url=utils.splash(guild))
+
+        if guild.splash.is_animated():
+            embed.description += f' | [GIF]({utils.splash(guild, format="gif")})'
 
         await ctx.reply(embed=embed)
 
     @commands.command(name='member', aliases=['memberinfo'])
-    async def member(self, ctx: context.Context, *, member: discord.Member = None) -> None:
+    async def member(self, ctx: context.Context, *, member: Optional[discord.Member]) -> None:
         """
         Displays a member's account information.
 
@@ -322,28 +365,38 @@ class Information(commands.Cog):
         if member is None:
             member = ctx.author
 
-        embed = discord.Embed(colour=self.COLOURS[member.status], title=f'`{member}`\'s information.')
-        embed.description = f'`Discord Name:` {member} {"<:owner:738961071729278987>" if member.id == member.guild.owner.id else ""}\n' \
-                            f'`Created on:` {utils.format_datetime(member.created_at)}\n' \
-                            f'`Created:` {utils.format_difference(member.created_at)} ago\n' \
-                            f'`Badges:` {utils.badges(bot=self.bot, person=member)}\n' \
-                            f'`Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{"<:phone:738961150343118958>" if member.is_on_mobile() else ""}\n' \
-                            f'`Bot:` {str(member.bot).replace("True", "Yes").replace("False", "No")}\n' \
-                            f'`Activity:` {utils.activities(person=member)}'
+        embed = discord.Embed(
+                colour=self.COLOURS[member.status],
+                title=f'`{member}`\'s information.',
+                description=f'''
+                `Discord Name:` {member} {config.CROWN if member.id == member.guild.owner.id else ""}
+                `Created on:` {utils.format_datetime(member.created_at)}
+                `Created:` {utils.format_difference(member.created_at)} ago
+                `Badges:` {utils.badge_emojis(member)}
+                `Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{config.PHONE if member.is_on_mobile() else ""}
+                `Bot:` {str(member.bot).replace("True", "Yes").replace("False", "No")}
+                `Activity:`\n{utils.activities(member)}
+                '''
+        )
 
-        embed.add_field(name='Server related information:',
-                        value=f'`Server nickname:` {member.nick}\n'
-                              f'`Joined on:` {utils.format_datetime(member.joined_at)}\n'
-                              f'`Joined:` {utils.format_difference(member.joined_at)} ago\n'
-                              f'`Join Position:` {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}\n'
-                              f'`Top role:` {member.top_role.mention}\n'
-                              f'`Role count:` {len(member.roles) - 1}', inline=False)
+        embed.add_field(
+                name='Server related information:',
+                value=f'''
+                `Server nickname:` {member.nick}
+                `Joined on:` {utils.format_datetime(member.joined_at)}
+                `Joined:` {utils.format_difference(member.joined_at)} ago
+                `Join Position:` {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(member) + 1}
+                `Top role:` {member.top_role.mention}
+                `Role count:` {len(member.roles) - 1}
+                ''',
+                inline=False
+        )
 
         embed.set_footer(text=f'ID: {member.id}')
         await ctx.reply(embed=embed)
 
     @commands.command(name='user', aliases=['userinfo'])
-    async def user(self, ctx: context.Context, *, user: converters.UserConverter = None) -> None:
+    async def user(self, ctx: context.Context, *, user: Optional[converters.UserConverter]) -> None:
         """
         Displays a user's account information.
 
@@ -353,18 +406,23 @@ class Information(commands.Cog):
         if not user:
             user = await self.bot.fetch_user(ctx.author.id)
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{user}`\'s information:')
-        embed.description = f'`Discord name:` {user}\n' \
-                            f'`Created on:` {utils.format_datetime(user.created_at)}\n' \
-                            f'`Created:` {utils.format_difference(user.created_at)} ago\n' \
-                            f'`Badges:` {utils.badges(bot=self.bot, person=user)}\n' \
-                            f'`Bot:` {str(user.bot).replace("True", "Yes").replace("False", "No")}'
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'`{user}`\'s information:',
+                description=f'''
+                `Discord name:` {user}
+                `Created on:` {utils.format_datetime(user.created_at)}
+                `Created:` {utils.format_difference(user.created_at)} ago
+                `Badges:` {utils.badge_emojis(person=user)}
+                `Bot:` {str(user.bot).replace("True", "Yes").replace("False", "No")}
+                '''
+        )
 
         embed.set_footer(text=f'ID: {user.id}')
         await ctx.reply(embed=embed)
 
     @commands.command(name='avatar', aliases=['avy'])
-    async def avatar(self, ctx: context.Context, *, user: converters.UserConverter = None) -> None:
+    async def avatar(self, ctx: context.Context, *, user: Optional[converters.UserConverter]) -> None:
         """
         Display a user's avatar.
 
@@ -374,13 +432,15 @@ class Information(commands.Cog):
         if not user:
             user = ctx.author
 
-        embed = discord.Embed(colour=ctx.colour, title=f'`{user}`\'s avatar:')
-        embed.description = f'[PNG]({user.avatar_url_as(format="png")}) | [JPEG]({user.avatar_url_as(format="jpeg")}) | [WEBP]({user.avatar_url_as(format="webp")})'
-        embed.set_image(url=str(user.avatar_url_as(format='png')))
+        embed = discord.Embed(
+                colour=ctx.colour,
+                title=f'Avatar for `{user}`:',
+                description=f'[PNG]({utils.avatar(user, format="png")}) | [JPG]({utils.avatar(user, format="jpg")}) | [WEBP]({utils.avatar(user, format="webp")})'
+        )
+        embed.set_image(url=utils.avatar(user))
 
-        if user.is_avatar_animated():
-            embed.description += f' | [GIF]({user.avatar_url_as(format="gif")})'
-            embed.set_image(url=str(user.avatar_url_as(format='gif')))
+        if user.avatar.is_animated():
+            embed.description += f' | [GIF]({utils.avatar(user, format="gif")})'
 
         await ctx.reply(embed=embed)
 

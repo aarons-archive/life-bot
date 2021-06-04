@@ -9,7 +9,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
-
 import random
 from inspect import Parameter
 from typing import Literal, Optional
@@ -128,7 +127,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='border')
-    async def border(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None, width: int = 10, height: int = 10) -> None:
+    async def border(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter], width: int = 10, height: int = 10) -> None:
         """
         Creates a border around the given image.
 
@@ -138,11 +137,10 @@ class Images(commands.Cog):
         `height`: The height of the border.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='border', colour=str(colour), width=width, height=height)
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='border', colour=colour_code, width=width, height=height)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -191,7 +189,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='colorize', aliases=['colourise'])
-    async def colorize(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None) -> None:
+    async def colorize(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter]) -> None:
         """
         Colorizes the given image with a random colour.
 
@@ -199,11 +197,10 @@ class Images(commands.Cog):
         `colour`: The colour of the border. Possible formats include `0x<hex>`, `#<hex>`, `0x#<hex>` and `rgb(<number>, <number>, <number>)`. `<number>` can be `0 - 255` or `0% to 100%` and `<hex>` can be `#FFF` or `#FFFFFF`.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='colorize', colour=str(colour))
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='colorize', colour=colour_code)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -295,7 +292,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='frame')
-    async def frame(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None, width: int = 20, height: int = 20,
+    async def frame(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter], width: int = 20, height: int = 20,
                     inner: int = 5, outer: int = 10) -> None:
         """
         Creates a frame around the given image with a 3D effect.
@@ -309,11 +306,10 @@ class Images(commands.Cog):
         `outer`: The outer bevel of the frame.
         """
 
-        if not colour:
-            colour = '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        colour_code = str(colour) if colour else '#%02X%02X%02X' % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='frame', matte=str(colour), height=height, width=width, inner_bevel=inner, outer_bevel=outer)
+            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit_type='frame', matte=colour_code, height=height, width=width, inner_bevel=inner, outer_bevel=outer)
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -475,7 +471,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='polaroid')
-    async def polaroid(self, ctx: context.Context, image: Optional[converters.ImageConverter], angle: float = 0, *, caption: str = None) -> None:
+    async def polaroid(self, ctx: context.Context, image: Optional[converters.ImageConverter], angle: float = 0, *, caption: Optional[str]) -> None:
         """
         Puts the image in the center of a polaroid-like card.
 

@@ -8,7 +8,6 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
@@ -18,7 +17,7 @@ import datetime as dt
 import logging
 import os
 import pathlib
-from typing import TYPE_CHECKING, Union
+from typing import Literal, Optional, TYPE_CHECKING, Union
 
 import aiohttp
 import discord
@@ -34,40 +33,33 @@ from utilities import exceptions
 if TYPE_CHECKING:
     from bot import Life
 
-__log__ = logging.getLogger(__name__)
+
+__log__ = logging.getLogger('utilities.utils')
 
 
-async def safe_text(text: str, mystbin_client: mystbin.Client, max_characters: int = 1024, syntax: str = 'python') -> str:
+def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulum.DateTime:
 
-    if len(text) <= max_characters:
-        return text
+    if type(datetime) is dt.datetime and datetime.tzinfo == dt.timezone.utc:
+        datetime = datetime.replace(tzinfo=None)
 
-    try:
-        return await mystbin_client.post(text, syntax=syntax)
-    except mystbin.APIError as error:
-        __log__.warning(f'[ERRORS] Error while uploading error traceback to mystbin | Code: {error.status_code} | Message: {error.message}')
-        return f'{text[:max_characters]}'  # Not the best solution.
+    return pendulum.instance(datetime, tz='UTC')
 
 
-def convert_datetime(datetime: Union[dt.datetime, pendulum.datetime]) -> pendulum.datetime:
-    return pendulum.instance(datetime, tz='UTC') if isinstance(datetime, dt.datetime) else datetime
+def format_datetime(datetime: Union[dt.datetime, pendulum.DateTime], *, seconds: bool = False) -> str:
+    return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
 
 
-def format_datetime(datetime: Union[dt.datetime, pendulum.datetime], *, seconds: bool = False) -> str:
-    datetime = convert_datetime(datetime)
-    return datetime.format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zz{"ZZ" if datetime.timezone.name != "UTC" else ""}')
+def format_date(date: pendulum.Date) -> str:
+    return date.format('dddd MMMM Do YYYY')
 
 
-def format_date(datetime: Union[dt.datetime, pendulum.datetime]) -> str:
-    return convert_datetime(datetime).format('dddd MMMM Do YYYY')
-
-
-def format_difference(datetime: Union[dt.datetime, pendulum.datetime], *, suppress=None) -> str:
+def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[list[str]] = None) -> str:
 
     if suppress is None:
         suppress = ['seconds']
 
-    return humanize.precisedelta(pendulum.now(tz='UTC').diff(convert_datetime(datetime)), format='%0.0f', suppress=suppress)
+    datetime = convert_datetime(datetime)
+    return humanize.precisedelta(pendulum.now(tz=datetime.timezone).diff(datetime), format='%0.0f', suppress=suppress)
 
 
 def format_seconds(seconds: int, *, friendly: bool = False) -> str:
@@ -82,6 +74,162 @@ def format_seconds(seconds: int, *, friendly: bool = False) -> str:
         return f'{f"{days}d " if not days == 0 else ""}{f"{hours}h " if not hours == 0 or not days == 0 else ""}{minutes}m {seconds}s'
 
     return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
+
+
+def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, discord.StageChannel], *, guild: discord.Guild, member: discord.Member) -> str:
+
+    overwrites = channel.permissions_for(member)
+
+    if isinstance(channel, discord.StageChannel):
+        emoji = 'STAGE' if overwrites.connect else 'STAGE_LOCKED'
+    elif isinstance(channel, discord.VoiceChannel):
+        emoji = 'VOICE' if overwrites.connect else 'VOICE_LOCKED'
+    elif channel == guild.rules_channel:
+        emoji = 'RULES'
+    else:
+        if channel.is_news():
+            emoji = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
+        elif channel.is_nsfw():
+            emoji = 'TEXT_NSFW'
+        else:
+            emoji = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
+
+    return config.CHANNELS[emoji]
+
+
+def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
+
+    badges = [badge for badge_name, badge in config.BADGES.items() if dict(person.public_flags)[badge_name] is True]
+
+    if dict(person.public_flags)['verified_bot'] is False and person.bot:
+        badges.append(config.BOT)
+    if isinstance(person, discord.Member) and person.premium_since:
+        badges.append(config.BOOSTER)
+
+    if person.avatar.is_animated():
+        badges.append(config.NITRO)
+
+    elif isinstance(person, discord.Member) and ((activity_list := [activity for activity in person.activities if isinstance(activity, discord.CustomActivity)]) is not None):
+        if activity_list[0].emoji and activity_list[0].emoji.is_custom_emoji():
+            badges.append(config.NITRO)
+
+    return ' '.join(badges) if badges else 'N/A'
+
+
+def activities(member: discord.Member) -> str:   # sourcery no-metrics
+
+    if not member.activities:
+        return 'N/A'
+
+    message = []
+
+    for activity in member.activities:
+
+        if isinstance(activity, discord.Activity):
+
+            if activity.type is discord.ActivityType.playing:
+                message.append(f'• Playing **{activity.name}** {f" | **{activity.details}**" if activity.details else ""}{f" | **{activity.state}**" if activity.state else ""}')
+
+            elif activity.type is discord.ActivityType.watching:
+                message.append(f'• Watching **{activity.name}**')
+
+            elif activity.type is discord.ActivityType.competing:
+                message.append(f'• Competing in **{activity.name}**')
+
+        elif isinstance(activity, discord.Spotify):
+
+            message.append(f''' \
+            • Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{", ".join(activity.artists)}** \
+            {f" from the album **{activity.album}**" if activity.album and activity.album != activity.title else ""} \
+            ''')
+
+        elif isinstance(activity, discord.Game):
+            message.append(f'• Playing **{activity.name}**')
+
+        elif isinstance(activity, discord.Streaming):
+            message.append(f'• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**')
+
+        elif isinstance(activity, discord.CustomActivity):
+            message.append(f'• {f"{activity.emoji} " if activity.emoji else ""}{f"{activity.name}" if activity.name else ""}')
+
+    return '\n'.join(message)
+
+
+def avatar(person: Union[discord.User, discord.Member], *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
+    return str(person.avatar.replace(format=format or ('gif' if person.avatar.is_animated() else 'png'), size=size)) if person.avatar else None
+
+
+def icon(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.icon.replace(format=format or ('gif' if guild.icon.is_animated() else 'png'), size=size)) if guild.icon else None
+
+
+def banner(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.banner.replace(format=format or ('gif' if guild.banner.is_animated() else 'png'), size=size)) if guild.banner else None
+
+
+def splash(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.splash.replace(format=format or ('gif' if guild.splash.is_animated() else 'png'), size=size)) if guild.splash else None
+
+
+def format_command(command: commands.Command) -> str:
+    return f'{config.PREFIX}{command.qualified_name}'
+
+
+def voice_region(obj: Union[discord.VoiceChannel, discord.StageChannel, discord.Guild]) -> str:
+
+    if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
+        return 'Automatic'
+
+    if region is discord.VoiceRegion.hongkong:
+        region_name = 'Hong Kong'
+    elif region is discord.VoiceRegion.southafrica:
+        region_name = 'South Africa'
+    else:
+        region_name = obj.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
+
+    return region_name
+
+
+def name(person: Union[discord.Member, discord.User], *, guild: Optional[discord.Guild] = None) -> str:
+
+    if guild and isinstance(person, discord.User):
+        member = guild.get_member(person.id)
+        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, 'name', 'Unknown')
+
+    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, 'name', 'Unknown')
+
+
+#
+
+
+async def upload_image(bot: Life, file: discord.File, file_format: str = 'png') -> str:
+
+    data = aiohttp.FormData()
+    data.add_field('file', file.fp, filename=f'file.{file_format.lower()}')
+
+    async with bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
+
+        if response.status == 413:
+            raise exceptions.GeneralError('The image produced was too large to upload.')
+
+        post = await response.json()
+
+    return f'https://media.mrrandom.xyz/{post.get("filename")}'
+
+
+async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = 'txt', max_characters: int = 1024) -> str:
+
+    if len(content) <= max_characters:
+        return content
+
+    try:
+        paste = await mystbin_client.post(content, syntax=syntax)
+        return paste.url
+    except mystbin.APIError:
+        return content[:max_characters]
+
+
+#
 
 
 def line_count() -> tuple[int, int, int, int]:
@@ -120,97 +268,6 @@ def line_count() -> tuple[int, int, int, int]:
     return files, functions, lines, classes
 
 
-def badges(bot: Life, person: Union[discord.User, discord.Member]) -> str:
-
-    badges_list = [badge for badge_name, badge in config.BADGE_EMOJIS.items() if dict(person.public_flags)[badge_name] is True]
-    if dict(person.public_flags)['verified_bot'] is False and person.bot:
-        badges_list.append('<:bot:738979752244674674>')
-
-    if any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
-        badges_list.append('<:booster_level_4:738961099310760036>')
-
-    if person.is_avatar_animated() or any(getattr(guild.get_member(person.id), 'premium_since', None) for guild in bot.guilds):
-        badges_list.append('<:nitro:738961134958149662>')
-
-    elif member := discord.utils.get(bot.get_all_members(), id=person.id):  # skipcq: PTC-W0048
-        if activity := discord.utils.get(member.activities, type=discord.ActivityType.custom):
-            if activity.emoji and activity.emoji.is_custom_emoji():
-                badges_list.append('<:nitro:738961134958149662>')
-
-    return ' '.join(badges_list) if badges_list else 'N/A'
-
-
-def avatar(person: Union[discord.User, discord.Member], img_format: str = None) -> str:
-    return str(person.avatar_url_as(format=img_format or 'gif' if person.is_avatar_animated() else 'png'))
-
-
-def icon(guild: discord.Guild, img_format: str = None) -> str:
-    return str(guild.icon_url_as(format=img_format or 'gif' if guild.is_icon_animated() else 'png'))
-
-
-def activities(person: discord.Member) -> str:  # sourcery no-metrics
-
-    if not person.activities:
-        return 'N/A'
-
-    message = '\n'
-    for activity in person.activities:
-
-        if activity.type == discord.ActivityType.custom:
-            message += '• '
-            if activity.emoji:
-                message += f'{activity.emoji} '
-            if activity.name:
-                message += f'{activity.name}'
-            message += '\n'
-
-        elif activity.type == discord.ActivityType.playing:
-
-            message += f'• Playing **{activity.name}** '
-            if not isinstance(activity, discord.Game):
-                if activity.details:
-                    message += f'**| {activity.details}** '
-                if activity.state:
-                    message += f'**| {activity.state}** '
-                message += '\n'
-
-        elif activity.type == discord.ActivityType.streaming:
-            message += f'• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**\n'
-
-        elif activity.type == discord.ActivityType.watching:
-            message += f'• Watching **{activity.name}**\n'
-
-        elif activity.type == discord.ActivityType.listening:
-
-            if isinstance(activity, discord.Spotify):
-                url = f'https://open.spotify.com/track/{activity.track_id}'
-                message += f'• Listening to **[{activity.title}]({url})** by **{", ".join(activity.artists)}** '
-                if activity.album and activity.album != activity.title:
-                    message += f'from the album **{activity.album}** '
-                message += '\n'
-            else:
-                message += f'• Listening to **{activity.name}**\n'
-
-    return message
-
-
-def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel]) -> str:
-
-    overwrites = channel.overwrites_for(channel.guild.default_role)
-
-    if isinstance(channel, discord.VoiceChannel):
-        emoji = 'voice' if overwrites.connect else 'voice_locked'
-    else:
-        if channel.is_news():
-            emoji = 'news' if overwrites.read_messages else 'news_locked'
-        elif channel.is_nsfw():
-            emoji = 'text_nsfw'
-        else:
-            emoji = 'text' if overwrites.read_messages else 'text_locked'
-
-    return config.CHANNEL_EMOJIS[emoji]
-
-
 def darken_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
 
     h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
@@ -222,46 +279,3 @@ def lighten_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
     h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
     r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
     return int(r * 255), int(g * 255), int(b * 255)
-
-
-def format_command(command: commands.Command) -> str:
-    return f'{config.PREFIX}{command.qualified_name}'
-
-
-def voice_region(x: Union[discord.VoiceChannel, discord.StageChannel, discord.Guild]) -> str:
-
-    x = x.rtc_region if isinstance(x, (discord.VoiceChannel, discord.StageChannel)) else x.region
-    if not x:
-        return 'Automatic'
-
-    region = x.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
-    if x == discord.VoiceRegion.hongkong:
-        region = 'Hong Kong'
-    if x == discord.VoiceRegion.southafrica:
-        region = 'South Africa'
-
-    return region
-
-
-def name(person: Union[discord.Member, discord.User], *, guild: discord.Guild = None) -> str:
-
-    if guild and isinstance(person, discord.User):
-        member = guild.get_member(person.id)
-        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, 'name', 'Unknown')
-
-    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, 'name', 'Unknown')
-
-
-async def upload_image(bot: Life, file: discord.File, file_format: str = 'png') -> str:
-
-    data = aiohttp.FormData()
-    data.add_field('file', file.fp, filename=f'file.{file_format.lower()}')
-
-    async with bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
-
-        if response.status == 413:
-            raise exceptions.GeneralError('The image produced was too large to upload.')
-
-        post = await response.json()
-
-    return f'https://media.mrrandom.xyz/{post.get("filename")}'

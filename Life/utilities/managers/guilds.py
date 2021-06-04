@@ -30,7 +30,7 @@ __log__ = logging.getLogger('utilities.managers.guilds')
 class GuildManager:
 
     def __init__(self, bot: Life) -> None:
-        self.bot = bot
+        self.bot: Life = bot
 
         self.DEFAULT_CONFIG = objects.DefaultGuildConfig(bot=self.bot, data={})
 

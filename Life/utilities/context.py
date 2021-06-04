@@ -8,7 +8,6 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
@@ -130,6 +129,7 @@ class Context(commands.Context):
         )
 
         try:
+            # noinspection PyTypeChecker
             response = await self.bot.wait_for('message', check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
         except asyncio.TimeoutError:
             raise exceptions.ArgumentError('You took too long to respond.')

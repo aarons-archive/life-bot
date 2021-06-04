@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
 
@@ -46,7 +46,7 @@ class EmbedsPaginator(paginators.BasePaginator):
 
     # Page generator
 
-    async def generate_page(self, page: int = 0) -> dict:
+    async def generate_page(self, page: int = 0) -> dict[str, Any]:
         return {'content': self.content, 'embed': self.pages[page]}
 
     # Abstract methods
