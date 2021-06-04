@@ -18,7 +18,7 @@ import math
 import os
 import pathlib
 import random
-from typing import Literal, TYPE_CHECKING, Union
+from typing import Literal, Optional, TYPE_CHECKING, Union
 
 import discord
 from PIL import Image, ImageDraw, ImageFont
@@ -65,7 +65,7 @@ KABEL_BLACK_FONT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 class UserManager:
 
     def __init__(self, bot: Life) -> None:
-        self.bot = bot
+        self.bot: Life = bot
 
         self.DEFAULT_CONFIG = objects.DefaultUserConfig(bot=self.bot, data={})
 
@@ -173,7 +173,7 @@ class UserManager:
 
     # Ranking
 
-    def leaderboard(self, leaderboard_type: Literal['xp', 'coins'] = 'xp', *, guild_id: int = None) -> list[objects.UserConfig]:
+    def leaderboard(self, leaderboard_type: Literal['xp', 'coins'] = 'xp', *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -186,12 +186,12 @@ class UserManager:
                 key=lambda config: getattr(config, leaderboard_type), reverse=True
         )
 
-    def rank(self, user_id: int, *, guild_id: int = None) -> int:
+    def rank(self, user_id: int, *, guild_id: Optional[int] = None) -> int:
 
         leaderboard = self.leaderboard(guild_id=guild_id)
         return leaderboard.index(self.get_config(user_id)) + 1
 
-    def timezones(self, *, guild_id: int = None) -> list[objects.UserConfig]:
+    def timezones(self, *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -199,12 +199,12 @@ class UserManager:
         return sorted(
                 filter(
                         lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.timezone_private and config.timezone is not None,
-                        self.bot.user_manager.configs.values()
+                        self.configs.values()
                 ),
                 key=lambda config: config.time.offset_hours
         )
 
-    def birthdays(self, *, guild_id: int = None) -> list[objects.UserConfig]:
+    def birthdays(self, *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -212,13 +212,14 @@ class UserManager:
         return sorted(
                 filter(
                         lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
-                        self.bot.user_manager.configs.values()),
+                        self.configs.values()
+                ),
                 key=lambda config: config.next_birthday
         )
 
     # Level card
 
-    async def create_level_card(self, user_id: int, *, guild_id: int = None) -> discord.File:
+    async def create_level_card(self, user_id: int, *, guild_id: Optional[int] = None) -> discord.File:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -235,7 +236,7 @@ class UserManager:
 
         return file
 
-    def create_level_card_image(self, data: tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO], guild: discord.Guild = None) -> io.BytesIO:
+    def create_level_card_image(self, data: tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO], guild: Optional[discord.Guild] = None) -> io.BytesIO:
 
         user, user_config, user_avatar_bytes = data
 
@@ -304,7 +305,7 @@ class UserManager:
 
     # Leaderboard card
 
-    async def create_leaderboard(self, page: int = 0, *, guild_id: int = None) -> discord.File:
+    async def create_leaderboard(self, page: int = 0, *, guild_id: Optional[int] = None) -> discord.File:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -330,7 +331,7 @@ class UserManager:
 
         return file
 
-    def create_leaderboard_image(self, data: list[tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO]], guild: discord.Guild = None) -> io.BytesIO:
+    def create_leaderboard_image(self, data: list[tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO]], guild: Optional[discord.Guild] = None) -> io.BytesIO:
 
         with Image.open(random.choice(IMAGES['SAI']['leaderboard'])) as image:
 
@@ -417,7 +418,7 @@ class UserManager:
 
     # Grid cards
 
-    async def create_timecard(self, *, guild_id: int = None) -> discord.File:
+    async def create_timecard(self, *, guild_id: Optional[int] = None) -> discord.File:
 
         if not (timezones := self.timezones(guild_id=guild_id)):
             raise exceptions.ArgumentError('There are no users who have set their timezone, or everyone has set them to be private.')
@@ -445,7 +446,7 @@ class UserManager:
 
         return file
 
-    async def create_birthday_card(self, *, guild_id: int = None) -> discord.File:
+    async def create_birthday_card(self, *, guild_id: Optional[int] = None) -> discord.File:
 
         if not (birthdays := self.birthdays(guild_id=guild_id)):
             raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')

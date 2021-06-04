@@ -67,7 +67,7 @@ class Time(commands.Cog):
     #
 
     @commands.group(name='timezone', aliases=['time'], invoke_without_command=True)
-    async def _timezone(self, ctx: context.Context, *, timezone: str = None) -> None:
+    async def _timezone(self, ctx: context.Context, *, timezone: Optional[str]) -> None:
         """
         Displays the time of the member or timezone provided.
 

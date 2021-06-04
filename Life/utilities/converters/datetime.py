@@ -21,16 +21,12 @@ from utilities import context, exceptions
 
 class DatetimeConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> dict[str, Union[str, pendulum.DateTime]]:
+    async def convert(self, ctx: context.Context, argument: str) -> dict[str, Union[str, dict[str, pendulum.DateTime]]]:
 
-        searches = dateparser.search.search_dates(argument, languages=['en'], settings=config.DATEPARSER_SETTINGS)
-        if not searches:
+        if not (searches := dateparser.search.search_dates(argument, languages=['en'], settings=config.DATEPARSER_SETTINGS)):
             raise exceptions.ArgumentError('I was unable to find a time and/or date within your query, try to be more explicit or put the time/date first.')
 
-        data = {'argument': argument, 'found': {}}
-
-        for datetime_phrase, datetime in searches:
-            data['found'][datetime_phrase] = pendulum.instance(dt=datetime, tz='UTC')
+        data = {'argument': argument, 'found': {str(phrase): pendulum.instance(datetime, tz='UTC') for phrase, datetime in searches}}
 
         if not data['found']:
             raise exceptions.ArgumentError('I was able to find a time and/or date within your query, however it seems to be in the past.')

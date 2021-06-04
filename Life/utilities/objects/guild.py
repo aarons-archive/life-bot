@@ -8,12 +8,11 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
 import pendulum
@@ -34,12 +33,12 @@ class DefaultGuildConfig:
 
     __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
 
-    def __init__(self, bot: Life, data: dict) -> None:
+    def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
         self._bot = bot
 
         self._id: int = data.get('id', 0)
-        self._created_at: pendulum.datetime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
+        self._created_at: pendulum.DateTime = pendulum.instance(created_at, tz='UTC') if (created_at := data.get('created_at')) else pendulum.now(tz='UTC')
 
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
@@ -50,7 +49,7 @@ class DefaultGuildConfig:
 
         self._tags: dict[str, objects.Tag] = {}
 
-        self._requires_db_update: set = set()
+        self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
         return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour=\'{self.colour}\' embed_size={self.embed_size}>'
@@ -66,7 +65,7 @@ class DefaultGuildConfig:
         return self._id
 
     @property
-    def created_at(self) -> pendulum.datetime:
+    def created_at(self) -> pendulum.DateTime:
         return self._created_at
 
     @property
@@ -74,7 +73,7 @@ class DefaultGuildConfig:
         return self._blacklisted
 
     @property
-    def blacklisted_reason(self) -> str:
+    def blacklisted_reason(self) -> Optional[str]:
         return self._blacklisted_reason
 
     @property
@@ -103,7 +102,7 @@ class GuildConfig(DefaultGuildConfig):
 
     # Config
 
-    async def set_blacklisted(self, blacklisted: bool, *, reason: str = None) -> None:
+    async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
 
         data = await self.bot.db.fetchrow(
                 'UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason',
@@ -122,7 +121,7 @@ class GuildConfig(DefaultGuildConfig):
         data = await self.bot.db.fetchrow('UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size', embed_size.value, self.id)
         self._embed_size = enums.EmbedSize(data['embed_size'])
 
-    async def change_prefixes(self, operation: enums.Operation, *, prefix: str = None) -> None:
+    async def change_prefixes(self, operation: enums.Operation, *, prefix: Optional[str] = None) -> None:
 
         if operation == enums.Operation.ADD:
             data = await self.bot.db.fetchrow('UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes', prefix, self.id)
@@ -137,7 +136,7 @@ class GuildConfig(DefaultGuildConfig):
 
     # Tags
 
-    async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: str = None) -> objects.Tag:
+    async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: Optional[str] = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
                 'INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -150,7 +149,7 @@ class GuildConfig(DefaultGuildConfig):
         __log__.info(f'[TAGS] Created tag with id \'{tag.id}\' for guild with id \'{tag.guild_id}\'.')
         return tag
 
-    async def create_tag_alias(self, *, user_id: int, name: str, original: int,  jump_url: str = None) -> objects.Tag:
+    async def create_tag_alias(self, *, user_id: int, name: str, original: int,  jump_url: Optional[str] = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
                 'INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -163,7 +162,7 @@ class GuildConfig(DefaultGuildConfig):
         __log__.info(f'[TAGS] Created tag alias with id \'{tag.id}\' for guild with id \'{tag.guild_id}\'.')
         return tag
 
-    def get_tag(self, *, tag_name: str = None, tag_id: int = None) -> Optional[objects.Tag]:
+    def get_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> Optional[objects.Tag]:
 
         if tag_name:
             tag = self.tags.get(tag_name)
@@ -187,7 +186,7 @@ class GuildConfig(DefaultGuildConfig):
     def get_tags_matching(self, name: str, *, limit: int = 5) -> Optional[list[objects.Tag]]:
         return [self.get_tag(tag_name=match) for match, _, _ in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
 
-    async def delete_tag(self, *, tag_name: str = None, tag_id: int = None) -> None:
+    async def delete_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> None:
 
         if not tag_name or not tag_id:
             raise ValueError('\'tag_name\' or \'tag_id\' parameter must be specified.')

@@ -8,7 +8,8 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
+from typing import Optional
 
 import discord
 import pendulum
@@ -24,7 +25,7 @@ class Birthdays(commands.Cog):
         self.bot = bot
 
     @commands.group(name='birthday', aliases=['birthdays', 'bd'], invoke_without_command=True)
-    async def birthday(self, ctx: context.Context, *, person: discord.Member = None) -> None:
+    async def birthday(self, ctx: context.Context, *, person: Optional[discord.Member]) -> None:
         """
         Display yours or another members birthday.
 

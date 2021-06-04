@@ -9,6 +9,8 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
+from typing import Optional
+
 import discord
 from discord.ext import commands
 
@@ -22,7 +24,7 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name='todo', aliases=['todos'], invoke_without_command=True)
-    async def todo(self, ctx: context.Context, *, content: str = None) -> None:
+    async def todo(self, ctx: context.Context, *, content: Optional[str]) -> None:
         """
         Display a list of your todos.
         """

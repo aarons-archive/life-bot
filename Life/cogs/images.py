@@ -9,7 +9,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
-
 import random
 from inspect import Parameter
 from typing import Literal, Optional
@@ -128,7 +127,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='border')
-    async def border(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None, width: int = 10, height: int = 10) -> None:
+    async def border(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter], width: int = 10, height: int = 10) -> None:
         """
         Creates a border around the given image.
 
@@ -190,7 +189,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='colorize', aliases=['colourise'])
-    async def colorize(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None) -> None:
+    async def colorize(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter]) -> None:
         """
         Colorizes the given image with a random colour.
 
@@ -293,7 +292,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='frame')
-    async def frame(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: commands.ColourConverter = None, width: int = 20, height: int = 20,
+    async def frame(self, ctx: context.Context, image: Optional[converters.ImageConverter], colour: Optional[commands.ColourConverter], width: int = 20, height: int = 20,
                     inner: int = 5, outer: int = 10) -> None:
         """
         Creates a frame around the given image with a 3D effect.
@@ -472,7 +471,7 @@ class Images(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='polaroid')
-    async def polaroid(self, ctx: context.Context, image: Optional[converters.ImageConverter], angle: float = 0, *, caption: str = None) -> None:
+    async def polaroid(self, ctx: context.Context, image: Optional[converters.ImageConverter], angle: float = 0, *, caption: Optional[str]) -> None:
         """
         Puts the image in the center of a polaroid-like card.
 

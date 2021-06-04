@@ -8,12 +8,11 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from utilities import objects
 
@@ -28,7 +27,7 @@ class Notifications:
 
     __slots__ = '_bot', '_user_config', '_id', '_user_id', '_level_ups'
 
-    def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict) -> None:
+    def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
         self._bot = bot
         self._user_config = user_config
 

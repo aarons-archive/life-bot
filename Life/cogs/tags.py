@@ -8,7 +8,7 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -218,7 +218,7 @@ class Tags(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=25, title=f'Tags matching: `{name}`')
 
     @tag.command(name='list')
-    async def tag_list(self, ctx: context.Context, *, member: discord.Member = None) -> None:
+    async def tag_list(self, ctx: context.Context, *, member: Optional[discord.Member]) -> None:
         """
         Get a list of yours or someone else's tags.
 

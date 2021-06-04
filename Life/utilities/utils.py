@@ -46,18 +46,14 @@ def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulu
 
 
 def format_datetime(datetime: Union[dt.datetime, pendulum.DateTime], *, seconds: bool = False) -> str:
-
-    datetime = convert_datetime(datetime)
-    return datetime.format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
+    return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
 
 
-def format_date(datetime: Union[dt.datetime, pendulum.DateTime]) -> str:
-
-    datetime = convert_datetime(datetime)
-    return datetime.format('dddd MMMM Do YYYY')
+def format_date(date: pendulum.Date) -> str:
+    return date.format('dddd MMMM Do YYYY')
 
 
-def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: list[str] = None) -> str:
+def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[list[str]] = None) -> str:
 
     if suppress is None:
         suppress = ['seconds']
@@ -159,19 +155,19 @@ def activities(member: discord.Member) -> str:   # sourcery no-metrics
     return '\n'.join(message)
 
 
-def avatar(person: Union[discord.User, discord.Member], *, format: Literal['webp', 'jpeg', 'jpg', 'png', 'gif'] = None, size: int = 1024) -> Optional[str]:
+def avatar(person: Union[discord.User, discord.Member], *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
     return str(person.avatar.replace(format=format or ('gif' if person.avatar.is_animated() else 'png'), size=size)) if person.avatar else None
 
 
-def icon(guild: discord.Guild, *, format: Literal['webp', 'jpeg', 'jpg', 'png', 'gif'] = None, size: int = 1024) -> Optional[str]:
+def icon(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
     return str(guild.icon.replace(format=format or ('gif' if guild.icon.is_animated() else 'png'), size=size)) if guild.icon else None
 
 
-def banner(guild: discord.Guild, *, format: Literal['webp', 'jpeg', 'jpg', 'png', 'gif'] = None, size: int = 1024) -> Optional[str]:
+def banner(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
     return str(guild.banner.replace(format=format or ('gif' if guild.banner.is_animated() else 'png'), size=size)) if guild.banner else None
 
 
-def splash(guild: discord.Guild, *, format: Literal['webp', 'jpeg', 'jpg', 'png', 'gif'] = None, size: int = 1024) -> Optional[str]:
+def splash(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
     return str(guild.splash.replace(format=format or ('gif' if guild.splash.is_animated() else 'png'), size=size)) if guild.splash else None
 
 
@@ -194,7 +190,7 @@ def voice_region(obj: Union[discord.VoiceChannel, discord.StageChannel, discord.
     return region_name
 
 
-def name(person: Union[discord.Member, discord.User], *, guild: discord.Guild = None) -> str:
+def name(person: Union[discord.Member, discord.User], *, guild: Optional[discord.Guild] = None) -> str:
 
     if guild and isinstance(person, discord.User):
         member = guild.get_member(person.id)

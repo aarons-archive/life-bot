@@ -8,12 +8,11 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import pendulum
 
@@ -31,19 +30,19 @@ class Tag:
 
     __slots__ = '_bot', '_guild_config', '_id', '_user_id', '_guild_id', '_created_at', '_name', '_alias', '_content', '_jump_url'
 
-    def __init__(self, bot: Life, guild_config: objects.GuildConfig, data: dict) -> None:
+    def __init__(self, bot: Life, guild_config: objects.GuildConfig, data: dict[str, Any]) -> None:
 
         self._bot = bot
         self._guild_config = guild_config
 
-        self._id: int = data.get('id')
-        self._user_id: int = data.get('user_id')
-        self._guild_id: int = data.get('guild_id')
-        self._created_at: pendulum.datetime = pendulum.instance(data.get('created_at'), tz='UTC')
-        self._name: str = data.get('name')
-        self._alias: Optional[int] = data.get('alias')
-        self._content: Optional[str] = data.get('content')
-        self._jump_url: Optional[str] = data.get('jump_url')
+        self._id: int = data['id']
+        self._user_id: int = data['user_id']
+        self._guild_id: int = data['guild_id']
+        self._created_at: pendulum.DateTime = pendulum.instance(data['created_at'], tz='UTC')
+        self._name: str = data['name']
+        self._alias: Optional[int] = data['alias']
+        self._content: Optional[str] = data['content']
+        self._jump_url: Optional[str] = data['jump_url']
 
     def __repr__(self) -> str:
         return f'<Tag id=\'{self.id}\' user_id=\'{self.user_id}\' guild_id=\'{self.guild_id}\' name=\'{self.name}\' alias=\'{self.alias}\'>'
@@ -71,7 +70,7 @@ class Tag:
         return self._guild_id
 
     @property
-    def created_at(self) -> pendulum.datetime:
+    def created_at(self) -> pendulum.DateTime:
         return self._created_at
 
     @property
@@ -100,7 +99,7 @@ class Tag:
 
     # Config
 
-    async def change_content(self, content: str, *, jump_url: str = None) -> None:
+    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE tags SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
         self._content = data['content']

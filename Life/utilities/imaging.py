@@ -71,7 +71,7 @@ def charcoal(image: Image, radius: float, sigma: float) -> Optional[str]:
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def colorize(image: Image, colour: str = None) -> Optional[str]:
+def colorize(image: Image, colour: Optional[str] = None) -> Optional[str]:
 
     with Color(colour) as color, Color('rgb(50%, 50%, 50%)') as alpha:
         image.colorize(color=color, alpha=alpha)
@@ -142,13 +142,13 @@ def implode(image: Image, amount: float) -> Optional[str]:
     return f'Amount: {amount}'
 
 
-def kmeans(image: Image, number_colours: int = None) -> Optional[str]:
+def kmeans(image: Image, number_colours: Optional[int] = None) -> Optional[str]:
 
     image.kmeans(number_colors=number_colours)
     return f'Number of colours: {number_colours}'
 
 
-def kuwahara(image: Image, radius: float = 1, sigma: float = None) -> Optional[str]:
+def kuwahara(image: Image, radius: float = 1, sigma: Optional[float] = None) -> Optional[str]:
 
     image.kuwahara(radius=radius, sigma=sigma)
     return f'Radius: {radius} | Sigma: {sigma}'
@@ -178,7 +178,7 @@ def oil_paint(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str
     return f'Radius: {radius} | Sigma: {sigma}'
 
 
-def polaroid(image: Image, angle: float = 0, caption: str = None) -> Optional[str]:
+def polaroid(image: Image, angle: float = 0, caption: Optional[str] = None) -> Optional[str]:
 
     image.polaroid(angle=angle, caption=caption)
     return f'Angle: {angle} | Caption: {caption}'
@@ -433,7 +433,7 @@ async def _request_image_bytes(*, ctx: context.Context, url: str) -> bytes:
         return await request.read()
 
 
-async def _upload_image(*, ctx: context.Context, image: io.BytesIO, image_format: str, text: str = None) -> discord.Embed:
+async def _upload_image(*, ctx: context.Context, image: io.BytesIO, image_format: str, text: Optional[str] = None) -> discord.Embed:
 
     data = aiohttp.FormData()
     data.add_field('file', image, filename=f'image.{image_format.lower()}')

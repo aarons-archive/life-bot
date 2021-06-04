@@ -8,12 +8,11 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
 
 from __future__ import annotations
 
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import aioscheduler.task
 import discord
@@ -51,20 +50,20 @@ class Reminder:
 
     __slots__ = '_bot', '_user_config', '_id', '_user_id', '_channel_id', '_created_at', '_content', '_jump_url', '_repeat_type', '_notified', '_datetime', '_task'
 
-    def __init__(self, bot: Life, user_config: objects.user.UserConfig, data: dict) -> None:
+    def __init__(self, bot: Life, user_config: objects.user.UserConfig, data: dict[str, Any]) -> None:
 
         self._bot = bot
         self._user_config = user_config
 
-        self._id: int = data.get('id')
-        self._user_id: int = data.get('user_id')
-        self._channel_id: int = data.get('channel_id')
-        self._created_at: pendulum.datetime = pendulum.instance(data.get('created_at'), tz='UTC')
-        self._content: str = data.get('content')
-        self._jump_url: str = data.get('jump_url')
-        self._repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType(value=data.get('repeat_type'))
-        self._notified: bool = data.get('notified')
-        self._datetime: pendulum.datetime = pendulum.instance(data.get('datetime'), tz='UTC')
+        self._id: int = data['id']
+        self._user_id: int = data['user_id']
+        self._channel_id: int = data['channel_id']
+        self._created_at: pendulum.DateTime = pendulum.instance(data['created_at'], tz='UTC')
+        self._content: str = data['content']
+        self._jump_url: str = data['jump_url']
+        self._repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType(data['repeat_type'])
+        self._notified: bool = data['notified']
+        self._datetime: pendulum.DateTime = pendulum.instance(data['datetime'], tz='UTC')
 
         self._task: Optional[aioscheduler.task.Task] = None
 
@@ -94,7 +93,7 @@ class Reminder:
         return self._channel_id
 
     @property
-    def created_at(self) -> pendulum.datetime:
+    def created_at(self) -> pendulum.DateTime:
         return self._created_at
 
     @property
@@ -114,11 +113,11 @@ class Reminder:
         return self._notified
 
     @property
-    def datetime(self) -> pendulum.datetime:
+    def datetime(self) -> pendulum.DateTime:
         return self._datetime
 
     @property
-    def task(self) -> aioscheduler.task.Task:
+    def task(self) -> Optional[aioscheduler.task.Task]:
         return self._task
 
     #
@@ -185,12 +184,12 @@ class Reminder:
         data = await self.bot.db.fetchrow('UPDATE reminders SET notified = $1 WHERE id = $2 RETURNING notified', notified, self.id)
         self._notified = data['notified']
 
-    async def change_datetime(self, datetime: pendulum.datetime) -> None:
+    async def change_datetime(self, datetime: pendulum.DateTime) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE reminders SET datetime = $1 WHERE id = $2 RETURNING datetime', datetime, self.id)
         self._datetime = pendulum.instance(data['datetime'], tz='UTC')
 
-    async def change_content(self, content: str, *, jump_url: str = None) -> None:
+    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
 
         data = await self.bot.db.fetchrow('UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
         self._content = data['content']

@@ -8,10 +8,11 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+
 import functools
 import random
 import textwrap
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -55,7 +56,7 @@ class Economy(commands.Cog):
     #
 
     @commands.command(name='level', aliases=['xp', 'score', 'rank'])
-    async def level(self, ctx: context.Context, *, member: discord.Member = None) -> None:
+    async def level(self, ctx: context.Context, *, member: Optional[discord.Member]) -> None:
         """
         Display yours, or someone else's level / xp information.
 
