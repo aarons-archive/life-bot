@@ -8,7 +8,7 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-
+import discord
 from discord.ext import commands
 
 
@@ -32,5 +32,11 @@ class GeneralError(LifeError):
     pass
 
 
-class NotFound(LifeError):
-    pass
+class EmbedError(LifeError):
+
+    def __init__(self, embed: discord.Embed) -> None:
+        self._embed: discord.Embed = embed
+
+    @property
+    def embed(self) -> discord.Embed:
+        return self._embed

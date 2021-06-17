@@ -17,3 +17,4 @@ from utilities.converters.prefix import PrefixConverter
 from utilities.converters.reminder import ReminderRepeatTypeConverter
 from utilities.converters.tag import TagContentConverter, TagNameConverter
 from utilities.converters.timezone import TimezoneConverter
+from utilities.converters.time import TimeConverter
