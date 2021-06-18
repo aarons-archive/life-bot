@@ -14,6 +14,7 @@ from __future__ import annotations
 import codecs
 import colorsys
 import datetime as dt
+import io
 import logging
 import os
 import pathlib
@@ -27,11 +28,12 @@ import pendulum
 from discord.ext import commands
 
 import config
+import emoji
 from utilities import exceptions
 
 
 if TYPE_CHECKING:
-    from bot import Life
+    pass
 
 
 __log__ = logging.getLogger('utilities.utils')
@@ -81,37 +83,37 @@ def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, disc
     overwrites = channel.permissions_for(member)
 
     if isinstance(channel, discord.StageChannel):
-        emoji = 'STAGE' if overwrites.connect else 'STAGE_LOCKED'
+        emoji_name = 'STAGE' if overwrites.connect else 'STAGE_LOCKED'
     elif isinstance(channel, discord.VoiceChannel):
-        emoji = 'VOICE' if overwrites.connect else 'VOICE_LOCKED'
+        emoji_name = 'VOICE' if overwrites.connect else 'VOICE_LOCKED'
     elif channel == guild.rules_channel:
-        emoji = 'RULES'
+        emoji_name = 'RULES'
     else:
         if channel.is_news():
-            emoji = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
+            emoji_name = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
         elif channel.is_nsfw():
-            emoji = 'TEXT_NSFW'
+            emoji_name = 'TEXT_NSFW'
         else:
-            emoji = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
+            emoji_name = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
 
-    return config.CHANNELS[emoji]
+    return emoji.CHANNELS[emoji_name]
 
 
 def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
 
-    badges = [badge for badge_name, badge in config.BADGES.items() if dict(person.public_flags)[badge_name] is True]
+    badges = [badge for badge_name, badge in emoji.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
-        badges.append(config.BOT)
+        badges.append(emoji.BOT)
     if isinstance(person, discord.Member) and person.premium_since:
-        badges.append(config.BOOSTER)
+        badges.append(emoji.BADGES)
 
     if person.avatar.is_animated():
-        badges.append(config.NITRO)
+        badges.append(emoji.NITRO)
 
     elif isinstance(person, discord.Member) and ((activity_list := [activity for activity in person.activities if isinstance(activity, discord.CustomActivity)]) is not None):
         if activity_list[0].emoji and activity_list[0].emoji.is_custom_emoji():
-            badges.append(config.NITRO)
+            badges.append(emoji.NITRO)
 
     return ' '.join(badges) if badges else 'N/A'
 
@@ -202,12 +204,12 @@ def name(person: Union[discord.Member, discord.User], *, guild: Optional[discord
 #
 
 
-async def upload_image(bot: Life, file: discord.File, file_format: str = 'png') -> str:
+async def upload_image(session: aiohttp.ClientSession, *, buffer: io.BytesIO, file_format: str = 'png') -> str:
 
     data = aiohttp.FormData()
-    data.add_field('file', file.fp, filename=f'file.{file_format.lower()}')
+    data.add_field('file', buffer, filename=f'file.{file_format.lower()}')
 
-    async with bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
+    async with session.post('https://media.mrrandom.xyz/api/media', headers={'Authorization': config.AXEL_WEB_TOKEN}, data=data) as response:
 
         if response.status == 413:
             raise exceptions.GeneralError('The image produced was too large to upload.')

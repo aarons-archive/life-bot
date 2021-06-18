@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import functools
+import io
 from typing import Optional, TYPE_CHECKING
 
 from utilities import context, paginators, utils
@@ -52,10 +53,11 @@ class FilePaginator(paginators.BasePaginator):
 
     async def generate_page(self, page: int = 0) -> str:
 
-        file = await self.entries[page](page=page)
-        image = await utils.upload_image(bot=self.bot, file=file)
+        buffer: io.BytesIO = await self.entries[page](page=page)
+        url = await utils.upload_image(session=self.bot.session, buffer=buffer)
+        buffer.close()
 
-        return f'{self.header}{image}{self.footer}'
+        return f'{self.header}{url}{self.footer}'
 
     # Abstract methods
 

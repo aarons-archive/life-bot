@@ -24,8 +24,7 @@ import yarl
 from wand.color import Color
 from wand.image import Image
 
-import config
-from utilities import context, exceptions
+from utilities import context, exceptions, utils
 
 
 def adaptive_blur(image: Image, radius: float = 0, sigma: float = 0) -> Optional[str]:
@@ -369,14 +368,30 @@ VALID_CONTENT_TYPES = ['image/gif', 'image/heic', 'image/jpeg', 'image/png', 'im
 COMMON_GIF_SITES = ['tenor.com', 'giphy.com']
 
 
+async def _request_image_bytes(session: aiohttp.ClientSession, *, url: str) -> bytes:
+
+    async with session.get(url) as request:
+
+        if yarl.URL(url).host in COMMON_GIF_SITES:
+            page = bs4.BeautifulSoup(await request.text(), features='html.parser')
+            if (tag := page.find('meta', property='og:url')) is not None:
+                return await _request_image_bytes(session, url=tag['content'])
+
+        if request.status != 200:
+            raise exceptions.ImageError('Something went wrong while fetching that image, please try again.')
+        if request.headers.get('Content-Type') not in VALID_CONTENT_TYPES:
+            raise exceptions.ImageError('That image format is not allowed. Valid formats include `gif`, `heic`, `jpeg`, `png`, `webp`, `avif` and `svg`.')
+        if (content_length := request.headers.get('Content-Length', 0)) and int(content_length) > MAX_CONTENT_SIZE:
+            raise exceptions.ImageError(f'That image was too big to edit, please keep to a `{humanize.naturalsize(MAX_CONTENT_SIZE)}` maximum')
+
+        return await request.read()
+
+
 def _do_edit_image(child_pipe: multiprocessing.connection.Connection, edit_function: Callable[..., str], image_bytes: bytes, **kwargs):
 
     try:
 
-        image_buffer = io.BytesIO(image_bytes)
-        image_edited_buffer = io.BytesIO()
-
-        with Image(file=image_buffer) as image, Color('transparent') as colour:
+        with Image(blob=image_bytes) as image, Color('transparent') as colour:
 
             image.background_color = colour
 
@@ -396,73 +411,33 @@ def _do_edit_image(child_pipe: multiprocessing.connection.Connection, edit_funct
                 image.optimize_transparency()
 
             image_format = image.format
-            image.save(file=image_edited_buffer)
 
-        image_edited_buffer.seek(0)
+            edited_image_buffer = io.BytesIO()
+            image.save(file=edited_image_buffer)
+            edited_image_buffer.seek(0)
 
         child_pipe.send({
-            'image': image_edited_buffer,
-            'image_format': image_format,
+            'buffer': edited_image_buffer,
+            'file_format': image_format,
             'text': text
         })
 
-        image_buffer.close()
-        image_edited_buffer.close()
+        edited_image_buffer.close()
 
     except Exception as e:
         print(e, file=sys.stderr)
         child_pipe.send(exceptions.ImageError())
 
 
-async def _request_image_bytes(*, ctx: context.Context, url: str) -> bytes:
-
-    async with ctx.bot.session.get(url) as request:
-
-        if yarl.URL(url).host in COMMON_GIF_SITES:
-            page = bs4.BeautifulSoup(await request.text(), features='html.parser')
-            if (tag := page.find('meta', property='og:url')) is not None:
-                return await _request_image_bytes(ctx=ctx, url=tag['content'])
-
-        if request.status != 200:
-            raise exceptions.ImageError('Something went wrong while loading that image, check the url or try again later.')
-        if request.headers.get('Content-Type') not in VALID_CONTENT_TYPES:
-            raise exceptions.ImageError('That image format is not allowed. Valid formats include `gif`, `heic`, `jpeg`, `png`, `webp`, `avif` and `svg`.')
-        if (content_length := request.headers.get('Content-Length', 0)) and int(content_length) > MAX_CONTENT_SIZE:
-            raise exceptions.ImageError(f'That image was too big to edit, please keep to a `{humanize.naturalsize(MAX_CONTENT_SIZE)}` maximum')
-
-        return await request.read()
-
-
-async def _upload_image(*, ctx: context.Context, image: io.BytesIO, image_format: str, text: Optional[str] = None) -> discord.Embed:
-
-    data = aiohttp.FormData()
-    data.add_field('file', image, filename=f'image.{image_format.lower()}')
-
-    async with ctx.bot.session.post(config.CDN_UPLOAD_URL, headers=config.CDN_HEADERS, data=data) as response:
-
-        if response.status == 413:
-            raise exceptions.ImageError('The image produced was too large to upload.')
-
-        post = await response.json()
-
-    embed = discord.Embed(colour=ctx.colour)
-    embed.set_image(url=f'https://media.mrrandom.xyz/{post.get("filename")}')
-    if text:
-        embed.set_footer(text=text)
-
-    image.close()
-    return embed
-
-
 #
 
 
-async def edit_image(*, ctx: context.Context, edit_type: str,  url: str, **kwargs) -> discord.Embed:
+async def edit_image(ctx: context.Context, edit: str,  url: str, **kwargs) -> discord.Embed:
 
-    image_bytes = await _request_image_bytes(ctx=ctx, url=url)
+    image_bytes = await _request_image_bytes(ctx.bot.session, url=url)
     parent_pipe, child_pipe = multiprocessing.Pipe()
 
-    process = multiprocessing.Process(target=_do_edit_image, daemon=True, args=(child_pipe, IMAGE_OPERATIONS[edit_type], image_bytes), kwargs=kwargs)
+    process = multiprocessing.Process(target=_do_edit_image, daemon=True, args=(child_pipe, IMAGE_OPERATIONS[edit], image_bytes), kwargs=kwargs)
     process.start()
 
     data = await ctx.bot.loop.run_in_executor(None, parent_pipe.recv)
@@ -476,5 +451,15 @@ async def edit_image(*, ctx: context.Context, edit_type: str,  url: str, **kwarg
     parent_pipe.close()
     child_pipe.close()
 
-    embed = await _upload_image(ctx=ctx, image=data['image'], image_format=data['image_format'], text=data['text'])
+    buffer: io.BytesIO = data['buffer']
+    text: str = data['text']
+
+    url = await utils.upload_image(ctx.bot.session, buffer=buffer, file_format=data['file_format'])
+
+    embed = discord.Embed(colour=ctx.colour)
+    embed.set_image(url=url)
+    if text:
+        embed.set_footer(text=text)
+
+    buffer.close()
     return embed
