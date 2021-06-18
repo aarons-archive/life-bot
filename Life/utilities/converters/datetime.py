@@ -15,15 +15,24 @@ import dateparser.search
 import pendulum
 from discord.ext import commands
 
-import config
 from utilities import context, exceptions
+
+
+settings = {
+    'DATE_ORDER':               'DMY',
+    'TIMEZONE':                 'UTC',
+    'RETURN_AS_TIMEZONE_AWARE': False,
+    'PREFER_DAY_OF_MONTH':      'current',
+    'PREFER_DATES_FROM':        'future',
+    'PARSERS':                  ['relative-time', 'absolute-time', 'timestamp', 'custom-formats']
+}
 
 
 class DatetimeConverter(commands.Converter):
 
     async def convert(self, ctx: context.Context, argument: str) -> dict[str, Union[str, dict[str, pendulum.DateTime]]]:
 
-        if not (searches := dateparser.search.search_dates(argument, languages=['en'], settings=config.DATEPARSER_SETTINGS)):
+        if not (searches := dateparser.search.search_dates(argument, languages=['en'], settings=settings)):
             raise exceptions.ArgumentError('I was unable to find a time and/or date within your query, try to be more explicit or put the time/date first.')
 
         data = {'argument': argument, 'found': {str(phrase): pendulum.instance(datetime, tz='UTC') for phrase, datetime in searches}}
