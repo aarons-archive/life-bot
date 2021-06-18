@@ -87,7 +87,7 @@ class Information(commands.Cog):
         uptime = utils.format_seconds(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = utils.line_count()
 
-        embed = discord.Embed(colour=ctx.colour)
+        embed = discord.Embed(colour=config.MAIN)
         embed.add_field(name='Bot info:',
                         value=f'`Uptime:` {uptime}\n`Guilds:` {len(self.bot.guilds)}\n`Shards:` {len(self.bot.shards)}\n`Users:` {len(self.bot.users)}\n')
         embed.add_field(name='\u200B', value='\u200B')
@@ -110,7 +110,7 @@ class Information(commands.Cog):
         """
 
         cpu_freq: Any = psutil.cpu_freq()
-        embed = discord.Embed(colour=ctx.colour)
+        embed = discord.Embed(colour=config.MAIN)
 
         embed.add_field(
                 name='System CPU:',
@@ -172,7 +172,7 @@ class Information(commands.Cog):
                 features.append(f'{emoji.CROSS} {description}')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'`{guild.name}`\'s information.',
                 description=f'''
                 `Owner:` {guild.owner}
@@ -223,7 +223,7 @@ class Information(commands.Cog):
             role = ctx.author.top_role
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Information about the role `{role}`',
                 description=f'''
                 `Name:` {role.name}
@@ -291,7 +291,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an icon.')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Icon for `{guild.name}`:',
                 description=f'[PNG]({utils.icon(guild, format="png")}) | [JPG]({utils.icon(guild, format="jpg")}) | [WEBP]({utils.icon(guild, format="webp")})'
         )
@@ -317,7 +317,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have a banner.')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Banner for `{guild.name}`:',
                 description=f'[PNG]({utils.banner(guild, format="png")}) | [JPG]({utils.banner(guild, format="jpg")}) | [WEBP]({utils.banner(guild, format="webp")})'
         )
@@ -343,7 +343,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an splash.')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Splash for `{guild.name}`:',
                 description=f'[PNG]({utils.splash(guild, format="png")}) | [JPG]({utils.splash(guild, format="jpg")}) | [WEBP]({utils.splash(guild, format="webp")})'
         )
@@ -407,7 +407,7 @@ class Information(commands.Cog):
             user = await self.bot.fetch_user(ctx.author.id)
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'`{user}`\'s information:',
                 description=f'''
                 `Discord name:` {user}
@@ -433,7 +433,7 @@ class Information(commands.Cog):
             user = ctx.author
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Avatar for `{user}`:',
                 description=f'[PNG]({utils.avatar(user, format="png")}) | [JPG]({utils.avatar(user, format="jpg")}) | [WEBP]({utils.avatar(user, format="webp")})'
         )

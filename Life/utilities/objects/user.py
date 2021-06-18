@@ -15,11 +15,9 @@ import logging
 import math
 from typing import Any, Optional, TYPE_CHECKING
 
-import discord
 import pendulum
 from pendulum.tz.timezone import Timezone
 
-import config
 from utilities import enums, objects
 
 
@@ -31,8 +29,8 @@ __log__ = logging.getLogger('utilities.objects.user')
 
 class DefaultUserConfig:
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_timezone', '_timezone_private', '_birthday', '_birthday_private', '_xp', '_coins', \
-                '_notifications', '_reminders', '_todos', '_requires_db_update'
+    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_timezone', '_timezone_private', '_birthday', '_birthday_private', '_xp', '_coins', '_notifications', \
+                '_reminders', '_todos', '_requires_db_update'
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
@@ -43,8 +41,6 @@ class DefaultUserConfig:
 
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
-
-        self._colour: discord.Colour = discord.Colour(int(colour, 16)) if (colour := data.get('colour')) else config.COLOUR
 
         self._timezone: Optional[Timezone] = pendulum.timezone(timezone) if (timezone := data.get('timezone')) else None
         self._timezone_private: bool = data.get('timezone_private', False)
@@ -62,7 +58,7 @@ class DefaultUserConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f'<DefaultUserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
+        return f'<DefaultUserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' xp={self.xp} coins={self.coins} level={self.level}>'
 
     # Properties
 
@@ -85,10 +81,6 @@ class DefaultUserConfig:
     @property
     def blacklisted_reason(self) -> Optional[str]:
         return self._blacklisted_reason
-
-    @property
-    def colour(self) -> discord.Colour:
-        return self._colour
 
     @property
     def timezone(self) -> Optional[Timezone]:
@@ -171,7 +163,7 @@ class DefaultUserConfig:
 class UserConfig(DefaultUserConfig):
 
     def __repr__(self) -> str:
-        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' colour=\'{self.colour}\' xp={self.xp} coins={self.coins} level={self.level}>'
+        return f'<UserConfig id=\'{self.id}\' blacklisted={self.blacklisted} timezone=\'{self.timezone}\' xp={self.xp} coins={self.coins} level={self.level}>'
 
     # Config
 
@@ -184,11 +176,6 @@ class UserConfig(DefaultUserConfig):
 
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
-
-    async def set_colour(self, colour: discord.Colour = config.COLOUR) -> None:
-
-        data = await self.bot.db.fetchrow('UPDATE users SET colour = $1 WHERE id = $2', f'0x{str(colour).strip("#")}', self.id)
-        self._colour = discord.Colour(int(data['colour'], 16))
 
     async def set_timezone(self, timezone: Timezone, *, private: Optional[bool] = None) -> None:
 

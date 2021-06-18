@@ -97,7 +97,7 @@ class Time(commands.Cog):
             raise exceptions.ArgumentError('That user has not set their timezone.')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'Time in `{found_timezone.name}`{f" for `{member}`" if member else ""}:',
                 description=f'```\n{utils.format_datetime(pendulum.now(tz=found_timezone))}\n```'
         )
@@ -273,7 +273,7 @@ class Time(commands.Cog):
         difference = utils.format_difference(reminder.datetime, suppress=[])
 
         embed = discord.Embed(
-                colour=ctx.colour, title=f'Reminder `{reminder.id}`:',
+                colour=config.MAIN, title=f'Reminder `{reminder.id}`:',
                 description=f'''
                 [__**{"In " if reminder.done is False else ""}{difference}{" ago" if reminder.done else ""}:**__]({reminder.jump_url})
                 `Created:` {utils.format_datetime(reminder.created_at, seconds=True)}

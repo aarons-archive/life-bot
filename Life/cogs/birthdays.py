@@ -15,6 +15,7 @@ import discord
 import pendulum
 from discord.ext import commands
 
+import config
 from bot import Life
 from utilities import context, converters, exceptions, utils
 
@@ -41,7 +42,7 @@ class Birthdays(commands.Cog):
             raise exceptions.ArgumentError(f'`{person}` has their birthday set as private. Use `{utils.format_command(self.bot.get_command("birthday public"))}` to change this.')
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'{person}\'s birthday information:',
                 description=f'''
                 `Birthday:` {utils.format_date(user_config.birthday)}
@@ -153,7 +154,7 @@ class Birthdays(commands.Cog):
         member = ctx.guild.get_member(user_config.id)
 
         embed = discord.Embed(
-                colour=ctx.colour,
+                colour=config.MAIN,
                 title=f'{member}\'s birthday information:',
                 description=f'''
                 `Birthday:` {utils.format_date(user_config.birthday)}

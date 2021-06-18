@@ -134,7 +134,7 @@ class Dev(commands.Cog):
 
         description.append('```')
 
-        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=ctx.colour, description='\n'.join(description))
+        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=config.MAIN, description='\n'.join(description))
         await ctx.reply(embed=embed)
 
     #

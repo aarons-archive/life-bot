@@ -14,11 +14,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional, TYPE_CHECKING
 
-import discord
 import pendulum
 import rapidfuzz
 
-import config
 from utilities import enums, objects
 
 
@@ -31,7 +29,7 @@ __log__ = logging.getLogger('utilities.objects.guild')
 
 class DefaultGuildConfig:
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
+    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
@@ -43,7 +41,6 @@ class DefaultGuildConfig:
         self._blacklisted: bool = data.get('blacklisted', False)
         self._blacklisted_reason: Optional[str] = data.get('blacklisted_reason')
 
-        self._colour: discord.Colour = discord.Colour(int(colour, 16)) if (colour := data.get('colour')) else config.COLOUR
         self._embed_size: enums.EmbedSize = enums.EmbedSize(data.get('embed_size', 0))
         self._prefixes: list[str] = data.get('prefixes', [])
 
@@ -52,7 +49,7 @@ class DefaultGuildConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour=\'{self.colour}\' embed_size={self.embed_size}>'
+        return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} embed_size={self.embed_size}>'
 
     # Properties
 
@@ -77,10 +74,6 @@ class DefaultGuildConfig:
         return self._blacklisted_reason
 
     @property
-    def colour(self) -> discord.Colour:
-        return self._colour
-
-    @property
     def embed_size(self) -> enums.EmbedSize:
         return self._embed_size
 
@@ -95,10 +88,10 @@ class DefaultGuildConfig:
 
 class GuildConfig(DefaultGuildConfig):
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_colour', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
+    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
 
     def __repr__(self) -> str:
-        return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} colour=\'{self.colour}\' embed_size={self.embed_size}>'
+        return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} embed_size={self.embed_size}>'
 
     # Config
 
@@ -110,11 +103,6 @@ class GuildConfig(DefaultGuildConfig):
         )
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
-
-    async def set_colour(self, colour: discord.Colour = config.COLOUR) -> None:
-
-        data = await self.bot.db.fetchrow('UPDATE guilds SET colour = $1 WHERE id = $2 RETURNING colour', f'0x{str(colour).strip("#")}', self.id)
-        self._colour = discord.Colour(int(data.get('colour'), 16))
 
     async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
