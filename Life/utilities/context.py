@@ -50,18 +50,6 @@ class Context(commands.Context):
     def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
         return self.bot.guild_manager.get_config(getattr(self.guild, 'id', None))
 
-    @property
-    def colour(self) -> discord.Colour:
-
-        if self.user_config.colour != config.COLOUR:
-            return self.user_config.colour
-        if self.guild_config.colour != config.COLOUR:
-            return self.guild_config.colour
-        if isinstance(self.author, discord.Member) and (roles := list(reversed([role for role in self.author.roles if role.colour.value != 0]))):  # skipcq: PTC-W0048
-            return roles[0].colour
-
-        return config.COLOUR
-
     # Paginators
 
     async def paginate(

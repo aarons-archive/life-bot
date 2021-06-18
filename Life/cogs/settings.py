@@ -11,7 +11,6 @@
 
 from typing import Literal, Optional
 
-import discord
 from discord.ext import commands
 
 import config
@@ -39,48 +38,6 @@ class Settings(commands.Cog):
     @settings.group(name='guild', invoke_without_command=True)
     async def settings_guild(self, ctx: context.Context) -> None:
         pass
-
-    @settings_guild.command(name='colour', aliases=['color'])
-    async def settings_guild_colour(self, ctx: context.Context, operation: Optional[Literal['set', 'reset']], *, colour: Optional[commands.ColourConverter]) -> None:
-        """
-        Manage this servers colour settings.
-
-        Please note that to view the colour, no permissions are needed, however to change it you require the `manage_guild` permission.
-
-        `operation`: The operation to perform, `set` to set the colour, `reset` to revert to the default. If not provided the current colour will be displayed.
-        `colour`: The colour to set. Possible formats include `0x<hex>`, `#<hex>`, `0x#<hex>` and `rgb(<number>, <number>, <number>)`. `<number>` can be `0 - 255` or `0% to 100%` and `<hex>` can be `#FFF` or `#FFFFFF`.
-        """
-
-        if not operation:
-            await ctx.reply(embed=discord.Embed(colour=ctx.guild_config.colour, title=str(ctx.guild_config.colour).upper()))
-            return
-
-        if await self.bot.is_owner(ctx.author) is False:
-            await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
-
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
-
-        old_colour = guild_config.colour
-
-        if operation == 'reset':
-
-            if guild_config.colour == config.COLOUR:
-                raise exceptions.ArgumentError('This servers colour is already the default.')
-
-            await guild_config.set_colour()
-
-        elif operation == 'set':
-
-            if not colour:
-                raise exceptions.ArgumentError('You did not provide a valid colour argument.')
-            if guild_config.colour == colour:
-                raise exceptions.ArgumentError(f'This servers colour is already `{str(colour).upper()}`.')
-
-            # noinspection PyTypeChecker
-            await guild_config.set_colour(colour)
-
-        await ctx.send(embed=discord.Embed(colour=old_colour, title=f'Old: {str(old_colour).upper()}'))
-        await ctx.send(embed=discord.Embed(colour=guild_config.colour, title=f'New: {str(guild_config.colour).upper()}'))
 
     @settings_guild.command(name='embed-size', aliases=['embedsize', 'es'])
     async def settings_guild_embed_size(self, ctx: context.Context, operation: Optional[Literal['set', 'reset']], size: Optional[Literal['large', 'medium', 'small']]) -> None:
@@ -134,7 +91,7 @@ class Settings(commands.Cog):
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
             clean_prefixes = [f'`1.` {prefixes[0]}', *[f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:])]]
-            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=ctx.guild_config.colour, title='List of usable prefixes.')
+            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=config.MAIN, title='List of usable prefixes.')
             return
 
         if await self.bot.is_owner(ctx.author) is False:

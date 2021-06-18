@@ -30,7 +30,7 @@ from discord.ext import commands
 
 import config
 import slate
-from utilities import context, help, managers  # skipcq: PYL-W0622
+from utilities import context, help, managers
 
 
 __log__ = logging.getLogger(__name__)
@@ -210,7 +210,7 @@ class Life(commands.AutoShardedBot):
         if not ctx.guild:
             current_permissions['read_messages'] = True
 
-        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:  # skipcq: PTC-W0048
+        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:
             if isinstance(ctx.author, discord.Member) and (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
                 needed_permissions = {permission: value for permission, value in self.voice_permissions if value is True}
                 current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})

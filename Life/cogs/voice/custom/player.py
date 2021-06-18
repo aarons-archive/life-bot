@@ -144,7 +144,7 @@ class Player(obsidian.ObsidianPlayer):
 
     async def invoke_controller(self) -> None:
 
-        embed = discord.Embed(colour=self.current.ctx.colour, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
+        embed = discord.Embed(colour=config.MAIN, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
         embed.set_thumbnail(url=self.current.thumbnail)
 
         if self.current.ctx.guild_config.embed_size is enums.EmbedSize.LARGE:
@@ -251,5 +251,5 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-        embed = discord.Embed(colour=ctx.colour, description=description)
+        embed = discord.Embed(colour=config.MAIN description=description)
         await ctx.reply(embed=embed)

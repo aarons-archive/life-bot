@@ -267,7 +267,7 @@ class Tags(commands.Cog):
         owner = ctx.guild.get_member(tag.user_id)
 
         embed = discord.Embed(
-                colour=ctx.colour, title=f'{tag.name}',
+                colour=config.MAIN, title=f'{tag.name}',
                 description=f'''
                 `Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})
                 `Claimable:` {owner is None}

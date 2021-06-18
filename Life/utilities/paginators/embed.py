@@ -12,10 +12,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
-from discord.embeds import _EmptyEmbed
 
 import config
 from utilities import context, paginators
@@ -45,7 +44,7 @@ class EmbedPaginator(paginators.BasePaginator):
 
         self.embed_title: Optional[str] = title
         self.embed_url: Optional[str] = url
-        self.embed_colour = discord.Colour = colour or self.ctx.colour
+        self.embed_colour = discord.Colour = colour or config.MAIN
         self.embed_image: Optional[str] = image
         self.embed_thumbnail: Optional[str] = thumbnail
         self._embed_footer: Optional[str] = embed_footer

@@ -24,6 +24,7 @@ import yarl
 from wand.color import Color
 from wand.image import Image
 
+import config
 from utilities import context, exceptions, utils
 
 
@@ -456,7 +457,7 @@ async def edit_image(ctx: context.Context, edit: str,  url: str, **kwargs) -> di
 
     url = await utils.upload_image(ctx.bot.session, buffer=buffer, file_format=data['file_format'])
 
-    embed = discord.Embed(colour=ctx.colour)
+    embed = discord.Embed(colour=config.MAIN)
     embed.set_image(url=url)
     if text:
         embed.set_footer(text=text)

@@ -26,11 +26,11 @@ import discord
 from discord.ext import commands
 
 import config
+import slate
 from bot import Life
 from cogs.voice.custom.player import Player
 from slate import obsidian
 from utilities import checks, context, converters, exceptions, utils
-import slate
 
 
 class PlayerController(commands.Cog):
@@ -125,7 +125,7 @@ class PlayerController(commands.Cog):
             track = ctx.voice_client.current
             await ctx.author.send(
                     embed=discord.Embed(
-                        colour=ctx.colour,
+                        colour=config.MAIN,
                         title=track.title,
                         url=track.uri,
                         description=f'''
@@ -155,7 +155,7 @@ class PlayerController(commands.Cog):
         await ctx.author.voice.channel.connect(cls=Player)
         ctx.voice_client._text_channel = ctx.channel
 
-        embed = discord.Embed(colour=ctx.colour, description=f'Joined voice channel `{ctx.voice_client.channel}`.')
+        embed = discord.Embed(colour=config.MAIN, description=f'Joined voice channel `{ctx.voice_client.channel}`.')
         await ctx.send(embed=embed)
 
     @commands.command(name='disconnect', aliases=['dc', 'leave', 'destroy'])
@@ -166,7 +166,7 @@ class PlayerController(commands.Cog):
         Disconnects the bot from the voice channel that it is in.
         """
 
-        await ctx.send(embed=discord.Embed(colour=ctx.colour, description=f'Left voice channel `{ctx.voice_client.channel}`.'))
+        await ctx.send(embed=discord.Embed(colour=config.MAIN, description=f'Left voice channel `{ctx.voice_client.channel}`.'))
         await ctx.voice_client.disconnect()
 
     @commands.command(name='pause')
@@ -181,7 +181,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError('The player is already paused.')
 
         await ctx.voice_client.set_pause(True)
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description='The player is now paused.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description='The player is now paused.'))
 
     @commands.command(name='resume', aliases=['continue', 'unpause'])
     @checks.is_connected(same_channel=True)
@@ -195,7 +195,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError('The player is not paused.')
 
         await ctx.voice_client.set_pause(False)
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description='The player is now resumed.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description='The player is now resumed.'))
 
     @commands.command(name='seek')
     @checks.is_voice_client_playing()
@@ -218,7 +218,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid time, please choose a value between `0s` and `{utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}`.')
 
         await ctx.voice_client.set_position(milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
 
     @commands.command(name='forward', aliases=['fwd'])
     @checks.is_voice_client_playing()
@@ -243,7 +243,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(time_remaining // 1000, friendly=True)}`.')
 
         await ctx.voice_client.set_position(position + milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
 
     @commands.command(name='rewind', aliases=['rwd'])
     @checks.is_voice_client_playing()
@@ -267,7 +267,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.')
 
         await ctx.voice_client.set_position(position - milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
 
     @commands.command(name='replay', aliases=['restart'])
     @checks.is_voice_client_playing()
@@ -316,11 +316,11 @@ class PlayerController(commands.Cog):
             skips_needed = (len(ctx.voice_client.listeners) // 2) + 1
 
             if len(ctx.voice_client.skip_request_ids) < skips_needed:
-                await ctx.reply(embed=discord.Embed(colour=ctx.colour, description=f'{message} currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.'))
+                await ctx.reply(embed=discord.Embed(colour=config.MAIN, description=f'{message} currently on `{len(ctx.voice_client.skip_request_ids)}` out of `{skips_needed}` votes needed to skip.'))
                 return
 
         await ctx.voice_client.stop()
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description='Skipped the current track.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description='Skipped the current track.'))
 
     @commands.command(name='forceskip', aliases=['force-skip', 'force_skip', 'fs'])
     @checks.is_voice_client_playing()
@@ -340,7 +340,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError('You do not have permission to force skip.')
 
         await ctx.voice_client.stop()
-        await ctx.reply(embed=discord.Embed(colour=ctx.colour, description='Skipped the current track.'))
+        await ctx.reply(embed=discord.Embed(colour=config.MAIN, description='Skipped the current track.'))
 
     @commands.command(name='loop', aliases=['loop-current', 'loop_current'])
     @checks.is_voice_client_playing()
@@ -353,10 +353,10 @@ class PlayerController(commands.Cog):
 
         if ctx.voice_client.queue.is_looping_current:
             ctx.voice_client.queue.set_looping(looping=False)
-            embed = discord.Embed(colour=ctx.colour, description='The current track will stop looping.')
+            embed = discord.Embed(colour=config.MAIN, description='The current track will stop looping.')
         else:
             ctx.voice_client.queue.set_looping(looping=True, current=True)
-            embed = discord.Embed(colour=ctx.colour, description='The current track will start looping.')
+            embed = discord.Embed(colour=config.MAIN, description='The current track will start looping.')
 
         await ctx.reply(embed=embed)
 

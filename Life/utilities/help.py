@@ -116,7 +116,7 @@ class HelpCommand(commands.HelpCommand):
 
         title = f'{command.qualified_name} {command.signature if command.signature else ""}'
         description = f'{aliases if command.aliases else ""}{command_help}'
-        embed = discord.Embed(colour=self.context.colour, title=title, description=description)
+        embed = discord.Embed(colour=config.MAIN, title=title, description=description)
 
         await self.context.paginate_embeds(entries=[embed])
 
