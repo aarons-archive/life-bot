@@ -251,5 +251,5 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-        embed = discord.Embed(colour=config.MAIN description=description)
+        embed = discord.Embed(colour=config.MAIN, description=description)
         await ctx.reply(embed=embed)

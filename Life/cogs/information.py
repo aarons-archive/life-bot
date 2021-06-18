@@ -17,6 +17,7 @@ import psutil
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
+import config
 import emoji
 import time
 from bot import Life
