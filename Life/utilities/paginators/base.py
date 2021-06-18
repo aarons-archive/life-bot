@@ -21,6 +21,7 @@ import async_timeout
 import discord
 
 import config
+import emoji
 from utilities import context, paginators
 
 
@@ -58,11 +59,11 @@ class BasePaginator(abc.ABC):
         self.page: int = 0
 
         self.BUTTONS = {
-            ':first:737826967910481931':    self.first,
-            ':backward:737826960885153800': self.backward,
-            ':stop:737826951980646491':     self.stop,
-            ':forward:737826943193448513':  self.forward,
-            ':last:737826943520473198':     self.last
+            emoji.PREVIOUS:    self.first,
+            emoji.ARROW_LEFT:  self.backward,
+            emoji.STOP:        self.stop,
+            emoji.ARROW_RIGHT: self.forward,
+            emoji.NEXT:        self.last
         }
 
         self.pages = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
@@ -71,7 +72,7 @@ class BasePaginator(abc.ABC):
 
     def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
 
-        if str(payload.emoji).strip('<>') not in self.BUTTONS.keys():
+        if str(payload.emoji) not in self.BUTTONS.keys():
             return False
 
         if payload.message_id != getattr(self.message, 'id', None) or payload.channel_id != getattr(getattr(self.message, 'channel', None), 'id', None):
@@ -94,7 +95,7 @@ class BasePaginator(abc.ABC):
 
         self.reaction_event.set()
         with contextlib.suppress(paginators.AlreadyOnPage, paginators.PageOutOfBounds):
-            await self.BUTTONS[str(payload.emoji).strip('<>')]()
+            await self.BUTTONS[str(payload.emoji)]()
 
     # Loop
 

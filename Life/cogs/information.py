@@ -17,7 +17,7 @@ import psutil
 from discord.ext import commands
 from discord.ext.alternatives import guild_converter
 
-import config
+import emoji
 import time
 from bot import Life
 from utilities import context, converters, exceptions, utils
@@ -167,9 +167,9 @@ class Information(commands.Cog):
         features = []
         for feature, description in sorted(self.FEATURES.items(), key=lambda kv: kv[1][0]):
             if feature in guild.features:
-                features.append(f'{config.TICK} {description}')
+                features.append(f'{emoji.TICK} {description}')
             else:
-                features.append(f'{config.CROSS} {description}')
+                features.append(f'{emoji.CROSS} {description}')
 
         embed = discord.Embed(
                 colour=ctx.colour,
@@ -178,8 +178,8 @@ class Information(commands.Cog):
                 `Owner:` {guild.owner}
                 `Created on:` {utils.format_datetime(guild.created_at)}
                 `Created:` {utils.format_difference(guild.created_at)} ago
-                `Members:` {guild.member_count} | {config.ONLINE}{statuses[discord.Status.online]} | {config.IDLE}{statuses[discord.Status.idle]} | {config.DND}{statuses[discord.Status.dnd]} | \
-                {config.OFFLINE}{statuses[discord.Status.offline]}
+                `Members:` {guild.member_count} | {emoji.ONLINE}{statuses[discord.Status.online]} | {emoji.IDLE}{statuses[discord.Status.idle]} | {emoji.DND}{statuses[discord.Status.dnd]} | \
+                {emoji.OFFLINE}{statuses[discord.Status.offline]}
                 `Content filter level:` {self.CONTENT_FILTER_LEVELS[ctx.guild.explicit_content_filter]} | `2FA:` {self.MFA_LEVELS[ctx.guild.mfa_level]}
                 `Verification level:` {self.VERIFICATION_LEVELS[ctx.guild.verification_level]}
                 '''
@@ -190,8 +190,8 @@ class Information(commands.Cog):
                 value=f'''
                 `Nitro Tier:` {ctx.guild.premium_tier} | `Boosters:` {ctx.guild.premium_subscription_count} | `File Size:` {round(ctx.guild.filesize_limit / 1048576)} MB | \
                 `Bitrate:` {round(ctx.guild.bitrate_limit / 1000)} kbps
-                `Emoji limit:` {ctx.guild.emoji_limit} | `Normal emoji:` {sum([1 for emoji in guild.emojis if not emoji.animated])} | 
-                `Animated emoji:` {sum([1 for emoji in guild.emojis if emoji.animated])}
+                `Emoji limit:` {ctx.guild.emoji_limit} | `Normal emoji:` {sum([1 for _ in guild.emojis if not _.animated])} | 
+                `Animated emoji:` {sum([1 for _ in guild.emojis if _.animated])}
                 '''
         )
 
@@ -270,7 +270,7 @@ class Information(commands.Cog):
 
         space = '\u200b ' * 5
         for category in sorted(categories, key=lambda category: category.position):
-            entries.append(f'{config.CHANNELS["CATEGORY"]} **{category}**')
+            entries.append(f'{emoji.CHANNELS["CATEGORY"]} **{category}**')
             for channel in category.channels:
                 entries.append(f'{space}{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}')
 
@@ -369,11 +369,11 @@ class Information(commands.Cog):
                 colour=self.COLOURS[member.status],
                 title=f'`{member}`\'s information.',
                 description=f'''
-                `Discord Name:` {member} {config.CROWN if member.id == member.guild.owner.id else ""}
+                `Discord Name:` {member} {emoji.OWNER if member.id == member.guild.owner.id else ""}
                 `Created on:` {utils.format_datetime(member.created_at)}
                 `Created:` {utils.format_difference(member.created_at)} ago
                 `Badges:` {utils.badge_emojis(member)}
-                `Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{config.PHONE if member.is_on_mobile() else ""}
+                `Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{emoji.PHONE if member.is_on_mobile() else ""}
                 `Bot:` {str(member.bot).replace("True", "Yes").replace("False", "No")}
                 `Activity:`\n{utils.activities(member)}
                 '''
