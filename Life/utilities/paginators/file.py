@@ -23,6 +23,7 @@ SOFTWARE.
 from __future__ import annotations
 
 import functools
+import io
 from typing import Optional
 
 from utilities import context, paginators, utils

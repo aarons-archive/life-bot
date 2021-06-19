@@ -22,14 +22,10 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional
 
 import config
 from utilities import context, paginators
-
-
-if TYPE_CHECKING:
-    from bot import Life
 
 
 class TextPaginator(paginators.BasePaginator):
