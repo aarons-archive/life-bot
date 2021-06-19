@@ -1,14 +1,24 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from __future__ import annotations
 
@@ -24,17 +34,11 @@ if TYPE_CHECKING:
 
 class TextPaginator(paginators.BasePaginator):
 
-    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_messages_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
-                'page', 'BUTTONS', '_header', '_footer'
-
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
-            codeblock: bool = False, splitter: str = '\n', header: Optional[str] = None, footer: Optional[str] = None
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, codeblock: bool = False, splitter: str = '\n',
+            header: Optional[str] = None, footer: Optional[str] = None
     ) -> None:
-        super().__init__(
-                bot=bot, ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, delete_reactions_when_done=delete_reactions_when_done,
-                codeblock=codeblock, splitter=splitter
-        )
+        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, codeblock=codeblock, splitter=splitter)
 
         self._header: Optional[str] = header
         self._footer: Optional[str] = footer
@@ -58,8 +62,8 @@ class TextPaginator(paginators.BasePaginator):
 
     async def paginate(self) -> None:
 
-        self.message = await self.ctx.reply(self.generate_page(self.page))
         await super().paginate()
+        self.message = await self.ctx.reply(self.generate_page(self.page), view=self.view)
 
     async def first(self) -> None:
 

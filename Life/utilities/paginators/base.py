@@ -1,24 +1,32 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from __future__ import annotations
 
 import abc
-import asyncio
-import contextlib
 from typing import Any, Optional, TYPE_CHECKING
 
-import async_timeout
 import discord
+from discord import Interaction
 
 import config
 import emoji
@@ -29,114 +37,66 @@ if TYPE_CHECKING:
     from bot import Life
 
 
+class ButtonsView(discord.ui.View):
+
+    def __init__(self, paginator: BasePaginator, timeout: Optional[int] = 180) -> None:
+        super().__init__(timeout=timeout)
+
+        self.paginator: BasePaginator = paginator
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        return interaction.message.id == getattr(self.paginator.message, 'id', None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
+
+    @discord.ui.button(emoji=emoji.FIRST)
+    async def first(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.paginator.first()
+
+    @discord.ui.button(emoji=emoji.BACKWARD)
+    async def backward(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.paginator.backward()
+
+    @discord.ui.button(emoji=emoji.STOP)
+    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.paginator.stop()
+
+    @discord.ui.button(emoji=emoji.FORWARD)
+    async def forward(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.paginator.forward()
+
+    @discord.ui.button(emoji=emoji.LAST)
+    async def last(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await self.paginator.last()
+
+
 class BasePaginator(abc.ABC):
 
-    __slots__ = 'bot', 'ctx', 'entries', 'per_page', 'timeout', 'delete_message_when_done', 'delete_reactions_when_done', 'codeblock', 'splitter', 'reaction_event', 'task', 'message', 'looping', \
-                'page', 'BUTTONS', 'pages'
-
     def __init__(
-            self, *, bot: Life = None, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, delete_reactions_when_done: bool = True,
-            codeblock: bool = False, splitter: str = '\n'
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, codeblock: bool = False, splitter: str = '\n'
     ) -> None:
 
-        self.bot: Life = bot or ctx.bot
+        self.bot: Life = ctx.bot
         self.ctx: context.Context = ctx
         self.entries: list[Any] = entries
         self.per_page: int = per_page
 
         self.timeout: int = timeout
         self.delete_message_when_done: bool = delete_message_when_done
-        self.delete_reactions_when_done: bool = delete_reactions_when_done
         self.codeblock: bool = codeblock
         self.splitter: str = splitter
 
-        self.reaction_event: asyncio.Event = asyncio.Event()
-
-        self.task: Optional[asyncio.Task] = None
         self.message: Optional[discord.Message] = None
+        self.view: Optional[discord.ui.View] = None
 
-        self.looping: bool = True
         self.page: int = 0
 
-        self.BUTTONS = {
-            emoji.PREVIOUS:    self.first,
-            emoji.ARROW_LEFT:  self.backward,
-            emoji.STOP:        self.stop,
-            emoji.ARROW_RIGHT: self.forward,
-            emoji.NEXT:        self.last
-        }
-
         self.pages = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
-
-    # Checks
-
-    def check_reaction(self, payload: discord.RawReactionActionEvent) -> bool:
-
-        if str(payload.emoji) not in self.BUTTONS.keys():
-            return False
-
-        if payload.message_id != getattr(self.message, 'id', None) or payload.channel_id != getattr(getattr(self.message, 'channel', None), 'id', None):
-            return False
-
-        return payload.user_id in {*config.OWNER_IDS, self.ctx.author.id}
-
-    # Listeners
-
-    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
-        await self.handle_reaction(payload)
-
-    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
-        await self.handle_reaction(payload)
-
-    async def handle_reaction(self, payload: discord.RawReactionActionEvent) -> None:
-
-        if not self.check_reaction(payload) or not self.looping:
-            return
-
-        self.reaction_event.set()
-        with contextlib.suppress(paginators.AlreadyOnPage, paginators.PageOutOfBounds):
-            await self.BUTTONS[str(payload.emoji)]()
-
-    # Loop
-
-    async def loop(self) -> None:
-
-        if len(self.pages) == 1:
-            await self.message.add_reaction(':stop:737826951980646491')
-        else:
-            for emote in self.BUTTONS:
-                await self.message.add_reaction(emote)
-
-        #
-
-        while self.looping:
-            try:
-                async with async_timeout.timeout(self.timeout):
-                    await self.reaction_event.wait()
-                    self.reaction_event.clear()
-            except asyncio.TimeoutError:
-                self.looping = False
-            else:
-                continue
-
-        #
-
-        if self.message and self.delete_reactions_when_done:
-            for reaction in self.BUTTONS:
-                await self.message.remove_reaction(reaction, self.bot.user)
-            await self.stop(delete=False)
-        else:
-            await self.stop(delete=self.delete_message_when_done)
 
     # Abstract methods
 
     @abc.abstractmethod
     async def paginate(self) -> None:
 
-        self.task = asyncio.create_task(self.loop())
-
-        self.bot.add_listener(self.on_raw_reaction_add)
-        self.bot.add_listener(self.on_raw_reaction_remove)
+        self.view = ButtonsView(self, timeout=self.timeout)
 
     @abc.abstractmethod
     async def first(self) -> None:
@@ -156,15 +116,9 @@ class BasePaginator(abc.ABC):
 
     async def stop(self, delete: bool = True) -> None:
 
-        self.task.cancel()
-        self.looping = False
-
         if self.message and delete:
             await self.message.delete()
             self.message = None
-
-        self.bot.remove_listener(self.on_raw_reaction_add)
-        self.bot.remove_listener(self.on_raw_reaction_remove)
 
     @abc.abstractmethod
     async def forward(self) -> None:
