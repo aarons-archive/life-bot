@@ -39,32 +39,48 @@ if TYPE_CHECKING:
 
 class ButtonsView(discord.ui.View):
 
-    def __init__(self, paginator: BasePaginator, timeout: Optional[int] = 180) -> None:
-        super().__init__(timeout=timeout)
+    def __init__(self, paginator: BasePaginator) -> None:
+        super().__init__(timeout=paginator.timeout)
 
         self.paginator: BasePaginator = paginator
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         return interaction.message.id == getattr(self.paginator.message, 'id', None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
 
+    async def on_timeout(self) -> None:
+        await self.paginator.stop(delete=self.paginator.delete_message_when_done)
+
+    async def on_error(self, exception: Exception, item: discord.ui.Button, interaction: discord.Interaction) -> None:
+        return
+
     @discord.ui.button(emoji=emoji.FIRST)
     async def first(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+        await interaction.response.defer()
         await self.paginator.first()
 
     @discord.ui.button(emoji=emoji.BACKWARD)
     async def backward(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+        await interaction.response.defer()
         await self.paginator.backward()
 
     @discord.ui.button(emoji=emoji.STOP)
     async def stop(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+        await interaction.response.defer()
         await self.paginator.stop()
 
     @discord.ui.button(emoji=emoji.FORWARD)
     async def forward(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+        await interaction.response.defer()
         await self.paginator.forward()
 
     @discord.ui.button(emoji=emoji.LAST)
     async def last(self, button: discord.ui.Button, interaction: discord.Interaction):
+        
+        await interaction.response.defer()
         await self.paginator.last()
 
 
@@ -96,10 +112,13 @@ class BasePaginator(abc.ABC):
     @abc.abstractmethod
     async def paginate(self) -> None:
 
-        self.view = ButtonsView(self, timeout=self.timeout)
+        self.view = ButtonsView(self)
 
     @abc.abstractmethod
     async def first(self) -> None:
+
+        if not self.message:
+            return
 
         if self.page == 0:
             raise paginators.AlreadyOnPage
@@ -109,12 +128,17 @@ class BasePaginator(abc.ABC):
     @abc.abstractmethod
     async def backward(self) -> None:
 
+        if not self.message:
+            return
+
         if self.page <= 0:
             raise paginators.PageOutOfBounds
 
         self.page -= 1
 
-    async def stop(self, delete: bool = True) -> None:
+    async def stop(self, delete: bool = False) -> None:
+
+        await self.message.edit(view=None)
 
         if self.message and delete:
             await self.message.delete()
@@ -123,6 +147,9 @@ class BasePaginator(abc.ABC):
     @abc.abstractmethod
     async def forward(self) -> None:
 
+        if not self.message:
+            return
+
         if self.page >= len(self.pages) - 1:
             raise paginators.PageOutOfBounds
 
@@ -130,6 +157,9 @@ class BasePaginator(abc.ABC):
 
     @abc.abstractmethod
     async def last(self) -> None:
+
+        if not self.message:
+            return
 
         if (page := len(self.pages) - 1) == self.page:
             raise paginators.AlreadyOnPage
