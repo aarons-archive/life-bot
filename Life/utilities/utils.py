@@ -18,7 +18,7 @@ import io
 import logging
 import os
 import pathlib
-from typing import Literal, Optional, TYPE_CHECKING, Union
+from typing import Literal, Optional, Union
 
 import aiohttp
 import discord
@@ -30,10 +30,6 @@ from discord.ext import commands
 import config
 import emoji
 from utilities import exceptions
-
-
-if TYPE_CHECKING:
-    pass
 
 
 __log__ = logging.getLogger('utilities.utils')
@@ -88,13 +84,12 @@ def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, disc
         emoji_name = 'VOICE' if overwrites.connect else 'VOICE_LOCKED'
     elif channel == guild.rules_channel:
         emoji_name = 'RULES'
+    elif channel.is_news():
+        emoji_name = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
+    elif channel.is_nsfw():
+        emoji_name = 'TEXT_NSFW'
     else:
-        if channel.is_news():
-            emoji_name = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
-        elif channel.is_nsfw():
-            emoji_name = 'TEXT_NSFW'
-        else:
-            emoji_name = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
+        emoji_name = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
 
     return emoji.CHANNELS[emoji_name]
 

@@ -66,10 +66,7 @@ def is_track_requester():
 
     async def predicate(ctx) -> bool:
 
-        if getattr(getattr(getattr(ctx.voice_client, 'current', None), 'requester', None), 'id', None) != ctx.author.id:
-            return False
-
-        return True
+        return getattr(getattr(getattr(ctx.voice_client, 'current', None), 'requester', None), 'id', None) == ctx.author.id
 
     return commands.check(predicate)
 

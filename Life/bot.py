@@ -133,7 +133,7 @@ class Life(commands.AutoShardedBot):
             __log__.debug('[REDIS] Attempting connection')
             redis = aioredis.from_url(url=config.REDIS, decode_responses=True, retry_on_timeout=True)
             await redis.ping()
-        except (aredis.ConnectionError, aredis.ResponseError) as e:
+        except (aioredis.ConnectionError, aioredis.ResponseError) as e:
             __log__.critical(f'[REDIS] Error while connecting.\n{e}\n')
             print(f'[REDIS] Error while connecting: {e}')
             raise ConnectionError()
