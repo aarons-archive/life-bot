@@ -15,7 +15,6 @@ from typing import Any, Optional
 import discord
 import psutil
 from discord.ext import commands
-from discord.ext.alternatives import guild_converter
 
 import config
 import emoji
@@ -153,7 +152,7 @@ class Information(commands.Cog):
         await ctx.reply(f'{round(self.bot.latency * 1000)}ms')
 
     @commands.command(name='server', aliases=['serverinfo'])
-    async def server(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
+    async def server(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
         """
         Display information about a server.
 
@@ -254,7 +253,7 @@ class Information(commands.Cog):
         await ctx.paginate(entries=roles, per_page=20, codeblock=True)
 
     @commands.command(name='channels')
-    async def channels(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
+    async def channels(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
         """
         Displays a list of a servers channels.
 
@@ -278,7 +277,7 @@ class Information(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=30, title=f'`{guild.name}`\'s channels.')
 
     @commands.command(name='icon')
-    async def icon(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
+    async def icon(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
         """
         Displays a server's icon.
 
@@ -304,7 +303,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name='banner')
-    async def banner(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
+    async def banner(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
         """
         Displays a servers banner.
 
@@ -330,7 +329,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name='splash')
-    async def splash(self, ctx: context.Context, *, guild: Optional[guild_converter.Guild]) -> None:
+    async def splash(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
         """
         Displays a servers splash.
 

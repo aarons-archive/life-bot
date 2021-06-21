@@ -50,36 +50,36 @@ class ButtonsView(discord.ui.View):
     async def on_timeout(self) -> None:
         await self.paginator.stop(delete=self.paginator.delete_message_when_done)
 
-    async def on_error(self, exception: Exception, item: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         return
 
     @discord.ui.button(emoji=emoji.FIRST)
-    async def first(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def first(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
         await self.paginator.first()
 
     @discord.ui.button(emoji=emoji.BACKWARD)
-    async def backward(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def backward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
         await self.paginator.backward()
 
     @discord.ui.button(emoji=emoji.STOP)
-    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
         await self.paginator.stop()
 
     @discord.ui.button(emoji=emoji.FORWARD)
-    async def forward(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def forward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
         await self.paginator.forward()
 
     @discord.ui.button(emoji=emoji.LAST)
-    async def last(self, button: discord.ui.Button, interaction: discord.Interaction):
-        
+    async def last(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+
         await interaction.response.defer()
         await self.paginator.last()
 
