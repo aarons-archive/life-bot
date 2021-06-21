@@ -16,8 +16,8 @@ import traceback
 from typing import Optional, Union
 
 import aiohttp
+import aioredis
 import aioscheduler
-import aredis
 import asyncpg
 import discord
 import ksoftapi
@@ -60,7 +60,7 @@ class Life(commands.AutoShardedBot):
         self.first_ready: bool = True
 
         self.db: Optional[asyncpg.Pool] = None
-        self.redis: Optional[aredis.StrictRedis] = None
+        self.redis: Optional[aioredis.Redis] = None
 
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: Optional[ksoftapi.Client] = ksoftapi.Client(config.KSOFT_TOKEN)
@@ -94,7 +94,7 @@ class Life(commands.AutoShardedBot):
         except Exception as e:
             __log__.critical(f'[POSTGRESQL] Error while connecting.\n{e}\n')
             print(f'\n[POSTGRESQL] Error while connecting: {e}')
-            raise ConnectionError
+            raise ConnectionError()
         else:
             __log__.info('[POSTGRESQL] Successful connection.')
             print('\n[POSTGRESQL] Successful connection.')
@@ -102,15 +102,15 @@ class Life(commands.AutoShardedBot):
 
         try:
             __log__.debug('[REDIS] Attempting connection')
-            redis = aredis.StrictRedis(**config.REDIS)
-            await redis.set('connected', 0)
+            redis = aioredis.from_url(url=config.REDIS, decode_responses=True, retry_on_timeout=True)
+            await redis.ping()
         except (aredis.ConnectionError, aredis.ResponseError) as e:
             __log__.critical(f'[REDIS] Error while connecting.\n{e}\n')
             print(f'[REDIS] Error while connecting: {e}')
             raise ConnectionError()
         else:
             __log__.info('[REDIS] Successful connection.')
-            print(f'[REDIS] Successful connection to Redis DB number \'{config.REDIS["db"]}\'. \n')
+            print(f'[REDIS] Successful connection to Redis DB. \n')
             self.redis = redis
 
         for extension in config.EXTENSIONS:
