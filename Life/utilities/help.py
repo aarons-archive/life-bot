@@ -37,14 +37,13 @@ class HelpCommand(commands.HelpCommand):
 
     def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[Union[commands.Command, commands.Group]]]:
 
-        filtered_commands = []
-
-        for command in cog.walk_commands():
-            if (command.hidden or command.root_parent and command.root_parent.hidden) and self.context.author.id not in config.OWNER_IDS:
-                continue
-            filtered_commands.append(command)
-
-        return filtered_commands
+        return [
+            command
+            for command in cog.walk_commands()
+            if not command.hidden
+            and (not command.root_parent or not command.root_parent.hidden)
+            or self.context.author.id in config.OWNER_IDS
+        ]
 
     @staticmethod
     def format_commands(*, unformatted_command: list[Union[commands.Command, commands.Group]]) -> list[str]:
