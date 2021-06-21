@@ -5,7 +5,6 @@ Life is a multi-purpose discord bot made by Axel#3456. You can click
 or [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot) to invite with no permissions. Feel free to join my 
 [support server](https://discord.gg/w9f6NkQbde) in case you find any bugs or have features to suggest.
 
-
 ## Features:
 * Music - lyrics, queue management, volume control, and filters
 * Birthdays - Set your birthday and notify users of when a birthday happens so that you never forget.
@@ -21,33 +20,54 @@ or [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scop
 * [Invite (No permissions)](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot)
 * [Support Server](https://discord.gg/w9f6NkQbde)
 
-## Installing/Running
-While I would prefer you don't run your own instance of this bot, setup instructions will be provided for those wanting to contribute to the development of Life.
+
+# Running
+I'd request that you don't run your own instance of this bot, but im not exactly able to stop you...setup instructions are provided 
+for those wishing to contribute to the development of life.
 
 ### Prerequisites
-* Python3.8 or higher
-* PostgreSQL-12
-* Redis server
-* A LavaLink node
-* Spotify API credentials
-* Ksoft.si API credentials
-* Image uploader token
+* [Python-3.9](https://www.python.org/downloads) or higher
+* [PostgreSQL-13](https://www.postgresql.org/download/) (a lower version should work, 13 is just the version I use.)
+* [Redis](https://redis.io/topics/quickstart)
+* [Obsidian](https://github.com/mixtape-bot/obsidian) (requires [JDK-16](https://openjdk.java.net/projects/jdk/16/))
+* [Discord API Application](https://discord.com/developers/applications)
+* [Spotify API Application](https://developer.spotify.com/dashboard/applications)
+* [Ksoft.si API Application](https://api.ksoft.si/dashboard/)
+* [AxelWeb](https://cdn.axelancerr.xyz/home) token (Reach out to me on discord if you desperately need this.)
 
+
+* Good python knowledge, chances are that I'll help you understand whatever is going on here - as long as you know 
+  [the basics](https://media.mrrandom.xyz/TofuYoyoCynicChorusGyro.png) of a discord bot made in python.
+  
 ### Setup
 
-1. Install dependencies
+1. Clone repository
 ```bash
-pip install -U -r requirements.txt
+git clone https://github.com/Axelancerr/Life
+cd Life/
 ```
 
-2. Rename `config_example.py` to `config.py` [here](https://github.com/Axelancerr/Life/tree/master/Life/config).
+2. Create and activate a virtual environment
+
+If needed, run `sudo apt install python3.9-venv`.
 ```bash
+python -m venv venv/
+source venv\bin\activate
+```
+
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+4. Rename [`config_example.py`](Life/config_example.py) to `config.py` and fill in the tokens/other data.
+```bash
+cd Life/
 mv config_example.py config.py
+nano config.py
 ```
 
-3. Fill in the config file with the correct information.
-
-4. Run the `main.py` file.
+5. Run the [`main.py`](Life/main.py) file.
 ```bash
-python3.8 main.py
+python main.py
 ```
