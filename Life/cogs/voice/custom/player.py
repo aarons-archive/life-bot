@@ -1,95 +1,96 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
+from __future__ import annotations
 
 import asyncio
 import logging
-import re
+import textwrap
 from typing import Optional
 
 import async_timeout
 import discord
-import slate
-import spotify
-import yarl
-from spotify.errors import HTTPException
 
 import config
+import emoji
+import slate
 from bot import Life
-from cogs.voice.custom import objects, queue
+from cogs.voice.custom.queue import Queue
+from slate import obsidian
 from utilities import context, enums, exceptions, utils
 
 
-__log__ = logging.getLogger('slate.bases.player')
+__all__ = ['Player']
+__log__ = logging.getLogger('slate.obsidian.player')
 
 
-class Player(slate.Player):
+class Player(obsidian.ObsidianPlayer):
 
     def __init__(self, bot: Life, channel: discord.VoiceChannel) -> None:
         super().__init__(bot, channel)
 
-        self.queue = queue.Queue(player=self)
+        self._text_channel: Optional[discord.TextChannel] = None
+        self._dj: Optional[discord.Member] = None
 
-        self.queue_add_event = asyncio.Event()
-        self.track_start_event = asyncio.Event()
-        self.track_end_event = asyncio.Event()
+        self._queue: Queue = Queue(player=self)
 
-        self.skip_request_ids: set[int] = set()
+        self._queue_add_event: asyncio.Event = asyncio.Event()
+        self._track_start_event: asyncio.Event = asyncio.Event()
+        self._track_end_event: asyncio.Event = asyncio.Event()
 
-        self.text_channel: Optional[discord.TextChannel] = None
-        self.task: Optional[asyncio.Task] = None
+        self._task: Optional[asyncio.Task] = None
 
-        self.spotify_url_regex = re.compile(r'http(s)?://open.spotify.com/(?P<type>album|playlist|track)/(?P<id>[a-zA-Z0-9]+)')
+    def __repr__(self) -> str:
+        return f'<life.Player>'
 
-    async def connect(self, *, timeout: float, reconnect: bool) -> None:
-        await super().connect(timeout=timeout, reconnect=reconnect)
+    #
 
-        await self.guild.change_voice_state(channel=self.channel, self_deaf=True)
-        self.task = self.bot.loop.create_task(self.loop())
+    @property
+    def text_channel(self) -> Optional[discord.TextChannel]:
+        return self._text_channel
+
+    @property
+    def voice_channel(self) -> Optional[discord.VoiceChannel]:
+        return self.channel
+
+    @property
+    def dj(self) -> Optional[discord.Member]:
+        return self._dj
+
+    @property
+    def queue(self) -> Queue:
+        return self._queue
+
+    #
+
+    async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None, self_deaf: bool = True) -> None:
+
+        await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
+        self._task = asyncio.create_task(self.loop())
 
     async def disconnect(self, *, force: bool = False) -> None:
 
-        if not self.is_connected and not force:
-            return
-
-        await self.guild.change_voice_state(channel=None)
-        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' disconnected from voice channel \'{self.channel.id}\'.')
-
-        self.task.cancel()
-        self.task = None
-
-        self.channel = None
-
-    async def reconnect(self, *, channel: discord.VoiceChannel) -> None:
-
-        self.channel = channel
-        await self.connect(timeout=60, reconnect=True)
-
-    async def destroy(self, *, force: bool = False) -> None:
-
-        if not self.is_connected and not force:
-            return
-
-        if self.node.is_connected:
-            await self.stop(force=force)
-            await self.node._send(op='destroy', guildId=str(self.guild.id))
-
-        await self.guild.change_voice_state(channel=None)
-        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' disconnected from voice channel \'{self.channel.id}\'.')
-
-        self.task.cancel()
-        self.task = None
-
-        del self.node.players[self.guild.id]
-        self.cleanup()
+        await super().disconnect(force=force)
+        self._task.cancel()
 
     #
 
@@ -97,49 +98,45 @@ class Player(slate.Player):
 
         while True:
 
-            self.queue_add_event.clear()
-            self.track_start_event.clear()
-            self.track_end_event.clear()
+            self._queue_add_event.clear()
+            self._track_start_event.clear()
+            self._track_end_event.clear()
 
             if self.queue.is_empty:
 
-                timeout = 60
-
                 try:
-                    with async_timeout.timeout(timeout=timeout):
-                        await self.queue_add_event.wait()
+                    with async_timeout.timeout(timeout=120):
+                        await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    await self.send(f'No tracks were added to the queue for `{timeout}s`. The player has disconnected temporarily.')
-                    await self.stop()
+                    await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
                     await self.disconnect()
                     break
 
             track = self.queue.get()
 
-            if track.source == 'Spotify':
-                for retry in range(2):
-                    try:
-                        search = await self.search(query=f'{"ytmsearch:" if retry == 0 else ""}{track.author} - {track.title}', ctx=track.ctx)
-                    except exceptions.VoiceError as error:
-                        if retry == 1:
-                            await self.send(f'{error}')
-                        continue
-                    track = search.tracks[0]
-                    break
+            if track.source is slate.Source.SPOTIFY:
 
-            await self.play(track=track)
+                try:
+                    search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
+                except exceptions.VoiceError:
+                    try:
+                        search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE)
+                    except exceptions.VoiceError as error:
+                        await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.UNKNOWN}  {error}'))
+                        continue
+
+                track = search.tracks[0]
+
+            await self.play(track)
 
             try:
-                with async_timeout.timeout(timeout=10):
-                    await self.track_start_event.wait()
+                with async_timeout.timeout(timeout=5):
+                    await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(f'Something went wrong while starting the track `{track.title}`. Use `{config.PREFIX}support` for help.')
+                await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
                 continue
 
-            await self.track_end_event.wait()
-
-            if self.queue.is_looping:
-                self.queue.put(items=track, position=0 if self.queue.is_looping_current else None)
+            await self._track_end_event.wait()
 
             self._current = None
 
@@ -147,114 +144,112 @@ class Player(slate.Player):
 
     async def invoke_controller(self) -> None:
 
-        embed = discord.Embed(colour=self.current.ctx.colour)
+        embed = discord.Embed(colour=config.MAIN, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
         embed.set_thumbnail(url=self.current.thumbnail)
-        embed.add_field(name='Now playing:', value=f'**[{self.current.title}]({self.current.uri})**', inline=False)
 
-        queue_time = utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)
+        if self.current.ctx.guild_config.embed_size is enums.EmbedSize.LARGE:
 
-        if self.current.ctx.guild_config.embed_size == enums.EmbedSize.LARGE:
-
-            embed.add_field(name='Player info:',
-                            value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n'
-                                  f'`Queue entries:` {len(self.queue)}\n`Queue time:` {queue_time}')
-            embed.add_field(name='Track info:',
-                            value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / '
-                                  f'{utils.format_seconds(seconds=round(self.current.length) // 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
-                                  f'`Requester:` {self.current.requester.mention}\n`Live:` {self.current.is_stream}\n`Seekable:` {self.current.is_seekable}')
+            embed.add_field(
+                    name='Player info:',
+                    value=textwrap.dedent(
+                            f'''
+                            `Paused:` {self.paused}
+                            `Loop mode:` {self.queue.loop_mode.name.title()}
+                            `Filter:` {getattr(self.filter, "name", None)}
+                            `Queue entries:` {len(self.queue)}
+                            `Queue time:` {utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)}
+                            '''
+                    )
+            )
+            embed.add_field(
+                    name='Track info:',
+                    value=textwrap.dedent(
+                            f'''
+                            `Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}
+                            `Author:` {self.current.author}
+                            `Source:` {self.current.source.value.title()}
+                            `Requester:` {self.current.requester.mention}
+                            `Seekable:` {self.current.is_seekable}
+                            '''
+                    )
+            )
 
             if not self.queue.is_empty:
-                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {utils.format_seconds(seconds=round(entry.length) // 1000)} | {entry.requester.mention}'
-                           for index, entry in enumerate(self.queue[:5])]
 
+                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {utils.format_seconds(entry.length // 1000)} | {entry.requester.mention}' for index, entry in enumerate(self.queue[:5])]
                 if len(self.queue) > 5:
-                    entries.append(f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | '
-                                   f'{utils.format_seconds(seconds=round(self.queue[-1].length) // 1000)} | {self.queue[-1].requester.mention}')
+                    entries.append(
+                            f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | {utils.format_seconds(self.queue[-1].length // 1000)} | {self.queue[-1].requester.mention}'
+                    )
 
                 embed.add_field(name='Up next:', value='\n'.join(entries), inline=False)
 
-        elif self.current.ctx.guild_config.embed_size == enums.EmbedSize.MEDIUM:
+        elif self.current.ctx.guild_config.embed_size is enums.EmbedSize.MEDIUM:
 
-            embed.add_field(name='Player info:',
-                            value=f'`Volume:` {self.volume}\n`Paused:` {self.is_paused}\n`Looping:` {self.queue.is_looping}\n`Looping current:` {self.queue.is_looping_current}\n')
-            embed.add_field(name='Track info:',
-                            value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / '
-                                  f'{utils.format_seconds(seconds=round(self.current.length) // 1000)}\n`Author:` {self.current.author}\n`Source:` {self.current.source}\n'
-                                  f'`Requester:` {self.current.requester.mention}\n')
+            embed.add_field(
+                    name='Player info:',
+                    value=f'''
+                    `Paused:` {self.paused}
+                    `Loop mode:` {self.queue.loop_mode.value.title()}
+                    `Filter:` {getattr(self.filter, "name", None)}
+                    '''
+            )
+            embed.add_field(
+                    name='Track info:',
+                    value=f'''
+                    `Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}
+                    `Author:` {self.current.author}
+                    `Source:` {self.current.source.value.title()}
+                    '''
+            )
 
         await self.send(embed=embed)
 
-    async def send(self, content: str = None, *, embed: discord.Embed = None) -> None:
+    async def send(self, *args, **kwargs) -> None:
 
         if not self.text_channel:
             return
 
-        await self.text_channel.send(content=content, embed=embed)
+        await self.text_channel.send(*args, **kwargs)
 
     #
 
-    async def search(self, query: str, ctx: context.Context) -> objects.SearchResult:
+    async def search(self, query: str, ctx: context.Context, source: slate.Source) -> Optional[slate.SearchResult]:
 
-        if (spotify_url_check := self.spotify_url_regex.match(query)) is not None:
+        try:
+            search = await self.node.search(search=query, ctx=ctx, source=source)
 
-            source = 'spotify'
-            search_type, spotify_id = spotify_url_check.group('type'), spotify_url_check.group('id')
+        except (slate.HTTPError, obsidian.ObsidianSearchError):
+            raise exceptions.EmbedError(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  There was an error while searching for results.'))
 
-            try:
-                if search_type == 'album':
-                    search_result = await self.bot.spotify.get_album(spotify_id=spotify_id)
-                    search_tracks = await search_result.get_all_tracks()
-                elif search_type == 'playlist':
-                    search_result = spotify.Playlist(client=self.bot.spotify, data=await self.bot.spotify_http.get_playlist(spotify_id))
-                    search_tracks = await search_result.get_all_tracks()
-                else:
-                    search_result = await self.bot.spotify.get_track(spotify_id=spotify_id)
-                    search_tracks = [search_result]
+        except slate.NoMatchesFound as error:
+            raise exceptions.EmbedError(
+                    embed=discord.Embed(
+                            colour=config.MAIN,
+                            description=f'{emoji.UNKNOWN}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.'
+                    )
+            )
 
-            except (spotify.NotFound, HTTPException):
-                raise exceptions.VoiceError('No results were found for your Spotify link.')
-            if not search_tracks:
-                raise exceptions.VoiceError('No results were found for your Spotify link.')
+        if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
+            raise exceptions.EmbedError(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.'))
 
-            # noinspection PyTypeChecker
-            tracks = [
-                slate.Track(
-                        track_id='',
-                        ctx=ctx,
-                        track_info={'title': track.name or 'Unknown', 'author': ', '.join(artist.name for artist in track.artists) or 'Unknown',
-                                    'length': track.duration or 0, 'identifier': track.id or 'Unknown', 'uri': track.url or 'spotify',
-                                    'isStream': False, 'isSeekable': False, 'position': 0, 'thumbnail': track.images[0].url if track.images else None},
-                ) for track in search_tracks
-            ]
+        return search
 
+    async def queue_search(self, query: str, ctx: context.Context, source: slate.Source, now: bool = False, next: bool = False) -> None:
+
+        search = await self.search(query=query, ctx=ctx, source=source)
+
+        self.queue.put(
+                items=search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks,
+                position=0 if (now or next) else None
+        )
+        if now:
+            await self.stop()
+
+        if search.type is slate.SearchType.TRACK:
+            description = f'Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue.'
         else:
+            description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-            url = yarl.URL(query)
-            if not url.host or not url.scheme:
-                if query.startswith('soundcloud:'):
-                    query = f'scsearch:{query[11:]}'
-                elif query.startswith('ytmsearch:'):
-                    query = f'ytmsearch:{query[10:]}'
-                else:
-                    query = f'ytsearch:{query}'
-
-            try:
-                search_result = await self.node.search(query=query, ctx=ctx)
-            except slate.HTTPError as error:
-                raise exceptions.VoiceError(f'`{error.status_code}` error code while searching for results. For support use `{config.PREFIX}support`.')
-            except slate.TrackLoadFailed as error:
-                raise exceptions.VoiceError(f'`{error.severity}` error while searching for results. For support use `{config.PREFIX}support`. \nReason: `{error.message}`')
-
-            if not search_result:
-                raise exceptions.VoiceError('No results were found for your search.')
-
-            if isinstance(search_result, slate.Playlist):
-                source = 'youtube'
-                search_type = 'playlist'
-                tracks = search_result.tracks
-            else:
-                source = search_result[0].source
-                search_type = 'track'
-                tracks = search_result
-
-        return objects.SearchResult(source=source, search_type=search_type, search_result=search_result, tracks=tracks)
+        embed = discord.Embed(colour=config.MAIN, description=description)
+        await ctx.reply(embed=embed)

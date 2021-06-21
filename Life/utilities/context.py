@@ -18,7 +18,6 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 import discord
 from discord.ext import commands
 
-import config
 from utilities import exceptions, objects, paginators
 
 

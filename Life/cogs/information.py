@@ -16,6 +16,7 @@ import discord
 import psutil
 from discord.ext import commands
 
+import config
 import emoji
 import time
 from bot import Life

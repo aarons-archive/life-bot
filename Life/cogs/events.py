@@ -73,7 +73,7 @@ class Events(commands.Cog):
             exceptions.GeneralError:                '{error}',
             exceptions.ImageError:                  '{error}',
             exceptions.VoiceError:                  '{error}',
-            slate.NoNodesAvailable:                 'There are no music nodes available right now.',
+            slate.NodesNotFound:                    'There are no player nodes available right now.',
 
             commands.TooManyArguments:              'You used too many arguments. Use `{prefix}help {command}` for more information on what arguments to use.',
 
@@ -155,6 +155,10 @@ class Events(commands.Cog):
             permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
             message = f'I am missing the following permissions required to run the command `{ctx.command.qualified_name}`.\n{permissions}'
             await ctx.try_dm(content=message)
+            return
+
+        if isinstance(error, exceptions.EmbedError):
+            await ctx.reply(embed=error.embed)
             return
 
         message = None

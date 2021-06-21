@@ -305,7 +305,7 @@ class UserManager:
 
     # Leaderboard card
 
-    async def create_leaderboard(self, page: int = 0, *, guild_id: Optional[int] = None) -> discord.File:
+    async def create_leaderboard(self, page: int = 0, *, guild_id: Optional[int] = None) -> io.BytesIO:
 
         if not (guild := self.bot.get_guild(guild_id)) and guild_id:
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
@@ -323,13 +323,11 @@ class UserManager:
             data.append((user, user_config, avatar_bytes))
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data, guild)
-        file = discord.File(fp=buffer, filename='leaderboard.png')
 
-        buffer.close()
         for _, _, avatar_bytes in data:
             avatar_bytes.close()
 
-        return file
+        return buffer
 
     def create_leaderboard_image(self, data: list[tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO]], guild: Optional[discord.Guild] = None) -> io.BytesIO:
 

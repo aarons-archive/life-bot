@@ -10,10 +10,12 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
 import collections
+import copy
 import logging
+import re
 import time
 import traceback
-from typing import Optional, Union
+from typing import Literal, Optional, Type, Union
 
 import aiohttp
 import aioredis
@@ -23,12 +25,12 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
-import slate
 import spotify
 from discord.ext import commands
 
 import config
-from utilities import context, help, managers  # skipcq: PYL-W0622
+import slate
+from utilities import context, help, managers
 
 
 __log__ = logging.getLogger(__name__)
@@ -43,10 +45,11 @@ class Life(commands.AutoShardedBot):
                 allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False), case_insensitive=True
         )
 
-        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True,
-                                                    external_emojis=True)
-        self.voice_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True,
-                                                     external_emojis=True, connect=True, speak=True, use_voice_activation=True)
+        self.text_permissions = discord.Permissions(read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True, external_emojis=True)
+        self.voice_permissions = discord.Permissions(
+                read_messages=True, send_messages=True, embed_links=True, attach_files=True, read_message_history=True, add_reactions=True, external_emojis=True, connect=True, speak=True,
+                use_voice_activation=True
+        )
 
         self.session = aiohttp.ClientSession()
         self.start_time = time.time()
@@ -63,10 +66,10 @@ class Life(commands.AutoShardedBot):
         self.redis: Optional[aioredis.Redis] = None
 
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
-        self.ksoft: Optional[ksoftapi.Client] = ksoftapi.Client(config.KSOFT_TOKEN)
-        self.slate: Optional[slate.Client] = slate.Client(bot=self, session=self.session)
-        self.spotify: Optional[spotify.Client] = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
-        self.spotify_http: Optional[spotify.HTTPClient] = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
+        self.ksoft: ksoftapi.Client = ksoftapi.Client(config.KSOFT_TOKEN)
+        self.slate: Type[slate.NodePool] = slate.NodePool
+        self.spotify: spotify.Client = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
+        self.spotify_http: spotify.HTTPClient = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager(2)
 
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
@@ -78,6 +81,32 @@ class Life(commands.AutoShardedBot):
     async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
         return user.id in config.OWNER_IDS
 
+    async def process_commands(self, message: discord.Message) -> None:
+
+        if message.author.bot:
+            return
+
+        ctx = await self.get_context(message)
+
+        if ctx.command and ctx.command.name in ['play', 'yt-music', 'soundcloud', 'search', 'play-now', 'play-next']:
+
+            content = message.content
+            start = content.index(ctx.invoked_with) + len(ctx.invoked_with) + 1
+            try:
+                end = content.index(" --")
+            except ValueError:
+                end = len(content)
+            query = '"' + content[start:end] + '"'
+
+            content = content[:start] + query + content[end:]
+
+            message = copy.copy(message)
+            message.content = re.sub(r"--([^\s]+)\s*", r"--\1 true ", content)
+
+            ctx = await self.get_context(message)
+
+        await self.invoke(ctx)
+
     async def get_prefix(self, message: discord.Message) -> list[str]:
 
         if not message.guild:
@@ -86,7 +115,7 @@ class Life(commands.AutoShardedBot):
         guild_config = self.guild_manager.get_config(message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
 
-    async def start(self, *args, **kwargs) -> None:
+    async def start(self, token: str, *, reconnect: bool = True) -> None:
 
         try:
             __log__.debug('[POSTGRESQL] Attempting connection.')
@@ -129,7 +158,7 @@ class Life(commands.AutoShardedBot):
                 print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
 
         print('')
-        await super().start(*args, **kwargs)
+        await super().start(token=token, reconnect=reconnect)
 
     async def close(self) -> None:
 
@@ -169,7 +198,7 @@ class Life(commands.AutoShardedBot):
             if hasattr(cog, 'load'):
                 await cog.load()
 
-    async def command_check(self, ctx: context.Context) -> bool:
+    async def command_check(self, ctx: context.Context) -> Literal[True]:
 
         if ctx.user_config.blacklisted is True and ctx.command.qualified_name not in {'help', 'support'}:
             raise commands.CheckFailure(f'You are blacklisted from using this bot with the reason:\n\n`{ctx.user_config.blacklisted_reason}`')
@@ -181,7 +210,7 @@ class Life(commands.AutoShardedBot):
         if not ctx.guild:
             current_permissions['read_messages'] = True
 
-        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:  # skipcq: PTC-W0048
+        if ctx.command.cog and ctx.command.cog in {self.get_cog('Music')}:
             if isinstance(ctx.author, discord.Member) and (channel := getattr(ctx.author.voice, 'channel', None)) is not None:
                 needed_permissions = {permission: value for permission, value in self.voice_permissions if value is True}
                 current_permissions.update({permission: value for permission, value in ctx.me.permissions_in(channel) if value is True})
