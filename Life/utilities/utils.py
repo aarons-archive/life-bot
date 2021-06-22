@@ -28,7 +28,7 @@ import pendulum
 from discord.ext import commands
 
 import config
-import emoji
+import emojis
 from utilities import exceptions
 
 
@@ -91,24 +91,24 @@ def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, disc
     else:
         emoji_name = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
 
-    return emoji.CHANNELS[emoji_name]
+    return emojis.CHANNELS[emoji_name]
 
 
 def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
 
-    badges = [badge for badge_name, badge in emoji.BADGES.items() if dict(person.public_flags)[badge_name] is True]
+    badges = [badge for badge_name, badge in emojis.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
-        badges.append(emoji.BOT)
+        badges.append(emojis.BOT)
     if isinstance(person, discord.Member) and person.premium_since:
-        badges.append(emoji.BADGES)
+        badges.append(emojis.BADGES)
 
     if person.avatar.is_animated():
-        badges.append(emoji.NITRO)
+        badges.append(emojis.NITRO)
 
     elif isinstance(person, discord.Member) and ((activity_list := [activity for activity in person.activities if isinstance(activity, discord.CustomActivity)]) is not None):
         if activity_list[0].emoji and activity_list[0].emoji.is_custom_emoji():
-            badges.append(emoji.NITRO)
+            badges.append(emojis.NITRO)
 
     return ' '.join(badges) if badges else 'N/A'
 

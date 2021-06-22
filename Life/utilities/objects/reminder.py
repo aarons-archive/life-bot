@@ -18,7 +18,7 @@ import aioscheduler.task
 import discord
 import pendulum
 
-import config
+import colours
 from utilities import enums, objects, utils
 
 
@@ -152,7 +152,7 @@ class Reminder:
         channel = self.bot.get_channel(self.channel_id)
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title='Reminder:',
                 description=f'[`{utils.format_difference(self.created_at, suppress=[])} ago:`]({self.jump_url})\n\n{self.content}'
         )

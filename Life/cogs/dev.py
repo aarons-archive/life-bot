@@ -19,6 +19,7 @@ import pkg_resources
 import setproctitle
 from discord.ext import commands
 
+import colours
 import config
 import time
 from bot import Life
@@ -134,7 +135,7 @@ class Dev(commands.Cog):
 
         description.append('```')
 
-        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=config.MAIN, description='\n'.join(description))
+        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=colours.MAIN, description='\n'.join(description))
         await ctx.reply(embed=embed)
 
     #

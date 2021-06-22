@@ -27,7 +27,7 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-import config
+import colours
 import slate
 from bot import Life
 from utilities import checks, context
@@ -228,7 +228,7 @@ class Play(commands.Cog):
         else:
             description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-        embed = discord.Embed(colour=config.MAIN, description=description)
+        embed = discord.Embed(colour=colours.MAIN, description=description)
         await ctx.reply(embed=embed)
 
 

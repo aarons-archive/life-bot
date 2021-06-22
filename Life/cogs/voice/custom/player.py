@@ -30,8 +30,9 @@ from typing import Optional
 import async_timeout
 import discord
 
+import colours
 import config
-import emoji
+import emojis
 import slate
 from bot import Life
 from cogs.voice.custom.queue import Queue
@@ -108,7 +109,7 @@ class Player(obsidian.ObsidianPlayer):
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
+                    await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
                     await self.disconnect()
                     break
 
@@ -122,7 +123,7 @@ class Player(obsidian.ObsidianPlayer):
                     try:
                         search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE)
                     except exceptions.VoiceError as error:
-                        await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.UNKNOWN}  {error}'))
+                        await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.UNKNOWN}  {error}'))
                         continue
 
                 track = search.tracks[0]
@@ -133,7 +134,7 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
+                await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
                 continue
 
             await self._track_end_event.wait()
@@ -144,7 +145,7 @@ class Player(obsidian.ObsidianPlayer):
 
     async def invoke_controller(self) -> None:
 
-        embed = discord.Embed(colour=config.MAIN, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
+        embed = discord.Embed(colour=colours.MAIN, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
         embed.set_thumbnail(url=self.current.thumbnail)
 
         if self.current.ctx.guild_config.embed_size is enums.EmbedSize.LARGE:
@@ -220,18 +221,18 @@ class Player(obsidian.ObsidianPlayer):
             search = await self.node.search(search=query, ctx=ctx, source=source)
 
         except (slate.HTTPError, obsidian.ObsidianSearchError):
-            raise exceptions.EmbedError(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  There was an error while searching for results.'))
+            raise exceptions.EmbedError(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  There was an error while searching for results.'))
 
         except slate.NoMatchesFound as error:
             raise exceptions.EmbedError(
                     embed=discord.Embed(
-                            colour=config.MAIN,
-                            description=f'{emoji.UNKNOWN}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.'
+                            colour=colours.MAIN,
+                            description=f'{emojis.UNKNOWN}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.'
                     )
             )
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.EmbedError(embed=discord.Embed(colour=config.MAIN, description=f'{emoji.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.'))
+            raise exceptions.EmbedError(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.'))
 
         return search
 
@@ -251,5 +252,5 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-        embed = discord.Embed(colour=config.MAIN, description=description)
+        embed = discord.Embed(colour=colours.MAIN, description=description)
         await ctx.reply(embed=embed)

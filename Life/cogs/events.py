@@ -19,6 +19,7 @@ import discord
 import pendulum
 from discord.ext import commands
 
+import colours
 import config
 import slate
 from bot import Life
@@ -223,7 +224,7 @@ class Events(commands.Cog):
         `Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}
         '''
 
-        embed = discord.Embed(colour=config.MAIN, description=ctx.message.content)
+        embed = discord.Embed(colour=colours.MAIN, description=ctx.message.content)
         embed.add_field(name='Info:', value=info)
         await self.bot.ERROR_LOG.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 

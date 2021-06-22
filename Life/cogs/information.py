@@ -16,8 +16,8 @@ import discord
 import psutil
 from discord.ext import commands
 
-import config
-import emoji
+import colours
+import emojis
 import time
 from bot import Life
 from utilities import context, converters, exceptions, utils
@@ -87,7 +87,7 @@ class Information(commands.Cog):
         uptime = utils.format_seconds(seconds=round(time.time() - self.bot.start_time), friendly=True)
         files, functions, lines, classes = utils.line_count()
 
-        embed = discord.Embed(colour=config.MAIN)
+        embed = discord.Embed(colour=colours.MAIN)
         embed.add_field(name='Bot info:',
                         value=f'`Uptime:` {uptime}\n`Guilds:` {len(self.bot.guilds)}\n`Shards:` {len(self.bot.shards)}\n`Users:` {len(self.bot.users)}\n')
         embed.add_field(name='\u200B', value='\u200B')
@@ -110,7 +110,7 @@ class Information(commands.Cog):
         """
 
         cpu_freq: Any = psutil.cpu_freq()
-        embed = discord.Embed(colour=config.MAIN)
+        embed = discord.Embed(colour=colours.MAIN)
 
         embed.add_field(
                 name='System CPU:',
@@ -167,19 +167,19 @@ class Information(commands.Cog):
         features = []
         for feature, description in sorted(self.FEATURES.items(), key=lambda kv: kv[1][0]):
             if feature in guild.features:
-                features.append(f'{emoji.TICK} {description}')
+                features.append(f'{emojis.TICK} {description}')
             else:
-                features.append(f'{emoji.CROSS} {description}')
+                features.append(f'{emojis.CROSS} {description}')
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'`{guild.name}`\'s information.',
                 description=f'''
                 `Owner:` {guild.owner}
                 `Created on:` {utils.format_datetime(guild.created_at)}
                 `Created:` {utils.format_difference(guild.created_at)} ago
-                `Members:` {guild.member_count} | {emoji.ONLINE}{statuses[discord.Status.online]} | {emoji.IDLE}{statuses[discord.Status.idle]} | {emoji.DND}{statuses[discord.Status.dnd]} | \
-                {emoji.OFFLINE}{statuses[discord.Status.offline]}
+                `Members:` {guild.member_count} | {emojis.ONLINE}{statuses[discord.Status.online]} | {emojis.IDLE}{statuses[discord.Status.idle]} | {emojis.DND}{statuses[discord.Status.dnd]} | \
+                {emojis.OFFLINE}{statuses[discord.Status.offline]}
                 `Content filter level:` {self.CONTENT_FILTER_LEVELS[ctx.guild.explicit_content_filter]} | `2FA:` {self.MFA_LEVELS[ctx.guild.mfa_level]}
                 `Verification level:` {self.VERIFICATION_LEVELS[ctx.guild.verification_level]}
                 '''
@@ -223,7 +223,7 @@ class Information(commands.Cog):
             role = ctx.author.top_role
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'Information about the role `{role}`',
                 description=f'''
                 `Name:` {role.name}
@@ -270,7 +270,7 @@ class Information(commands.Cog):
 
         space = '\u200b ' * 5
         for category in sorted(categories, key=lambda category: category.position):
-            entries.append(f'{emoji.CHANNELS["CATEGORY"]} **{category}**')
+            entries.append(f'{emojis.CHANNELS["CATEGORY"]} **{category}**')
             for channel in category.channels:
                 entries.append(f'{space}{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}')
 
@@ -291,7 +291,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an icon.')
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'Icon for `{guild.name}`:',
                 description=f'[PNG]({utils.icon(guild, format="png")}) | [JPG]({utils.icon(guild, format="jpg")}) | [WEBP]({utils.icon(guild, format="webp")})'
         )
@@ -317,7 +317,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have a banner.')
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'Banner for `{guild.name}`:',
                 description=f'[PNG]({utils.banner(guild, format="png")}) | [JPG]({utils.banner(guild, format="jpg")}) | [WEBP]({utils.banner(guild, format="webp")})'
         )
@@ -343,7 +343,7 @@ class Information(commands.Cog):
             raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an splash.')
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'Splash for `{guild.name}`:',
                 description=f'[PNG]({utils.splash(guild, format="png")}) | [JPG]({utils.splash(guild, format="jpg")}) | [WEBP]({utils.splash(guild, format="webp")})'
         )
@@ -369,11 +369,11 @@ class Information(commands.Cog):
                 colour=self.COLOURS[member.status],
                 title=f'`{member}`\'s information.',
                 description=f'''
-                `Discord Name:` {member} {emoji.OWNER if member.id == member.guild.owner.id else ""}
+                `Discord Name:` {member} {emojis.OWNER if member.id == member.guild.owner.id else ""}
                 `Created on:` {utils.format_datetime(member.created_at)}
                 `Created:` {utils.format_difference(member.created_at)} ago
                 `Badges:` {utils.badge_emojis(member)}
-                `Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{emoji.PHONE if member.is_on_mobile() else ""}
+                `Status:` {member.status.name.replace("dnd", "Do Not Disturb").title()}{emojis.PHONE if member.is_on_mobile() else ""}
                 `Bot:` {str(member.bot).replace("True", "Yes").replace("False", "No")}
                 `Activity:`\n{utils.activities(member)}
                 '''
@@ -407,7 +407,7 @@ class Information(commands.Cog):
             user = await self.bot.fetch_user(ctx.author.id)
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'`{user}`\'s information:',
                 description=f'''
                 `Discord name:` {user}
@@ -433,7 +433,7 @@ class Information(commands.Cog):
             user = ctx.author
 
         embed = discord.Embed(
-                colour=config.MAIN,
+                colour=colours.MAIN,
                 title=f'Avatar for `{user}`:',
                 description=f'[PNG]({utils.avatar(user, format="png")}) | [JPG]({utils.avatar(user, format="jpg")}) | [WEBP]({utils.avatar(user, format="webp")})'
         )

@@ -14,7 +14,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-import config
+import colours
 from bot import Life
 from utilities import context, exceptions
 
@@ -96,7 +96,7 @@ class Todo(commands.Cog):
 
             todos_to_delete.append(todo)
 
-        embed = discord.Embed(colour=config.MAIN, title=f'Deleted `{len(todos_to_delete)}` todo{"s" if len(todos_to_delete) > 1 else ""}:')
+        embed = discord.Embed(colour=colours.MAIN, title=f'Deleted `{len(todos_to_delete)}` todo{"s" if len(todos_to_delete) > 1 else ""}:')
         embed.add_field(name='Contents: ', value='\n'.join(f'[`{todo.id}`]({todo.jump_url}) {todo.content}' for todo in todos_to_delete))
 
         for todo in todos_to_delete:

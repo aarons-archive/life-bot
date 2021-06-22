@@ -13,6 +13,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
+import colours
 import config
 from bot import Life
 from utilities import context, converters, exceptions, utils
@@ -267,7 +268,7 @@ class Tags(commands.Cog):
         owner = ctx.guild.get_member(tag.user_id)
 
         embed = discord.Embed(
-                colour=config.MAIN, title=f'{tag.name}',
+                colour=colours.MAIN, title=f'{tag.name}',
                 description=f'''
                 `Owner:` {owner.mention if owner else "*Not found*"} ({tag.user_id})
                 `Claimable:` {owner is None}
