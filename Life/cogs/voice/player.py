@@ -126,16 +126,15 @@ class PlayerController(commands.Cog):
             track = ctx.voice_client.current
             await ctx.author.send(
                     embed=discord.Embed(
-                        colour=colours.MAIN,
-                        title=track.title,
-                        url=track.uri,
-                        description=f'''
-                        `Author:` {track.author}
-                        `Source:` {track.source.value.title()}
-                        `Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}
-                        `Live:` {track.is_stream}
-                        `Seekable:` {track.is_seekable}'
-                        '''
+                            colour=colours.MAIN,
+                            title=track.title,
+                            url=track.uri,
+                            description=f'''
+                            `Author:` {track.author}
+                            `Source:` {track.source.value.title()}
+                            `Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}
+                            `Live:` {track.is_stream}
+                            `Seekable:` {track.is_seekable}'''
                     ).set_image(url=track.thumbnail)
             )
             await ctx.reply('Track saved to DM\'s.')

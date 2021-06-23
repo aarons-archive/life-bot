@@ -13,13 +13,11 @@ import enum
 
 
 class Environment(enum.Enum):
-
     PROD = 'prod'
     DEV = 'dev'
 
 
 class Operation(enum.Enum):
-
     SET = 'set'
     UPDATE = SET
 
@@ -33,20 +31,17 @@ class Operation(enum.Enum):
 
 
 class Updateable(enum.Enum):
-
     COINS = 'coins'
     XP = 'xp'
 
 
 class EmbedSize(enum.Enum):
-
     LARGE = 0
     MEDIUM = 1
     SMALL = 2
 
 
 class ReminderRepeatType(enum.Enum):
-
     NEVER = 0
 
     EVERY_HALF_HOUR = 1

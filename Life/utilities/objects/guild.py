@@ -23,13 +23,10 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from bot import Life
 
-
 __log__ = logging.getLogger('utilities.objects.guild')
 
 
 class DefaultGuildConfig:
-
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
@@ -88,8 +85,6 @@ class DefaultGuildConfig:
 
 class GuildConfig(DefaultGuildConfig):
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_embed_size', '_prefixes', '_tags', '_requires_db_update'
-
     def __repr__(self) -> str:
         return f'<GuildConfig id=\'{self.id}\' blacklisted={self.blacklisted} embed_size={self.embed_size}>'
 
@@ -137,7 +132,7 @@ class GuildConfig(DefaultGuildConfig):
         __log__.info(f'[TAGS] Created tag with id \'{tag.id}\' for guild with id \'{tag.guild_id}\'.')
         return tag
 
-    async def create_tag_alias(self, *, user_id: int, name: str, original: int,  jump_url: Optional[str] = None) -> objects.Tag:
+    async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: Optional[str] = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
                 'INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',

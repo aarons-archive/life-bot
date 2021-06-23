@@ -88,10 +88,12 @@ def despeckle(image: Image) -> Optional[str]:
 def floor(image: Image) -> Optional[str]:
 
     image.virtual_pixel = 'tile'
-    arguments = (0,            0,            image.width * 0.2, image.height * 0.5,
-                 image.width,  0,            image.width * 0.8, image.height * 0.5,
-                 0,            image.height, image.width * 0.1, image.height,
-                 image.width,  image.height, image.width * 0.9, image.height)
+    arguments = (
+        0,           0,            image.width * 0.2, image.height * 0.5,
+        image.width, 0,            image.width * 0.8, image.height * 0.5,
+        0,           image.height, image.width * 0.1, image.height,
+        image.width, image.height, image.width * 0.9, image.height
+    )
     image.distort('perspective', arguments)
 
     return ''
@@ -282,14 +284,6 @@ def cube(image: Image) -> Optional[str]:
     return ''
 
 
-def popcorn(image: Image) -> Optional[str]:
-
-    with Image(filename=r'C:\Users\Axel\Documents\Programming\Python\Life\Life\resources\popcorn.png') as popcorn_image:
-        image.composite(popcorn_image, left=0, top=image.height - 490)
-
-    return 'Popcorn time!'
-
-
 def magik(image: Image) -> Optional[str]:
 
     if image.format != 'GIF':
@@ -325,43 +319,42 @@ def magik(image: Image) -> Optional[str]:
 
 
 IMAGE_OPERATIONS = {
-    'adaptive_blur': adaptive_blur,
+    'adaptive_blur':    adaptive_blur,
     'adaptive_sharpen': adaptive_sharpen,
-    'blueshift': blueshift,
-    'blur': blur,
-    'border': border,
-    'edge': edge,
-    'charcoal': charcoal,
-    'colorize': colorize,
-    'despeckle': despeckle,
-    'floor': floor,
-    'emboss': emboss,
-    'enhance': enhance,
-    'flip': flip,
-    'flop': flop,
-    'frame': frame,
-    'gaussian_blur': gaussian_blur,
-    'implode': implode,
-    'kmeans': kmeans,
-    'kuwahara': kuwahara,
-    'motion_blur': motion_blur,
-    'negate': negate,
-    'noise': noise,
-    'oil_paint': oil_paint,
-    'polaroid': polaroid,
-    'rotate': rotate,
-    'sepia_tone': sepia_tone,
-    'sharpen': sharpen,
-    'solarize': solarize,
-    'spread': spread,
-    'swirl': swirl,
-    'transparentize': transparentize,
-    'transpose': transpose,
-    'transverse': transverse,
-    'wave': wave,
-    'cube': cube,
-    'popcorn': popcorn,
-    'magik': magik,
+    'blueshift':        blueshift,
+    'blur':             blur,
+    'border':           border,
+    'edge':             edge,
+    'charcoal':         charcoal,
+    'colorize':         colorize,
+    'despeckle':        despeckle,
+    'floor':            floor,
+    'emboss':           emboss,
+    'enhance':          enhance,
+    'flip':             flip,
+    'flop':             flop,
+    'frame':            frame,
+    'gaussian_blur':    gaussian_blur,
+    'implode':          implode,
+    'kmeans':           kmeans,
+    'kuwahara':         kuwahara,
+    'motion_blur':      motion_blur,
+    'negate':           negate,
+    'noise':            noise,
+    'oil_paint':        oil_paint,
+    'polaroid':         polaroid,
+    'rotate':           rotate,
+    'sepia_tone':       sepia_tone,
+    'sharpen':          sharpen,
+    'solarize':         solarize,
+    'spread':           spread,
+    'swirl':            swirl,
+    'transparentize':   transparentize,
+    'transpose':        transpose,
+    'transverse':       transverse,
+    'wave':             wave,
+    'cube':             cube,
+    'magik':            magik,
 }
 
 MAX_CONTENT_SIZE = (2 ** 20) * 25
@@ -418,9 +411,9 @@ def _do_edit_image(child_pipe: multiprocessing.connection.Connection, edit_funct
             edited_image_buffer.seek(0)
 
         child_pipe.send({
-            'buffer': edited_image_buffer,
+            'buffer':      edited_image_buffer,
             'file_format': image_format,
-            'text': text
+            'text':        text
         })
 
         edited_image_buffer.close()
@@ -433,7 +426,7 @@ def _do_edit_image(child_pipe: multiprocessing.connection.Connection, edit_funct
 #
 
 
-async def edit_image(ctx: context.Context, edit: str,  url: str, **kwargs) -> discord.Embed:
+async def edit_image(ctx: context.Context, edit: str, url: str, **kwargs) -> discord.Embed:
 
     image_bytes = await _request_image_bytes(ctx.bot.session, url=url)
     parent_pipe, child_pipe = multiprocessing.Pipe()

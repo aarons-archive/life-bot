@@ -113,7 +113,7 @@ def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
     return ' '.join(badges) if badges else 'N/A'
 
 
-def activities(member: discord.Member) -> str:   # sourcery no-metrics
+def activities(member: discord.Member) -> str:  # sourcery no-metrics
 
     if not member.activities:
         return 'N/A'

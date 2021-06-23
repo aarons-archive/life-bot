@@ -57,7 +57,6 @@ class Dev(commands.Cog):
         ]
 
         with self.bot.process.oneshot():
-
             memory_info = self.bot.process.memory_full_info()
             physical_memory = humanize.naturalsize(memory_info.rss)
             virtual_memory = humanize.naturalsize(memory_info.vms)

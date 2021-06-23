@@ -180,8 +180,8 @@ class Time(commands.Cog):
         entries = {index: (datetime_phrase, datetime) for index, (datetime_phrase, datetime) in enumerate(time['found'].items())}
         if len(entries) != 1:
             choice = await ctx.choice(
-                     entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime)}`' for index, (phrase, datetime) in entries.items()],
-                     per_page=10, title='Multiple datetimes were detected within your query:', header='Please select the number that best matches your intention:\n\n'
+                    entries=[f'`{index + 1}.` **{phrase}**\n`{utils.format_datetime(datetime)}`' for index, (phrase, datetime) in entries.items()],
+                    per_page=10, title='Multiple datetimes were detected within your query:', header='Please select the number that best matches your intention:\n\n'
             )
             result = entries[choice]
         else:

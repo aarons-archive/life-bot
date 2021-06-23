@@ -46,7 +46,7 @@ class Economy(commands.Cog):
         await self.bot.redis.setex(name=f'{message.author.id}_xp_gain', time=60, value='')
 
     @commands.Cog.listener()
-    async def on_xp_level_up(self, message: discord.Message, user_config: objects.UserConfig,) -> None:
+    async def on_xp_level_up(self, message: discord.Message, user_config: objects.UserConfig) -> None:
 
         if not user_config.notifications.level_ups:
             return
