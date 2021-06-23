@@ -29,9 +29,6 @@ __log__ = logging.getLogger('utilities.objects.user')
 
 class DefaultUserConfig:
 
-    __slots__ = '_bot', '_id', '_created_at', '_blacklisted', '_blacklisted_reason', '_timezone', '_timezone_private', '_birthday', '_birthday_private', '_xp', '_coins', '_notifications', \
-                '_reminders', '_todos', '_requires_db_update'
-
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
         self._bot: Life = bot

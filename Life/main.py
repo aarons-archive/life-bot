@@ -35,7 +35,7 @@ def logger():
 
     for name, log in loggers.items():
 
-        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2**22)
+        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2 ** 22)
         log.addHandler(handler)
 
         if os.path.isfile(f'logs/{name}.log'):

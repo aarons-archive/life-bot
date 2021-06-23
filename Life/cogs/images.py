@@ -666,14 +666,6 @@ class Images(commands.Cog):
             await ctx.reply(embed=embed)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name='popcorn')
-    async def popcorn(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
-
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, url=str(image), edit='popcorn')
-            await ctx.reply(embed=embed)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='magik')
     async def magik(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
 

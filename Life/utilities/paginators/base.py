@@ -55,31 +55,26 @@ class ButtonsView(discord.ui.View):
 
     @discord.ui.button(emoji=emojis.FIRST)
     async def first(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-
         await interaction.response.defer()
         await self.paginator.first()
 
     @discord.ui.button(emoji=emojis.BACKWARD)
     async def backward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-
         await interaction.response.defer()
         await self.paginator.backward()
 
     @discord.ui.button(emoji=emojis.STOP)
     async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-
         await interaction.response.defer()
         await self.paginator.stop()
 
     @discord.ui.button(emoji=emojis.FORWARD)
     async def forward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-
         await interaction.response.defer()
         await self.paginator.forward()
 
     @discord.ui.button(emoji=emojis.LAST)
     async def last(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-
         await interaction.response.defer()
         await self.paginator.last()
 

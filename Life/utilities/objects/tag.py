@@ -22,13 +22,10 @@ from utilities import objects
 if TYPE_CHECKING:
     from bot import Life
 
-
 __log__ = logging.getLogger('utilities.objects.tag')
 
 
 class Tag:
-
-    __slots__ = '_bot', '_guild_config', '_id', '_user_id', '_guild_id', '_created_at', '_name', '_alias', '_content', '_jump_url'
 
     def __init__(self, bot: Life, guild_config: objects.GuildConfig, data: dict[str, Any]) -> None:
 

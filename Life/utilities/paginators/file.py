@@ -62,26 +62,21 @@ class FilePaginator(paginators.BasePaginator):
     # Abstract methods
 
     async def paginate(self) -> None:
-
         await super().paginate()
         self.message = await self.ctx.reply(await self.generate_page(self.page), view=self.view)
 
     async def first(self) -> None:
-
         await super().first()
         await self.message.edit(content=await self.generate_page(self.page))
 
     async def backward(self) -> None:
-
         await super().backward()
         await self.message.edit(content=await self.generate_page(self.page))
 
     async def forward(self) -> None:
-
         await super().forward()
         await self.message.edit(content=await self.generate_page(self.page))
 
     async def last(self) -> None:
-
         await super().last()
         await self.message.edit(content=await self.generate_page(self.page))

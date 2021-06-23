@@ -58,7 +58,7 @@ class Life(commands.AutoShardedBot):
 
         self.ERROR_LOG = discord.Webhook.from_url(session=self.session, url=config.ERROR_WEBHOOK_URL)
         self.GUILD_LOG = discord.Webhook.from_url(session=self.session, url=config.GUILD_WEBHOOK_URL)
-        self.DMS_LOG = discord.Webhook.from_url(session=self.session,  url=config.DM_WEBHOOK_URL)
+        self.DMS_LOG = discord.Webhook.from_url(session=self.session, url=config.DM_WEBHOOK_URL)
 
         self.first_ready: bool = True
 

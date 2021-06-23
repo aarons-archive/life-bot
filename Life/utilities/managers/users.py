@@ -31,7 +31,6 @@ from utilities import exceptions, objects, utils
 if TYPE_CHECKING:
     from bot import Life
 
-
 __log__ = logging.getLogger('utilities.managers.users')
 
 IMAGES = {
