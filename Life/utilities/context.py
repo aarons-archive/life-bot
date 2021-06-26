@@ -124,12 +124,12 @@ class Context(commands.Context):
 
     # Miscellaneous
 
-    async def try_dm(self, **kwargs) -> Optional[discord.Message]:
+    async def try_dm(self, *args, **kwargs) -> Optional[discord.Message]:
 
         try:
-            return await self.author.send(**kwargs)
+            return await self.author.send(*args, **kwargs)
         except discord.Forbidden:
             try:
-                return await self.reply(**kwargs)
+                return await self.reply(*args, **kwargs)
             except discord.Forbidden:
                 return None

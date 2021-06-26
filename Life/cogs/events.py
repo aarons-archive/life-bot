@@ -1,141 +1,104 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 import contextlib
 import logging
-import sys
 import traceback
 from typing import Any, Optional
 
 import discord
 import pendulum
+import slate
 from discord.ext import commands
 
 import colours
 import config
-import slate
+import emojis
 from bot import Life
 from utilities import context, enums, exceptions, utils
 
 
-__log__ = logging.getLogger(__name__)
+__log__: logging.Logger = logging.getLogger(__name__)
+
+
+BAD_ARGUMENT_ERRORS = {
+    commands.BadArgument:                   'I couldn\'t understand one or more of the arguments used. Use **{prefix}help {command.qualified_name}** for help.',
+    commands.MessageNotFound:               'I couldn\'t find a message that matches **{argument}**.',
+    commands.MemberNotFound:                'I couldn\'t find a member that matches **{argument}**.',
+    commands.UserNotFound:                  'I couldn\'t find a user that matches **{argument}**.',
+    commands.ChannelNotFound:               'I couldn\'t find a channel that matches **{argument}**.',
+    commands.ChannelNotReadable:            'I don\'t have permission to read messages in **{mention}**.',
+    commands.BadColourArgument:             'I couldn\'t find a colour that matches **{argument}**.',
+    commands.RoleNotFound:                  'I couldn\'t find a role that matches **{argument}**.',
+    commands.BadInviteArgument:             'That invite has expired or is invalid.',
+    commands.EmojiNotFound:                 'I couldn\'t find an emoji that matches **{argument}**.',
+    commands.PartialEmojiConversionFailure: '**{argument}** does not match the emoji format.',
+    commands.BadBoolArgument:               '**{argument}** is not a valid true or false value.',
+}
+
+COOLDOWN_BUCKETS = {
+    commands.BucketType.default:  'for the whole bot',
+    commands.BucketType.user:     'for you',
+    commands.BucketType.member:   'for you',
+    commands.BucketType.role:     'for your role',
+    commands.BucketType.guild:    'for this server',
+    commands.BucketType.channel:  'for this channel',
+    commands.BucketType.category: 'for this channel category'
+}
+
+CONCURRENCY_BUCKETS = {
+    commands.BucketType.default:  'for all users',
+    commands.BucketType.user:     'per user',
+    commands.BucketType.member:   'per member',
+    commands.BucketType.role:     'per role',
+    commands.BucketType.guild:    'per server',
+    commands.BucketType.channel:  'per channel',
+    commands.BucketType.category: 'per channel category',
+}
+
+OTHER_ERRORS = {
+    commands.TooManyArguments:              'You used too many arguments. Use **{prefix}help {command.qualified_name}** for help.',
+
+    commands.UnexpectedQuoteError:          'There was an unexpected quote character in the arguments you passed.',
+    commands.InvalidEndOfQuotedStringError: 'There was an unexpected space after a quote character in the arguments you passed.',
+    commands.ExpectedClosingQuoteError:     'There is a missing quote character in the arguments you passed.',
+
+    commands.CheckFailure:                  '{error}',
+    commands.CheckAnyFailure:               'PUT SOMETHING HERE',
+    commands.PrivateMessageOnly:            'This command can only be used in private messages.',
+    commands.NoPrivateMessage:              'This command can not be used in private messages.',
+    commands.NotOwner:                      'You don\'t have permission to use this command.',
+    commands.MissingRole:                   'You don\'t have the {error.missing_role.mention} role which is required to run this command.',
+    commands.BotMissingRole:                'I don\'t have the {error.missing_role.mention} role which I require to run this command.',
+    commands.NSFWChannelRequired:           'This command can only be run in NSFW channels.',
+
+    commands.DisabledCommand:               'This command is currently disabled.',
+}
 
 
 class Events(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
         self.bot = bot
-
-        self.BAD_ARGUMENT_ERRORS = {
-            commands.MessageNotFound:               'A message for the argument `{argument}` was not found.',
-            commands.MemberNotFound:                'A member for the argument `{argument}` was not found.',
-            commands.UserNotFound:                  'A user for the argument `{argument}` was not found.',
-            commands.ChannelNotFound:               'A channel for the argument `{argument}` was not found.',
-            commands.RoleNotFound:                  'A role for the argument `{argument}` was not found.',
-            commands.EmojiNotFound:                 'An emoji for the argument `{argument}` was not found.',
-            commands.ChannelNotReadable:            'I do not have permission to read the channel `{argument}`',
-            commands.BadInviteArgument:             'The invite `{argument}` was not valid or is expired.',
-            commands.PartialEmojiConversionFailure: 'The argument `{argument}` did not match the partial emoji format.',
-            commands.BadBoolArgument:               'The argument `{argument}` was not a valid True or False value.',
-            commands.BadColourArgument:             'The argument `{argument}` was not a valid colour type.',
-            commands.BadArgument:                   'I was unable to convert an argument that you used.',
-        }
-
-        self.COOLDOWN_BUCKETS = {
-            commands.BucketType.default:  'for the whole bot',
-            commands.BucketType.user:     'for you',
-            commands.BucketType.member:   'for you',
-            commands.BucketType.role:     'for your role',
-            commands.BucketType.guild:    'for this server',
-            commands.BucketType.channel:  'for this channel',
-            commands.BucketType.category: 'for this channel category'
-        }
-
-        self.CONCURRENCY_BUCKETS = {
-            commands.BucketType.default:  'for all users',
-            commands.BucketType.user:     'per user',
-            commands.BucketType.member:   'per member',
-            commands.BucketType.role:     'per role',
-            commands.BucketType.guild:    'per server',
-            commands.BucketType.channel:  'per channel',
-            commands.BucketType.category: 'per channel category',
-        }
-
-        self.OTHER_ERRORS = {
-            exceptions.ArgumentError:               '{error}',
-            exceptions.GeneralError:                '{error}',
-            exceptions.ImageError:                  '{error}',
-            exceptions.VoiceError:                  '{error}',
-            slate.NodesNotFound:                    'There are no player nodes available right now.',
-
-            commands.TooManyArguments:              'You used too many arguments. Use `{prefix}help {command}` for more information on what arguments to use.',
-
-            commands.UnexpectedQuoteError:          'There was an unexpected quote character in the arguments you passed.',
-            commands.InvalidEndOfQuotedStringError: 'There was an unexpected space after a quote character in the arguments you passed.',
-            commands.ExpectedClosingQuoteError:     'There is a missing quote character in the arguments you passed.',
-
-            commands.CheckFailure:                  '{error}',
-            commands.PrivateMessageOnly:            'The command `{command}` can only be used in private messages',
-            commands.NoPrivateMessage:              'The command `{command}` can not be used in private messages.',
-            commands.NotOwner:                      'The command `{command}` can only be used by owners.',
-            commands.NSFWChannelRequired:           'The command `{command}` can only be run in a NSFW channel.',
-
-            commands.DisabledCommand:               'The command `{command}` has been disabled.',
-        }
-
-        self.RED = discord.Colour(0xFF0000)
-        self.ORANGE = discord.Colour(0xFAA61A)
-        self.GREEN = discord.Colour(0x00FF00)
-
-    # Logging methods
-
-    @staticmethod
-    async def _log_attachments(webhook: discord.Webhook, message: discord.Message) -> None:
-
-        with contextlib.suppress(discord.HTTPException, discord.NotFound, discord.Forbidden):
-            for attachment in message.attachments:
-                await webhook.send(
-                        content=f'Attachment from message with id `{message.id}`:', file=await attachment.to_file(use_cached=True), username=f'{message.author}',
-                        avatar_url=utils.avatar(person=message.author)
-                )
-
-    @staticmethod
-    async def _log_embeds(webhook: discord.Webhook, message: discord.Message) -> None:
-
-        for embed in message.embeds:
-            await webhook.send(
-                    content=f'Embed from message with id `{message.id}`:', embed=embed, username=f'{message.author}',
-                    avatar_url=utils.avatar(person=message.author)
-            )
-
-    async def _log_dm(self, message: discord.Message) -> None:
-
-        content = await utils.safe_content(self.bot.mystbin, message.content) if message.content else '*No content*'
-
-        embed = discord.Embed(colour=self.GREEN, title=f'DM from `{message.author}`:', description=content)
-        embed.add_field(
-                name='Info:',
-                value=f'''
-                `Channel:` {message.channel} `{message.channel.id}`
-                `Author:` {message.author} `{message.author.id}`
-                `Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}
-                `Jump:` [Click here]({message.jump_url})
-                ''',
-                inline=False
-        )
-        embed.set_footer(text=f'ID: {message.id}')
-        await self.bot.DMS_LOG.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author))
-
-        await self._log_attachments(webhook=self.bot.DMS_LOG, message=message)
-        await self._log_embeds(webhook=self.bot.DMS_LOG, message=message)
 
     # Error handling
 
@@ -145,91 +108,96 @@ class Events(commands.Cog):
         error = getattr(error, 'original', error)
 
         __log__.error(
-                f'''[COMMANDS] Error while running command. Name: {ctx.command} | Error: {type(error)} | Invoker: {ctx.author} | Channel: {ctx.channel} ({ctx.channel.id}) \
-                {f" | Guild: {ctx.guild} ({ctx.guild.id})" if ctx.guild else ""}'''
+                f'Error in command. Error: {type(error)} | Content: {getattr(ctx.message, "content", None)} | Channel: {ctx.channel} ({getattr(ctx.channel, "id", None)}) | '
+                f'Author: {ctx.author} ({getattr(ctx.author, "id", None)}) | Guild: {ctx.guild} ({getattr(ctx.guild, "id", None)})'
         )
-
-        if isinstance(error, commands.CommandNotFound):
-            return
-
-        if isinstance(error, commands.BotMissingPermissions):
-            permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            message = f'I am missing the following permissions required to run the command `{ctx.command.qualified_name}`.\n{permissions}'
-            await ctx.try_dm(content=message)
-            return
 
         if isinstance(error, exceptions.EmbedError):
             await ctx.reply(embed=error.embed)
             return
 
+        if isinstance(error, commands.CommandNotFound):
+            await ctx.message.add_reaction(emojis.CROSS)
+            return
+
+        if isinstance(error, commands.MissingPermissions):
+            permissions = config.NL.join([f'- {permission}' for permission in error.missing_perms])
+            await ctx.reply(f'You are missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
+            return
+
+        if isinstance(error, commands.BotMissingPermissions):
+            permissions = config.NL.join([f'- {permission}' for permission in error.missing_perms])
+            await ctx.try_dm(f'I am missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
+            return
+
+        #
+
         message = None
 
-        if isinstance(error, commands.BadLiteralArgument):
-            message = f'The argument `{error.param.name}` must be one of {", ".join([f"`{arg}`" for arg in error.literals])}.'
-
-        elif isinstance(error, commands.BadArgument):
-            message = self.BAD_ARGUMENT_ERRORS.get(type(error), 'None').format(argument=getattr(error, 'argument', 'None'))
-
-        elif isinstance(error, commands.CommandOnCooldown):
-            message = f'''
-            The command `{ctx.command.qualified_name}` is on cooldown {self.COOLDOWN_BUCKETS.get(error.cooldown.type)}. You can retry in `{utils.format_seconds(error.retry_after, friendly=True)}`
-            '''
-
-        elif isinstance(error, commands.MaxConcurrencyReached):
-            message = f'''
-            The command `{ctx.command.qualified_name}` is being ran at its maximum of {error.number} time{"s" if error.number > 1 else ""} {self.CONCURRENCY_BUCKETS.get(error.per)}. Retry a bit later.
-            '''
-
-        elif isinstance(error, commands.MissingPermissions):
-            permissions = '\n'.join([f'> {permission}' for permission in error.missing_perms])
-            message = f'You are missing the following permissions required to run the command `{ctx.command.qualified_name}`.\n{permissions}'
+        if isinstance(error, slate.NodesNotFound):
+            message = 'There are no players available right now.'
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            message = f'You missed the `{error.param.name}` argument. Use `{config.PREFIX}help {ctx.command.qualified_name}` for more information on what arguments to use.'
+            message = f'You missed the **{error.param.name}** argument. Use **{config.PREFIX}help {ctx.command.qualified_name}** for help.'
+
+        elif isinstance(error, commands.BadArgument):
+            argument = getattr(error, 'argument', None)
+            message = BAD_ARGUMENT_ERRORS.get(type(error), 'None').format(argument=argument, prefix=config.PREFIX, command=ctx.command, mention=getattr(argument, 'mention', None))
 
         elif isinstance(error, commands.BadUnionArgument):
-            message = f'I was unable to convert the `{error.param.name}` argument. Use `{config.PREFIX}help {ctx.command.qualified_name}` for more help on what arguments to use.'
+            message = f'I couldn\'t understand the **{error.param.name}** argument. Use **{config.PREFIX}help {ctx.command.qualified_name}** for help.'
 
-        elif isinstance(error, commands.MissingRole):
-            message = f'The role `{error.missing_role}` is required to run this command.'
-
-        elif isinstance(error, commands.BotMissingRole):
-            message = f'The bot requires the role `{error.missing_role}` to run this command.'
+        elif isinstance(error, commands.BadLiteralArgument):
+            message = f'The argument **{error.param.name}** must be one of {", ".join([f"**{arg}**" for arg in error.literals])}.'
 
         elif isinstance(error, commands.MissingAnyRole):
-            message = f'The roles {", ".join([f"`{role}`" for role in error.missing_roles])} are required to run this command.'
+            message = f'You are missing any of the roles {", ".join([role.mention for role in error.missing_roles])} which are required to run this command.'
 
         elif isinstance(error, commands.BotMissingAnyRole):
-            message = f'The bot requires the roles {", ".join([f"`{role}`" for role in error.missing_roles])} to run this command.'
+            message = f'I am missing any of the roles {", ".join([role.mention for role in error.missing_roles])} which are required to run this command.'
+
+        elif isinstance(error, commands.CommandOnCooldown):
+            message = f'This command is on cooldown **{COOLDOWN_BUCKETS.get(error.cooldown.type)}**. You can retry in `{utils.format_seconds(error.retry_after, friendly=True)}`'
+
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            message = f'This command is being ran at its maximum of **{error.number} time{"s" if error.number > 1 else ""}** {CONCURRENCY_BUCKETS.get(error.per)}.'
+
+        embed = discord.Embed(colour=colours.RED)
 
         if message:
-            await ctx.reply(message)
-        elif (message := self.OTHER_ERRORS.get(type(error))) is not None:
-            await ctx.reply(message.format(command=ctx.command.qualified_name, error=error, prefix=config.PREFIX))
+            embed.description = f'{emojis.CROSS}  {message}'
+            await ctx.reply(embed=embed)
+
+        elif (message := OTHER_ERRORS.get(type(error))) is not None:
+            embed.description = f'{emojis.CROSS}  {message.format(command=ctx.command, error=error, prefix=config.PREFIX)}'
+            await ctx.reply(embed=embed)
+
         else:
-            await self.handle_traceback(ctx=ctx, error=error)
+            await self.handle_traceback(ctx, error)
 
-    async def handle_traceback(self, *, ctx: context.Context, error) -> None:
+    async def handle_traceback(self, ctx: context.Context, exception: Exception) -> None:
 
-        await ctx.reply('Something went wrong while executing that command.')
+        embed = discord.Embed(colour=colours.RED, description=f'{emojis.CROSS}  Something went wrong! Join my [support server](https://discord.gg/w9f6NkQbde) for help.')
+        await ctx.reply(embed=embed)
 
-        error_traceback = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
-        print(f'\n{error_traceback}\n', file=sys.stderr)
-        __log__.error(f'[COMMANDS]\n\n{traceback}\n\n')
+        message = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+        __log__.error(f'Traceback:', exc_info=exception)
 
-        info = f'''
-        {f"`Guild:` {ctx.guild} `{ctx.guild.id}`" if ctx.guild else ""}
-        `Channel:` {ctx.channel} `{ctx.channel.id}`
-        `Author:` {ctx.author} `{ctx.author.id}`
-        `Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}
-        '''
+        embed = discord.Embed(
+                colour=colours.RED,
+                description=await utils.safe_content(self.bot.mystbin, ctx.message.content, syntax='python', max_characters=2000)
+        ).add_field(
+                name='Info:',
+                value=f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`{config.NL}" if ctx.guild else ""}'
+                      f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n'
+                      f'`Author:` {ctx.author} `{ctx.author.id}`\n'
+                      f'`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
+        )
 
-        embed = discord.Embed(colour=colours.MAIN, description=ctx.message.content)
-        embed.add_field(name='Info:', value=info)
+        message = await utils.safe_content(self.bot.mystbin, f'```py\n{message}```', syntax='python', max_characters=2000)
+
         await self.bot.ERROR_LOG.send(embed=embed, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
-
-        error_traceback = await utils.safe_content(self.bot.mystbin, f'```py{error_traceback}```', syntax='python', max_characters=2000)
-        await self.bot.ERROR_LOG.send(content=error_traceback, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
+        await self.bot.ERROR_LOG.send(content=message, username=f'{ctx.author}', avatar_url=utils.avatar(person=ctx.author))
 
     # Bot events
 
@@ -249,8 +217,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
-
-        print(f'[BOT] The bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}\n')
         __log__.info(f'Bot is now ready. Name: {self.bot.user} | ID: {self.bot.user.id}')
 
     # Guild logging
@@ -258,26 +224,73 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
 
-        __log__.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
+        total = len(guild.members)
+        bots = sum(1 for member in guild.members if member.bot)
+        bots_percent = f'{round((bots / total) * 100, 2)}%'
 
-        time = utils.format_datetime(pendulum.now(tz='UTC'))
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Joined a guild',
-                              description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
+        embed = discord.Embed(
+                colour=colours.GREEN,
+                title=f'Joined guild: **{guild}**',
+                description=f'`Name:` {guild.name}\n'
+                            f'`ID:` {guild.id}\n'
+                            f'`Owner:` {guild.owner}\n'
+                            f'`Created on:` {utils.format_datetime(guild.created_at)}\n'
+                            f'`Joined:` {utils.format_datetime(guild.me.joined_at)}\n'
+                            f'`Members:` {total}\n'
+                            f'`Bots:` {bots}\n'
+                            f'`Bot%:` {bots_percent}'
+        ).set_thumbnail(
+                url=str(utils.icon(guild))
+        )
+
+        __log__.info(f'Joined a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)} | Bots: {bots} | Bots%: {bots_percent}')
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=str(utils.icon(guild)))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
 
-        __log__.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)}')
+        total = len(guild.members)
+        bots = sum(1 for member in guild.members if member.bot)
+        bots_percent = f'{round((bots / total) * 100, 2)}%'
 
-        time = utils.format_datetime(pendulum.now(tz='UTC'))
-        embed = discord.Embed(colour=discord.Colour.gold(), title='Left a guild',
-                              description=f'`Name:` {guild.name}\n`ID:` {guild.id}\n`Owner:` {guild.owner}\n`Time:` {time}\n`Members:` {len(guild.members)}')
-        embed.set_thumbnail(url=str(guild.icon.replace(format='gif' if guild.icon.is_animated() else 'png')))
-        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=guild.icon.replace(format='png'))
+        embed = discord.Embed(
+                colour=colours.RED,
+                title=f'Left guild: **{guild}**',
+                description=f'`Name:` {guild.name}\n'
+                            f'`ID:` {guild.id}\n'
+                            f'`Owner:` {guild.owner}\n'
+                            f'`Created on:` {utils.format_datetime(guild.created_at)}\n'
+                            f'`Joined:` {utils.format_datetime(guild.me.joined_at)}\n'
+                            f'`Members:` {total}\n'
+                            f'`Bots:` {bots}\n'
+                            f'`Bot%:` {bots_percent}'
+        ).set_thumbnail(
+                url=str(utils.icon(guild))
+        )
+
+        __log__.info(f'Left a guild. Name: {guild.name} | ID: {guild.id} | Owner: {guild.owner} | Members: {len(guild.members)} | Bots: {bots} | Bots%: {bots_percent}')
+        await self.bot.GUILD_LOG.send(embed=embed, avatar_url=str(utils.icon(guild)))
 
     # DM Logging
+
+    @staticmethod
+    async def _log_attachments(webhook: discord.Webhook, message: discord.Message) -> None:
+
+        with contextlib.suppress(discord.HTTPException, discord.NotFound, discord.Forbidden):
+            for attachment in message.attachments:
+                await webhook.send(
+                        content=f'Attachment from message with id **{message.id}**:', file=await attachment.to_file(use_cached=True), username=f'{message.author}',
+                        avatar_url=utils.avatar(person=message.author)
+                )
+
+    @staticmethod
+    async def _log_embeds(webhook: discord.Webhook, message: discord.Message) -> None:
+
+        for embed in message.embeds:
+            await webhook.send(
+                    content=f'Embed from message with id **{message.id}**:', embed=embed, username=f'{message.author}',
+                    avatar_url=utils.avatar(person=message.author)
+            )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -288,7 +301,27 @@ class Events(commands.Cog):
         if message.guild or message.is_system():
             return
 
-        await self._log_dm(message)
+        content = await utils.safe_content(self.bot.mystbin, message.content) if message.content else '*No content*'
+
+        embed = discord.Embed(
+                colour=colours.GREEN,
+                title=f'DM from **{message.author}**:',
+                description=content
+        ).add_field(
+                name='Info:',
+                value=f'`Channel:` {message.channel} `{message.channel.id}`\n'
+                      f'`Author:` {message.author} `{message.author.id}`\n'
+                      f'`Time:` {utils.format_datetime(datetime=pendulum.now(tz="UTC"))}\n'
+                      f'`Jump:` [Click here]({message.jump_url})'
+        ).set_footer(
+                text=f'ID: {message.id}'
+        )
+
+        __log__.info(f'DM from {message.author} ({message.author.id}) | Content: {content}')
+        await self.bot.DMS_LOG.send(embed=embed, username=f'{message.author}', avatar_url=utils.avatar(person=message.author))
+
+        await self._log_attachments(webhook=self.bot.DMS_LOG, message=message)
+        await self._log_embeds(webhook=self.bot.DMS_LOG, message=message)
 
 
 def setup(bot: Life) -> None:
