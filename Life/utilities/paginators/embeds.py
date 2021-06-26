@@ -31,8 +31,8 @@ from utilities import context, paginators
 
 class EmbedsPaginator(paginators.BasePaginator):
 
-    def __init__(self, *, ctx: context.Context, entries: list[discord.Embed], timeout: int = 300, delete_message_when_done: bool = False, content: Optional[str] = None) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message_when_done=delete_message_when_done)
+    def __init__(self, *, ctx: context.Context, entries: list[discord.Embed], timeout: int = 300, delete_message: bool = True, content: Optional[str] = None) -> None:
+        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message=delete_message)
 
         self._content: Optional[str] = content
 

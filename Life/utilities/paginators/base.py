@@ -48,7 +48,7 @@ class ButtonsView(discord.ui.View):
         return interaction.message.id == getattr(self.paginator.message, 'id', None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
 
     async def on_timeout(self) -> None:
-        await self.paginator.stop(delete=self.paginator.delete_message_when_done)
+        await self.paginator.stop(delete=self.paginator.delete_message)
 
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         return
@@ -66,7 +66,7 @@ class ButtonsView(discord.ui.View):
     @discord.ui.button(emoji=emojis.STOP)
     async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        await self.paginator.stop()
+        await self.paginator.stop(self.paginator.delete_message)
 
     @discord.ui.button(emoji=emojis.FORWARD)
     async def forward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
@@ -79,10 +79,32 @@ class ButtonsView(discord.ui.View):
         await self.paginator.last()
 
 
+class StopView(discord.ui.View):
+
+    def __init__(self, paginator: BasePaginator) -> None:
+        super().__init__(timeout=paginator.timeout)
+
+        self.paginator: BasePaginator = paginator
+
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        return interaction.message.id == getattr(self.paginator.message, 'id', None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
+
+    async def on_timeout(self) -> None:
+        await self.paginator.stop(delete=self.paginator.delete_message)
+
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        return
+
+    @discord.ui.button(emoji=emojis.STOP)
+    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        await self.paginator.stop(self.paginator.delete_message)
+
+
 class BasePaginator(abc.ABC):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, codeblock: bool = False, splitter: str = '\n'
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = '\n'
     ) -> None:
 
         self.bot: Life = ctx.bot
@@ -91,7 +113,7 @@ class BasePaginator(abc.ABC):
         self.per_page: int = per_page
 
         self.timeout: int = timeout
-        self.delete_message_when_done: bool = delete_message_when_done
+        self.delete_message: bool = delete_message
         self.codeblock: bool = codeblock
         self.splitter: str = splitter
 
@@ -107,7 +129,7 @@ class BasePaginator(abc.ABC):
     @abc.abstractmethod
     async def paginate(self) -> None:
 
-        self.view = ButtonsView(self)
+        self.view = ButtonsView(self) if len(self.pages) != 1 else StopView(self)
 
     @abc.abstractmethod
     async def first(self) -> None:

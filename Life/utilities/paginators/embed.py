@@ -34,18 +34,18 @@ from utilities import context, paginators
 class EmbedPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, codeblock: bool = False, splitter: str = '\n',
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = '\n',
             header: Optional[str] = None, footer: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None, colour: Optional[discord.Colour] = None, image: Optional[str] = None,
             thumbnail: Optional[str] = None, embed_footer: Optional[str] = None
     ) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, codeblock=codeblock, splitter=splitter)
+        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter)
 
         self.header: str = header or ''
         self.footer: str = footer or ''
 
         self.embed_title: Optional[str] = title
         self.embed_url: Optional[str] = url
-        self.embed_colour = discord.Colour = colour or colours.MAIN
+        self.embed_colour: discord.Colour = colour or colours.MAIN
         self.embed_image: Optional[str] = image
         self.embed_thumbnail: Optional[str] = thumbnail
         self._embed_footer: Optional[str] = embed_footer
@@ -61,7 +61,7 @@ class EmbedPaginator(paginators.BasePaginator):
 
     @property
     def embed_footer(self) -> str:
-        return self._embed_footer or f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}'
+        return (self._embed_footer or f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}') if len(self.pages) != 1 else discord.embeds.EmptyEmbed
 
     # Page generator
 
