@@ -4,8 +4,9 @@
 
 .idea/
 venv/
-node_modules/
-resources/
 
 config.py
-pyproject.toml
+
+*.ttf
+*.otf
+*.png
