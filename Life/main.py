@@ -35,13 +35,19 @@ def logger():
 
     for name, log in loggers.items():
 
-        handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2 ** 22)
-        log.addHandler(handler)
+        file_handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2 ** 22)
+        stream_handler = logging.StreamHandler()
+
+        log.addHandler(file_handler)
+        log.addHandler(stream_handler)
 
         if os.path.isfile(f'logs/{name}.log'):
-            handler.doRollover()
+            file_handler.doRollover()
 
-        handler.setFormatter(logging.Formatter(fmt='%(asctime)s | %(levelname)s: %(name)s: %(message)s', datefmt='%d/%m/%Y at %I:%M:%S %p'))
+        formatter = logging.Formatter(fmt='%(asctime)s [%(name) 30s] [%(filename) 20s] [%(levelname) 7s] %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
+
+        file_handler.setFormatter(formatter)
+        stream_handler.setFormatter(formatter)
 
     loggers['discord'].setLevel(logging.INFO)
     loggers['bot'].setLevel(logging.DEBUG)
