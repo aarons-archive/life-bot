@@ -15,11 +15,19 @@ import logging
 import logging.handlers
 import os
 import sys
+from typing import Any
 
 import setproctitle
 
 import config
 from bot import Life
+
+
+RESET = '\u001b[0m'
+BOLD = '\u001b[1m'
+UNDERLINE = '\u001b[4m'
+REVERSE = '\u001b[7m'
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = [f'\u001b[{30 + i}m' for i in range(8)]
 
 
 @contextlib.contextmanager
@@ -36,24 +44,25 @@ def logger():
     for name, log in loggers.items():
 
         file_handler = logging.handlers.RotatingFileHandler(filename=f'logs/{name}.log', mode='w', backupCount=5, encoding='utf-8', maxBytes=2 ** 22)
-        stream_handler = logging.StreamHandler()
-
         log.addHandler(file_handler)
+
+        stream_handler = logging.StreamHandler()
         log.addHandler(stream_handler)
 
         if os.path.isfile(f'logs/{name}.log'):
             file_handler.doRollover()
 
-        formatter = logging.Formatter(fmt='%(asctime)s [%(name) 30s] [%(filename) 20s] [%(levelname) 7s] %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
+        file_formatter = logging.Formatter(fmt='%(asctime)s [%(name) 30s] [%(filename) 20s] [%(levelname) 7s] %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
+        file_handler.setFormatter(file_formatter)
 
-        file_handler.setFormatter(formatter)
-        stream_handler.setFormatter(formatter)
+        stream_formatter = logging.Formatter(fmt=f'{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
+        stream_handler.setFormatter(stream_formatter)
 
     loggers['discord'].setLevel(logging.INFO)
     loggers['bot'].setLevel(logging.DEBUG)
     loggers['cogs'].setLevel(logging.DEBUG)
     loggers['utilities'].setLevel(logging.DEBUG)
-    loggers['slate'].setLevel(logging.DEBUG)
+    loggers['slate'].setLevel(logging.INFO)
 
     try:
         yield
