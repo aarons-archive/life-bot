@@ -121,12 +121,12 @@ class Events(commands.Cog):
             return
 
         if isinstance(error, commands.MissingPermissions):
-            permissions = config.NL.join([f'- {permission}' for permission in error.missing_perms])
+            permissions = config.NL.join([f'- {permission}' for permission in error.missing_permissions])
             await ctx.reply(f'You are missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
             return
 
         if isinstance(error, commands.BotMissingPermissions):
-            permissions = config.NL.join([f'- {permission}' for permission in error.missing_perms])
+            permissions = config.NL.join([f'- {permission}' for permission in error.missing_permissions])
             await ctx.try_dm(f'I am missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
             return
 
