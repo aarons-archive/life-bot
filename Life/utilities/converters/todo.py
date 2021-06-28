@@ -20,12 +20,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from utilities.converters.datetime import DatetimeConverter
-from utilities.converters.discord import UserConverter
-from utilities.converters.image import ImageConverter
-from utilities.converters.prefix import PrefixConverter
-from utilities.converters.reminder import ReminderRepeatTypeConverter
-from utilities.converters.tag import TagContentConverter, TagNameConverter
-from utilities.converters.time import TimeConverter
-from utilities.converters.timezone import TimezoneConverter
-from utilities.converters.todo import TodoContentConverter
+import discord
+from discord.ext import commands
+
+import colours
+import emojis
+from utilities import context, exceptions
+
+
+class TodoContentConverter(commands.clean_content):
+
+    async def convert(self, ctx: context.Context, argument: str) -> str:
+
+        if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
+            raise commands.BadArgument
+
+        if len(argument) > 150:
+            raise exceptions.EmbedError(description=f'{emojis.CROSS}  Your todo content must be under 150 characters.')
+
+        return argument
