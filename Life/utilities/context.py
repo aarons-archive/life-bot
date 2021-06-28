@@ -137,7 +137,7 @@ class Context(commands.Context):
                 raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You took too long to respond, try again.")
 
             if response.content == "cancel":
-                raise exceptions.EmbedError(colour=colours.GREEN, description=f"{emojis.TICK}  Exiting choice selection.")
+                break
 
             try:
                 number = int(response.content) - 1
@@ -149,6 +149,8 @@ class Context(commands.Context):
 
             await paginator.stop(delete=True)
             return number, pick
+
+        raise exceptions.EmbedError(colour=colours.GREEN, description=f"{emojis.TICK}  Exiting choice selection.")
 
     # Miscellaneous
 
