@@ -16,6 +16,7 @@ from discord.ext import commands
 
 import colours
 import config
+import values
 from utilities import context, exceptions
 
 
@@ -55,7 +56,7 @@ class HelpCommand(commands.HelpCommand):
 
         for command in unformatted_command:
             command_help = command.help.strip().split('\n')[0] if command.help else 'No help provided for this command.'
-            space = f'{config.ZWSP} {config.ZWSP}  ' * (len(command.parents) - 1)
+            space = f'{values.ZWSP} {values.ZWSP}  ' * (len(command.parents) - 1)
             indent = '`╚╡` ' if command.parents else ''
             formatted_commands.append(f'**{space}{indent}{command.name}** - {command_help}')
 
@@ -73,7 +74,7 @@ class HelpCommand(commands.HelpCommand):
             if not (cog_commands := self.get_cog_commands(cog=cog)):
                 continue
 
-            entries.append(f'__**{cog.qualified_name}:**__\n{"".join(f"`{command.qualified_name}`{config.ZWSP} " for command in cog_commands)}')
+            entries.append(f'__**{cog.qualified_name}:**__\n{"".join(f"`{command.qualified_name}`{values.ZWSP} " for command in cog_commands)}')
 
         title = f'__{self.context.bot.user.name}\'s help page__'
         header = f'Use `{config.PREFIX}help [Command/Category]` for more help with a command or category.\n\n'

@@ -30,6 +30,7 @@ from pendulum.tz.zoneinfo.exceptions import InvalidTimezone
 
 import colours
 import config
+import values
 from bot import Life
 from utilities import context, converters, exceptions, utils
 
@@ -62,7 +63,7 @@ class Time(commands.Cog):
             else:
                 timezone_users[timezone] = [f'{user} - {user_config.timezone.name}']
 
-        entries = [f'`{timezone}:`\n{config.NL.join(members)}\n' for timezone, members in timezone_users.items()]
+        entries = [f'`{timezone}:`\n{values.NL.join(members)}\n' for timezone, members in timezone_users.items()]
         await ctx.paginate_embed(entries=entries, per_page=5, title=f'{ctx.guild}\'s timezones:')
 
     @commands.command(name='timezones', aliases=['tzs'])

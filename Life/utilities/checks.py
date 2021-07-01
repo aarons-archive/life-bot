@@ -15,7 +15,10 @@ from typing import Literal
 
 from discord.ext import commands
 
-from utilities import exceptions
+import colours
+import emojis
+import values
+from utilities import context, exceptions
 
 
 def is_connected(same_channel: bool = False):
@@ -80,3 +83,25 @@ def is_guild_owner():
 
 def has_any_permissions(**permissions):
     return commands.check_any(*(commands.has_permissions(**{permission: value}) for permission, value in permissions.items()))
+
+
+async def bot_check(ctx: context.Context) -> Literal[True]:
+
+    if ctx.user_config.blacklisted is True or ctx.guild_config.blacklisted is True:
+        raise exceptions.EmbedError(
+                colour=colours.RED,
+                description=f'{emojis.CROSS} {values.ZWSP} You are blacklisted from using this bot.\n\n'
+                            f'*If you would like to appeal this please join my [support server]({values.SUPPORT_LINK}).*'
+
+        )
+
+    current = dict(ctx.channel.permissions_for(ctx.me))
+    if not ctx.guild:
+        current['read_messages'] = True
+
+    needed = {permission: value for permission, value in values.PERMISSIONS if value is True}
+
+    if missing := [permission for permission, value in needed.items() if current[permission] != value]:
+        raise commands.BotMissingPermissions(missing)
+
+    return True

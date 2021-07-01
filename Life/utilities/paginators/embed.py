@@ -28,6 +28,7 @@ import discord
 
 import colours
 import config
+import values
 from utilities import context, paginators
 
 
@@ -86,7 +87,7 @@ class EmbedPaginator(paginators.BasePaginator):
 
     async def set_page(self, *, page: int) -> None:
 
-        self.embed.description = f"{f'```{config.NL}' if self.codeblock else ''}{self.header}{self.pages[page]}{self.footer}{f'{config.NL}```' if self.codeblock else ''}"
+        self.embed.description = f"{f'```{values.NL}' if self.codeblock else ''}{self.header}{self.pages[page]}{self.footer}{f'{values.NL}```' if self.codeblock else ''}"
 
         if self._embed_footer:
             self.embed.set_footer(text=self._embed_footer, icon_url=self.embed_footer_url or discord.embeds.EmptyEmbed)

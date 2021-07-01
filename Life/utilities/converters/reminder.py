@@ -13,6 +13,7 @@
 from discord.ext import commands
 
 import config
+import values
 from utilities import context, enums, exceptions
 
 
@@ -24,4 +25,4 @@ class ReminderRepeatTypeConverter(commands.Converter):
             return enum
 
         valid = [f"{repeat_type.name.replace('_', ' ').lower()}" for repeat_type in enums.ReminderRepeatType]
-        raise exceptions.ArgumentError(f'Repeat type must be one of:\n{f"{config.NL}".join([f"- {v}" for v in valid])}')
+        raise exceptions.ArgumentError(f'Repeat type must be one of:\n{f"{values.NL}".join([f"- {v}" for v in valid])}')

@@ -25,6 +25,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import config
+import values
 from utilities import context, paginators
 
 
@@ -53,7 +54,7 @@ class TextPaginator(paginators.BasePaginator):
 
     async def set_page(self, *, page: int) -> None:
 
-        self.current_page = f"{f'```{config.NL}' if self.codeblock else ''}{self.header}{self.pages[page]}{self.footer}{f'{config.NL}```' if self.codeblock else ''}"
+        self.current_page = f"{f'```{values.NL}' if self.codeblock else ''}{self.header}{self.pages[page]}{self.footer}{f'{values.NL}```' if self.codeblock else ''}"
 
     async def change_page(self, *, page: int) -> None:
 

@@ -15,6 +15,7 @@ from discord.ext import commands
 
 import colours
 import config
+import values
 from bot import Life
 from utilities import context, converters, exceptions, utils
 
@@ -40,7 +41,7 @@ class Tags(commands.Cog):
         tag = tags[0]
 
         if tag.name != name:
-            msg = f'Maybe you meant one of these?\n{config.NL.join(f"- `{tag.name}`" for tag in tags[0:])}' if len(tags) > 1 else ''
+            msg = f'Maybe you meant one of these?\n{values.NL.join(f"- `{tag.name}`" for tag in tags[0:])}' if len(tags) > 1 else ''
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`. {msg}')
 
         if tag.alias:
@@ -64,7 +65,7 @@ class Tags(commands.Cog):
         tag = tags[0]
 
         if tag.name != name:
-            msg = f'Maybe you meant one of these?\n{config.NL.join(f"- `{tag.name}`" for tag in tags[0:])}' if len(tags) > 1 else ''
+            msg = f'Maybe you meant one of these?\n{values.NL.join(f"- `{tag.name}`" for tag in tags[0:])}' if len(tags) > 1 else ''
             raise exceptions.ArgumentError(f'There are no tags with the name `{name}`. {msg}')
 
         if tag.alias:

@@ -33,6 +33,7 @@ from discord.ext import commands
 import colours
 import config
 import emojis
+import values
 from bot import Life
 from utilities import context, enums, exceptions, utils
 
@@ -121,12 +122,12 @@ class Events(commands.Cog):
             return
 
         if isinstance(error, commands.MissingPermissions):
-            permissions = config.NL.join([f'- {permission}' for permission in error.missing_permissions])
+            permissions = values.NL.join([f'- {permission}' for permission in error.missing_permissions])
             await ctx.reply(f'You are missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
             return
 
         if isinstance(error, commands.BotMissingPermissions):
-            permissions = config.NL.join([f'- {permission}' for permission in error.missing_permissions])
+            permissions = values.NL.join([f'- {permission}' for permission in error.missing_permissions])
             await ctx.try_dm(f'I am missing permissions required to run the command `{ctx.command.qualified_name}` in `{ctx.guild}`.\n```diff\n{permissions}\n```')
             return
 
@@ -188,7 +189,7 @@ class Events(commands.Cog):
                 description=await utils.safe_content(self.bot.mystbin, ctx.message.content, syntax='python', max_characters=2000)
         ).add_field(
                 name='Info:',
-                value=f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`{config.NL}" if ctx.guild else ""}'
+                value=f'{f"`Guild:` {ctx.guild} `{ctx.guild.id}`{values.NL}" if ctx.guild else ""}'
                       f'`Channel:` {ctx.channel} `{ctx.channel.id}`\n'
                       f'`Author:` {ctx.author} `{ctx.author.id}`\n'
                       f'`Time:` {utils.format_datetime(pendulum.now(tz="UTC"))}'
