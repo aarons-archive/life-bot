@@ -44,7 +44,7 @@ from core import config
 from utilities import checks, context, help, managers
 
 
-__log__ = logging.getLogger('bot')
+__log__: logging.Logger = logging.getLogger('bot')
 
 
 class Life(commands.AutoShardedBot):
@@ -169,20 +169,17 @@ class Life(commands.AutoShardedBot):
 
     async def close(self) -> None:
 
-        __log__.info('[AIOHTTP] Closing ClientSessions.')
         await self.session.close()
         await self.ksoft.close()
         await self.spotify.close()
         await self.spotify_http.close()
 
-        __log__.info('[POSTGRESQL] Closing connection.')
-        await self.db.close()
-
-        __log__.info('[REDIS] Closing connection.')
-        await self.redis.close()
+        if self.db:
+            await self.db.close()
+        if self.redis:
+            await self.redis.close()
 
         await super().close()
-        __log__.info('BYE BYE!!!')
 
     # Events
 
@@ -196,6 +193,4 @@ class Life(commands.AutoShardedBot):
         await self.user_manager.load()
         await self.guild_manager.load()
 
-        for cog in self.cogs.values():
-            if hasattr(cog, 'load'):
-                await cog.load()
+        await self.cogs["Voice"].load()
