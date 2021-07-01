@@ -18,7 +18,7 @@ from typing import Any, Optional, TYPE_CHECKING
 import pendulum
 from pendulum.tz.timezone import Timezone
 
-import objects
+from utilities import objects
 from utilities import enums
 
 

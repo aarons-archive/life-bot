@@ -12,31 +12,34 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
-import objects
+import pendulum
+
+from utilities import objects
 
 
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.notifications')
+__log__ = logging.getLogger('utilities.objects.todo')
 
 
-class Notifications:
+class Todo:
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
 
         self._bot = bot
         self._user_config = user_config
 
-        self._id: int = data.get('id', 0)
-        self._user_id: int = data.get('user_id', 0)
-
-        self._level_ups: bool = data.get('level_ups', False)
+        self._id: int = data['id']
+        self._user_id: int = data['user_id']
+        self._created_at: pendulum.DateTime = pendulum.instance(data['created_at'], tz='UTC')
+        self._content: str = data['content']
+        self._jump_url: Optional[str] = data['jump_url']
 
     def __repr__(self) -> str:
-        return f'<Notifications id=\'{self.id}\' user_id=\'{self.user_id}\' level_ups={self.level_ups}>'
+        return f'<Todo id=\'{self.id}\' user_id=\'{self.user_id}\'>'
 
     # Properties
 
@@ -57,5 +60,28 @@ class Notifications:
         return self._user_id
 
     @property
-    def level_ups(self) -> bool:
-        return self._level_ups
+    def created_at(self) -> pendulum.DateTime:
+        return self._created_at
+
+    @property
+    def content(self) -> str:
+        return self._content
+
+    @property
+    def jump_url(self) -> Optional[str]:
+        return self._jump_url
+
+    # Misc
+
+    async def delete(self) -> None:
+
+        await self.bot.db.execute('DELETE FROM todos WHERE id = $1', self.id)
+        del self.user_config._todos[self.id]
+
+    # Config
+
+    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
+
+        data = await self.bot.db.fetchrow('UPDATE todos SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
+        self._content = data['content']
+        self._jump_url = data['jump_url'] or self.jump_url

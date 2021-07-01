@@ -17,9 +17,8 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-import objects
 from core.bot import Life
-from utilities import context, exceptions, utils
+from utilities import context, exceptions, utils, objects
 
 
 class Economy(commands.Cog):

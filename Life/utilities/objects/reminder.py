@@ -18,9 +18,8 @@ import aioscheduler.task
 import discord
 import pendulum
 
-import objects
 from core import colours
-from utilities import enums, utils
+from utilities import enums, utils, objects
 
 
 if TYPE_CHECKING:

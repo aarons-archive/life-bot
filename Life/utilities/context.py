@@ -29,9 +29,8 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 import discord
 from discord.ext import commands
 
-import objects
 from core import colours, emojis
-from utilities import exceptions, paginators
+from utilities import exceptions, paginators, objects
 
 
 if TYPE_CHECKING:

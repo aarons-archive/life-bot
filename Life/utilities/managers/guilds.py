@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Union
 
 from discord.ext import tasks
 
-import objects
+from utilities import objects
 
 
 if TYPE_CHECKING:
