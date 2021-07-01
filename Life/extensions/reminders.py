@@ -76,6 +76,7 @@ class Reminders(commands.Cog):
         await ctx.reply(embed=embed)
 
 
+
     @remind.command(name='edit')
     async def remind_edit(self, ctx: context.Context, reminder_id: int, *, content: str) -> None:
         """
@@ -151,7 +152,7 @@ class Reminders(commands.Cog):
         if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.ArgumentError('You do not have a reminder with that id.')
 
-        difference = utils.format_difference(reminder.datetime, suppress=[])
+        difference = utils.format_difference(reminder.datetime)
 
         embed = discord.Embed(
                 colour=colours.MAIN, title=f'Reminder `{reminder.id}`:',
@@ -183,7 +184,7 @@ class Reminders(commands.Cog):
         entries = [
             textwrap.dedent(
                     f'''
-                `{reminder.id}`: [__**In {utils.format_difference(reminder.datetime, suppress=[])}**__]({reminder.jump_url})
+                `{reminder.id}`: [__**In {utils.format_difference(reminder.datetime)}**__]({reminder.jump_url})
                 `When:` {utils.format_datetime(reminder.datetime, seconds=True)}
                 `Content:` {await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=80)}
                 `Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}
@@ -208,7 +209,7 @@ class Reminders(commands.Cog):
         entries = [
             textwrap.dedent(
                     f'''
-                `{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime, suppress=[])}{" ago" if reminder.done else ""}**__]({reminder.jump_url})
+                `{reminder.id}`: [__**{"In " if reminder.done is False else ""}{utils.format_difference(reminder.datetime)}{" ago" if reminder.done else ""}**__]({reminder.jump_url})
                 `When:` {utils.format_datetime(reminder.datetime, seconds=True)}
                 `Content:` {await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=80)}
                 `Repeat type:` {reminder.repeat_type.name.replace("_", " ").lower().title()}

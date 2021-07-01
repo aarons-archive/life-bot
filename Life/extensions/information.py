@@ -131,7 +131,7 @@ class Information(commands.Cog):
         embed.add_field(
                 name='Process information:',
                 value=f'''
-                `Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent(interval=None)}% 
+                `Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent()}% 
                 `Threads:` {self.bot.process.num_threads()}
                 '''
         )

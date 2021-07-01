@@ -28,6 +28,7 @@ import discord
 import slate
 from discord.ext import commands
 
+from core import colours
 from core.bot import Life
 from utilities import checks, context
 

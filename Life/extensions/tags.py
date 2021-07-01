@@ -273,7 +273,7 @@ class Tags(commands.Cog):
                 `Claimable:` {owner is None}
                 `Alias:` {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}
                 `Created on:` {utils.format_datetime(tag.created_at)}
-                `Created:` {utils.format_difference(tag.created_at, suppress=[])} ago
+                `Created:` {utils.format_difference(tag.created_at)} ago
                 '''
         )
         await ctx.reply(embed=embed)

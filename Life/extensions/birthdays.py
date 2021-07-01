@@ -48,7 +48,7 @@ class Birthdays(commands.Cog):
                         f'''
                         `Birthday:` {utils.format_date(user_config.birthday)}
                         `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-                        `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+                        `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
                         `Age:` {user_config.age}
                         '''
                 )
@@ -135,7 +135,7 @@ class Birthdays(commands.Cog):
                     __**{ctx.guild.get_member(user_config.id)}:**__
                     `Birthday:` {utils.format_date(user_config.birthday)}
                     `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-                    `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+                    `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
                     `Age:` {user_config.age}
                     '''
             )
@@ -162,7 +162,7 @@ class Birthdays(commands.Cog):
                         f'''
                         `Birthday:` {utils.format_date(user_config.birthday)}
                         `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-                        `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
+                        `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
                         `Age:` {user_config.age}
                         '''
                 )

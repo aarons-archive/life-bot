@@ -152,7 +152,7 @@ class Reminder:
         embed = discord.Embed(
                 colour=colours.MAIN,
                 title='Reminder:',
-                description=f'[`{utils.format_difference(self.created_at, suppress=[])} ago:`]({self.jump_url})\n\n{self.content}'
+                description=f'[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}'
         )
 
         try:
