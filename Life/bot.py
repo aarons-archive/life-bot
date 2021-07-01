@@ -122,11 +122,9 @@ class Life(commands.AutoShardedBot):
             db = await asyncpg.create_pool(**config.POSTGRESQL, max_inactive_connection_lifetime=0)
         except Exception as e:
             __log__.critical(f'[POSTGRESQL] Error while connecting.\n{e}\n')
-            print(f'\n[POSTGRESQL] Error while connecting: {e}')
             raise ConnectionError()
         else:
             __log__.info('[POSTGRESQL] Successful connection.')
-            print('\n[POSTGRESQL] Successful connection.')
             self.db = db
 
         try:
@@ -135,49 +133,38 @@ class Life(commands.AutoShardedBot):
             await redis.ping()
         except (aioredis.ConnectionError, aioredis.ResponseError) as e:
             __log__.critical(f'[REDIS] Error while connecting.\n{e}\n')
-            print(f'[REDIS] Error while connecting: {e}')
             raise ConnectionError()
         else:
             __log__.info('[REDIS] Successful connection.')
-            print(f'[REDIS] Successful connection to Redis DB. \n')
             self.redis = redis
 
         for extension in config.EXTENSIONS:
             try:
                 self.load_extension(extension)
                 __log__.info(f'[EXTENSIONS] Loaded - {extension}')
-                print(f'[EXTENSIONS] Loaded - {extension}')
             except commands.ExtensionNotFound:
                 __log__.warning(f'[EXTENSIONS] Extension not found - {extension}')
-                print(f'\n[EXTENSIONS] Extension not found - {extension}\n')
             except commands.NoEntryPointError:
                 __log__.warning(f'[EXTENSIONS] No entry point - {extension}')
-                print(f'\n[EXTENSIONS] No entry point - {extension}\n')
             except commands.ExtensionFailed as error:
                 __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {traceback.print_exception(type(error), error, error.__traceback__)}')
-                print(f'\n[EXTENSIONS] Failed - {extension} - Reason: {error}\n')
 
-        print('')
         await super().start(token=token, reconnect=reconnect)
 
     async def close(self) -> None:
 
         __log__.info('[BOT] Closing aiohttp client sessions.')
-        print('\n[CS] Closing aiohttp client sessions.')
         await self.session.close()
         await self.ksoft.close()
         await self.spotify.close()
         await self.spotify_http.close()
 
         __log__.info('[BOT] Closing bot down.')
-        print('[BOT] Closing bot down.')
 
         __log__.info('[BOT] Closing database connection.')
-        print('[DB] Closing database connection.')
         await self.db.close()
 
         __log__.info('[BOT] Bot has shutdown.')
-        print('\nBye bye!')
         await super().close()
 
     #

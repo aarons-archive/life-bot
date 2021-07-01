@@ -24,19 +24,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import textwrap
 from typing import Optional
 
 import async_timeout
 import discord
+import slate
+from slate import obsidian
 
 import colours
 import config
 import emojis
-import slate
 from bot import Life
 from cogs.voice.custom.queue import Queue
-from slate import obsidian
 from utilities import context, enums, exceptions, utils
 
 
@@ -109,7 +108,7 @@ class Player(obsidian.ObsidianPlayer):
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
+                    await self.send(embed=discord.Embed(colour=colours.RED, description=f'{emojis.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
                     await self.disconnect()
                     break
 
@@ -119,11 +118,11 @@ class Player(obsidian.ObsidianPlayer):
 
                 try:
                     search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
-                except exceptions.VoiceError:
+                except exceptions.EmbedError:
                     try:
                         search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE)
-                    except exceptions.VoiceError as error:
-                        await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.UNKNOWN}  {error}'))
+                    except exceptions.EmbedError as error:
+                        await self.send(embed=error.embed)
                         continue
 
                 track = search.tracks[0]
@@ -134,7 +133,7 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
+                await self.send(embed=discord.Embed(colour=colours.RED, description=f'{emojis.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
                 continue
 
             await self._track_end_event.wait()
@@ -152,27 +151,19 @@ class Player(obsidian.ObsidianPlayer):
 
             embed.add_field(
                     name='Player info:',
-                    value=textwrap.dedent(
-                            f'''
-                            `Paused:` {self.paused}
-                            `Loop mode:` {self.queue.loop_mode.name.title()}
-                            `Filter:` {getattr(self.filter, "name", None)}
-                            `Queue entries:` {len(self.queue)}
-                            `Queue time:` {utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)}
-                            '''
-                    )
+                    value=f'`Paused:` {self.paused}'
+                          f'`Loop mode:` {self.queue.loop_mode.name.title()}'
+                          f'`Filter:` {getattr(self.filter, "name", None)}'
+                          f'`Queue entries:` {len(self.queue)}'
+                          f'`Queue time:` {utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)}'
             )
             embed.add_field(
                     name='Track info:',
-                    value=textwrap.dedent(
-                            f'''
-                            `Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}
-                            `Author:` {self.current.author}
-                            `Source:` {self.current.source.value.title()}
-                            `Requester:` {self.current.requester.mention}
-                            `Seekable:` {self.current.is_seekable}
-                            '''
-                    )
+                    value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}'
+                          f'`Author:` {self.current.author}'
+                          f'`Source:` {self.current.source.value.title()}'
+                          f'`Requester:` {self.current.requester.mention}'
+                          f'`Seekable:` {self.current.is_seekable}'
             )
 
             if not self.queue.is_empty:
@@ -221,18 +212,12 @@ class Player(obsidian.ObsidianPlayer):
             search = await self.node.search(search=query, ctx=ctx, source=source)
 
         except (slate.HTTPError, obsidian.ObsidianSearchError):
-            raise exceptions.EmbedError(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  There was an error while searching for results.'))
-
+            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  There was an error while searching for results.')
         except slate.NoMatchesFound as error:
-            raise exceptions.EmbedError(
-                    embed=discord.Embed(
-                            colour=colours.MAIN,
-                            description=f'{emojis.UNKNOWN}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.'
-                    )
-            )
+            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.')
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.EmbedError(embed=discord.Embed(colour=colours.MAIN, description=f'{emojis.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.'))
+            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.')
 
         return search
 
@@ -248,9 +233,9 @@ class Player(obsidian.ObsidianPlayer):
             await self.stop()
 
         if search.type is slate.SearchType.TRACK:
-            description = f'Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue.'
+            description = f'{emojis.TICK}  Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue.'
         else:
-            description = f'Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
+            description = f'{emojis.TICK}  Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
 
-        embed = discord.Embed(colour=colours.MAIN, description=description)
+        embed = discord.Embed(colour=colours.GREEN, description=description)
         await ctx.reply(embed=embed)

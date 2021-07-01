@@ -43,7 +43,6 @@ class GuildManager:
             self.configs[config['id']] = objects.GuildConfig(bot=self.bot, data=config)
 
         __log__.info(f'[GUILD MANAGER] Loaded guild configs. [{len(configs)} guilds]')
-        print(f'[GUILD MANAGER] Loaded guild configs. [{len(configs)} guilds]')
 
         await self.load_tags()
 
@@ -59,7 +58,6 @@ class GuildManager:
             guild_config._tags[tag.name] = tag
 
         __log__.info(f'[GUILD MANAGER] Loaded tags. [{len(tags)} tags]')
-        print(f'[GUILD MANAGER] Loaded tags. [{len(tags)} tags]')
 
     # Background task
 

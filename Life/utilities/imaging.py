@@ -284,40 +284,6 @@ def cube(image: Image) -> Optional[str]:
     return ''
 
 
-def magik(image: Image) -> Optional[str]:
-
-    if image.format != 'GIF':
-        image.format = 'GIF'
-
-        for _ in range(1, 10):
-            with Image(image) as new_image:
-
-                new_image.liquid_rescale(
-                        width=int(image.width * random.uniform(0.3, 0.5)),
-                        height=int(image.height * random.uniform(0.3, 0.5)),
-                        delta_x=1,
-                )
-                new_image.liquid_rescale(
-                        width=int(image.width * random.uniform(1.6, 1.8)),
-                        height=int(image.height * random.uniform(1.6, 1.8)),
-                        delta_x=2,
-                )
-                image.sequence.append(new_image)
-
-    image.liquid_rescale(
-            width=int(image.width * 0.4),
-            height=int(image.height * 0.4),
-            delta_x=1,
-    )
-    image.liquid_rescale(
-            width=int(image.width * 1.7),
-            height=int(image.height * 1.7),
-            delta_x=2,
-    )
-
-    return 'spooky magik'
-
-
 IMAGE_OPERATIONS = {
     'adaptive_blur':    adaptive_blur,
     'adaptive_sharpen': adaptive_sharpen,
@@ -354,7 +320,6 @@ IMAGE_OPERATIONS = {
     'transverse':       transverse,
     'wave':             wave,
     'cube':             cube,
-    'magik':            magik,
 }
 
 MAX_CONTENT_SIZE = (2 ** 20) * 25
@@ -373,8 +338,11 @@ async def _request_image_bytes(session: aiohttp.ClientSession, *, url: str) -> b
 
         if request.status != 200:
             raise exceptions.ImageError('Something went wrong while fetching that image, please try again.')
+
         if request.headers.get('Content-Type') not in VALID_CONTENT_TYPES:
             raise exceptions.ImageError('That image format is not allowed. Valid formats include `gif`, `heic`, `jpeg`, `png`, `webp`, `avif` and `svg`.')
+
+        # noinspection PyTypeChecker
         if (content_length := request.headers.get('Content-Length', 0)) and int(content_length) > MAX_CONTENT_SIZE:
             raise exceptions.ImageError(f'That image was too big to edit, please keep to a `{humanize.naturalsize(MAX_CONTENT_SIZE)}` maximum')
 
@@ -435,7 +403,7 @@ async def edit_image(ctx: context.Context, edit: str, url: str, **kwargs) -> dis
     process.start()
 
     data = await ctx.bot.loop.run_in_executor(None, parent_pipe.recv)
-    if isinstance(data, (exceptions.ImageError, EOFError)):
+    if isinstance(data, EOFError):
         process.terminate()
         raise exceptions.ImageError('Something went wrong while trying to edit that image.')
 

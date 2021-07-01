@@ -91,7 +91,7 @@ class Settings(commands.Cog):
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
             clean_prefixes = [f'`1.` {prefixes[0]}', *[f'`{index + 2}.` `{prefix}`' for index, prefix in enumerate(prefixes[2:])]]
-            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, colour=colours.MAIN, title='List of usable prefixes.')
+            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, title='List of usable prefixes.')
             return
 
         if await self.bot.is_owner(ctx.author) is False:

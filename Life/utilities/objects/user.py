@@ -174,7 +174,7 @@ class UserConfig(DefaultUserConfig):
         self._blacklisted = data['blacklisted']
         self._blacklisted_reason = data['blacklisted_reason']
 
-    async def set_timezone(self, timezone: Timezone, *, private: Optional[bool] = None) -> None:
+    async def set_timezone(self, timezone: Optional[Timezone] = None, *, private: Optional[bool] = None) -> None:
 
         private = self.timezone_private if private is None else private
 
@@ -182,7 +182,7 @@ class UserConfig(DefaultUserConfig):
         self._timezone = pendulum.timezone(tz) if (tz := data.get('timezone')) else None
         self._timezone_private = private
 
-    async def set_birthday(self, birthday: pendulum.Date, *, private: Optional[bool] = None) -> None:
+    async def set_birthday(self, birthday: Optional[pendulum.Date] = None, *, private: Optional[bool] = None) -> None:
 
         private = self.timezone_private if private is None else private
 

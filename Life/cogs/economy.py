@@ -10,6 +10,7 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
 import functools
+import inspect
 import random
 import textwrap
 from typing import Optional
@@ -55,8 +56,8 @@ class Economy(commands.Cog):
 
     #
 
-    @commands.command(name='level', aliases=['xp', 'score', 'rank'])
-    async def level(self, ctx: context.Context, *, member: Optional[discord.Member]) -> None:
+    @commands.command(name='level', aliases=['xp', 'score', 'rank'], ignore_extra=False)
+    async def level(self, ctx: context.Context, member: Optional[discord.Member]) -> None:
         """
         Display yours, or someone else's level / xp information.
 
@@ -92,24 +93,29 @@ class Economy(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
-        header = '''
-        ╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗
-        ║ Rank  ║ XP        ║ Level ║ Name                                  ║
-        ╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣
-        '''
+        header = textwrap.dedent(
+                '''
+                ╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗
+                ║ Rank  ║ XP        ║ Level ║ Name                                  ║
+                ╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣
+                '''
+        )
 
-        footer = f'''
-        ║       ║           ║       ║                                       ║
-        ║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║
-        ╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝
-        '''
+        footer = textwrap.dedent(
+                f'''
+                ║       ║           ║       ║                                       ║
+                ║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║
+                ╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝
+                '''
+        )
 
+        # noinspection PyTypeChecker
         entries = [
             f'║ {index + 1:<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {utils.name(person=self.bot.get_user(user_config.id), guild=ctx.guild):<37} ║'
             for index, user_config in enumerate(leaderboard)
         ]
 
-        await ctx.paginate(entries=entries, per_page=10, header=textwrap.dedent(header), footer=textwrap.dedent(footer), codeblock=True)
+        await ctx.paginate(entries=entries, per_page=10, header=header, footer=footer, codeblock=True)
 
 
 def setup(bot: Life) -> None:

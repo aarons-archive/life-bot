@@ -8,7 +8,7 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-
+import textwrap
 from typing import Optional, Union
 
 import discord
@@ -26,14 +26,16 @@ class HelpCommand(commands.HelpCommand):
         self.context: Optional[context.Context] = None
 
         super().__init__(command_attrs={
-            'help': '''
-            Shows help for the bot, a category or a command.
-            
-            **<argument>** means the argument is required.
-            **[argument]** means the argument is optional.
-            **[a|b]** means it can be "A" or "B".
-            **[argument...]** means you can have multiple arguments.
-            '''
+            'help': textwrap.dedent(
+                    '''
+                    Shows help for the bot, a category or a command.
+                    
+                    `<argument>` means the argument is required.
+                    `[argument]` means the argument is optional.
+                    `[a|b]` means it can be `a` or `b`.
+                    `[argument...]` means you can have multiple arguments.
+                    '''
+            )
         })
 
     def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[Union[commands.Command, commands.Group]]]:

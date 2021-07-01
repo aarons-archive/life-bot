@@ -68,7 +68,6 @@ class Todo(commands.Cog):
         await ctx.paginate_embed(
                 entries=[f"[`**{todo.id}:**`]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
                 per_page=10,
-                colour=colours.MAIN,
                 title=f"Todo list for **{ctx.author}**:"
         )
 

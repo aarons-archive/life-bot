@@ -119,7 +119,10 @@ class Context(commands.Context):
             footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None,
             author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,
             colour: discord.Colour = colours.MAIN
-    ) -> tuple[int, Any]:
+    ) -> int:
+
+        if len(entries) == 1:
+            return 0
 
         paginator = paginators.EmbedPaginator(
                 ctx=self, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter, header=header, footer=footer,
@@ -141,14 +144,13 @@ class Context(commands.Context):
 
             try:
                 number = int(response.content) - 1
-                pick = entries[number]
             except (ValueError, KeyError):
                 embed = discord.Embed(colour=colours.RED, description=f"{emojis.CROSS}  That was not a valid choice, try again or send `cancel` to exit.")
                 await self.reply(embed=embed)
                 continue
 
             await paginator.stop(delete=True)
-            return number, pick
+            return number
 
         raise exceptions.EmbedError(colour=colours.GREEN, description=f"{emojis.TICK}  Exiting choice selection.")
 

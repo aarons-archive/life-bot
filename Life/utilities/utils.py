@@ -1,23 +1,31 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from __future__ import annotations
 
-import codecs
 import colorsys
 import datetime as dt
 import io
 import logging
-import os
-import pathlib
 from typing import Literal, Optional, Union
 
 import aiohttp
@@ -37,6 +45,8 @@ __log__ = logging.getLogger('utilities.utils')
 
 def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulum.DateTime:
 
+    datetime.replace(microsecond=0)
+
     if type(datetime) is dt.datetime and datetime.tzinfo == dt.timezone.utc:
         datetime = datetime.replace(tzinfo=None)
 
@@ -51,13 +61,20 @@ def format_date(date: pendulum.Date) -> str:
     return date.format('dddd MMMM Do YYYY')
 
 
-def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[list[str]] = None) -> str:
+def format_time(time: pendulum.Time) -> str:
+    return time.format(f'hh:mm:ss')
 
-    if suppress is None:
-        suppress = ['seconds']
+
+
+
+def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[tuple[str]] = None) -> str:
 
     datetime = convert_datetime(datetime)
-    return humanize.precisedelta(pendulum.now(tz=datetime.timezone).diff(datetime), format='%0.0f', suppress=suppress)
+
+    now = pendulum.now(tz=datetime.timezone)
+    now.replace(microsecond=0)
+
+    return humanize.precisedelta(now.diff(datetime), format='%0.0f', suppress=suppress or [])
 
 
 def format_seconds(seconds: int, *, friendly: bool = False) -> str:
@@ -135,10 +152,8 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
 
         elif isinstance(activity, discord.Spotify):
 
-            message.append(f''' \
-            • Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{", ".join(activity.artists)}** \
-            {f" from the album **{activity.album}**" if activity.album and activity.album != activity.title else ""} \
-            ''')
+            album = f" from their album **{activity.album}**" if activity.album and activity.album != activity.title else ""
+            message.append(f'• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{", ".join(activity.artists)}** {album}')
 
         elif isinstance(activity, discord.Game):
             message.append(f'• Playing **{activity.name}**')
@@ -204,14 +219,14 @@ async def upload_image(session: aiohttp.ClientSession, *, buffer: io.BytesIO, fi
     data = aiohttp.FormData()
     data.add_field('file', buffer, filename=f'file.{file_format.lower()}')
 
-    async with session.post('https://media.mrrandom.xyz/api/media', headers={'Authorization': config.AXEL_WEB_TOKEN}, data=data) as response:
+    async with session.post('https://cdn.axelancerr.xyz/api/media', headers={'Authorization': config.AXEL_WEB_TOKEN}, data=data) as response:
 
         if response.status == 413:
             raise exceptions.GeneralError('The image produced was too large to upload.')
 
         post = await response.json()
 
-    return f'https://media.mrrandom.xyz/{post.get("filename")}'
+    return f'https://cdn.axelancerr.xyz/{post.get("filename")}'
 
 
 async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = 'txt', max_characters: int = 1024) -> str:
@@ -229,50 +244,14 @@ async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: 
 #
 
 
-def line_count() -> tuple[int, int, int, int]:
+def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
 
-    files, functions, lines, classes = 0, 0, 0, 0
-    is_docstring = False
-
-    for dirpath, _, filenames in os.walk('.'):
-
-        for filename in filenames:
-            if not filename.endswith('.py'):
-                continue
-            files += 1
-
-            # noinspection PyArgumentEqualDefault
-            with codecs.open('./' + str(pathlib.PurePath(dirpath, filename)), 'r', 'utf-8') as filelines:
-                filelines = [line.strip() for line in filelines]
-                for line in filelines:
-
-                    if len(line) == 0:
-                        continue
-
-                    if line.startswith('"""'):
-                        is_docstring = not is_docstring
-                    if is_docstring:
-                        continue
-
-                    if line.startswith('#'):
-                        continue
-                    if line.startswith(('def', 'async def')):
-                        functions += 1
-                    if line.startswith('class'):
-                        classes += 1
-                    lines += 1
-
-    return files, functions, lines, classes
+    h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
+    red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
+    return int(red * 255), int(green * 255), int(blue * 255)
 
 
-def darken_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
-
-    h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
-    r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
-    return int(r * 255), int(g * 255), int(b * 255)
-
-
-def lighten_colour(r, g, b, factor: float = 0.1) -> tuple[float, float, float]:
-    h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
-    r, g, b = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
-    return int(r * 255), int(g * 255), int(b * 255)
+def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
+    h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
+    red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
+    return int(red * 255), int(green * 255), int(blue * 255)

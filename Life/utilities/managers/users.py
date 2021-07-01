@@ -78,7 +78,6 @@ class UserManager:
             self.configs[config['id']] = objects.UserConfig(bot=self.bot, data=config)
 
         __log__.info(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
-        print(f'[USER MANAGER] Loaded user configs. [{len(configs)} users]')
 
         await self.load_notifications()
         await self.load_reminders()
@@ -108,7 +107,6 @@ class UserManager:
             user_config._reminders[reminder.id] = reminder
 
         __log__.info(f'[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
-        print(f'[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]')
 
     async def load_todos(self) -> None:
 
@@ -120,7 +118,6 @@ class UserManager:
             user_config._todos[todo.id] = todo
 
         __log__.info(f'[USER MANAGER] Loaded todos. [{len(todos)} todos]')
-        print(f'[USER MANAGER] Loaded todos. [{len(todos)} todos]')
 
     # Background task
 

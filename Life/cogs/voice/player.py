@@ -22,6 +22,8 @@ SOFTWARE.
 
 from __future__ import annotations
 
+import logging
+
 import discord
 from discord.ext import commands
 
@@ -34,6 +36,9 @@ from slate import obsidian
 from utilities import checks, context, converters, exceptions, utils
 
 
+__log__: logging.Logger = logging.getLogger('cogs.voice.player')
+
+
 class PlayerController(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
@@ -43,8 +48,6 @@ class PlayerController(commands.Cog):
 
     async def load(self) -> None:
 
-        print('')
-
         for node in config.NODES:
             try:
                 await self.bot.slate.create_node(
@@ -52,12 +55,11 @@ class PlayerController(commands.Cog):
                         spotify_client_id=config.SPOTIFY_CLIENT_ID, spotify_client_secret=config.SPOTIFY_CLIENT_SECRET
                 )
             except slate.NodeConnectionError as e:
-                print(f'[SLATE] {e}')
+                __log__.error(f'[SLATE] {e}')
             else:
-                print(f'[SLATE] Node \'{node["identifier"]}\' connected.')
+                __log__.info(f'[SLATE] Node \'{node["identifier"]}\' connected.')
 
-    # TODO: Edit these
-
+    # noinspection PyUnusedLocal
     @commands.Cog.listener()
     async def on_obsidian_track_start(self, player: Player, event: obsidian.ObsidianTrackStart) -> None:
 
@@ -66,6 +68,7 @@ class PlayerController(commands.Cog):
 
         await player.invoke_controller()
 
+    # noinspection PyUnusedLocal
     @commands.Cog.listener()
     async def on_obsidian_track_end(self, player: Player, event: obsidian.ObsidianTrackEnd) -> None:
 
@@ -218,7 +221,7 @@ class PlayerController(commands.Cog):
             raise exceptions.VoiceError(f'That was not a valid time, please choose a value between `0s` and `{utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}`.')
 
         await ctx.voice_client.set_position(milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(round(ctx.voice_client.position // 1000), friendly=True)}`.'))
 
     @commands.command(name='forward', aliases=['fwd'])
     @checks.is_voice_client_playing()
@@ -236,14 +239,15 @@ class PlayerController(commands.Cog):
 
         # noinspection PyTypeChecker
         milliseconds = time * 1000
+
         position = ctx.voice_client.position
         time_remaining = ctx.voice_client.current.length - position
 
         if milliseconds >= time_remaining:
-            raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(time_remaining // 1000, friendly=True)}`.')
+            raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(round(time_remaining // 1000), friendly=True)}`.')
 
         await ctx.voice_client.set_position(position + milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(round(ctx.voice_client.position // 1000), friendly=True)}`.'))
 
     @commands.command(name='rewind', aliases=['rwd'])
     @checks.is_voice_client_playing()
@@ -264,10 +268,10 @@ class PlayerController(commands.Cog):
         position = ctx.voice_client.position
 
         if milliseconds >= ctx.voice_client.position:
-            raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.')
+            raise exceptions.VoiceError(f'That was not a valid amount of time. Please choose a value lower than `{utils.format_seconds(round(ctx.voice_client.position // 1000), friendly=True)}`.')
 
         await ctx.voice_client.set_position(position - milliseconds)
-        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}`.'))
+        await ctx.reply(embed=discord.Embed(colour=colours.MAIN, description=f'The players position is now `{utils.format_seconds(round(ctx.voice_client.position // 1000), friendly=True)}`.'))
 
     @commands.command(name='replay', aliases=['restart'])
     @checks.is_voice_client_playing()
