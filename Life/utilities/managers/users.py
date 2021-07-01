@@ -25,7 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
 
-from utilities import exceptions, utils, objects
+from utilities import exceptions, objects, utils
 
 
 if TYPE_CHECKING:

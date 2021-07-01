@@ -11,8 +11,9 @@
 #
 
 import discord
-from core.bot import Life
 from discord.ext import commands
+
+from core.bot import Life
 
 
 class Kross(commands.Cog):

@@ -30,7 +30,7 @@ import discord
 from discord.ext import commands
 
 from core import colours, emojis
-from utilities import exceptions, paginators, objects
+from utilities import exceptions, objects, paginators
 
 
 if TYPE_CHECKING:

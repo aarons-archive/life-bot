@@ -17,13 +17,13 @@ from typing import Callable, Optional
 
 import aiohttp
 import bs4
-from core import colours
 import discord
 import humanize
 import yarl
 from wand.color import Color
 from wand.image import Image
 
+from core import colours
 from utilities import context, exceptions, utils
 
 

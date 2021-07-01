@@ -19,7 +19,7 @@ import discord
 import pendulum
 
 from core import colours
-from utilities import enums, utils, objects
+from utilities import enums, objects, utils
 
 
 if TYPE_CHECKING:

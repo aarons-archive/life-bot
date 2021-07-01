@@ -17,7 +17,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from core import emojis, colours
+from core import colours, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
 

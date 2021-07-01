@@ -11,9 +11,9 @@
 
 from typing import Literal, Optional
 
-from core.bot import Life
 from discord.ext import commands
 
+from core.bot import Life
 from utilities import context, converters, enums, exceptions
 
 

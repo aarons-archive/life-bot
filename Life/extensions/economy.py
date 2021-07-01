@@ -18,7 +18,7 @@ import discord
 from discord.ext import commands
 
 from core.bot import Life
-from utilities import context, exceptions, utils, objects
+from utilities import context, exceptions, objects, utils
 
 
 class Economy(commands.Cog):
