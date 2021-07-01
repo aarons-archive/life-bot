@@ -17,11 +17,11 @@ from typing import TYPE_CHECKING, Union
 
 from discord.ext import tasks
 
-from utilities import objects
+import objects
 
 
 if TYPE_CHECKING:
-    from bot import Life
+    from core.bot import Life
 
 __log__ = logging.getLogger('utilities.managers.guilds')
 

@@ -14,9 +14,7 @@ from typing import Optional, Union
 import discord
 from discord.ext import commands
 
-import colours
-import config
-import values
+from core import colours, config, values
 from utilities import context, exceptions
 
 

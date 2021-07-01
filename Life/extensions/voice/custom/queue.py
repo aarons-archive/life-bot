@@ -20,32 +20,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import dateparser.search
-import pendulum
-from discord.ext import commands
+from __future__ import annotations
 
-from core import colours, emojis
-from utilities import context, exceptions
+from typing import Optional, TYPE_CHECKING, Union
 
-
-SETTINGS = {
-    "DATE_ORDER":               "DMY",
-
-    "TIMEZONE":                 "UTC",
-    "RETURN_AS_TIMEZONE_AWARE": False,
-
-    "PREFER_DAY_OF_MONTH":      "current",
-    "PREFER_DATES_FROM":        "future",
-
-    "PARSERS":                  ["absolute-time", "relative-time", "timestamp"]
-}
+import slate
 
 
-class DatetimeConverter(commands.Converter):
+if TYPE_CHECKING:
+    from extensions.voice.custom.player import Player
 
-    async def convert(self, ctx: context.Context, argument: str) -> tuple[str, dict[str, pendulum.DateTime]]:
 
-        if not (searches := dateparser.search.search_dates(argument, languages=["en"], settings=SETTINGS)):
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  I couldn't find a time or date in that input.")
+class Queue(slate.Queue):
 
-        return argument, {phrase: pendulum.instance(datetime, tz="UTC") for phrase, datetime in searches}
+    def __init__(self, player: Player) -> None:
+        super().__init__()
+
+        self._player: Player = player
+
+    def __repr__(self) -> str:
+        return f'<life.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
+
+    #
+
+    @property
+    def player(self) -> Player:
+        return self._player
+
+    def put(self, items: Union[list[slate.utils.queue.Item], slate.utils.queue.Item], *, position: Optional[int] = None) -> None:
+        super().put(items=items, position=position)
+
+        self.player._queue_add_event.set()
+        self.player._queue_add_event.clear()

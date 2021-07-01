@@ -12,8 +12,7 @@
 
 from discord.ext import commands
 
-import config
-import values
+from core import values
 from utilities import context, enums, exceptions
 
 

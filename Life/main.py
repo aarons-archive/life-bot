@@ -29,8 +29,7 @@ import sys
 
 import setproctitle
 
-import config
-from bot import Life
+from core import bot, config
 
 
 RESET = '\u001b[0m'
@@ -65,7 +64,10 @@ def logger():
         file_formatter = logging.Formatter(fmt='%(asctime)s [%(name) 30s] [%(filename) 20s] [%(levelname) 7s] %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
         file_handler.setFormatter(file_formatter)
 
-        stream_formatter = logging.Formatter(fmt=f'{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s', datefmt='%I:%M:%S %p %d/%m/%Y')
+        stream_formatter = logging.Formatter(
+                fmt=f'{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s',
+                datefmt='%I:%M:%S %p %d/%m/%Y'
+        )
         stream_handler.setFormatter(stream_formatter)
 
     loggers['discord'].setLevel(logging.INFO)
@@ -98,4 +100,4 @@ if __name__ == '__main__':
         del uvloop
 
     with logger():
-        Life().run(config.TOKEN)
+        bot.Life().run(config.TOKEN)

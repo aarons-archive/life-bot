@@ -22,8 +22,7 @@ SOFTWARE.
 
 from discord.ext import commands
 
-import colours
-import emojis
+from core import colours, emojis
 from utilities import context, exceptions
 
 

@@ -26,9 +26,7 @@ from typing import Any, Optional
 
 import discord
 
-import colours
-import config
-import values
+from core import colours, values
 from utilities import context, paginators
 
 

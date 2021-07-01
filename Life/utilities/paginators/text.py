@@ -24,8 +24,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-import config
-import values
+from core import values
 from utilities import context, paginators
 
 

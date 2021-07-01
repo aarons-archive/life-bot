@@ -35,8 +35,7 @@ import mystbin
 import pendulum
 from discord.ext import commands
 
-import config
-import emojis
+from core import config, emojis
 from utilities import exceptions
 
 
@@ -63,8 +62,6 @@ def format_date(date: pendulum.Date) -> str:
 
 def format_time(time: pendulum.Time) -> str:
     return time.format(f'hh:mm:ss')
-
-
 
 
 def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[tuple[str]] = None) -> str:

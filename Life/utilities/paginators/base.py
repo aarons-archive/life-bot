@@ -27,8 +27,7 @@ from typing import Any, Optional
 
 import discord
 
-import config
-import emojis
+from core import config, emojis
 from utilities import context
 
 

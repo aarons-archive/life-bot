@@ -1,6 +1,6 @@
 [tool.pyright]
 
-include = ["Life"]
+include = ["bot"]
 exclude = []
 ignore = []
 strict = []

@@ -60,10 +60,10 @@ source venv\bin\activate
 pip install -r requirements.txt
 ```
 
-4. Rename [`config_example.py`](Life/config_example.py) to `config.py` and fill in the tokens/other data.
+4. Rename [`config_example.py`](config_example.py) to `config.py` and fill in the tokens/other data.
 ```bash
 cd Life/
-mv config_example.py config.py
+mv config_example.py Life/config.py
 nano config.py
 ```
 

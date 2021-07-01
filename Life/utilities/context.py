@@ -29,14 +29,14 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 import discord
 from discord.ext import commands
 
-import colours
-import emojis
-from utilities import exceptions, objects, paginators
+import objects
+from core import colours, emojis
+from utilities import exceptions, paginators
 
 
 if TYPE_CHECKING:
-    from cogs.voice.custom.player import Player
-    from bot import Life
+    from extensions.voice.custom.player import Player
+    from core.bot import Life
 
 
 class Context(commands.Context):

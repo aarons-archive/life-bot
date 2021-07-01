@@ -15,9 +15,7 @@ from typing import Literal
 
 from discord.ext import commands
 
-import colours
-import emojis
-import values
+from core import colours, emojis, values
 from utilities import context, exceptions
 
 

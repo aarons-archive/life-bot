@@ -12,19 +12,18 @@
 import io
 import multiprocessing
 import multiprocessing.connection
-import random
 import sys
 from typing import Callable, Optional
 
 import aiohttp
 import bs4
+from core import colours
 import discord
 import humanize
 import yarl
 from wand.color import Color
 from wand.image import Image
 
-import colours
 from utilities import context, exceptions, utils
 
 

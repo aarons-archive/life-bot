@@ -25,11 +25,12 @@ from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
 
-from utilities import exceptions, objects, utils
+import objects
+from utilities import exceptions, utils
 
 
 if TYPE_CHECKING:
-    from bot import Life
+    from core.bot import Life
 
 __log__ = logging.getLogger('utilities.managers.users')
 
