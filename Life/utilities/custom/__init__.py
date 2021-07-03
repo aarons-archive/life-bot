@@ -20,18 +20,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from __future__ import annotations
-
-from discord.ext import commands
-
-from core.bot import Life
-
-
-class Queue(commands.Cog):
-
-    def __init__(self, bot: Life) -> None:
-        self.bot = bot
-
-
-def setup(bot: Life) -> None:
-    bot.add_cog(Queue(bot=bot))
+from utilities.custom.player import Player

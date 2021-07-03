@@ -23,8 +23,7 @@ SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import logging
-from typing import Optional
+from typing import Optional, Union
 
 import async_timeout
 import discord
@@ -33,12 +32,29 @@ from slate import obsidian
 
 from core import colours, config, emojis
 from core.bot import Life
-from extensions.voice.custom.queue import Queue
 from utilities import context, enums, exceptions, utils
 
 
-__all__ = ['Player']
-__log__ = logging.getLogger('slate.obsidian.player')
+class Queue(slate.Queue):
+
+    def __init__(self, player: Player) -> None:
+        super().__init__()
+
+        self._player: Player = player
+
+    #
+
+    @property
+    def player(self) -> Player:
+        return self._player
+
+    #
+
+    def put(self, items: Union[list[slate.utils.queue.Item], slate.utils.queue.Item], *, position: Optional[int] = None) -> None:
+        super().put(items=items, position=position)
+
+        self.player._queue_add_event.set()
+        self.player._queue_add_event.clear()
 
 
 class Player(obsidian.ObsidianPlayer):
@@ -47,7 +63,6 @@ class Player(obsidian.ObsidianPlayer):
         super().__init__(bot, channel)
 
         self._text_channel: Optional[discord.TextChannel] = None
-        self._dj: Optional[discord.Member] = None
 
         self._queue: Queue = Queue(player=self)
 
@@ -57,8 +72,7 @@ class Player(obsidian.ObsidianPlayer):
 
         self._task: Optional[asyncio.Task] = None
 
-    def __repr__(self) -> str:
-        return f'<life.Player>'
+        self.skip_request_ids: set[int] = set()
 
     #
 
@@ -70,9 +84,7 @@ class Player(obsidian.ObsidianPlayer):
     def voice_channel(self) -> Optional[discord.VoiceChannel]:
         return self.channel
 
-    @property
-    def dj(self) -> Optional[discord.Member]:
-        return self._dj
+    #
 
     @property
     def queue(self) -> Queue:
@@ -100,13 +112,13 @@ class Player(obsidian.ObsidianPlayer):
             self._track_start_event.clear()
             self._track_end_event.clear()
 
-            if self.queue.is_empty:
+            if self.queue.is_empty():
 
                 try:
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    await self.send(embed=discord.Embed(colour=colours.RED, description=f'{emojis.CROSS}  Nothing was added to the queue for 2 minutes, cya!'))
+                    await self.send(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Nothing was added to the queue for two minutes, cya next time!"))
                     await self.disconnect()
                     break
 
@@ -131,8 +143,10 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(embed=discord.Embed(colour=colours.RED, description=f'{emojis.CROSS}  There was an error while playing the track [{self.current.title}]({self.current.uri}).'))
+                await self.send(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"There was an error while playing the track [{self.current.title}]({self.current.uri})."))
                 continue
+
+            await self.invoke_controller()
 
             await self._track_end_event.wait()
 
@@ -142,55 +156,55 @@ class Player(obsidian.ObsidianPlayer):
 
     async def invoke_controller(self) -> None:
 
-        embed = discord.Embed(colour=colours.MAIN, title='Now playing:', description=f'**[{self.current.title}]({self.current.uri})**')
-        embed.set_thumbnail(url=self.current.thumbnail)
+        if not self.current:
+            return
+
+        embed = discord.Embed(
+                colour=colours.MAIN,
+                title="Now playing:",
+                description=f"**[{self.current.title}]({self.current.uri})**"
+        ).set_thumbnail(
+                url=self.current.thumbnail
+        )
 
         if self.current.ctx.guild_config.embed_size is enums.EmbedSize.LARGE:
 
             embed.add_field(
-                    name='Player info:',
-                    value=f'`Paused:` {self.paused}'
-                          f'`Loop mode:` {self.queue.loop_mode.name.title()}'
-                          f'`Filter:` {getattr(self.filter, "name", None)}'
-                          f'`Queue entries:` {len(self.queue)}'
-                          f'`Queue time:` {utils.format_seconds(seconds=round(sum(track.length for track in self.queue)) // 1000, friendly=True)}'
-            )
-            embed.add_field(
-                    name='Track info:',
-                    value=f'`Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}'
-                          f'`Author:` {self.current.author}'
-                          f'`Source:` {self.current.source.value.title()}'
-                          f'`Requester:` {self.current.requester.mention}'
-                          f'`Seekable:` {self.current.is_seekable}'
+                    name="Player info:",
+                    value=f"`Paused:` {self.paused}\n"
+                          f"`Loop mode:` {self.queue.loop_mode.name.title()}\n"
+                          f"`Filter:` {getattr(self.filter, 'name', None)}\n"
+                          f"`Queue entries:` {len(self.queue)}\n"
+                          f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n"
+            ).add_field(
+                    name="Track info:",
+                    value=f"`Time:` {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
+                          f"`Author:` {self.current.author}\n"
+                          f"`Source:` {self.current.source.value.title()}\n"
+                          f"`Requester:` {self.current.requester.mention}\n"
+                          f"`Seekable:` {self.current.is_seekable()}\n"
             )
 
-            if not self.queue.is_empty:
+            if not self.queue.is_empty():
 
-                entries = [f'`{index + 1}.` [{entry.title}]({entry.uri}) | {utils.format_seconds(entry.length // 1000)} | {entry.requester.mention}' for index, entry in enumerate(self.queue[:5])]
+                entries = [f"`{index + 1}.` [{entry.title}]({entry.uri})" for index, entry in enumerate(self.queue[:5])]
                 if len(self.queue) > 5:
-                    entries.append(
-                            f'`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri}) | {utils.format_seconds(self.queue[-1].length // 1000)} | {self.queue[-1].requester.mention}'
-                    )
+                    entries.append(f"`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri})")
 
-                embed.add_field(name='Up next:', value='\n'.join(entries), inline=False)
+                embed.add_field(name="Up next:", value='\n'.join(entries), inline=False)
 
         elif self.current.ctx.guild_config.embed_size is enums.EmbedSize.MEDIUM:
 
             embed.add_field(
-                    name='Player info:',
-                    value=f'''
-                    `Paused:` {self.paused}
-                    `Loop mode:` {self.queue.loop_mode.value.title()}
-                    `Filter:` {getattr(self.filter, "name", None)}
-                    '''
-            )
-            embed.add_field(
-                    name='Track info:',
-                    value=f'''
-                    `Time:` {utils.format_seconds(seconds=round(self.position) // 1000)} / {utils.format_seconds(seconds=round(self.current.length) // 1000)}
-                    `Author:` {self.current.author}
-                    `Source:` {self.current.source.value.title()}
-                    '''
+                    name="Player info:",
+                    value=f"`Paused:` {self.paused}\n"
+                          f"`Loop mode:` {self.queue.loop_mode.value.title()}\n"
+                          f"`Filter:` {getattr(self.filter, 'name', None)}\n"
+            ).add_field(
+                    name="Track info:",
+                    value=f"`Time:` {utils.format_seconds(seconds=self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
+                          f"`Author:` {self.current.author}\n"
+                          f"`Source:` {self.current.source.value.title()}\n"
             )
 
         await self.send(embed=embed)
@@ -210,30 +224,39 @@ class Player(obsidian.ObsidianPlayer):
             search = await self.node.search(search=query, ctx=ctx, source=source)
 
         except (slate.HTTPError, obsidian.ObsidianSearchError):
-            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  There was an error while searching for results.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There was an error while searching for results.")
         except slate.NoMatchesFound as error:
-            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  No {error.source.value.lower().replace("_", " ")} {error.search_type.value}s were found for your query.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query.")
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  You do not have permission to play tracks from `HTTP` or `LOCAL` sources.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources.")
 
         return search
 
-    async def queue_search(self, query: str, ctx: context.Context, source: slate.Source, now: bool = False, next: bool = False) -> None:
+    async def queue_search(self, query: str, ctx: context.Context, source: slate.Source, now: bool = False, next: bool = False, choose: bool = False) -> None:
 
         search = await self.search(query=query, ctx=ctx, source=source)
 
+        if choose:
+            choice = await ctx.choice(
+                    entries=[f"`{index + 1:}:` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
+                    per_page=10,
+                    title="Select the number of the track you want to play:"
+            )
+            tracks = search.tracks[choice]
+        else:
+            tracks = search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks
+
         self.queue.put(
-                items=search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks,
+                items=tracks,
                 position=0 if (now or next) else None
         )
         if now:
             await self.stop()
 
         if search.type is slate.SearchType.TRACK:
-            description = f'{emojis.TICK}  Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue.'
+            description = f"Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue."
         else:
-            description = f'{emojis.TICK}  Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue.'
+            description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
 
-        embed = discord.Embed(colour=colours.GREEN, description=description)
-        await ctx.reply(embed=embed)
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description))

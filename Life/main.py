@@ -43,11 +43,11 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = [f'\u001b[{30 + i}m' for
 def logger():
 
     loggers: dict[str, logging.Logger] = {
-        'discord':   logging.getLogger('discord'),
-        'bot':       logging.getLogger('bot'),
-        'cogs':      logging.getLogger('cogs'),
-        'utilities': logging.getLogger('utilities'),
-        'slate':     logging.getLogger('slate'),
+        'discord':    logging.getLogger('discord'),
+        'bot':        logging.getLogger('bot'),
+        'extensions': logging.getLogger('extensions'),
+        'utilities':  logging.getLogger('utilities'),
+        'slate':      logging.getLogger('slate'),
     }
 
     for name, log in loggers.items():
@@ -72,9 +72,9 @@ def logger():
 
     loggers['discord'].setLevel(logging.INFO)
     loggers['bot'].setLevel(logging.DEBUG)
-    loggers['cogs'].setLevel(logging.DEBUG)
+    loggers['extensions'].setLevel(logging.DEBUG)
     loggers['utilities'].setLevel(logging.DEBUG)
-    loggers['slate'].setLevel(logging.INFO)
+    loggers['slate'].setLevel(logging.DEBUG)
 
     try:
         yield

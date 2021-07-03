@@ -82,7 +82,7 @@ class Information(commands.Cog):
         Display the bots stats.
         """
 
-        uptime = utils.format_seconds(seconds=round(time.time() - self.bot.start_time), friendly=True)
+        uptime = utils.format_seconds(time.time() - self.bot.start_time, friendly=True)
 
         embed = discord.Embed(colour=colours.MAIN)
         embed.add_field(name='Bot info:',

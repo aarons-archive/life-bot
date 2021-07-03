@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import re
+from typing import Literal
 
 from discord.ext import commands
 
@@ -28,30 +28,17 @@ from core import colours, emojis
 from utilities import context, exceptions
 
 
-COLON_REGEX = re.compile(r'^(?:(?:(?P<hours>[01]?\d|2[0-3]):)?(?P<minutes>[0-5]?\d):)?(?P<seconds>[0-5]?\d)$')
-HUMAN_REGEX = re.compile(r'^(?:(?P<hours>[01]?\d|2[0-3])\s?(h|hour|hours)\s?)?(?:(?P<minutes>[0-5]?\d)\s?(m|min|mins|minutes)\s?)?(?:(?P<seconds>[0-5]?\d)\s?(s|sec|secs|seconds))?$')
+def has_voice_client(try_join: bool):
 
+    async def predicate(ctx: context.Context) -> Literal[True]:
 
-class TimeConverter(commands.Converter):
+        if not ctx.voice_client or ctx.voice_client.is_connected() is False:
 
-    async def convert(self, ctx: context.Context, argument: str) -> int:
+            if try_join:
+                await ctx.invoke(ctx.bot.get_command('join'))
+            else:
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='I am not connected to any voice channels.')
 
-        if (match := COLON_REGEX.match(argument)) or (match := HUMAN_REGEX.match(argument)):
+        return True
 
-            total = 0
-
-            if hours := match.group('hours'):
-                total += int(hours) * 60 * 60
-            if minutes := match.group('minutes'):
-                total += int(minutes) * 60
-            if seconds := match.group('seconds'):
-                total += int(seconds)
-
-        else:
-
-            try:
-                total = int(argument)
-            except ValueError:
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='That time format was not recognized.')
-
-        return total
+    return commands.check(predicate)

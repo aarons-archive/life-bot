@@ -35,7 +35,7 @@ import mystbin
 import pendulum
 from discord.ext import commands
 
-from core import config, emojis
+from core import colours, config, emojis, values
 from utilities import exceptions
 
 
@@ -74,7 +74,9 @@ def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppre
     return humanize.precisedelta(now.diff(datetime), format='%0.0f', suppress=suppress or [])
 
 
-def format_seconds(seconds: int, *, friendly: bool = False) -> str:
+def format_seconds(seconds: float, *, friendly: bool = False) -> str:
+
+    seconds = round(seconds)
 
     minute, second = divmod(seconds, 60)
     hour, minute = divmod(minute, 60)
@@ -252,3 +254,35 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
+
+
+#
+
+
+def embed(
+        embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
+        author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
+        colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
+) -> discord.Embed:
+
+    embed = discord.Embed(colour=colour)
+
+    if embed_footer:
+        embed.set_footer(text=embed_footer, icon_url=embed_footer_url or discord.embeds.EmptyEmbed)
+
+    if image:
+        embed.set_image(url=image)
+    if thumbnail:
+        embed.set_thumbnail(url=thumbnail)
+
+    if author:
+        embed.set_author(name=author, url=author_url or discord.embeds.EmptyEmbed, icon_url=author_icon_url or discord.embeds.EmptyEmbed)
+
+    if title:
+        embed.title = title
+    if description:
+        embed.description = f"{emoji} {values.ZWSP} {description}" if emoji else description
+    if url:
+        embed.url = url
+
+    return embed
