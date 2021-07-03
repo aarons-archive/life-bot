@@ -20,28 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Optional
-
-import discord
-from discord.ext import commands
-
-from core import colours, values
-from utilities import utils
-
-
-class LifeError(commands.CommandError):
-    pass
-
-
-class EmbedError(LifeError):
-
-    def __init__(
-            self, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
-            author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
-            colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
-    ) -> None:
-
-        self.embed = utils.embed(
-                embed_footer_url=embed_footer_url, embed_footer=embed_footer, image=image, thumbnail=thumbnail, author=author, author_url=author_url, author_icon_url=author_icon_url, title=title,
-                description=description, url=url, colour=colour, emoji=emoji
-        )
+from utilities.checks.global_check import global_check
+from utilities.checks.has_any_permission import has_any_permissions
+from utilities.checks.has_voice_client import has_voice_client
+from utilities.checks.is_author_connected import is_author_connected
+from utilities.checks.is_guild_owner import is_guild_owner
+from utilities.checks.is_track_requester import is_track_requester
+from utilities.checks.is_track_seekable import is_track_seekable
+from utilities.checks.is_voice_client_playing import is_voice_client_playing

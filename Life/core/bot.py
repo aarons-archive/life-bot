@@ -85,7 +85,7 @@ class Life(commands.AutoShardedBot):
         self.first_ready: bool = True
         self.start_time: float = time.time()
 
-        self.add_check(checks.bot_check, call_once=True)
+        self.add_check(checks.global_check, call_once=True)
 
     #
 

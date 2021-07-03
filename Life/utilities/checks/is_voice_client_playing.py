@@ -20,35 +20,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from __future__ import annotations
+from typing import Literal
 
-from typing import Optional, TYPE_CHECKING, Union
+from discord.ext import commands
 
-import slate
-
-
-if TYPE_CHECKING:
-    from extensions.voice.custom.player import Player
+from core import colours, emojis
+from utilities import exceptions, context
 
 
-class Queue(slate.Queue):
+def is_voice_client_playing():
 
-    def __init__(self, player: Player) -> None:
-        super().__init__()
+    async def predicate(ctx: context.Context) -> Literal[True]:
 
-        self._player: Player = player
+        if not ctx.voice_client or not ctx.voice_client.is_playing():
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='No tracks are currently playing.')
 
-    def __repr__(self) -> str:
-        return f'<life.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
+        return True
 
-    #
-
-    @property
-    def player(self) -> Player:
-        return self._player
-
-    def put(self, items: Union[list[slate.utils.queue.Item], slate.utils.queue.Item], *, position: Optional[int] = None) -> None:
-        super().put(items=items, position=position)
-
-        self.player._queue_add_event.set()
-        self.player._queue_add_event.clear()
+    return commands.check(predicate)
