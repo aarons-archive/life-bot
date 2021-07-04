@@ -79,13 +79,13 @@ class Context(commands.Context):
             self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n", header: Optional[str] = None,
             footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None,
             author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,
-            colour: discord.Colour = colours.MAIN
+            colour: discord.Colour = colours.MAIN, additional_footer: Optional[str] = None
     ) -> paginators.EmbedPaginator:
 
         paginator = paginators.EmbedPaginator(
                 ctx=self, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter, header=header, footer=footer,
                 embed_footer_url=embed_footer_url, embed_footer=embed_footer, image=image, thumbnail=thumbnail, author=author, author_url=author_url, author_icon_url=author_icon_url, title=title,
-                url=url, colour=colour
+                url=url, colour=colour, additional_footer=additional_footer
         )
 
         await paginator.paginate()
