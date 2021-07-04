@@ -24,9 +24,10 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Union
+from typing import Optional, Union
 
 import discord
+import ksoftapi
 import slate
 from discord.ext import commands
 from slate import obsidian
@@ -125,7 +126,7 @@ class Voice(commands.Cog):
             pass
 
         title = getattr(track or player.current, "title", "Not Found")
-        await player.send(f"There was an error of severity `{event.severity}` while playing the track `{title}`.\nReason: {event.message}")
+        await player.send(f"There was an error of severity **{event.severity}** while playing the track **{title}**.\nReason: {event.message}")
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -142,7 +143,7 @@ class Voice(commands.Cog):
             pass
 
         title = getattr(track or player.current, "title", "Not Found")
-        await player.send(f"Something went wrong while playing the track `{title}`. Use `{config.PREFIX}support` for more help.")
+        await player.send(f"Something went wrong while playing the track **{title}**. Use `{config.PREFIX}support` for more help.")
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -530,13 +531,13 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(
                     colour=colours.RED,
                     emoji=emojis.CROSS,
-                    description=f'There are not enough tracks in the queue to skip that many. Choose a number between **1** and **{len(ctx.voice_client.queue) + 1}**.'
+                    description=f"There are not enough tracks in the queue to skip that many. Choose a number between **1** and **{len(ctx.voice_client.queue) + 1}**."
             )
 
-        for index, track in enumerate(ctx.voice_client.queue[:amount - 1]):
+        for track in ctx.voice_client.queue[:amount - 1]:
             try:
                 if track.requester.id != ctx.author.id:
-                    raise commands.CheckAnyFailure
+                    raise commands.CheckAnyFailure(checks=[], errors=[])
                 await commands.check_any(
                         commands.is_owner(), checks.is_guild_owner(), checks.has_any_permissions(manage_guild=True, kick_members=True, ban_members=True, manage_messages=True, manage_channels=True)
                 ).predicate(ctx=ctx)
@@ -588,6 +589,79 @@ class Voice(commands.Cog):
 
         except discord.Forbidden:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"I am unable to DM you.")
+
+    @commands.command(name="lyrics")
+    async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
+        """
+        Displays lyrics for the given song.
+
+        `query`: The query to search for lyrics with, If not provided the bot will try to display lyrics for the song you are listening to on spotify, or the track playing in a voice chat the bot is in.
+
+        You can also force it to display lyrics from either of these by specifying the `query` argument as `spotify` or `player`.
+        """
+
+        def get_spotify_query() -> Optional[str]:
+
+            if not (activity := discord.utils.find(lambda a: isinstance(a, discord.Spotify), ctx.author.activities)):
+                return None
+
+            featuring = f" feat.{' & '.join(activity.artists[1:])}" if len(activity.artists) > 1 else ""
+            return f"{activity.artist[:activity.artist.index(';')] if len(activity.artists) > 1 else activity.artist}{featuring} - {activity.title}"
+
+        def get_player_query() -> Optional[str]:
+
+            if not ctx.voice_client or ctx.voice_client.is_playing() is False:
+                return None
+
+            return ctx.voice_client.current.title
+
+        if query == "spotify":
+            if not (query := get_spotify_query()):
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have an active spotify status to fetch lyrics from.")
+
+        elif query == "player":
+            if not (query := get_player_query()):
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I am not playing a track in voice chat to fetch lyrics from.")
+
+        else:
+            if query is None and not (query := get_spotify_query()) and not (query := get_player_query()):
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You must provide a search term to find lyrics for.")
+
+        try:
+            results = await self.bot.ksoft.music.lyrics(query, limit=50)
+        except ksoftapi.NoResults:
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"No results were found for the search **{query}**.")
+        except ksoftapi.APIError:
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='The API used to fetch lyrics is currently unavailable.')
+
+        choice = await ctx.choice(
+                entries=[f"`{index + 1}:` {result.artist} - {result.name}" for index, result in enumerate(results)],
+                per_page=10,
+                title="Type the number of the song that you want lyrics for:",
+                header=f"**Query:** {query}\n\n"
+        )
+        result = results[choice]
+
+        entries = []
+        for line in result.lyrics.split('\n'):
+
+            if not entries:
+                entries.append(line)
+                continue
+
+            last_entry = entries[-1]
+            if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
+                entries.append(line)
+                continue
+
+            entries[-1] += f'\n{line}'
+
+        await ctx.paginate_embed(
+                entries=entries,
+                per_page=1,
+                title=f'Lyrics for **{result.name}** by **{result.artist}**:',
+                additional_footer='Lyrics provided by KSoft.Si API'
+        )
 
 
 def setup(bot: Life) -> None:
