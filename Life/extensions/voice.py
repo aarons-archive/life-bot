@@ -34,7 +34,7 @@ from slate import obsidian
 
 from core import colours, config, emojis
 from core.bot import Life
-from utilities import checks, context, converters, custom, exceptions, utils
+from utilities import checks, context, converters, custom, enums, exceptions, utils
 
 
 class Options(commands.FlagConverter, delimiter=" ", prefix="--", case_insensitive=True):
@@ -182,7 +182,7 @@ class Voice(commands.Cog):
 
     # Play commands
 
-    @commands.command(name="play", invoke_without_command=True)
+    @commands.command(name="play", aliases=["p"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def play(self, ctx: context.Context, query: str, *, options: Options) -> None:
@@ -320,7 +320,7 @@ class Voice(commands.Cog):
 
     # Pause/Resume commands
 
-    @commands.command(name="pause")
+    @commands.command(name="pause", aliases=["stop"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def pause(self, ctx: context.Context) -> None:
@@ -407,7 +407,7 @@ class Voice(commands.Cog):
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
-    @commands.command(name="rewind", aliases=["rwd", "backward"])
+    @commands.command(name="rewind", aliases=["rwd", "backward", "bckwd"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
@@ -436,7 +436,7 @@ class Voice(commands.Cog):
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
-    @commands.command(name="replay", aliases=["restart"])
+    @commands.command(name="replay")
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
@@ -489,7 +489,7 @@ class Voice(commands.Cog):
 
     # Skip commands
 
-    @commands.command(name="skip", aliases=["voteskip", "vote-skip", "vote_skip", "vs", "forceskip", "force-skip", "force_skip", "fs"])
+    @commands.command(name="skip", aliases=["next", "s", "voteskip", "vote-skip", "vote_skip", "vs", "forceskip", "force-skip", "force_skip", "fs", "skipto"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -592,7 +592,7 @@ class Voice(commands.Cog):
         except discord.Forbidden:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"I am unable to DM you.")
 
-    @commands.command(name="lyrics")
+    @commands.command(name="lyrics", aliases=["ly"])
     async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
         """
         Displays lyrics for the given song.
@@ -717,7 +717,7 @@ class Voice(commands.Cog):
 
         await ctx.paginate_embeds(entries=entries)
 
-    @queue.group(name="history", aliases=["h"], invoke_without_command=True)
+    @queue.group(name="history", invoke_without_command=True)
     @checks.has_voice_client(try_join=False)
     async def queue_history(self, ctx: context.Context) -> None:
         """
@@ -882,6 +882,44 @@ class Voice(commands.Cog):
         ctx.voice_client.queue.put(items=track, position=entry_2 - 1)
 
         await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Moved **[{track.title}]({track.uri})** from position **{entry_1}** to position **{entry_2}**."))
+
+    # Effect commands
+
+    @commands.command(name='8d')
+    @checks.is_author_connected(same_channel=True)
+    @checks.has_voice_client(try_join=False)
+    async def _8d(self, ctx: context.Context) -> None:
+        """
+        Sets an 8D audio filter on the player.
+        """
+
+        if enums.EnabledFilters.ROTATION in ctx.voice_client.enabled_filters:
+            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation()))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="**8D** audio effect is now **inactive**."))
+            ctx.voice_client.enabled_filters.remove(enums.EnabledFilters.ROTATION)
+
+        else:
+            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation(rotation_hertz=0.5)))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="**8D** audio effect is now **active**."))
+            ctx.voice_client.enabled_filters.add(enums.EnabledFilters.ROTATION)
+
+    @commands.command(name='nightcore')
+    @checks.is_author_connected(same_channel=True)
+    @checks.has_voice_client(try_join=False)
+    async def nightcore(self, ctx: context.Context) -> None:
+        """
+        Sets a nightcore audio filter on the player.
+        """
+
+        if enums.EnabledFilters.NIGHTCORE in ctx.voice_client.enabled_filters:
+            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale()))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="**Nightcore** audio effect is now **inactive**."))
+            ctx.voice_client.enabled_filters.remove(enums.EnabledFilters.NIGHTCORE)
+
+        else:
+            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale(speed=1.12, pitch=1.12)))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="**Nightcore** audio effect is now **active**."))
+            ctx.voice_client.enabled_filters.add(enums.EnabledFilters.NIGHTCORE)
 
 
 def setup(bot: Life) -> None:
