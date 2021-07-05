@@ -31,40 +31,37 @@ from utilities import context, paginators
 
 class EmbedsPaginator(paginators.BasePaginator):
 
-    def __init__(self, *, ctx: context.Context, entries: list[discord.Embed], timeout: int = 300, delete_message_when_done: bool = False, content: Optional[str] = None) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message_when_done=delete_message_when_done)
+    def __init__(
+            self, *, ctx: context.Context, entries: list[Any], timeout: int = 300, delete_message: bool = True, content: Optional[str] = None
+    ) -> None:
+        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message=delete_message)
 
         self._content: Optional[str] = content
+
+        self.current_page: Optional[discord.Embed] = None
 
     # Properties
 
     @property
     def content(self) -> str:
-        return self._content or f'\n\nPage: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}\n'
-
-    # Page generator
-
-    async def generate_page(self, page: int = 0) -> dict[str, Any]:
-        return {'content': self.content, 'embed': self.pages[page]}
+        return self._content or f'Page: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}'
 
     # Abstract methods
 
+    async def set_page(self, *, page: int) -> None:
+
+        self.current_page = self.pages[page]
+
+    async def change_page(self, *, page: int) -> None:
+
+        self.page = page
+        await self.set_page(page=page)
+
+        await self.message.edit(embed=self.current_page)
+
     async def paginate(self) -> None:
+
         await super().paginate()
-        self.message = await self.ctx.reply(**await self.generate_page(self.page), view=self.view)
 
-    async def first(self) -> None:
-        await super().first()
-        await self.message.edit(**await self.generate_page(self.page))
-
-    async def backward(self) -> None:
-        await super().backward()
-        await self.message.edit(**await self.generate_page(self.page))
-
-    async def forward(self) -> None:
-        await super().forward()
-        await self.message.edit(**await self.generate_page(self.page))
-
-    async def last(self) -> None:
-        await super().last()
-        await self.message.edit(**await self.generate_page(self.page))
+        await self.set_page(page=self.page)
+        self.message = await self.ctx.reply(content=self.content, embed=self.current_page, view=self.view)

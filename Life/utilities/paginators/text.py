@@ -24,17 +24,17 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-import config
+from core import values
 from utilities import context, paginators
 
 
 class TextPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message_when_done: bool = False, codeblock: bool = False, splitter: str = '\n',
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = '\n',
             header: Optional[str] = None, footer: Optional[str] = None
     ) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message_when_done=delete_message_when_done, codeblock=codeblock, splitter=splitter)
+        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter)
 
         self._header: Optional[str] = header
         self._footer: Optional[str] = footer
@@ -43,35 +43,28 @@ class TextPaginator(paginators.BasePaginator):
 
     @property
     def header(self) -> str:
-        return self._header or ''
+        return self._header or ""
 
     @property
     def footer(self) -> str:
-        return self._footer or f'\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}'
-
-    # Page generator
-
-    def generate_page(self, page: int = 0) -> str:
-        return f'{f"```{config.NL}" if self.codeblock else ""}{self.header}{self.pages[page]}{self.footer}{f"{config.NL}```" if self.codeblock else ""}'
+        return self._footer or f"\n\nPage: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}"
 
     # Abstract methods
 
+    async def set_page(self, *, page: int) -> None:
+
+        self.current_page = f"{f'```{values.NL}' if self.codeblock else ''}{self.header}{self.pages[page]}{self.footer}{f'{values.NL}```' if self.codeblock else ''}"
+
+    async def change_page(self, *, page: int) -> None:
+
+        self.page = page
+        await self.set_page(page=page)
+
+        await self.message.edit(content=self.current_page)
+
     async def paginate(self) -> None:
+
         await super().paginate()
-        self.message = await self.ctx.reply(self.generate_page(self.page), view=self.view)
 
-    async def first(self) -> None:
-        await super().first()
-        await self.message.edit(content=self.generate_page(self.page))
-
-    async def backward(self) -> None:
-        await super().backward()
-        await self.message.edit(content=self.generate_page(self.page))
-
-    async def forward(self) -> None:
-        await super().forward()
-        await self.message.edit(content=self.generate_page(self.page))
-
-    async def last(self) -> None:
-        await super().last()
-        await self.message.edit(content=self.generate_page(self.page))
+        await self.set_page(page=self.page)
+        self.message = await self.ctx.reply(self.current_page, view=self.view)

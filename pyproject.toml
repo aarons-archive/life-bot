@@ -1,0 +1,80 @@
+[tool.pyright]
+
+include = ["bot"]
+exclude = []
+ignore = []
+strict = []
+
+# typeshedPath = ""
+# stubPath = ""
+venvPath = "venv"
+# venv = ""
+# verboseOutput = false
+# extraPaths = []
+
+pythonVersion = "3.9"
+# pythonPlatform = ""
+
+# typeCheckingMode = 'basic'
+useLibraryCodeForTypes = true # false
+
+strictListInference = true # false
+strictDictionaryInference = true # false
+strictSetInference = true # false
+strictParameterNoneValue = true # false
+# enableTypeIgnoreComments = true
+# reportGeneralTypeIssues = "error"
+# reportPropertyTypeMismatch = "error"
+# reportFunctionMemberAccess = 'none'
+reportMissingImports = "none"
+# reportMissingModuleSource = "warning"
+# reportMissingTypeStubs = "none"
+# reportImportCycles = "none"
+reportUnusedImport = "none"
+reportUnusedClass = true # "none"
+reportUnusedFunction =  true # "none"
+reportUnusedVariable = true # "none"
+reportDuplicateImport = true # "none"
+# reportWildcardImportFromLibrary = "warning"
+reportOptionalSubscript = true # "none"
+# reportOptionalMemberAccess = "none"
+reportOptionalCall = true # "none" *
+reportOptionalIterable = true # "none"
+reportOptionalContextManager = true # "none"
+reportOptionalOperand = true # "none" *
+# reportTypedDictNotRequiredAccess = "error"
+# reportUntypedFunctionDecorator = "none"
+reportUntypedClassDecorator = true # "none"
+# reportUntypedBaseClass = "none"
+reportUntypedNamedTuple = true # "none"
+# reportPrivateUsage = "none"
+reportConstantRedefinition = true # "none"
+reportIncompatibleMethodOverride = true # "none"
+reportIncompatibleVariableOverride = true # "none"
+reportOverlappingOverload = true # "none"
+# reportInvalidStringEscapeSequence = 'warning'
+# reportUnknownParameterType = "none"
+# reportUnknownArgumentType = "none"
+# reportUnknownLambdaType = "none"
+# reportUnknownVariableType = "error"
+# reportUnknownMemberType = "none"
+reportMissingTypeArgument = true # "none"
+reportInvalidTypeVarUse = true # "none"
+reportCallInDefaultInitializer = true # "none"
+reportUnnecessaryIsInstance = true # "none"
+reportUnnecessaryCast = true # "none"
+reportUnnecessaryComparison = true # "none"
+# reportAssertAlwaysTrue = "warning"
+# reportSelfClsParameterName = "warning"
+# reportImplicitStringConcatenation = 'none'
+# reportUndefinedVariable = "error"
+# reportUnboundVariable = "error"
+reportInvalidStubStatement = true # "none"
+reportIncompleteStub = true # "none"
+# reportUnsupportedDunderAll = "warning"
+# reportUnusedCallResult = "none"
+# reportUnusedCoroutine = "error"
+
+executionEnvironments = [
+  { root = "code"},
+]

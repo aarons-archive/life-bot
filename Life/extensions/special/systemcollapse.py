@@ -13,7 +13,7 @@
 import discord
 from discord.ext import commands
 
-from bot import Life
+from core.bot import Life
 
 
 class SystemCollapse(commands.Cog):

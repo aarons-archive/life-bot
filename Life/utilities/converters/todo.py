@@ -20,9 +20,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from utilities.objects.guild import DefaultGuildConfig, GuildConfig
-from utilities.objects.notifications import Notifications
-from utilities.objects.reminder import Reminder
-from utilities.objects.tag import Tag
-from utilities.objects.todo import Todo
-from utilities.objects.user import DefaultUserConfig, UserConfig
+from discord.ext import commands
+
+from core import colours, emojis
+from utilities import context, exceptions
+
+
+class TodoContentConverter(commands.clean_content):
+
+    async def convert(self, ctx: context.Context, argument: str) -> str:
+
+        if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
+            raise commands.BadArgument
+
+        if len(argument) > 150:
+            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  Your todo content must be under 150 characters.')
+
+        return argument

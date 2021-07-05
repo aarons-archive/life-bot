@@ -20,9 +20,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from utilities.objects.guild import DefaultGuildConfig, GuildConfig
-from utilities.objects.notifications import Notifications
-from utilities.objects.reminder import Reminder
-from utilities.objects.tag import Tag
-from utilities.objects.todo import Todo
-from utilities.objects.user import DefaultUserConfig, UserConfig
+import discord
+
+from core import config
+
+
+ZWSP = "\u200b"
+NL = "\n"
+
+PERMISSIONS = discord.Permissions(
+        read_messages=True,
+        send_messages=True,
+        embed_links=True,
+        attach_files=True,
+        read_message_history=True,
+        add_reactions=True,
+        external_emojis=True,
+)
+
+INVITE_LINK = discord.utils.oauth_url(client_id=config.BOT_ID, permissions=PERMISSIONS, scopes=["bot"])
+INVITE_LINK_NO_PERMISSIONS = discord.utils.oauth_url(client_id=config.BOT_ID)
+
+SUPPORT_LINK = "https://discord.gg/w9f6NkQbde"

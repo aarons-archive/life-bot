@@ -11,18 +11,13 @@
 #
 
 import collections
-import sys
+import time
 
 import discord
-import humanize
-import pkg_resources
-import setproctitle
 from discord.ext import commands
 
-import colours
-import config
-import time
-from bot import Life
+from core import colours, config
+from core.bot import Life
 from utilities import context, converters, exceptions
 
 
@@ -36,44 +31,7 @@ class Dev(commands.Cog):
     async def dev(self, ctx: context.Context) -> None:
         """
         Base command for bot developer commands.
-
-        Displays a message with stats about the bot.
         """
-
-        python_version = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
-        discordpy_version = pkg_resources.get_distribution('discord.py').version
-        platform = sys.platform
-        process_name = setproctitle.getproctitle()
-        process_id = self.bot.process.pid
-        thread_count = self.bot.process.num_threads()
-
-        description = [
-            f'''
-            I am running on the python version **{python_version}** on the OS **{platform}** using the discord.py version **{discordpy_version}**. The process is running as **{process_name}** \
-            on PID **{process_id}** and is using **{thread_count}** threads. 
-            
-            The bot is automatically sharded with **{self.bot.shard_count}** shard(s) and can see **{len(self.bot.guilds)}** guilds and **{len(self.bot.users)}** users.
-            '''
-        ]
-
-        with self.bot.process.oneshot():
-            memory_info = self.bot.process.memory_full_info()
-            physical_memory = humanize.naturalsize(memory_info.rss)
-            virtual_memory = humanize.naturalsize(memory_info.vms)
-            unique_memory = humanize.naturalsize(memory_info.uss)
-            cpu_usage = self.bot.process.cpu_percent(interval=None)
-
-            description.append(
-                    f'''
-                    The process is using **{physical_memory}** of physical memory, **{virtual_memory}** of virtual memory and **{unique_memory}** of memory that is unique to the process. It is \
-                    also using **{cpu_usage}%** of CPU.
-                    '''
-            )
-
-        embed = discord.Embed(title=f'{self.bot.user.name} bot information page.', colour=0xF5F5F5)
-        embed.description = ''.join(description)
-
-        await ctx.reply(embed=embed)
 
     @commands.is_owner()
     @dev.command(name='cleanup', aliases=['clean'], hidden=True)
@@ -124,7 +82,6 @@ class Dev(commands.Cog):
 
         event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
         events_total = sum(event_stats.values())
-        # noinspection PyUnresolvedReferences
         events_per_second = round(events_total / round(time.time() - self.bot.start_time))
 
         description = [f'```py\n{events_total} socket events observed at a rate of {events_per_second} per second.\n']

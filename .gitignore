@@ -1,11 +1,12 @@
 *.pyc
-*.ini
 *.log*
+*.ttf
+*.otf
+*.png
+
 
 .idea/
 venv/
-node_modules/
-resources/
+.git/
 
 config.py
-pyproject.toml

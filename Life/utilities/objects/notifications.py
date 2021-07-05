@@ -18,7 +18,7 @@ from utilities import objects
 
 
 if TYPE_CHECKING:
-    from bot import Life
+    from core.bot import Life
 
 __log__ = logging.getLogger('utilities.objects.notifications')
 

@@ -25,11 +25,11 @@ from __future__ import annotations
 from typing import Union
 
 import discord
+import slate
 from discord.ext import commands
 
-import colours
-import slate
-from bot import Life
+from core import colours
+from core.bot import Life
 from utilities import checks, context
 
 
@@ -212,7 +212,7 @@ class Play(commands.Cog):
 
         if search.type in {slate.SearchType.TRACK, slate.SearchType.ARTIST}:
             choice = await ctx.choice(entries=[f'`{index + 1}.` [{track.title}]({track.uri})' for index, track in enumerate(search.tracks)], per_page=10, title=f'Search results for `{query}`:')
-            tracks = search.tracks[choice]
+            tracks = search.tracks[choice[0]]
         else:
             tracks = search.tracks
 

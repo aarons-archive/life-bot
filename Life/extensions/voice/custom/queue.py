@@ -22,16 +22,33 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from discord.ext import commands
+from typing import Optional, TYPE_CHECKING, Union
 
-from bot import Life
-
-
-class Queue(commands.Cog):
-
-    def __init__(self, bot: Life) -> None:
-        self.bot = bot
+import slate
 
 
-def setup(bot: Life) -> None:
-    bot.add_cog(Queue(bot=bot))
+if TYPE_CHECKING:
+    from extensions.voice.custom.player import Player
+
+
+class Queue(slate.Queue):
+
+    def __init__(self, player: Player) -> None:
+        super().__init__()
+
+        self._player: Player = player
+
+    def __repr__(self) -> str:
+        return f'<life.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
+
+    #
+
+    @property
+    def player(self) -> Player:
+        return self._player
+
+    def put(self, items: Union[list[slate.utils.queue.Item], slate.utils.queue.Item], *, position: Optional[int] = None) -> None:
+        super().put(items=items, position=position)
+
+        self.player._queue_add_event.set()
+        self.player._queue_add_event.clear()

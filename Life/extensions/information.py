@@ -10,16 +10,15 @@
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
 
 import collections
+import time
 from typing import Any, Optional
 
 import discord
 import psutil
 from discord.ext import commands
 
-import colours
-import emojis
-import time
-from bot import Life
+from core import colours, emojis
+from core.bot import Life
 from utilities import context, converters, exceptions, utils
 
 
@@ -83,9 +82,7 @@ class Information(commands.Cog):
         Display the bots stats.
         """
 
-        # noinspection PyUnresolvedReferences
         uptime = utils.format_seconds(seconds=round(time.time() - self.bot.start_time), friendly=True)
-        files, functions, lines, classes = utils.line_count()
 
         embed = discord.Embed(colour=colours.MAIN)
         embed.add_field(name='Bot info:',
@@ -94,8 +91,6 @@ class Information(commands.Cog):
         embed.add_field(name='Bot stats:',
                         value=f'`Discord.py:` {discord.__version__}\n`Extensions:` {len(self.bot.extensions)}\n`Commands:` {len(self.bot.commands)}\n`Cogs:` {len(self.bot.cogs)}')
 
-        embed.add_field(name='Code:',
-                        value=f'`Functions:` {functions}\n`Classes:` {classes}\n`Lines:` {lines}\n`Files:` {files}\n')
         embed.add_field(name='\u200B', value='\u200B')
         embed.add_field(name='Ping:',
                         value=f'`Latency:` {round(self.bot.latency * 1000)}ms')
@@ -136,7 +131,7 @@ class Information(commands.Cog):
         embed.add_field(
                 name='Process information:',
                 value=f'''
-                `Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent(interval=None)}% 
+                `Memory usage:` {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n`CPU usage:` {self.bot.process.cpu_percent()}% 
                 `Threads:` {self.bot.process.num_threads()}
                 '''
         )
@@ -340,7 +335,7 @@ class Information(commands.Cog):
             guild = ctx.guild
 
         if not guild.splash:
-            raise exceptions.ArgumentError(f'The server `{guild.name}` does not have an splash.')
+            raise exceptions.ArgumentError(f'The server `{guild.name}` does not have a splash.')
 
         embed = discord.Embed(
                 colour=colours.MAIN,

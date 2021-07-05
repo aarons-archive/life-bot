@@ -18,12 +18,12 @@ import aioscheduler.task
 import discord
 import pendulum
 
-import colours
+from core import colours
 from utilities import enums, objects, utils
 
 
 if TYPE_CHECKING:
-    from bot import Life
+    from core.bot import Life
 
 __log__ = logging.getLogger('utilities.objects.reminder')
 
@@ -151,7 +151,7 @@ class Reminder:
         embed = discord.Embed(
                 colour=colours.MAIN,
                 title='Reminder:',
-                description=f'[`{utils.format_difference(self.created_at, suppress=[])} ago:`]({self.jump_url})\n\n{self.content}'
+                description=f'[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}'
         )
 
         try:

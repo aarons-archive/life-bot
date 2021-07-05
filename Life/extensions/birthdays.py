@@ -8,15 +8,15 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-
+import textwrap
 from typing import Optional
 
 import discord
 import pendulum
 from discord.ext import commands
 
-import colours
-from bot import Life
+from core import colours
+from core.bot import Life
 from utilities import context, converters, exceptions, utils
 
 
@@ -44,12 +44,14 @@ class Birthdays(commands.Cog):
         embed = discord.Embed(
                 colour=colours.MAIN,
                 title=f'{person}\'s birthday information:',
-                description=f'''
-                `Birthday:` {utils.format_date(user_config.birthday)}
-                `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-                `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
-                `Age:` {user_config.age}
-                ''',
+                description=textwrap.dedent(
+                        f'''
+                        `Birthday:` {utils.format_date(user_config.birthday)}
+                        `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+                        `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
+                        `Age:` {user_config.age}
+                        '''
+                )
         )
         await ctx.reply(embed=embed)
 
@@ -87,7 +89,7 @@ class Birthdays(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
-        await user_config.set_birthday(None)
+        await user_config.set_birthday()
         await ctx.reply('Your birthday was reset.')
 
     @birthday.command(name='private')
@@ -127,15 +129,16 @@ class Birthdays(commands.Cog):
         if not (birthdays := self.bot.user_manager.birthdays(guild_id=getattr(ctx.guild, 'id', None))):
             raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
-        # noinspection PyTypeChecker
         entries = [
-            f'''
-            __**{ctx.guild.get_member(user_config.id)}:**__
-            `Birthday:` {utils.format_date(user_config.birthday)}
-            `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-            `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
-            `Age:` {user_config.age}
-            '''
+            textwrap.dedent(
+                    f'''
+                    __**{ctx.guild.get_member(user_config.id)}:**__
+                    `Birthday:` {utils.format_date(user_config.birthday)}
+                    `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+                    `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
+                    `Age:` {user_config.age}
+                    '''
+            )
             for user_config in birthdays
         ]
         await ctx.paginate_embed(entries=entries, per_page=3, title='Upcoming birthdays:')
@@ -149,19 +152,20 @@ class Birthdays(commands.Cog):
         if not (birthdays := self.bot.user_manager.birthdays(guild_id=getattr(ctx.guild, 'id', None))):
             raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
 
-        # noinspection PyUnresolvedReferences
         user_config = birthdays[0]
         member = ctx.guild.get_member(user_config.id)
 
         embed = discord.Embed(
                 colour=colours.MAIN,
                 title=f'{member}\'s birthday information:',
-                description=f'''
-                `Birthday:` {utils.format_date(user_config.birthday)}
-                `Next birthday date:` {utils.format_date(user_config.next_birthday)}
-                `Next birthday:` In {utils.format_difference(user_config.next_birthday, suppress=[])}
-                `Age:` {user_config.age}' \
-                f'''
+                description=textwrap.dedent(
+                        f'''
+                        `Birthday:` {utils.format_date(user_config.birthday)}
+                        `Next birthday date:` {utils.format_date(user_config.next_birthday)}
+                        `Next birthday:` In {utils.format_difference(user_config.next_birthday)}
+                        `Age:` {user_config.age}
+                        '''
+                )
         )
         await ctx.reply(embed=embed)
 
