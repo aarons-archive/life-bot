@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -54,11 +54,11 @@ class Context(commands.Context):
     # Custom properties
 
     @property
-    def user_config(self) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+    def user_config(self) -> objects.DefaultUserConfig | objects.UserConfig:
         return self.bot.user_manager.get_config(getattr(self.author, "id", None))
 
     @property
-    def guild_config(self) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    def guild_config(self) -> objects.DefaultGuildConfig | objects.GuildConfig:
         return self.bot.guild_manager.get_config(getattr(self.guild, "id", None))
 
     # Paginators

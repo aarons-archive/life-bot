@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from discord.ext import tasks
 
@@ -87,7 +87,7 @@ class GuildManager:
         __log__.info(f'[GUILD MANAGER] Created config for guild with id \'{guild_id}\'.')
         return guild_config
 
-    def get_config(self, guild_id: int) -> Union[objects.DefaultGuildConfig, objects.GuildConfig]:
+    def get_config(self, guild_id: int) -> objects.DefaultGuildConfig | objects.GuildConfig:
         return self.configs.get(guild_id, self.DEFAULT_CONFIG)
 
     async def get_or_create_config(self, guild_id: int) -> objects.GuildConfig:

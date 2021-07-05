@@ -18,7 +18,7 @@ import math
 import os
 import pathlib
 import random
-from typing import Literal, Optional, TYPE_CHECKING, Union
+from typing import Literal, Optional, TYPE_CHECKING
 
 import discord
 from PIL import Image, ImageDraw, ImageFont
@@ -150,7 +150,7 @@ class UserManager:
         __log__.info(f'[USER MANAGER] Created config for user with id \'{user_config.id}\'.')
         return user_config
 
-    def get_config(self, user_id: int) -> Union[objects.DefaultUserConfig, objects.UserConfig]:
+    def get_config(self, user_id: int) -> objects.DefaultUserConfig | objects.UserConfig:
         return self.configs.get(user_id, self.DEFAULT_CONFIG)
 
     async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
@@ -232,7 +232,7 @@ class UserManager:
 
         return file
 
-    def create_level_card_image(self, data: tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO], guild: Optional[discord.Guild] = None) -> io.BytesIO:
+    def create_level_card_image(self, data: tuple[discord.User | discord.Member, objects.UserConfig, io.BytesIO], guild: Optional[discord.Guild] = None) -> io.BytesIO:
 
         user, user_config, user_avatar_bytes = data
 
@@ -325,7 +325,7 @@ class UserManager:
 
         return buffer
 
-    def create_leaderboard_image(self, data: list[tuple[Union[discord.User, discord.Member], objects.UserConfig, io.BytesIO]], guild: Optional[discord.Guild] = None) -> io.BytesIO:
+    def create_leaderboard_image(self, data: list[tuple[discord.User | discord.Member, objects.UserConfig, io.BytesIO]], guild: Optional[discord.Guild] = None) -> io.BytesIO:
 
         with Image.open(random.choice(IMAGES['SAI']['leaderboard'])) as image:
 
