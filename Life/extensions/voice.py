@@ -102,12 +102,14 @@ class Voice(commands.Cog):
 
     # Events
 
+    # noinspection PyUnusedLocal
     @commands.Cog.listener()
     async def on_obsidian_track_start(self, player: custom.Player, event: obsidian.ObsidianTrackStart) -> None:
 
         player._track_start_event.set()
         player._track_start_event.clear()
 
+    # noinspection PyUnusedLocal
     @commands.Cog.listener()
     async def on_obsidian_track_end(self, player: custom.Player, event: obsidian.ObsidianTrackEnd) -> None:
 
@@ -451,7 +453,7 @@ class Voice(commands.Cog):
 
     # Loop commands
 
-    @commands.command(name="loop", aliases=["loop-current", "loop_current"])
+    @commands.command(name="loop", aliases=["loop-current", "loop_current", "repeat"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -468,7 +470,7 @@ class Voice(commands.Cog):
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.")
         await ctx.reply(embed=embed)
 
-    @commands.command(name="queueloop", aliases=["loopqueue", "loop-queue", "loop_queue"])
+    @commands.command(name="queueloop", aliases=["loopqueue", "loop-queue", "loop_queue", "qloop"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
