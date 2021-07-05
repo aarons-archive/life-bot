@@ -50,8 +50,8 @@ class Fun(commands.Cog):
 		for reaction in REACTIONS: await msg.add_reaction(reaction)
 		try:
 			reaction, user = await self.bot.wait_for(event   = 'reaction_add', 
-												 	 timeout = 45.0, 
-													 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
+								 timeout = 45.0, 
+								 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
 		except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
 
 		if (CHOICE := reaction.emoji) == '\U0001faa8':
