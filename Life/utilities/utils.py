@@ -26,7 +26,7 @@ import colorsys
 import datetime as dt
 import io
 import logging
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 import aiohttp
 import discord
@@ -42,7 +42,7 @@ from utilities import exceptions
 __log__ = logging.getLogger('utilities.utils')
 
 
-def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulum.DateTime:
+def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:
 
     datetime.replace(microsecond=0)
 
@@ -52,7 +52,7 @@ def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulu
     return pendulum.instance(datetime, tz='UTC')
 
 
-def format_datetime(datetime: Union[dt.datetime, pendulum.DateTime], *, seconds: bool = False) -> str:
+def format_datetime(datetime: dt.datetime | pendulum.DateTime, *, seconds: bool = False) -> str:
     return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
 
 
@@ -64,7 +64,7 @@ def format_time(time: pendulum.Time) -> str:
     return time.format(f'hh:mm:ss')
 
 
-def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[tuple[str]] = None) -> str:
+def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: Optional[tuple[str]] = None) -> str:
 
     datetime = convert_datetime(datetime)
 
@@ -90,7 +90,7 @@ def format_seconds(seconds: float, *, friendly: bool = False) -> str:
     return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
 
 
-def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, discord.StageChannel], *, guild: discord.Guild, member: discord.Member) -> str:
+def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel, *, guild: discord.Guild, member: discord.Member) -> str:
 
     overwrites = channel.permissions_for(member)
 
@@ -110,7 +110,7 @@ def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, disc
     return emojis.CHANNELS[emoji_name]
 
 
-def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
+def badge_emojis(person: discord.User | discord.Member) -> str:
 
     badges = [badge for badge_name, badge in emojis.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
@@ -166,7 +166,7 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
     return '\n'.join(message)
 
 
-def avatar(person: Union[discord.User, discord.Member], *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
+def avatar(person: discord.User | discord.Member, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
     return str(person.avatar.replace(format=format or ('gif' if person.avatar.is_animated() else 'png'), size=size)) if person.avatar else None
 
 
@@ -186,7 +186,7 @@ def format_command(command: commands.Command) -> str:
     return f'{config.PREFIX}{command.qualified_name}'
 
 
-def voice_region(obj: Union[discord.VoiceChannel, discord.StageChannel, discord.Guild]) -> str:
+def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
 
     if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
         return 'Automatic'
@@ -201,7 +201,7 @@ def voice_region(obj: Union[discord.VoiceChannel, discord.StageChannel, discord.
     return region_name
 
 
-def name(person: Union[discord.Member, discord.User], *, guild: Optional[discord.Guild] = None) -> str:
+def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:
 
     if guild and isinstance(person, discord.User):
         member = guild.get_member(person.id)

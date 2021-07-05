@@ -23,7 +23,7 @@ SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import Optional, Union
+from typing import Optional
 
 import async_timeout
 import discord
@@ -50,7 +50,7 @@ class Queue(slate.Queue):
 
     #
 
-    def put(self, items: Union[list[slate.utils.queue.Item], slate.utils.queue.Item], *, position: Optional[int] = None) -> None:
+    def put(self, items: list[slate.utils.queue.Item] | slate.utils.queue.Item, *, position: Optional[int] = None) -> None:
         super().put(items=items, position=position)
 
         self.player._queue_add_event.set()

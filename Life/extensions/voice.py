@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 import discord
 import ksoftapi
@@ -58,7 +58,7 @@ class SearchOptions(commands.FlagConverter, delimiter=" ", prefix="--", case_ins
     http: bool = False
 
 
-def get_source(flags: Union[Options, SearchOptions]) -> slate.Source:
+def get_source(flags: Options | SearchOptions) -> slate.Source:
 
     if flags.music:
         return slate.Source.YOUTUBE_MUSIC

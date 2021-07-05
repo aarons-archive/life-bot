@@ -26,7 +26,7 @@ import logging
 import re
 import time
 import traceback
-from typing import Optional, Type, Union
+from typing import Optional, Type
 
 import aiohttp
 import aioredis
@@ -126,7 +126,7 @@ class Life(commands.AutoShardedBot):
     async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
         return await super().get_context(message=message, cls=cls)
 
-    async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
+    async def is_owner(self, user: discord.User | discord.Member) -> bool:
         return user.id in config.OWNER_IDS
 
     #

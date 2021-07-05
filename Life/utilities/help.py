@@ -8,8 +8,9 @@
 #  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
+
 import textwrap
-from typing import Optional, Union
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -37,7 +38,7 @@ class HelpCommand(commands.HelpCommand):
             )
         })
 
-    def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[Union[commands.Command, commands.Group]]]:
+    def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[commands.Command | commands.Group]]:
 
         return [
             command
@@ -48,7 +49,7 @@ class HelpCommand(commands.HelpCommand):
         ]
 
     @staticmethod
-    def format_commands(*, unformatted_command: list[Union[commands.Command, commands.Group]]) -> list[str]:
+    def format_commands(*, unformatted_command: list[commands.Command | commands.Group]) -> list[str]:
 
         formatted_commands = []
 
@@ -124,7 +125,7 @@ class HelpCommand(commands.HelpCommand):
     def command_not_found(self, string: str) -> str:
         return f'There are no commands or categories with the name `{string}`. Be sure to capitalize the first letter if you are looking for the help of a category.'
 
-    def subcommand_not_found(self, command: Union[commands.Command, commands.Group], string: str) -> str:
+    def subcommand_not_found(self, command: commands.Command | commands.Group, string: str) -> str:
 
         if isinstance(command, commands.Group):
             return f'The command `{command.qualified_name}` has no sub-commands called `{string}`.'
