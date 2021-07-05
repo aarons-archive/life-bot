@@ -40,30 +40,30 @@ class Fun(commands.Cog):
     async def rps(self, ctx: Context):
         ALLOWED_MENTIONS = discord.AllowedMentions(replied_user=False)
         REACTIONS = ['\U0001faa8', '\U0001f4f0', '\U00002702']
-		MYCHOICE  = random.choice(["\U0001faa8", "\U0001f4f0", "\U00002702"])
+	MYCHOICE  = random.choice(["\U0001faa8", "\U0001f4f0", "\U00002702"])
 
-		LOSE = 'You won!, GG'
-		WIN	 = 'I won!, GG'
-		DRAW = 'We both picked the same, It\'s a draw!'
+	LOSE = 'You won!, GG'
+	WIN  = 'I won!, GG'
+	DRAW = 'We both picked the same, It\'s a draw!'
 
-		msg = await ctx.reply('Let\'s see who wins!')
-		for reaction in REACTIONS: await msg.add_reaction(reaction)
-		try:
-			reaction, user = await self.bot.wait_for(event   = 'reaction_add', 
-								 timeout = 45.0, 
-								 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
-		except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
+	msg = await ctx.reply('Let\'s see who wins!')
+	for reaction in REACTIONS: await msg.add_reaction(reaction)
+	try:
+		reaction, user = await self.bot.wait_for(event   = 'reaction_add', 
+							 timeout = 45.0, 
+							 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
+	except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
 
-		if (CHOICE := reaction.emoji) == '\U0001faa8':
-			if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
-		elif (CHOICE := reaction.emoji) == '\U0001f4f0':
-			if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U00002702': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
-		elif (CHOICE := reaction.emoji) == '\U00002702':
-			if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-			elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS)
+	if (CHOICE := reaction.emoji) == '\U0001faa8':
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
+	elif (CHOICE := reaction.emoji) == '\U0001f4f0':
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U00002702': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
+	elif (CHOICE := reaction.emoji) == '\U00002702':
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
+		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS)
         
