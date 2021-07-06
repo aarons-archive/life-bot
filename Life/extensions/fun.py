@@ -41,35 +41,40 @@ class Fun(commands.Cog):
     @commands.command()
     async def rps(self, ctx: Context):
         REACTIONS = ['\U0001faa8', '\U0001f4f0', '\U00002702']
-	MYCHOICE  = random.choice(["\U0001faa8", "\U0001f4f0", "\U00002702"])
+		MYCHOICE  = random.choice(["\U0001faa8", "\U0001f4f0", "\U00002702"])
 
-	LOSE = 'You won!, GG'
-	WIN  = 'I won!, GG'
-	DRAW = 'We both picked the same, It\'s a draw!'
+		LOSE = 'You won!, GG'
+		WIN  = 'I won!, GG'
+		DRAW = 'We both picked the same, It\'s a draw!'
 
-	msg = await ctx.reply('Let\'s see who wins!')
-	for reaction in REACTIONS: await msg.add_reaction(reaction)
-	try:
-		reaction, user = await self.bot.wait_for(event   = 'reaction_add', 
-							 timeout = 45.0, 
-							 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
-	except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
+		msg = await ctx.reply('Let\'s see who wins!')
+		for reaction in REACTIONS: await msg.add_reaction(reaction)
+		try:
+			reaction, user = await self.bot.wait_for(event   = 'reaction_add', 
+								 timeout = 45.0, 
+								 check   = lambda reaction, user: reaction.message.id == msg.id and user.id == ctx.author.id and reaction.emoji in REACTIONS)
+		except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
 
-	if (CHOICE := reaction.emoji) == '\U0001faa8':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
-		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN)
-		elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE) 
-	elif (CHOICE := reaction.emoji) == '\U0001f4f0':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
-		elif MYCHOICE == '\U00002702': await msg.edit(content = WIN)
-		elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE) 
-	elif (CHOICE := reaction.emoji) == '\U00002702':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
-		elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN)
-		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE)
+		if (CHOICE := reaction.emoji) == '\U0001faa8':
+			if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+			elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN)
+			elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE) 
+		elif (CHOICE := reaction.emoji) == '\U0001f4f0':
+			if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+			elif MYCHOICE == '\U00002702': await msg.edit(content = WIN)
+			elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE) 
+		elif (CHOICE := reaction.emoji) == '\U00002702':
+			if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+			elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN)
+			elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE)
 			
 	@commands.command()
 	async def gayrate(self, ctx: Context, member: discord.Member = None):
 		if member is None: member = ctx.author
 		return await ctx.reply(embed=discord.Embed(description = f"**{member.name}** is {random.randint(10, 100)}", colour=colours.MAIN))
+	
+	@commands.command()
+	async def iqrate(self, ctx: Context, member: discord.Member = None):
+		if member is None: member = ctx.author
+		return await ctx.reply(embed=discord.Embed(description = f"**{member.name}'s** IQ is **{random.randint(40, 150)}** :nerd:", colour=colours.MAIN))
         
