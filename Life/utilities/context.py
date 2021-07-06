@@ -43,6 +43,7 @@ class Context(commands.Context):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
+        self.message: discord.Message = kwargs["message"]
         self.bot: Life = kwargs.get("bot")
 
     # Properties
@@ -50,6 +51,10 @@ class Context(commands.Context):
     @property
     def voice_client(self) -> Optional[Player]:
         return self.guild.voice_client if self.guild else None
+
+    @discord.utils.cached_property
+    def author(self) -> discord.User | discord.Member:
+        return self.message.author
 
     # Custom properties
 

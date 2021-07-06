@@ -29,6 +29,7 @@ import async_timeout
 import discord
 import slate
 from slate import obsidian
+from slate.utils.queue import Item
 
 from core import colours, config, emojis
 from core.bot import Life
@@ -50,7 +51,7 @@ class Queue(slate.Queue):
 
     #
 
-    def put(self, items: list[slate.utils.queue.Item] | slate.utils.queue.Item, *, position: Optional[int] = None) -> None:
+    def put(self, items: list[Item] | Item, *, position: Optional[int] = None) -> None:
         super().put(items=items, position=position)
 
         self.player._queue_add_event.set()
@@ -254,7 +255,7 @@ class Player(obsidian.ObsidianPlayer):
         if now:
             await self.stop()
 
-        if search.type is slate.SearchType.TRACK:
+        if search.type is slate.SearchType.TRACK or isinstance(search.result, list):
             description = f"Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue."
         else:
             description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
