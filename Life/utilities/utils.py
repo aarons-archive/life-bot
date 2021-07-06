@@ -160,7 +160,7 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
         elif isinstance(activity, discord.Streaming):
             message.append(f'• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**')
 
-        elif isinstance(activity, discord.CustomActivity):
+        else:
             message.append(f'• {f"{activity.emoji} " if activity.emoji else ""}{f"{activity.name}" if activity.name else ""}')
 
     return '\n'.join(message)
