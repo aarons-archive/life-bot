@@ -88,6 +88,11 @@ class Fun(commands.Cog):
 
         member = member or ctx.author
         await ctx.reply(embed=utils.embed(description=f'**{member.name}** is **{random.randint(10, 100)}%** gay :rainbow:'))
+        
+    @commands.command()
+	  async def iqrate(self, ctx: Context, member: discord.Member = None):
+        member = member or ctx.author
+		    await ctx.reply(embed=utils.embed(description=f"**{member.name}'s** IQ is **{random.randint(40, 150)}** :nerd:"))
 
 
 def setup(bot: Life) -> None:
