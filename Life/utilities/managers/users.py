@@ -25,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
 
+from core import colours
 from utilities import exceptions, objects, utils
 
 
@@ -473,7 +474,7 @@ class UserManager:
 
         width_x, height_y = (1600 * (len(data) if len(data) < 5 else 5)) + 100, (1800 * math.ceil(len(data) / 5)) + 100
 
-        with Image.new(mode='RGBA', size=(width_x, height_y), color='#F1C30F') as image:
+        with Image.new(mode='RGBA', size=(width_x, height_y), color=colours.MAIN.to_rgb()) as image:
 
             draw = ImageDraw.Draw(im=image)
             font = ImageFont.truetype(font=ARIAL_FONT, size=120)
