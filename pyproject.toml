@@ -12,7 +12,7 @@ venvPath = "venv"
 # verboseOutput = false
 # extraPaths = []
 
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 # pythonPlatform = ""
 
 # typeCheckingMode = 'basic'
@@ -32,7 +32,7 @@ reportMissingImports = "none"
 # reportImportCycles = "none"
 reportUnusedImport = "none"
 reportUnusedClass = true # "none"
-reportUnusedFunction =  true # "none"
+# reportUnusedFunction = "none"
 reportUnusedVariable = true # "none"
 reportDuplicateImport = true # "none"
 # reportWildcardImportFromLibrary = "warning"

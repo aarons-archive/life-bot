@@ -74,6 +74,8 @@ class Player(obsidian.ObsidianPlayer):
 
         self.skip_request_ids: set[int] = set()
 
+        self.enabled_filters: set[enums.EnabledFilters] = set()
+
     #
 
     @property
@@ -83,8 +85,6 @@ class Player(obsidian.ObsidianPlayer):
     @property
     def voice_channel(self) -> Optional[discord.VoiceChannel]:
         return self.channel
-
-    #
 
     @property
     def queue(self) -> Queue:
