@@ -1,4 +1,5 @@
 # Life
+[![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com) [![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
 
 Life is a multi-purpose discord bot made by Axel#3456. You can click 
 [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=4399156288) to invite it with basic permissions,
@@ -6,14 +7,14 @@ or [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scop
 [support server](https://discord.gg/w9f6NkQbde) in case you find any bugs or have features to suggest.
 
 ## Features:
-* Music - lyrics, queue management, volume control, and filters
-* Birthdays - Set your birthday and notify users of when a birthday happens so that you never forget.
-* Economy system - XP, leaderboards, rank cards, and money.
-* Image commands - Edit images from urls, attachments, or profile pictures. Supports different image formats such as gif, heic and svg.
-* Information commands - Easily get yours or someone else's avatar, server icons/banners and other information.
-* Tags - Create a tag, then easily fetch its content to store useful information or funny moments.
-* Time - View another persons timezone and set reminders that can repeat on a fixed schedule.
-* Todo - Set todos to keep track of things that need to be done.
+* **Music** - lyrics, queue management, volume control, and filters
+* **Birthdays** - Set your birthday and notify users of when a birthday happens so that you never forget.
+* **Economy system** - XP, leaderboards, rank cards, and money.
+* **Image commands** - Edit images from urls, attachments, or profile pictures. Supports different image formats such as gif, heic and svg.
+* **Information commands** - Easily get yours or someone else's avatar, server icons/banners and other information.
+* **Tags** - Create a tag, then easily fetch its content to store useful information or funny moments.
+* **Time** - View another persons timezone and set reminders that can repeat on a fixed schedule.
+* **Todo** - Set todos to keep track of things that need to be done.
 
 ## Links
 * [Invite (Required permissions)](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=4399156288)
