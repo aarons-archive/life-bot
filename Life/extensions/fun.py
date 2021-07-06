@@ -19,10 +19,12 @@ SOFTWARE.
 
 import logging
 import asyncio
+import random
 
 import discord
 from discord.ext import commands
 
+from core import colours
 from core.emojis import CROSS
 from utilities.context import Context
 
@@ -38,7 +40,6 @@ class Fun(commands.Cog):
         
     @commands.command()
     async def rps(self, ctx: Context):
-        ALLOWED_MENTIONS = discord.AllowedMentions(replied_user=False)
         REACTIONS = ['\U0001faa8', '\U0001f4f0', '\U00002702']
 	MYCHOICE  = random.choice(["\U0001faa8", "\U0001f4f0", "\U00002702"])
 
@@ -55,15 +56,20 @@ class Fun(commands.Cog):
 	except asyncio.TimeoutError: return await ctx.reply(f"{CROSS} | **Timed out:** You took too long to respond! **[45s]**")
 
 	if (CHOICE := reaction.emoji) == '\U0001faa8':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = WIN)
+		elif MYCHOICE == '\U00002702': await msg.edit(content = LOSE) 
 	elif (CHOICE := reaction.emoji) == '\U0001f4f0':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U00002702': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS) 
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+		elif MYCHOICE == '\U00002702': await msg.edit(content = WIN)
+		elif MYCHOICE == '\U0001faa8': await msg.edit(content = LOSE) 
 	elif (CHOICE := reaction.emoji) == '\U00002702':
-		if CHOICE == MYCHOICE: await msg.edit(content = DRAW, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN, allowed_mentions = ALLOWED_MENTIONS)
-		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE, allowed_mentions = ALLOWED_MENTIONS)
+		if CHOICE == MYCHOICE: await msg.edit(content = DRAW)
+		elif MYCHOICE == '\U0001faa8': await msg.edit(content = WIN)
+		elif MYCHOICE == '\U0001f4f0': await msg.edit(content = LOSE)
+			
+	@commands.command()
+	async def gayrate(self, ctx: Context, member: discord.Member = None):
+		if member is None: member = ctx.author
+		return await ctx.reply(embed=discord.Embed(description = f"**{member.name}** is {random.randint(10, 100)}", colour=colours.MAIN))
         
