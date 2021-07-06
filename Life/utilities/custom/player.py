@@ -86,8 +86,6 @@ class Player(obsidian.ObsidianPlayer):
     def voice_channel(self) -> Optional[discord.VoiceChannel]:
         return self.channel
 
-    #
-
     @property
     def queue(self) -> Queue:
         return self._queue

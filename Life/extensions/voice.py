@@ -102,16 +102,14 @@ class Voice(commands.Cog):
 
     # Events
 
-    # noinspection PyUnusedLocal
     @commands.Cog.listener()
-    async def on_obsidian_track_start(self, player: custom.Player, event: obsidian.ObsidianTrackStart) -> None:
+    async def on_obsidian_track_start(self, player: custom.Player, _: obsidian.ObsidianTrackStart) -> None:
 
         player._track_start_event.set()
         player._track_start_event.clear()
 
-    # noinspection PyUnusedLocal
     @commands.Cog.listener()
-    async def on_obsidian_track_end(self, player: custom.Player, event: obsidian.ObsidianTrackEnd) -> None:
+    async def on_obsidian_track_end(self, player: custom.Player, _: obsidian.ObsidianTrackEnd) -> None:
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -152,6 +150,36 @@ class Voice(commands.Cog):
 
         player.skip_request_ids = set()
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, _: discord.VoiceState, __: discord.VoiceState) -> None:
+
+        if member.bot:
+            return
+
+        if not (guild := self.bot.get_guild(member.guild.id)):
+            return
+
+        # noinspection PyTypeChecker
+        voice_client: custom.Player = guild.voice_client
+        if not voice_client:
+            return
+
+        if not [member for member in voice_client.voice_channel.members if not member.bot] and (not voice_client.paused):
+            await voice_client.set_pause(True)
+            embed = utils.embed(colour=colours.RED, emoji=emojis.PAUSED, description=f"The player is now **paused** because there is no one in {voice_client.voice_channel.mention}.")
+            await voice_client.send(embed=embed)
+            return
+
+        if all([member.voice.self_deaf or member.voice.deaf for member in voice_client.voice_channel.members if not member.bot]) and (not voice_client.paused):
+            await voice_client.set_pause(True)
+            embed = utils.embed(colour=colours.RED, emoji=emojis.PAUSED, description=f"The player is now **paused** because everyone in {voice_client.voice_channel.mention} is deafened.")
+            await voice_client.send(embed=embed)
+            return
+
+        if voice_client.paused:
+            await voice_client.set_pause(False)
+            await voice_client.send(embed=utils.embed(colour=colours.RED, emoji=emojis.PLAYING, description="The player is now **resumed** as at least one person is listening."))
+
     # Join/Leave commands
 
     @commands.command(name="join", aliases=["summon", "connect"])
@@ -167,7 +195,7 @@ class Voice(commands.Cog):
         await ctx.author.voice.channel.connect(cls=custom.Player)
         ctx.voice_client._text_channel = ctx.channel
 
-        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Joined {ctx.voice_client.voice_channel.mention}"))
+        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Joined {ctx.voice_client.voice_channel.mention}."))
 
     @commands.command(name="disconnect", aliases=["dc", "leave", "destroy"])
     @checks.is_author_connected(same_channel=True)
@@ -177,7 +205,7 @@ class Voice(commands.Cog):
         Disconnects the bot its voice channel.
         """
 
-        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Left voice channel {ctx.voice_client.voice_channel.mention}"))
+        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Left {ctx.voice_client.voice_channel.mention}."))
         await ctx.voice_client.disconnect()
 
     # Play commands
@@ -332,7 +360,7 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The player is already paused.")
 
         await ctx.voice_client.set_pause(True)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="The player is now paused."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.PAUSED, description="The player is now **paused**."))
 
     @commands.command(name="resume", aliases=["continue", "unpause"])
     @checks.is_author_connected(same_channel=True)
@@ -346,7 +374,7 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The player is not paused.")
 
         await ctx.voice_client.set_pause(False)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="The player is now resumed."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.PLAYING, description="The player is now **resumed**."))
 
     # Seek commands
 
@@ -374,7 +402,7 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(milliseconds)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.SEEK_FORWARD, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
     @commands.command(name="forward", aliases=["fwd"])
@@ -404,7 +432,7 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(position + milliseconds)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.SEEK_FORWARD, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
     @commands.command(name="rewind", aliases=["rwd", "backward", "bckwd"])
@@ -433,7 +461,7 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(position - milliseconds)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.SEEK_BACK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
     @commands.command(name="replay")
@@ -448,7 +476,7 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(position=0)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.REPEAT, description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.")
         await ctx.reply(embed=embed)
 
     # Loop commands
@@ -467,7 +495,7 @@ class Voice(commands.Cog):
         else:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.OFF)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.LOOP_CURRENT, description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.")
         await ctx.reply(embed=embed)
 
     @commands.command(name="queueloop", aliases=["loopqueue", "loop-queue", "loop_queue", "qloop"])
@@ -484,7 +512,7 @@ class Voice(commands.Cog):
         else:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.OFF)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.LOOP, description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.")
         await ctx.reply(embed=embed)
 
     # Skip commands
@@ -526,7 +554,7 @@ class Voice(commands.Cog):
                 )
 
             await ctx.voice_client.stop()
-            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Skipped the current track."))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.NEXT, description="Skipped the current track."))
             return
 
         if 0 <= amount > len(ctx.voice_client.queue) + 1:
@@ -550,7 +578,7 @@ class Voice(commands.Cog):
             ctx.voice_client.queue.get()
 
         await ctx.voice_client.stop()
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.NEXT, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."))
 
     # Misc
 
@@ -795,7 +823,7 @@ class Voice(commands.Cog):
         """
 
         ctx.voice_client.queue.shuffle()
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="The queue has been shuffled."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.SHUFFLE, description="The queue has been shuffled."))
 
     @commands.command(name="reverse")
     @checks.queue_not_empty()
@@ -807,7 +835,7 @@ class Voice(commands.Cog):
         """
 
         ctx.voice_client.queue.reverse()
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="The queue has been reversed."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.DOUBLE_LEFT, description="The queue has been reversed."))
 
     @commands.command(name="sort")
     @checks.queue_not_empty()
