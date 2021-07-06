@@ -74,7 +74,7 @@ def logger():
     loggers['bot'].setLevel(logging.DEBUG)
     loggers['extensions'].setLevel(logging.DEBUG)
     loggers['utilities'].setLevel(logging.DEBUG)
-    loggers['slate'].setLevel(logging.DEBUG)
+    loggers['slate'].setLevel(logging.INFO)
 
     try:
         yield

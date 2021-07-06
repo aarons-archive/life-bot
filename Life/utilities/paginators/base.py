@@ -51,9 +51,8 @@ class PaginatorButtons(discord.ui.View):
 
     #
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.FIRST)
-    async def first(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def first(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -62,9 +61,8 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=0)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.BACKWARD)
-    async def backward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def backward(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -73,18 +71,16 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page - 1)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
         await self.paginator.stop(self.paginator.delete_message)
         self.stop()
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.FORWARD)
-    async def forward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def forward(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -93,9 +89,8 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page + 1)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.LAST)
-    async def last(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def last(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -125,9 +120,8 @@ class PaginatorStopButton(discord.ui.View):
 
     #
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
