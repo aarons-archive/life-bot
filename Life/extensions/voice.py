@@ -260,7 +260,7 @@ class Voice(commands.Cog):
 
     # Platform specific play commands
 
-    @commands.command(name="youtube-music", aliases=["youtube_music", "youtubemusic", "yt-music", "yt_music", "ytmusic", "ytm"])
+    @commands.command(name="youtubemusic", aliases=["youtube-music", "youtube_music", "ytmusic", "yt-music", "yt_music", "ytm"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def youtube_music(self, ctx: context.Context, query: str, *, options: QueueOptions) -> None:
@@ -304,7 +304,7 @@ class Voice(commands.Cog):
 
     # Queue specific play commands
 
-    @commands.command(name="play-next", aliases=["play_next", "playnext", "pnext"])
+    @commands.command(name="playnext", aliases=["play-next", "play_next", "pnext"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def play_next(self, ctx: context.Context, query: str, *, options: SearchOptions) -> None:
@@ -325,7 +325,7 @@ class Voice(commands.Cog):
         async with ctx.channel.typing():
             await ctx.voice_client.queue_search(query=query, ctx=ctx, next=True, source=get_source(options))
 
-    @commands.command(name="play-now", aliases=["play_now", "playnow", "pnow"])
+    @commands.command(name="playnow", aliases=["play-now", "play_now", "pnow"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def play_now(self, ctx: context.Context, query: str, *, options: SearchOptions) -> None:
