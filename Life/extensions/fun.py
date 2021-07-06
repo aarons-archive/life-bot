@@ -42,6 +42,9 @@ class Fun(commands.Cog):
 
     @commands.command(name="rps")
     async def rps(self, ctx: context.Context) -> None:
+        """
+        Play rock, paper, scissors with the bot.
+        """
 
         REACTIONS = ["\U0001faa8", "\U0001f4f0", "\U00002702"]
         MY_CHOICE = random.choice(['\U0001faa8', '\U0001f4f0', '\U00002702'])
@@ -85,14 +88,21 @@ class Fun(commands.Cog):
 
     @commands.command(name="gayrate", aliases=["gay-rate", "gay_rate"])
     async def gay_rate(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        See how gay you, or someone else is.
+        """
 
         member = member or ctx.author
         await ctx.reply(embed=utils.embed(description=f'**{member.name}** is **{random.randint(10, 100)}%** gay :rainbow:'))
-        
-    @commands.command()
-	  async def iqrate(self, ctx: Context, member: discord.Member = None):
+
+    @commands.command(name="iqrate", aliases=["iq-rate", "iq_rate"])
+    async def iq_rate(self, ctx: context.Context, member: discord.Member = None) -> None:
+        """
+        See yours, or someone else's IQ.
+        """
+
         member = member or ctx.author
-		    await ctx.reply(embed=utils.embed(description=f"**{member.name}'s** IQ is **{random.randint(40, 150)}** :nerd:"))
+        await ctx.reply(embed=utils.embed(description=f"**{member.name}'s** IQ is **{random.randint(40, 150)}**  :nerd:"))
 
 
 def setup(bot: Life) -> None:
