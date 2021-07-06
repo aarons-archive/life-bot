@@ -123,7 +123,7 @@ class Life(commands.AutoShardedBot):
 
         await self.invoke(ctx)
 
-    async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
+    async def get_context(self, message: discord.Message, *, cls: Type[context.Context] = context.Context) -> context.Context:
         return await super().get_context(message=message, cls=cls)
 
     async def is_owner(self, user: discord.User | discord.Member) -> bool:

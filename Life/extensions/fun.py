@@ -23,6 +23,7 @@ SOFTWARE.
 import asyncio
 import logging
 import random
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -58,28 +59,28 @@ class Fun(commands.Cog):
             await message.add_reaction(reaction)
 
         try:
-            reaction, user = await self.bot.wait_for("reaction_add", timeout=45.0, check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in REACTIONS)
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=45.0, check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in REACTIONS)
         except asyncio.TimeoutError:
             raise exceptions.EmbedError(emoji=emojis.CROSS, colour=colours.RED, description="You took too long to respond!")
 
-        if (CHOICE := reaction.emoji) == "\U0001faa8":
-            if CHOICE == MY_CHOICE:
+        if (choice := reaction.emoji) == "\U0001faa8":
+            if choice == MY_CHOICE:
                 await message.edit(content=DRAW)
             elif MY_CHOICE == "\U0001f4f0":
                 await message.edit(content=WIN)
             elif MY_CHOICE == "\U00002702":
                 await message.edit(content=LOSE)
 
-        elif (CHOICE := reaction.emoji) == "\U0001f4f0":
-            if CHOICE == MY_CHOICE:
+        elif (choice := reaction.emoji) == "\U0001f4f0":
+            if choice == MY_CHOICE:
                 await message.edit(content=DRAW)
             elif MY_CHOICE == "\U00002702":
                 await message.edit(content=WIN)
             elif MY_CHOICE == "\U0001faa8":
                 await message.edit(content=LOSE)
 
-        elif (CHOICE := reaction.emoji) == "\U00002702":
-            if CHOICE == MY_CHOICE:
+        elif (choice := reaction.emoji) == "\U00002702":
+            if choice == MY_CHOICE:
                 await message.edit(content=DRAW)
             elif MY_CHOICE == "\U0001faa8":
                 await message.edit(content=WIN)
@@ -87,22 +88,22 @@ class Fun(commands.Cog):
                 await message.edit(content=LOSE)
 
     @commands.command(name="gayrate", aliases=["gay-rate", "gay_rate"])
-    async def gay_rate(self, ctx: context.Context, member: discord.Member = None) -> None:
+    async def gay_rate(self, ctx: context.Context, member: Optional[discord.Member]) -> None:
         """
         See how gay you, or someone else is.
         """
 
-        member = member or ctx.author
-        await ctx.reply(embed=utils.embed(description=f'**{member.name}** is **{random.randint(10, 100)}%** gay :rainbow:'))
+        person: discord.Member = member or ctx.author
+        await ctx.reply(embed=utils.embed(description=f'**{person.name}** is **{random.randint(10, 100)}%** gay :rainbow:'))
 
     @commands.command(name="iqrate", aliases=["iq-rate", "iq_rate"])
-    async def iq_rate(self, ctx: context.Context, member: discord.Member = None) -> None:
+    async def iq_rate(self, ctx: context.Context, member: Optional[discord.Member]) -> None:
         """
         See yours, or someone else's IQ.
         """
 
-        member = member or ctx.author
-        await ctx.reply(embed=utils.embed(description=f"**{member.name}'s** IQ is **{random.randint(40, 150)}**  :nerd:"))
+        person: discord.Member = member or ctx.author
+        await ctx.reply(embed=utils.embed(description=f"**{person.name}'s** IQ is **{random.randint(40, 150)}**  :nerd:"))
 
 
 def setup(bot: Life) -> None:
