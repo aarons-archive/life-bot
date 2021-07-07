@@ -15,7 +15,6 @@ import time
 from typing import Any, Optional
 
 import discord
-from discord.ext.commands.core import command
 import psutil
 from discord.ext import commands
 
