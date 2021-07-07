@@ -213,10 +213,10 @@ def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild
 #
 
 
-async def upload_image(session: aiohttp.ClientSession, *, buffer: io.BytesIO, file_format: str = 'png') -> str:
+async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
 
     data = aiohttp.FormData()
-    data.add_field('file', buffer, filename=f'file.{file_format.lower()}')
+    data.add_field('file', value=file_bytes, filename=f'file.{file_format.lower()}')
 
     async with session.post('https://cdn.axelancerr.xyz/api/media', headers={'Authorization': config.AXEL_WEB_TOKEN}, data=data) as response:
 
