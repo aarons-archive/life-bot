@@ -668,6 +668,8 @@ class Images(commands.Cog):
             embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image))
             await ctx.reply(embed=embed)
 
+    # In development commands.
+
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='cube')
     async def cube(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
@@ -678,7 +680,46 @@ class Images(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image))
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='sphere')
+    async def sphere(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Creates a sphere!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='tshirt', aliases=["shirt"])
+    async def tshirt(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Creates a tshirt!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='pixel')
+    async def pixel(self, ctx: context.Context, image: Optional[converters.ImageConverter], method: Literal["square", "s", "hexagon", "h", "random", "r"] = "random") -> None:
+        """
+        Creates a pixel art!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f"{ctx.author}", method=method)
             await ctx.reply(embed=embed)
 
 

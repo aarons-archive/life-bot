@@ -20,11 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import io
 import multiprocessing
 import multiprocessing.connection
+import os
+import os.path
+import subprocess
 import sys
-from typing import Callable, Optional
+from typing import Any, Callable, Literal, Optional
 
 import aiohttp
 import bs4
@@ -37,259 +39,217 @@ from wand.image import Image
 from core import colours, emojis
 from utilities import context, exceptions, utils
 
+if sys.platform == "win32":
+    CMD = f"bash"
+else:
+    CMD = f"{os.getenv('SHELL') or '/bin/bash'} -c"
 
-def blur(image: Image, area: float = 0, amount: float = 3):
+
+def blur(image: Image, area: float = 0, amount: float = 3) -> None:
     image.blur(radius=area, sigma=amount)
 
 
-def adaptive_blur(image: Image, radius: float = 0, sigma: float = 3):
-
+def adaptive_blur(image: Image, radius: float = 0, sigma: float = 3) -> None:
     image.adaptive_blur(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def adaptive_sharpen(image: Image, radius: float = 0, sigma: float = 0):
-
+def adaptive_sharpen(image: Image, radius: float = 0, sigma: float = 0) -> None:
     image.adaptive_sharpen(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def blueshift(image: Image, factor: float = 1.5):
-
+def blueshift(image: Image, factor: float = 1.5) -> None:
     image.blue_shift(factor=factor)
-    return f"Factor: {factor}"
 
 
-def border(image: Image, colour: str, width: int = 1, height: int = 1):
-
+def border(image: Image, colour: str, width: int = 1, height: int = 1) -> None:
     with Color(colour) as color:
         image.border(color=color, width=width, height=height, compose="atop")
-    return f"Colour: {colour} | Width: {width} | Height: {height}"
 
 
-def edge(image: Image, radius: float = 0, sigma: float = 1):
-
+def edge(image: Image, radius: float = 0, sigma: float = 1) -> None:
     image.canny(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def charcoal(image: Image, radius: float, sigma: float):
-
+def charcoal(image: Image, radius: float, sigma: float) -> None:
     image.charcoal(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def colorize(image: Image, colour = None):
-
+def colorize(image: Image, colour=None) -> None:
     with Color(colour) as color, Color("rgb(50%, 50%, 50%)") as alpha:
         image.colorize(color=color, alpha=alpha)
 
-    return f"Colour: {colour}"
 
-
-def despeckle(image: Image):
-
+def despeckle(image: Image) -> None:
     image.despeckle()
-    return ""
 
 
-def floor(image: Image):
-
+def floor(image: Image) -> None:
     image.virtual_pixel = "tile"
-    arguments = (
-        0,           0,            image.width * 0.2, image.height * 0.5,
-        image.width, 0,            image.width * 0.8, image.height * 0.5,
-        0,           image.height, image.width * 0.1, image.height,
-        image.width, image.height, image.width * 0.9, image.height
+    image.distort(
+            "perspective",
+            (
+                0, 0, image.width * 0.2, image.height * 0.5,
+                image.width, 0, image.width * 0.8, image.height * 0.5,
+                0, image.height, image.width * 0.1, image.height,
+                image.width, image.height, image.width * 0.9, image.height
+            )
     )
-    image.distort("perspective", arguments)
-
-    return ""
 
 
-def emboss(image: Image, radius: float = 0, sigma: float = 0):
-
+def emboss(image: Image, radius: float = 0, sigma: float = 0) -> None:
     image.transform_colorspace("gray")
     image.emboss(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def enhance(image: Image):
-
+def enhance(image: Image) -> None:
     image.enhance()
-    return ""
 
 
-def flip(image: Image):
-
+def flip(image: Image) -> None:
     image.flip()
-    return None
 
 
-def flop(image: Image):
-
+def flop(image: Image) -> None:
     image.flop()
-    return None
 
 
-def frame(image: Image, matte: str, width: int = 10, height: int = 10, inner_bevel: float = 5, outer_bevel: float = 5):
-
+def frame(image: Image, matte: str, width: int = 10, height: int = 10, inner_bevel: float = 5, outer_bevel: float = 5) -> None:
     with Color(matte) as color:
         image.frame(matte=color, width=width, height=height, inner_bevel=inner_bevel, outer_bevel=outer_bevel)
 
-    return f"Colour: {matte} | Width: {width} | Height: {height} | Inner bevel: {inner_bevel} | Outer bevel: {outer_bevel}"
 
-
-def gaussian_blur(image: Image, radius: float = 0, sigma: float = 0):
-
+def gaussian_blur(image: Image, radius: float = 0, sigma: float = 0) -> None:
     image.gaussian_blur(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def implode(image: Image, amount: float):
-
+def implode(image: Image, amount: float) -> None:
     image.implode(amount=amount)
-    return f"Amount: {amount}"
 
 
-def kmeans(image: Image, number_colours: Optional[int] = None):
-
+def kmeans(image: Image, number_colours: Optional[int] = None) -> None:
     image.kmeans(number_colors=number_colours)
-    return f"Number of colours: {number_colours}"
 
 
-def kuwahara(image: Image, radius: float = 1, sigma: Optional[float] = None):
-
+def kuwahara(image: Image, radius: float = 1, sigma: Optional[float] = None) -> None:
     image.kuwahara(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def motion_blur(image: Image, radius: float = 0, sigma: float = 0, angle: float = 0):
-
+def motion_blur(image: Image, radius: float = 0, sigma: float = 0, angle: float = 0) -> None:
     image.motion_blur(radius=radius, sigma=sigma, angle=angle)
-    return f"Radius: {radius} | Sigma: {sigma} | Angle: {angle}"
 
 
-def negate(image: Image):
-
+def negate(image: Image) -> None:
     image.negate(channel="rgb")
-    return ""
 
 
-def noise(image: Image, method: str = "uniform", attenuate: float = 1):
-
+def noise(image: Image, method: str = "uniform", attenuate: float = 1) -> None:
     image.noise(method, attenuate=attenuate)
-    return f"Method: {method} | Attenuate: {attenuate}"
 
 
-def oil_paint(image: Image, radius: float = 0, sigma: float = 0):
-
+def oil_paint(image: Image, radius: float = 0, sigma: float = 0) -> None:
     image.oil_paint(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def polaroid(image: Image, angle: float = 0, caption = None):
-
+def polaroid(image: Image, angle: float = 0, caption=None) -> None:
     image.polaroid(angle=angle, caption=caption)
-    return f"Angle: {angle} | Caption: {caption}"
 
 
-def rotate(image: Image, degree: float, reset: bool = True):
-
+def rotate(image: Image, degree: float, reset: bool = True) -> None:
     image.rotate(degree=degree, reset_coords=reset)
-    return f"Degree: {degree} | Reset: {reset}"
 
 
-def sepia_tone(image: Image, threshold: float = 0.8):
-
+def sepia_tone(image: Image, threshold: float = 0.8) -> None:
     image.sepia_tone(threshold=threshold)
-    return f"Threshold: {threshold}"
 
 
-def sharpen(image: Image, radius: float = 0, sigma: float = 0):
-
+def sharpen(image: Image, radius: float = 0, sigma: float = 0) -> None:
     image.adaptive_sharpen(radius=radius, sigma=sigma)
-    return f"Radius: {radius} | Sigma: {sigma}"
 
 
-def solarize(image: Image, threshold: float = 0.5):
-
+def solarize(image: Image, threshold: float = 0.5) -> None:
     image.solarize(threshold=threshold, channel="rgb")
-    return f"Threshold: {threshold}"
 
 
-def spread(image: Image, radius: float):
-
+def spread(image: Image, radius: float) -> None:
     image.spread(radius=radius)
-    return f"Radius: {radius}"
 
 
-def swirl(image: Image, degree: float):
-
+def swirl(image: Image, degree: float) -> None:
     image.swirl(degree=degree)
-    return f"Degree: {degree}"
 
 
-def transparentize(image: Image, transparency: float):
-
+def transparentize(image: Image, transparency: float) -> None:
     image.transparentize(transparency=transparency)
-    return f"Transparency: {transparency}"
 
 
-def transpose(image: Image):
-
+def transpose(image: Image) -> None:
     image.transpose()
-    return ""
 
 
-def transverse(image: Image):
-
+def transverse(image: Image) -> None:
     image.transverse()
-    return ""
 
 
-def wave(image: Image):
-
+def wave(image: Image) -> None:
     image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
-    return ""
 
 
-def cube(image: Image):
+def cube(image: Image, filename: str) -> Image:
 
-    def d3(x: int):
-        return int(x / 3)
+    image.resize(width=1000, height=1000)
 
-    image.resize(1000, 1000)
-    image.alpha_channel = "opaque"
+    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/cube/{filename}"))
+    image.save(filename=f"{PATH}.png")
 
-    top = Image(image)
-    top.resize(d3(1000), d3(860))
-    top.shear(x=-30, background=Color("none"))
-    top.rotate(degree=-30)
+    COMMAND = r"""
+    convert \
+        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent +distort Affine "0,1000 0,0  0,0 -200,-100  1000,1000 200,-100" \) \
+        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent -resize 1000x1000 +distort Affine "1000,0 0,0  0,0 -200,-100  1000,1000 0,200" \) \
+        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent -resize 1000x1000 +distort Affine "0,0 0,0  0,1000 0,200  1000,0 200,-100" \) \
+        \
+        -background none -compose plus -layers merge +repage -compose over ./resources/cube/{filename}_edited.png
+    """.format(filename=filename)
 
-    right = Image(image)
-    right.resize(d3(1000), d3(860))
-    right.shear(background=Color("none"), x=30)
-    right.rotate(degree=-30)
+    subprocess.run(f"{CMD} -c {COMMAND}", cwd=os.getcwd())
+    return Image(filename=f"{PATH}_edited.png")
 
-    left = Image(image)
-    left.resize(d3(1000), d3(860))
-    left.shear(background=Color("none"), x=-30)
-    left.rotate(degree=30)
 
-    image.resize(width=d3(3000 - 450), height=d3(860 - 100) * 3)
-    image.gaussian_blur(sigma=5)
+def sphere(image: Image, filename: str) -> Image:
 
-    image.composite(top, left=d3(500 - 250), top=d3(0 - 230) + d3(118))
-    image.composite(right, left=d3(1000 - 250) - d3(72), top=d3(860 - 230))
-    image.composite(left, left=d3(0 - 250) + d3(68), top=d3(860 - 230))
+    image.colorize(Color("transparent"), alpha=Color("rgb(1%, 1%, 1%)"))  # Necessary because the spherize script doesn't like colourless images??
+    image.resize(width=1000, height=1000)
 
-    top.close()
-    right.close()
-    left.close()
+    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/sphere/{filename}"))
+    image.save(filename=f"{PATH}.png")
 
-    image.crop(left=80, top=40, right=665, bottom=710)
-    return ""
+    COMMAND = r"./sphere.sh -a 1.1 -b none -s -t resources/sphere/{filename}.png resources/sphere/{filename}_edited.png".format(filename=filename)
+
+    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
+    return Image(filename=f"{PATH}_edited.png")
+
+
+def tshirt(image: Image, filename: str) -> Image:
+
+    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/tshirt/{filename}"))
+    image.save(filename=f"{PATH}.png")
+
+    COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
+
+    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
+    return Image(filename=f"{PATH}_edited.png")
+
+
+def pixel(image: Image, filename: str, method: Literal["square", "s", "hexagon", "h", "random", "r"]) -> Image:
+
+    image.resize(width=1000, height=1000)
+
+    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/pixel/{filename}"))
+    image.save(filename=f"{PATH}.png")
+
+    COMMAND = r"./pixel.sh -k {method} -t 0 -b 150 resources/pixel/{filename}.png resources/pixel/{filename}_edited.png".format(filename=filename, method=method)
+
+    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
+    return Image(filename=f"{PATH}_edited.png")
 
 
 #
@@ -301,7 +261,6 @@ COMMON_GIF_SITES = ["tenor.com", "giphy.com", "gifer.com"]
 
 
 async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> bytes:
-
     async with session.get(url) as request:
 
         if yarl.URL(url).host in COMMON_GIF_SITES:
@@ -334,8 +293,7 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
         return await request.read()
 
 
-async def edit_image(ctx: context.Context, edit_function: Callable[..., None], url: str, **kwargs) -> discord.Embed:
-
+async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> discord.Embed:
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
     image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
 
@@ -346,7 +304,7 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., None], u
     if isinstance(data, EOFError):
         process.terminate()
         process.close()
-        raise exceptions.EmbedError(colour=colours.RED,emoji=emojis.CROSS, description="Something went wrong while trying to edit that image, try again.")
+        raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Something went wrong while trying to edit that image, try again.")
 
     process.join()
 
@@ -365,15 +323,25 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., None], u
     return embed
 
 
-def do_edit_image(edit_function: Callable[..., None], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs):
-
+def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs) -> None:
     try:
 
         with Image(blob=image_bytes) as image, Color("transparent") as colour:
 
-            image.background_color = colour
+            if edit_function in {cube, sphere, tshirt, pixel}:
 
-            if image.format != "GIF":
+                if image.format != "GIF":
+                    image = edit_function(image, **kwargs)
+
+                else:
+                    image.coalesce()
+                    for index, x in enumerate(image.sequence):
+                        image.sequence[index] = edit_function(Image(x), **kwargs)
+                    image.format = "GIF"
+                    image.optimize_transparency()
+
+            elif image.format != "GIF":
+                image.background_color = colour
                 edit_function(image, **kwargs)
 
             else:
