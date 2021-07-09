@@ -3,7 +3,7 @@
 *.ttf
 *.otf
 *.png
-
+*.sh
 
 .idea/
 venv/
