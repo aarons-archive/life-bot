@@ -235,7 +235,7 @@ def tshirt(image: Image, filename: str) -> Image:
 
     COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
 
-    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
+    print(subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd()))
     return Image(filename=f"{PATH}_edited.png")
 
 
