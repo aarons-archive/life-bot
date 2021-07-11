@@ -42,7 +42,7 @@ from utilities import context, exceptions, utils
 if sys.platform == "win32":
     CMD = f"bash"
 else:
-    CMD = f"{os.getenv('SHELL') or '/bin/bash'}"
+    CMD = f"/bin/bash"
 
 
 def blur(image: Image, area: float = 0, amount: float = 3) -> None:
