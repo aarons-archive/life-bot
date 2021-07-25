@@ -37,12 +37,12 @@ from utilities import context, enums, exceptions, utils
 
 __log__: logging.Logger = logging.getLogger(__name__)
 
-
 BAD_ARGUMENT_ERRORS = {
     commands.BadArgument:                   'I couldn\'t understand one or more of the arguments used. Use **{prefix}help {command.qualified_name}** for help.',
     commands.MessageNotFound:               'I couldn\'t find a message that matches **{argument}**.',
     commands.MemberNotFound:                'I couldn\'t find a member that matches **{argument}**.',
     commands.UserNotFound:                  'I couldn\'t find a user that matches **{argument}**.',
+    commands.GuildNotFound:                 'I couldn\'t find a server that matches **{argument}**.',
     commands.ChannelNotFound:               'I couldn\'t find a channel that matches **{argument}**.',
     commands.ChannelNotReadable:            'I don\'t have permission to read messages in **{mention}**.',
     commands.BadColourArgument:             'I couldn\'t find a colour that matches **{argument}**.',

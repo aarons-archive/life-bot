@@ -20,12 +20,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from utilities.converters.datetime import DatetimeConverter
-from utilities.converters.image import ImageConverter
-from utilities.converters.person import PersonConverter
-from utilities.converters.prefix import PrefixConverter
-from utilities.converters.reminder import ReminderRepeatTypeConverter
-from utilities.converters.tag import TagContentConverter, TagNameConverter
-from utilities.converters.time import TimeConverter
-from utilities.converters.timezone import TimezoneConverter
-from utilities.converters.todo import TodoContentConverter
+import discord
+from discord.ext import commands
+
+from utilities import context
+
+
+class PersonConverter(commands.Converter):
+
+    async def convert(self, ctx: context.Context, argument: str) -> discord.Member | discord.User:
+
+        person = None
+
+        try:
+            person = await commands.MemberConverter().convert(ctx, argument)
+        except commands.MemberNotFound:
+            pass
+
+        if not person:
+            try:
+                person = await commands.UserConverter().convert(ctx, argument)
+            except commands.UserNotFound:
+                pass
+
+        if not person:
+            raise commands.MemberNotFound(argument)
+
+        return person

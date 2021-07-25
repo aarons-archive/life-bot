@@ -123,7 +123,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_users.command(name='add', hidden=True)
-    async def blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
+    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: str = 'No reason') -> None:
         """
         Blacklist a user.
 
@@ -143,7 +143,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_users.command(name='remove', hidden=True)
-    async def blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
+    async def blacklist_users_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
         """
         Unblacklist a user.
 
