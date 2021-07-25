@@ -27,6 +27,7 @@ from typing import Any, Optional
 
 import discord
 import humanize
+import pkg_resources
 import psutil
 from discord.ext import commands
 
@@ -317,41 +318,49 @@ class Information(commands.Cog):
                 colour=colours.MAIN,
                 title="Ping:",
         ).add_field(
-                name="Websocket:",
-                value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
+                name="Websocket:", value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
         ).add_field(
-                name="API:",
-                value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
+                name="API:", value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
         ).add_field(
-                name="PSQL:",
-                value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
+                name="\u200B", value="\u200B"
         ).add_field(
-                name="Redis:",
-                value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
+                name="PSQL:", value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
+        ).add_field(
+                name="Redis:", value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
+        ).add_field(
+                name="\u200B", value="\u200B"
         )
         await ctx.reply(embed=embed)
 
     @commands.command(name="stats")
     async def stats(self, ctx: context.Context) -> None:
-        '''
+        """
         Display the bots stats.
-        '''
+        """
 
-        uptime = utils.format_seconds(time.time() - self.bot.start_time, friendly=True)
-
-        embed = discord.Embed(colour=colours.MAIN)
-        embed.add_field(name="Bot info:",
-                        value=f"**Uptime:** {uptime}\n**Guilds:** {len(self.bot.guilds)}\n**Shards:** {len(self.bot.shards)}\n**Users:** {len(self.bot.users)}\n")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Bot stats:",
-                        value=f"**Discord.py:** {discord.__version__}\n**Extensions:** {len(self.bot.extensions)}\n**Commands:** {len(self.bot.commands)}\n**Cogs:** {len(self.bot.cogs)}")
-
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Ping:",
-                        value=f"**Latency:** {round(self.bot.latency * 1000)}ms")
-
-        embed.set_footer(text=f"Created on {utils.format_datetime(self.bot.user.created_at)}")
+        embed = discord.Embed(
+                colour=colours.MAIN,
+                title="Stats:",
+                description=f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
+                            f"`Shards:` {len(self.bot.shards)}\n"
+                            f"`Servers:` {len(self.bot.guilds)}\n"
+                            f"`Members:` {sum(len(guild.members) for guild in self.bot.guilds)}\n"
+                            f"`Users:` {len(self.bot.users)}\n"
+                            f"`Extensions:` {len(self.bot.extensions)}\n"
+                            f"`Cogs:` {len(self.bot.cogs)}\n"
+                            f"`Commands:` {len(self.bot.commands)}\n\n"
+                            f"**Version Info:**\n"
+                            f"`discord.py:` {pkg_resources.get_distribution('discord.py').version}\n"
+                            f"`asyncpg:` {pkg_resources.get_distribution('asyncpg').version}\n"
+                            f"`aioredis:` {pkg_resources.get_distribution('aioredis').version}\n"
+                            f"`aiohttp:` {pkg_resources.get_distribution('aiohttp').version}\n"
+                            f"`slate:` {pkg_resources.get_distribution('slate').version}\n"
+                            f"`pillow:` {pkg_resources.get_distribution('pillow').version}\n"
+                            f"`wand:` {pkg_resources.get_distribution('wand').version}\n"
+        )
         await ctx.reply(embed=embed)
+
+    #
 
     @commands.command(name="system", aliases=["sys"])
     async def system(self, ctx: context.Context) -> None:
