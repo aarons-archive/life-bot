@@ -25,7 +25,7 @@ from utilities import enums, objects, utils
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.reminder')
+__log__: logging.Logger = logging.getLogger('utilities.objects.reminder')
 
 REPEAT_TYPES = {
     1:  lambda dt: dt.add(minutes=30),

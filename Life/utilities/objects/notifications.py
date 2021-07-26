@@ -20,13 +20,12 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.notifications')
+__log__: logging.Logger = logging.getLogger('utilities.objects.notifications')
 
 
 class Notifications:
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
-
         self._bot = bot
         self._user_config = user_config
 

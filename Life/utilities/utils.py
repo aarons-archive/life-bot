@@ -39,7 +39,7 @@ from core import colours, config, emojis, values
 from utilities import exceptions
 
 
-__log__ = logging.getLogger('utilities.utils')
+__log__: logging.Logger = logging.getLogger('utilities.utils')
 
 
 def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:

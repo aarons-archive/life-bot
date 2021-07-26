@@ -32,7 +32,7 @@ from utilities import exceptions, objects, utils
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.managers.users')
+__log__: logging.Logger = logging.getLogger('utilities.managers.users')
 
 IMAGES = {
     'SAI': {
