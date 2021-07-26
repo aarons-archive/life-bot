@@ -22,6 +22,9 @@ SOFTWARE.
 
 import collections
 import logging
+import platform
+import re
+import subprocess
 import time
 from typing import Any, Optional
 
@@ -360,47 +363,50 @@ class Information(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    #
-
     @commands.command(name="system", aliases=["sys"])
     async def system(self, ctx: context.Context) -> None:
-        '''
+        """
         Display the bot"s system stats.
-        '''
+        """
 
         cpu_freq: Any = psutil.cpu_freq()
-        embed = discord.Embed(colour=colours.MAIN)
+        java_version = re.search(r'\"(\d+\.\d+).*\"', subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT).decode()).groups()[0]
 
-        embed.add_field(
+        embed = discord.Embed(
+                colour=colours.MAIN,
+                title="System stats:",
+                description=f"`OS:` {platform.platform()}\n"
+                            f"`Python version:` {platform.python_version()} ({platform.python_implementation()})\n"
+                            f"`Java version:` {java_version}\n"
+                            f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
+        ).add_field(
                 name="System CPU:",
-                value=f"**Frequency:** {round(cpu_freq.current, 2)} Mhz\n**Cores:** {psutil.cpu_count()}\n**Usage:** {psutil.cpu_percent(interval=0.1)}%"
-        )
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(
+                value=f"`Frequency:` {round(cpu_freq.current, 2)} Mhz\n"
+                      f"`Cores (logical):` {psutil.cpu_count()}\n"
+                      f"`Overall Usage:` {psutil.cpu_percent(interval=0.1)}%"
+        ).add_field(
+                name="\u200B", value="\u200B"
+        ).add_field(
                 name="System Memory:",
-                value=f"""
-            **Available:** {round(psutil.virtual_memory().available / 1048576)} MB\n**Total:** {round(psutil.virtual_memory().total / 1048576)} MB
-            **Used:** {round(psutil.virtual_memory().used / 1048576)} MB
-            """
-        )
-
-        embed.add_field(
+                value=f"`Available:` {humanize.naturalsize(psutil.virtual_memory().available, binary=True)}\n"
+                      f"`Total:` {humanize.naturalsize(psutil.virtual_memory().total, binary=True)}\n"
+                      f"`Used:` {humanize.naturalsize(psutil.virtual_memory().used, binary=True)}"
+        ).add_field(
                 name="System Disk:",
-                value=f"""
-            **Total:** {round(psutil.disk_usage('/').total / 1073741824, 2)} GB\n**Used:** {round(psutil.disk_usage('/').used / 1073741824, 2)} GB
-            **Free:** {round(psutil.disk_usage('/').free / 1073741824, 2)} GB
-            """
-        )
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(
+                value=f"`Total:` {humanize.naturalsize(psutil.disk_usage('/').total, binary=True)}\n"
+                      f"`Used:` {humanize.naturalsize(psutil.disk_usage('/').used, binary=True)}\n"
+                      f"`Free:` {humanize.naturalsize(psutil.disk_usage('/').free, binary=True)}"
+        ).add_field(
+                name="\u200B", value="\u200B"
+        ).add_field(
                 name="Process information:",
-                value=f"""
-            **Memory usage:** {round(self.bot.process.memory_full_info().rss / 1048576, 2)} MB\n**CPU usage:** {self.bot.process.cpu_percent()}% 
-            **Threads:** {self.bot.process.num_threads()}
-            """
+                value=f"`Memory usage:` {humanize.naturalsize(self.bot.process.memory_full_info().rss, binary=True)}\n"
+                      f"`CPU usage:` {self.bot.process.cpu_percent()} %\n"
+                      f"`Threads:` {self.bot.process.num_threads()}"
         )
-
         await ctx.reply(embed=embed)
+
+    #
 
     @commands.command(name="rolecounts", aliases=["rcs", "roles"])
     async def role_counts(self, ctx: context.Context) -> None:
