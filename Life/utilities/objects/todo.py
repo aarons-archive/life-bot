@@ -22,13 +22,12 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.todo')
+__log__: logging.Logger = logging.getLogger('utilities.objects.todo')
 
 
 class Todo:
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
-
         self._bot = bot
         self._user_config = user_config
 
@@ -74,14 +73,12 @@ class Todo:
     # Misc
 
     async def delete(self) -> None:
-
         await self.bot.db.execute('DELETE FROM todos WHERE id = $1', self.id)
         del self.user_config._todos[self.id]
 
     # Config
 
     async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
-
         data = await self.bot.db.fetchrow('UPDATE todos SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
         self._content = data['content']
         self._jump_url = data['jump_url'] or self.jump_url

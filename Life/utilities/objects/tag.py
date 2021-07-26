@@ -22,7 +22,7 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.tag')
+__log__: logging.Logger = logging.getLogger('utilities.objects.tag')
 
 
 class Tag:

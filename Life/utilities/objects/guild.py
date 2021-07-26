@@ -23,13 +23,12 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.guild')
+__log__: logging.Logger = logging.getLogger('utilities.objects.guild')
 
 
 class DefaultGuildConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
-
         self._bot = bot
 
         self._id: int = data.get('id', 0)

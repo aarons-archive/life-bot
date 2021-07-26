@@ -24,7 +24,7 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.user')
+__log__: logging.Logger = logging.getLogger('utilities.objects.user')
 
 
 class DefaultUserConfig:

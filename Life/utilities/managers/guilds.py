@@ -23,7 +23,7 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.managers.guilds')
+__log__: logging.Logger = logging.getLogger('utilities.managers.guilds')
 
 
 class GuildManager:
