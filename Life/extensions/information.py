@@ -370,6 +370,9 @@ class Information(commands.Cog):
         """
 
         cpu_freq: Any = psutil.cpu_freq()
+        memory_info = psutil.virtual_memory()
+        disk_usage = psutil.disk_usage("/")
+
         java_version = re.search(r'\"(\d+\.\d+).*\"', subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT).decode()).groups()[0]
 
         embed = discord.Embed(
@@ -388,14 +391,14 @@ class Information(commands.Cog):
                 name="\u200B", value="\u200B"
         ).add_field(
                 name="System Memory:",
-                value=f"`Available:` {humanize.naturalsize(psutil.virtual_memory().available, binary=True)}\n"
-                      f"`Total:` {humanize.naturalsize(psutil.virtual_memory().total, binary=True)}\n"
-                      f"`Used:` {humanize.naturalsize(psutil.virtual_memory().used, binary=True)}"
+                value=f"`Available:` {humanize.naturalsize(memory_info.available, binary=True)}\n"
+                      f"`Total:` {humanize.naturalsize(memory_info.total, binary=True)}\n"
+                      f"`Used:` {humanize.naturalsize(memory_info.used, binary=True)}"
         ).add_field(
                 name="System Disk:",
-                value=f"`Total:` {humanize.naturalsize(psutil.disk_usage('/').total, binary=True)}\n"
-                      f"`Used:` {humanize.naturalsize(psutil.disk_usage('/').used, binary=True)}\n"
-                      f"`Free:` {humanize.naturalsize(psutil.disk_usage('/').free, binary=True)}"
+                value=f"`Total:` {humanize.naturalsize(disk_usage.total, binary=True)}\n"
+                      f"`Used:` {humanize.naturalsize(disk_usage.used, binary=True)}\n"
+                      f"`Free:` {humanize.naturalsize(disk_usage.free, binary=True)}"
         ).add_field(
                 name="\u200B", value="\u200B"
         ).add_field(
