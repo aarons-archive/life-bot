@@ -104,7 +104,7 @@ class Life(commands.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        if ctx.command and ctx.command.name in ["play", "yt-music", "soundcloud", "search", "play-now", "play-next"]:
+        if ctx.command and ctx.command.name in ["play", "yt-music", "soundcloud", "search", "play-now", "play-next", "rolecounts"]:
 
             content = message.content
             start = content.index(ctx.invoked_with) + len(ctx.invoked_with) + 1
