@@ -26,7 +26,7 @@ import platform
 import re
 import subprocess
 import time
-from typing import Any, Optional
+from typing import Any
 
 import discord
 import humanize
@@ -75,6 +75,10 @@ NSFW_LEVELS: dict[discord.NSFWLevel, str] = {
     discord.NSFWLevel.safe:           "Safe - No NSFW content.",
     discord.NSFWLevel.age_restricted: "Maybe - May contain NSFW content."
 }
+
+
+class RoleCountOptions(commands.FlagConverter, delimiter=" ", prefix="--", case_insensitive=True):
+    sorted: bool = False
 
 
 class Information(commands.Cog):
@@ -152,7 +156,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.guild_only()
-    @commands.command(name="icon")
+    @commands.command(name="icon", aliases=["ico"])
     async def icon(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays the current servers icon.
@@ -231,6 +235,53 @@ class Information(commands.Cog):
                 url=utils.splash(guild)
         )
         await ctx.reply(embed=embed)
+
+    @commands.command(name="rolecounts", aliases=["role-counts", "role_counts", "roles", "rcs"])
+    async def role_counts(self, ctx: context.Context, server: discord.Guild = utils.MISSING, *, options: RoleCountOptions) -> None:
+        """
+        Displays roles and how many people have them within a server.
+
+        **server**: The server to get the information for, can be its Name or ID.
+        """
+
+        guild = server or ctx.guild
+
+        counts = {role.name: len(role.members) for role in guild.roles}
+        if options.sorted:
+            counts = dict(sorted(counts.items(), key=lambda kv: kv[1], reverse=True))
+
+        await ctx.paginate(
+                entries=[f"{role_name[:20] + (role_name[20:] and '..'):23} | {role_count}" for role_name, role_count in counts.items()],
+                per_page=20,
+                codeblock=True
+        )
+
+    @commands.command(name="channels")
+    async def channels(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+        """
+        Displays a list of channels in a server.
+
+        **guild**: The server of which to display channels for. Can be its ID or Name. Defaults to the current server.
+        """
+
+        guild = server or ctx.guild
+
+        channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
+        categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
+
+        entries = [f"{utils.channel_emoji(channel, guild=guild, member=ctx.author)}{channel}" for channel in sorted(channels, key=lambda channel: channel.position)]
+
+        space = "\u200b " * 5
+        for category in sorted(categories, key=lambda category: category.position):
+            entries.append(f"{emojis.CHANNELS['CATEGORY']} **{category}**")
+            for channel in category.channels:
+                entries.append(f"{space}{utils.channel_emoji(channel, guild=guild, member=ctx.author)}{channel}")
+
+        await ctx.paginate_embed(
+                entries=entries,
+                per_page=30,
+                title=f"Channels in **{guild}**:"
+        )
 
     #
 
@@ -408,44 +459,6 @@ class Information(commands.Cog):
                       f"`Threads:` {self.bot.process.num_threads()}"
         )
         await ctx.reply(embed=embed)
-
-    #
-
-    @commands.command(name="rolecounts", aliases=["rcs", "roles"])
-    async def role_counts(self, ctx: context.Context) -> None:
-        '''
-        Displays a list of roles and how many people have that role.
-        '''
-
-        counts = {role.name.title(): len(role.members) for role in ctx.guild.roles}
-        counts["Bots (Actual)"] = len([member for member in ctx.guild.members if member.bot])
-
-        roles = [f"{role_name[:20] + (role_name[20:] and '..'):23} | {role_count}" for role_name, role_count in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)]
-        await ctx.paginate(entries=roles, per_page=20, codeblock=True)
-
-    @commands.command(name="channels")
-    async def channels(self, ctx: context.Context, *, guild: Optional[discord.Guild]) -> None:
-        '''
-        Displays a list of a servers channels.
-
-        **guild**: The server of which to display channels for. Can be its ID or Name. Defaults to the current server.
-        '''
-
-        if not guild:
-            guild = ctx.guild
-
-        channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
-        categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
-
-        entries = [f"{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}" for channel in sorted(channels, key=lambda channel: channel.position)]
-
-        space = "\u200b " * 5
-        for category in sorted(categories, key=lambda category: category.position):
-            entries.append(f"{emojis.CHANNELS['CATEGORY']} **{category}**")
-            for channel in category.channels:
-                entries.append(f"{space}{utils.channel_emoji(channel, guild=ctx.guild, member=ctx.author)}{channel}")
-
-        await ctx.paginate_embed(entries=entries, per_page=30, title=f"**{guild.name}**\"s channels.")
 
 
 def setup(bot: Life) -> None:
