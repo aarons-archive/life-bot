@@ -1,14 +1,3 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-
 from __future__ import annotations
 
 import logging
@@ -23,13 +12,12 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__ = logging.getLogger('utilities.objects.guild')
+__log__: logging.Logger = logging.getLogger('utilities.objects.guild')
 
 
 class DefaultGuildConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
-
         self._bot = bot
 
         self._id: int = data.get('id', 0)

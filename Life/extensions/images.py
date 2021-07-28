@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 import random
 from inspect import Parameter
 from typing import Literal, Optional
@@ -668,6 +646,8 @@ class Images(commands.Cog):
             embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image))
             await ctx.reply(embed=embed)
 
+    # In development commands.
+
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name='cube')
     async def cube(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
@@ -678,7 +658,46 @@ class Images(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image))
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='sphere')
+    async def sphere(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Creates a sphere!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='tshirt', aliases=["shirt"])
+    async def tshirt(self, ctx: context.Context, image: Optional[converters.ImageConverter]) -> None:
+        """
+        Creates a tshirt!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f"{ctx.author}")
+            await ctx.reply(embed=embed)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name='pixel')
+    async def pixel(self, ctx: context.Context, image: Optional[converters.ImageConverter], method: Literal["square", "s", "hexagon", "h", "random", "r"] = "random") -> None:
+        """
+        Creates a pixel art!
+
+        `image`: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        """
+
+        async with ctx.channel.typing():
+            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f"{ctx.author}", method=method)
             await ctx.reply(embed=embed)
 
 

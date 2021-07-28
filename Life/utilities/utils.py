@@ -1,32 +1,10 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import colorsys
 import datetime as dt
 import io
 import logging
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import aiohttp
 import discord
@@ -39,11 +17,10 @@ from core import colours, config, emojis, values
 from utilities import exceptions
 
 
-__log__ = logging.getLogger('utilities.utils')
+__log__: logging.Logger = logging.getLogger('utilities.utils')
 
 
 def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:
-
     datetime.replace(microsecond=0)
 
     if type(datetime) is dt.datetime and datetime.tzinfo == dt.timezone.utc:
@@ -53,7 +30,7 @@ def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.Date
 
 
 def format_datetime(datetime: dt.datetime | pendulum.DateTime, *, seconds: bool = False) -> str:
-    return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
+    return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A')
 
 
 def format_date(date: pendulum.Date) -> str:
@@ -64,18 +41,16 @@ def format_time(time: pendulum.Time) -> str:
     return time.format(f'hh:mm:ss')
 
 
-def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: Optional[tuple[str]] = None) -> str:
-
+def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tuple[str] = ("seconds",)) -> str:
     datetime = convert_datetime(datetime)
 
     now = pendulum.now(tz=datetime.timezone)
     now.replace(microsecond=0)
 
-    return humanize.precisedelta(now.diff(datetime), format='%0.0f', suppress=suppress or [])
+    return humanize.precisedelta(now.diff(datetime), format='%0.0f', suppress=suppress)
 
 
 def format_seconds(seconds: float, *, friendly: bool = False) -> str:
-
     seconds = round(seconds)
 
     minute, second = divmod(seconds, 60)
@@ -91,7 +66,6 @@ def format_seconds(seconds: float, *, friendly: bool = False) -> str:
 
 
 def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel, *, guild: discord.Guild, member: discord.Member) -> str:
-
     overwrites = channel.permissions_for(member)
 
     if isinstance(channel, discord.StageChannel):
@@ -111,20 +85,19 @@ def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.
 
 
 def badge_emojis(person: discord.User | discord.Member) -> str:
-
     badges = [badge for badge_name, badge in emojis.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
     if dict(person.public_flags)['verified_bot'] is False and person.bot:
         badges.append(emojis.BOT)
-    if isinstance(person, discord.Member) and person.premium_since:
-        badges.append(emojis.BADGES)
 
-    if person.avatar.is_animated():
-        badges.append(emojis.NITRO)
-
-    elif isinstance(person, discord.Member) and ((activity_list := [activity for activity in person.activities if isinstance(activity, discord.CustomActivity)]) is not None):
-        if activity_list[0].emoji and activity_list[0].emoji.is_custom_emoji():
+    if isinstance(person, discord.Member):
+        if person.premium_since:
+            badges.append(emojis.BOOSTER)
+        if ((activity := discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)) is not None) and activity.emoji and activity.emoji.is_custom_emoji():
             badges.append(emojis.NITRO)
+
+    if person.avatar.is_animated() and emojis.NITRO not in badges:
+        badges.append(emojis.NITRO)
 
     return ' '.join(badges) if badges else 'N/A'
 
@@ -132,7 +105,7 @@ def badge_emojis(person: discord.User | discord.Member) -> str:
 def activities(member: discord.Member) -> str:  # sourcery no-metrics
 
     if not member.activities:
-        return 'N/A'
+        return '• N/A'
 
     message = []
 
@@ -151,7 +124,7 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
 
         elif isinstance(activity, discord.Spotify):
 
-            album = f" from their album **{activity.album}**" if activity.album and activity.album != activity.title else ""
+            album = f" from the album **{activity.album}**" if activity.album and activity.album != activity.title else ""
             message.append(f'• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{", ".join(activity.artists)}** {album}')
 
         elif isinstance(activity, discord.Game):
@@ -187,7 +160,6 @@ def format_command(command: commands.Command) -> str:
 
 
 def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
-
     if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
         return 'Automatic'
 
@@ -202,7 +174,6 @@ def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guil
 
 
 def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:
-
     if guild and isinstance(person, discord.User):
         member = guild.get_member(person.id)
         return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, 'name', 'Unknown')
@@ -214,7 +185,6 @@ def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild
 
 
 async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
-
     data = aiohttp.FormData()
     data.add_field('file', value=file_bytes, filename=f'file.{file_format.lower()}')
 
@@ -229,7 +199,6 @@ async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.
 
 
 async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = 'txt', max_characters: int = 1024) -> str:
-
     if len(content) <= max_characters:
         return content
 
@@ -244,7 +213,6 @@ async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: 
 
 
 def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
-
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
@@ -264,7 +232,6 @@ def embed(
         author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
         colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
 ) -> discord.Embed:
-
     embed = discord.Embed(colour=colour)
 
     if embed_footer:
@@ -286,3 +253,18 @@ def embed(
         embed.url = url
 
     return embed
+
+
+class _MissingSentinel:
+
+    def __eq__(self, other):
+        return False
+
+    def __bool__(self):
+        return False
+
+    def __repr__(self):
+        return '...'
+
+
+MISSING: Any = _MissingSentinel()

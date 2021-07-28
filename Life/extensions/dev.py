@@ -1,15 +1,3 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
-
 import collections
 import time
 
@@ -123,7 +111,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_users.command(name='add', hidden=True)
-    async def blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
+    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: str = 'No reason') -> None:
         """
         Blacklist a user.
 
@@ -143,7 +131,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_users.command(name='remove', hidden=True)
-    async def blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
+    async def blacklist_users_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
         """
         Unblacklist a user.
 
