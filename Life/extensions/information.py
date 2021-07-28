@@ -15,6 +15,7 @@ from discord.ext import commands
 from core import colours, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
+import inspect
 
 
 __log__: logging.Logger = logging.getLogger("extensions.information")
@@ -437,6 +438,30 @@ class Information(commands.Cog):
                       f"`Threads:` {self.bot.process.num_threads()}"
         )
         await ctx.reply(embed=embed)
+        
+    @commands.command(name='source', aliases=['src'])
+    async def source(self, ctx: context.Context, *, command: str = None) -> None:
+        base_url="https://github.com/Axelancerr/Life"
+        branch="rewrite"
+
+        if command is None:
+            return await ctx.reply(f"You can find my source code here:\n{base_url + '/tree/' + branch}")
+
+        command =  self.bot.get_command(command)
+            
+        if not command:
+            return await ctx.send(f"Couldn't find command `{command}`.")
+
+        source = command.callback.__code__
+        module = command.callback.__module__
+        filename = source.co_filename
+
+        source_lines, starting_line_no = inspect.getsourcelines(source)
+
+        location = module.replace('.', '/') + '.py'
+
+        final_url = f'<{base_url}/blob/{branch}/{location}#L{starting_line_no}-L{starting_line_no + len(source_lines) - 1}>'
+        await ctx.send(f'You can find the source code for `{command}` command here:\n{final_url}')
 
 
 def setup(bot: Life) -> None:
