@@ -290,19 +290,23 @@ class Information(commands.Cog):
                 colour=colours.MAIN,
                 title=f"Information about **{user}**:",
                 description=description
-        ).add_field(
-                name="Server related information:",
-                value=f"**Nickname:** {user.nick}\n"
-                      f"**Joined on:** {utils.format_datetime(user.joined_at)}\n"
-                      f"**Joined:** {utils.format_difference(user.joined_at)} ago\n"
-                      f"**Join Position:** {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}\n"
-                      f"**Top role:** {user.top_role.mention}\n"
-                      f"**Role count:** {len(user.roles) - 1}\n",
         ).set_footer(
                 text=f"ID: {user.id}"
         ).set_thumbnail(
                 url=utils.avatar(user)
         )
+
+        if isinstance(user, discord.Member):
+            embed.add_field(
+                    name="Server related information:",
+                    value=f"**Nickname:** {user.nick}\n"
+                          f"**Joined on:** {utils.format_datetime(user.joined_at)}\n"
+                          f"**Joined:** {utils.format_difference(user.joined_at)} ago\n"
+                          f"**Join Position:** {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}\n"
+                          f"**Top role:** {user.top_role.mention}\n"
+                          f"**Role count:** {len(user.roles) - 1}\n",
+            )
+
         await ctx.reply(embed=embed)
 
     @commands.command(name="avatar", aliases=["avy"])
