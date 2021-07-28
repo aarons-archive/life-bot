@@ -1,10 +1,12 @@
 import collections
+import inspect
 import logging
+import os
 import platform
 import re
 import subprocess
 import time
-from typing import Any
+from typing import Any, Optional
 
 import discord
 import humanize
@@ -15,7 +17,6 @@ from discord.ext import commands
 from core import colours, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
-import inspect
 
 
 __log__: logging.Logger = logging.getLogger("extensions.information")
@@ -438,30 +439,39 @@ class Information(commands.Cog):
                       f"`Threads:` {self.bot.process.num_threads()}"
         )
         await ctx.reply(embed=embed)
-        
+
     @commands.command(name='source', aliases=['src'])
-    async def source(self, ctx: context.Context, *, command: str = None) -> None:
-        base_url="https://github.com/Axelancerr/Life"
-        branch="rewrite"
+    async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
 
-        if command is None:
-            return await ctx.reply(f"You can find my source code here:\n{base_url + '/tree/' + branch}")
+        URL = "https://github.com/Axelancerr/Life"
+        BRANCH = "rewrite"
 
-        command =  self.bot.get_command(command)
-            
         if not command:
-            return await ctx.send(f"Couldn't find command `{command}`.")
+            await ctx.reply(embed=utils.embed(emoji="\U0001f4da", description=f"My source code can be viewed here: {URL}."))
+            return
 
-        source = command.callback.__code__
-        module = command.callback.__module__
-        filename = source.co_filename
+        if command == "help":
+            source = type(self.bot.help_command)
+            module = source.__module__
+            filename = inspect.getsourcefile(source)
 
-        source_lines, starting_line_no = inspect.getsourcelines(source)
+        else:
+            if (command := self.bot.get_command(command.replace(".", ""))) is None:
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I couldn't find that command.")
 
-        location = module.replace('.', '/') + '.py'
+            source = command.callback.__code__
+            module = command.callback.__module__
+            filename = source.co_filename
 
-        final_url = f'<{base_url}/blob/{branch}/{location}#L{starting_line_no}-L{starting_line_no + len(source_lines) - 1}>'
-        await ctx.send(f'You can find the source code for `{command}` command here:\n{final_url}')
+        lines, start_line_number = inspect.getsourcelines(source)
+        if not module.startswith('discord'):
+            location = os.path.relpath(filename).replace('\\', '/')
+        else:
+            location = module.replace('.', '/') + '.py'
+            URL = 'https://github.com/Rapptz/discord.py'
+            BRANCH = 'master'
+
+        await ctx.reply(f'<{URL}/blob/{BRANCH}/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>')
 
 
 def setup(bot: Life) -> None:
