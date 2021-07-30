@@ -454,14 +454,14 @@ class Information(commands.Cog):
         if command == "help":
             source = type(self.bot.help_command)
             module = source.__module__
-            filename = inspect.getsourcefile(source)
+            filename: str = str(inspect.getsourcefile(source))
 
         else:
-            if (command := self.bot.get_command(command.replace(".", ""))) is None:
+            if (obj := self.bot.get_command(command.replace(".", ""))) is None:
                 raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I couldn't find that command.")
 
-            source = command.callback.__code__
-            module = command.callback.__module__
+            source = obj.callback.__code__
+            module = obj.callback.__module__
             filename = source.co_filename
 
         lines, start_line_number = inspect.getsourcelines(source)
