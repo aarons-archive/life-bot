@@ -15,8 +15,8 @@ class EmbedError(LifeError):
 
     def __init__(
             self,
-            embed_footer_url: Optional[str] = None,
-            embed_footer: Optional[str] = None,
+            footer_url: Optional[str] = None,
+            footer: Optional[str] = None,
             image: Optional[str] = None,
             thumbnail: Optional[str] = None,
             author: Optional[str] = None,
@@ -29,8 +29,8 @@ class EmbedError(LifeError):
             emoji: Optional[str] = None
     ) -> None:
         self.embed = utils.embed(
-                embed_footer_url=embed_footer_url,
-                embed_footer=embed_footer,
+                footer_url=footer_url,
+                footer=footer,
                 image=image,
                 thumbnail=thumbnail,
                 author=author,

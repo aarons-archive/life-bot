@@ -228,31 +228,29 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
 
 
 def embed(
-        embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
+        footer_url: Optional[str] = None, footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
         author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
         colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
 ) -> discord.Embed:
-    embed = discord.Embed(colour=colour)
 
-    if embed_footer:
-        embed.set_footer(text=embed_footer, icon_url=embed_footer_url or discord.embeds.EmptyEmbed)
+    e = discord.Embed(colour=colour)
 
+    if footer:
+        e.set_footer(text=footer, icon_url=footer_url or discord.embeds.EmptyEmbed)
     if image:
-        embed.set_image(url=image)
+        e.set_image(url=image)
     if thumbnail:
-        embed.set_thumbnail(url=thumbnail)
-
+        e.set_thumbnail(url=thumbnail)
     if author:
-        embed.set_author(name=author, url=author_url or discord.embeds.EmptyEmbed, icon_url=author_icon_url or discord.embeds.EmptyEmbed)
-
+        e.set_author(name=author, url=author_url or discord.embeds.EmptyEmbed, icon_url=author_icon_url or discord.embeds.EmptyEmbed)
     if title:
-        embed.title = title
+        e.title = title
     if description:
-        embed.description = f"{emoji} {values.ZWSP} {description}" if emoji else description
+        e.description = f"{emoji} {values.ZWSP} {description}" if emoji else description
     if url:
-        embed.url = url
+        e.url = url
 
-    return embed
+    return e
 
 
 class _MissingSentinel:
