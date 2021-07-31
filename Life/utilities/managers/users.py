@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
 from discord.ext import tasks
 
-from core import colours
+from core import colours, emojis
 from utilities import exceptions, objects, utils
 
 
@@ -189,9 +189,9 @@ class UserManager:
                 key=lambda config: config.time.offset_hours
         )
 
-    def birthdays(self, *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
+    def birthdays(self, *, guild_id: int) -> list[objects.UserConfig]:
 
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
+        if not (guild := self.bot.get_guild(guild_id)):
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
 
         return sorted(
@@ -429,10 +429,10 @@ class UserManager:
 
         return file
 
-    async def create_birthday_card(self, *, guild_id: Optional[int] = None) -> discord.File:
+    async def create_birthday_card(self, *, guild_id: int) -> discord.File:
 
         if not (birthdays := self.birthdays(guild_id=guild_id)):
-            raise exceptions.ArgumentError('There are no users who have set their birthday, or everyone has set them to be private.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="No one has set their birthday, or everyone has set them to be private.")
 
         birthday_avatars = {}
 
@@ -460,7 +460,7 @@ class UserManager:
     @staticmethod
     def create_grid_image(data: dict[str, io.BytesIO]) -> io.BytesIO:
 
-        width_x, height_y = (1600 * (len(data) if len(data) < 5 else 5)) + 100, (1800 * math.ceil(len(data) / 5)) + 100
+        width_x, height_y = ((1600 * min(len(data), 5)) + 100), ((1800 * math.ceil(len(data) / 5)) + 100)
 
         with Image.new(mode='RGBA', size=(width_x, height_y), color=colours.MAIN.to_rgb()) as image:
 
