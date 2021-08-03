@@ -21,7 +21,7 @@ class Birthdays(commands.Cog):
         """
         Display yours or another persons birthday.
 
-        `person`: The person to display the birthday of. Can be their ID, Username, Nickname or @Mention, If not provided than your birthday will be displayed.
+        **person**: The person to display the birthday of. Can be their ID, Username, Nickname or @Mention, If not provided than your birthday will be displayed.
         """
 
         member = person or ctx.author
@@ -47,7 +47,7 @@ class Birthdays(commands.Cog):
         """
         Sets your birthday.
 
-        `date`: Your birthday. This should include some form of date such as **tomorrow**, **in 3 weeks** or **1st january 2020**.
+        **date**: Your birthday. This should include some form of date such as **tomorrow**, **in 3 weeks** or **1st january 2020**.
         """
 
         entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(date[1].items())}
