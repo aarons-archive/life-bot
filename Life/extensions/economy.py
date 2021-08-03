@@ -76,11 +76,11 @@ class Economy(commands.Cog):
         Displays the leaderboard in a text table.
         """
 
-        if not (leaderboard := self.bot.user_manager.leaderboard()):
+        if not (leaderboard := self.bot.user_manager.leaderboard(guild_id=getattr(ctx.guild, "id", None))):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='There are no leaderboard stats.')
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
-        
+
         entries = [
             f"║ {index + 1:<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {utils.name(person=self.bot.get_user(user_config.id), guild=ctx.guild):<37} ║"
             for index, user_config in enumerate(leaderboard)
@@ -93,8 +93,9 @@ class Economy(commands.Cog):
                        "║ Rank  ║ XP        ║ Level ║ Name                                  ║\n"
                        "╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n",
                 footer=f"\n"
-                       f"║       ║           ║       ║                                       ║"
-                       f"║ {self.bot.user_manager.rank(ctx.author.id):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║"
-                       f"╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝",
+                       f"║       ║           ║       ║                                       ║\n"
+                       f"╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n"
+                       f"║ {self.bot.user_manager.rank(ctx.author.id, guild_id=getattr(ctx.guild, 'id', None)):<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {str(ctx.author):<37} ║\n"
+                       f"╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n",
                 codeblock=True
         )
