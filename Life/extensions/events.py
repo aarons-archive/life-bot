@@ -16,20 +16,25 @@ from utilities import context, enums, exceptions, utils
 __log__: logging.Logger = logging.getLogger(__name__)
 
 BAD_ARGUMENT_ERRORS = {
-    commands.BadArgument:                   "I couldn't understand one or more of the arguments used. Use **{prefix}help {command.qualified_name}** for help.",
+    commands.BadArgument:                   "I couldn't convert one of the arguments you passed. Use **{help}** for help.",
     commands.MessageNotFound:               "I couldn't find a message that matches **{argument}**.",
     commands.MemberNotFound:                "I couldn't find a member that matches **{argument}**.",
-    commands.UserNotFound:                  "I couldn't find a user that matches **{argument}**.",
     commands.GuildNotFound:                 "I couldn't find a server that matches **{argument}**.",
+    commands.UserNotFound:                  "I couldn't find a user that matches **{argument}**.",
     commands.ChannelNotFound:               "I couldn't find a channel that matches **{argument}**.",
-    commands.ChannelNotReadable:            "I don't have permission to read messages in **{mention}**.",
+    commands.ChannelNotReadable:            "I don't have permission to read messages in **{argument.mention}**.",
     commands.BadColourArgument:             "I couldn't find a colour that matches **{argument}**.",
     commands.RoleNotFound:                  "I couldn't find a role that matches **{argument}**.",
-    commands.ThreadNotFound: "I couldn't find a thread that matches **{argument}**.",
-    commands.BadInviteArgument:             "That invite has expired or is invalid.",
+    commands.BadInviteArgument:             "That is not a valid invite.",
     commands.EmojiNotFound:                 "I couldn't find an emoji that matches **{argument}**.",
     commands.PartialEmojiConversionFailure: "**{argument}** does not match the emoji format.",
     commands.BadBoolArgument:               "**{argument}** is not a valid true or false value.",
+    commands.ThreadNotFound:                "I couldn't find a thread that matches **{argument}**.",
+    commands.BadFlagArgument:               "I couldn't convert a value for one of the flags you passed.",
+    commands.MissingFlagArgument:           "You missed a value for the **{error.flag.name}** flag.",
+    commands.TooManyFlags:                  "You passed too many values to the **{error.flag.name}** flag.",
+    commands.MissingRequiredFlag:           "You missed the **{error.flag.name}** flag."
+
 }
 
 COOLDOWN_BUCKETS = {
@@ -81,8 +86,6 @@ class Events(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    # Error handling
-
     @commands.Cog.listener()
     async def on_command_error(self, ctx: context.Context, error: Any) -> Optional[discord.Message]:
 
@@ -123,10 +126,14 @@ class Events(commands.Cog):
 
         elif isinstance(error, commands.BadArgument):
             argument = getattr(error, "argument", None)
-            message = BAD_ARGUMENT_ERRORS.get(type(error), "None").format(argument=argument, prefix=config.PREFIX, command=ctx.command, mention=getattr(argument, "mention", None))
+            message = BAD_ARGUMENT_ERRORS.get(type(error), "None").format(
+                    argument=argument,
+                    help=f"{config.PREFIX}help {ctx.command.qualified_name}",
+                    error=error
+            )
 
         elif isinstance(error, commands.BadUnionArgument):
-            message = f"I couldn\"t understand the **{error.param.name}** argument. Use **{config.PREFIX}help {ctx.command.qualified_name}** for help."
+            message = f"I couldn't understand the **{error.param.name}** argument. Use **{config.PREFIX}help {ctx.command.qualified_name}** for help."
 
         elif isinstance(error, commands.BadLiteralArgument):
             message = f"The argument **{error.param.name}** must be one of {', '.join([f'**{arg}**' for arg in error.literals])}."
