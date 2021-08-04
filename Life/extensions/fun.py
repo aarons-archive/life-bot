@@ -197,7 +197,7 @@ class Fun(commands.Cog):
         """
         Chooses something from a list of choices.
 
-        **choices**: A list of choices to choose from. These should be separated using just quotes. For example `!choose "Do coding" "Do gaming"`
+        **choices**: A list of choices to choose from. These should be separated using just quotes. For example **l-choose "Do coding" "Do gaming"**
         """
 
         if len(choices) <= 1:
