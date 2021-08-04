@@ -69,10 +69,10 @@ class Fun(commands.Cog):
     @tasks.loop(minutes=5)
     async def clear_states(self) -> None:
 
-        self.MAGIC_8_BALL_PREDICTIONS = {}
-        self.RATES = {}
-        self.IQ_RATES = {}
-        self.GAY_RATES = {}
+        self.MAGIC_8_BALL_PREDICTIONS.clear()
+        self.RATES.clear()
+        self.IQ_RATES.clear()
+        self.GAY_RATES.clear()
 
     @clear_states.before_loop
     async def before_clear_states(self) -> None:
@@ -216,14 +216,10 @@ class Fun(commands.Cog):
 
         if len(choices) <= 1:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Not enough choices to choose from.")
-
-        if times is None:
-            times = (len(choices) ** 3) + 1
-
-        if times > 999999999:
+        if times and times > 999999999:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That a bit too many times...")
 
-        times = min(10001, max(1, times))
+        times = min(10001, max(1, (len(choices) ** 3) + 1 if not times else times))
         counter = collections.Counter(random.choice(list(map(str, choices))) for _ in range(times))
 
         await ctx.paginate(
