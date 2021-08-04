@@ -4,7 +4,7 @@ import os
 import os.path
 import subprocess
 import sys
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal
 
 import aiohttp
 import bs4
@@ -24,28 +24,33 @@ else:
     CMD = f"/bin/bash"
 
 
-def blur(image: Image, area: float = 0, amount: float = 3) -> None:
+PixelInterpolateMethods = Literal["undefined", "average", "average9", "average16", "background", "bilinear", "blend", "catrom", "integer", "mesh", "nearest", "spline"]
+NoiseTypes = Literal["undefined", "uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"]
+
+
+def blur(image: Image, area: float, amount: float) -> None:
     image.blur(radius=area, sigma=amount)
 
 
-def adaptive_blur(image: Image, radius: float = 0, sigma: float = 3) -> None:
+def adaptive_blur(image: Image, radius: float, sigma: float) -> None:
     image.adaptive_blur(radius=radius, sigma=sigma)
 
 
-def adaptive_sharpen(image: Image, radius: float = 0, sigma: float = 0) -> None:
+def adaptive_sharpen(image: Image, radius: float, sigma: float) -> None:
     image.adaptive_sharpen(radius=radius, sigma=sigma)
 
 
-def blueshift(image: Image, factor: float = 1.5) -> None:
+def blueshift(image: Image, factor: float) -> None:
     image.blue_shift(factor=factor)
 
 
-def border(image: Image, colour: str, width: int = 1, height: int = 1) -> None:
+def border(image: Image, colour: str, width: int, height: int) -> None:
+
     with Color(colour) as color:
         image.border(color=color, width=width, height=height, compose="atop")
 
 
-def edge(image: Image, radius: float = 0, sigma: float = 1) -> None:
+def edge(image: Image, radius: float, sigma: float) -> None:
     image.canny(radius=radius, sigma=sigma)
 
 
@@ -53,7 +58,8 @@ def charcoal(image: Image, radius: float, sigma: float) -> None:
     image.charcoal(radius=radius, sigma=sigma)
 
 
-def colorize(image: Image, colour=None) -> None:
+def colorize(image: Image, colour: str) -> None:
+
     with Color(colour) as color, Color("rgb(50%, 50%, 50%)") as alpha:
         image.colorize(color=color, alpha=alpha)
 
@@ -63,10 +69,11 @@ def despeckle(image: Image) -> None:
 
 
 def floor(image: Image) -> None:
+
     image.virtual_pixel = "tile"
     image.distort(
-            "perspective",
-            (
+            method="perspective",
+            arguments=(
                 0, 0, image.width * 0.2, image.height * 0.5,
                 image.width, 0, image.width * 0.8, image.height * 0.5,
                 0, image.height, image.width * 0.1, image.height,
@@ -75,7 +82,8 @@ def floor(image: Image) -> None:
     )
 
 
-def emboss(image: Image, radius: float = 0, sigma: float = 0) -> None:
+def emboss(image: Image, radius: float, sigma: float) -> None:
+
     image.transform_colorspace("gray")
     image.emboss(radius=radius, sigma=sigma)
 
@@ -92,28 +100,29 @@ def flop(image: Image) -> None:
     image.flop()
 
 
-def frame(image: Image, matte: str, width: int = 10, height: int = 10, inner_bevel: float = 5, outer_bevel: float = 5) -> None:
+def frame(image: Image, matte: str, width: int, height: int, inner_bevel: float, outer_bevel: float) -> None:
+
     with Color(matte) as color:
-        image.frame(matte=color, width=width, height=height, inner_bevel=inner_bevel, outer_bevel=outer_bevel)
+        image.frame(matte=color, width=width, height=height, inner_bevel=inner_bevel, outer_bevel=outer_bevel, compose="atop")
 
 
-def gaussian_blur(image: Image, radius: float = 0, sigma: float = 0) -> None:
+def gaussian_blur(image: Image, radius: float, sigma: float) -> None:
     image.gaussian_blur(radius=radius, sigma=sigma)
 
 
-def implode(image: Image, amount: float) -> None:
-    image.implode(amount=amount)
+def implode(image: Image, amount: float, method: PixelInterpolateMethods) -> None:
+    image.implode(amount=amount, method=method)
 
 
-def kmeans(image: Image, number_colours: Optional[int] = None) -> None:
+def kmeans(image: Image, number_colours: int) -> None:
     image.kmeans(number_colors=number_colours)
 
 
-def kuwahara(image: Image, radius: float = 1, sigma: Optional[float] = None) -> None:
+def kuwahara(image: Image, radius: float, sigma: float) -> None:
     image.kuwahara(radius=radius, sigma=sigma)
 
 
-def motion_blur(image: Image, radius: float = 0, sigma: float = 0, angle: float = 0) -> None:
+def motion_blur(image: Image, radius: float, sigma: float, angle: float) -> None:
     image.motion_blur(radius=radius, sigma=sigma, angle=angle)
 
 
@@ -121,40 +130,40 @@ def negate(image: Image) -> None:
     image.negate(channel="rgb")
 
 
-def noise(image: Image, method: str = "uniform", attenuate: float = 1) -> None:
-    image.noise(method, attenuate=attenuate)
+def noise(image: Image, noise_type: NoiseTypes, attenuate: float) -> None:
+    image.noise(noise_type=noise_type, attenuate=attenuate)
 
 
-def oil_paint(image: Image, radius: float = 0, sigma: float = 0) -> None:
+def oil_paint(image: Image, radius: float, sigma: float) -> None:
     image.oil_paint(radius=radius, sigma=sigma)
 
 
-def polaroid(image: Image, angle: float = 0, caption=None) -> None:
-    image.polaroid(angle=angle, caption=caption)
+def polaroid(image: Image, angle: float, caption: str, method: PixelInterpolateMethods) -> None:
+    image.polaroid(angle=angle, caption=caption, method=method)
 
 
-def rotate(image: Image, degree: float, reset: bool = True) -> None:
-    image.rotate(degree=degree, reset_coords=reset)
+def rotate(image: Image, degree: float, reset_coords: bool) -> None:
+    image.rotate(degree=degree, reset_coords=reset_coords)
 
 
-def sepia_tone(image: Image, threshold: float = 0.8) -> None:
+def sepia_tone(image: Image, threshold: float) -> None:
     image.sepia_tone(threshold=threshold)
 
 
-def sharpen(image: Image, radius: float = 0, sigma: float = 0) -> None:
+def sharpen(image: Image, radius: float, sigma: float) -> None:
     image.adaptive_sharpen(radius=radius, sigma=sigma)
 
 
-def solarize(image: Image, threshold: float = 0.5) -> None:
+def solarize(image: Image, threshold: float) -> None:
     image.solarize(threshold=threshold, channel="rgb")
 
 
-def spread(image: Image, radius: float) -> None:
-    image.spread(radius=radius)
+def spread(image: Image, radius: float, method: PixelInterpolateMethods) -> None:
+    image.spread(radius=radius, method=method)
 
 
-def swirl(image: Image, degree: float) -> None:
-    image.swirl(degree=degree)
+def swirl(image: Image, degree: float, method: PixelInterpolateMethods) -> None:
+    image.swirl(degree=degree, method=method)
 
 
 def transparentize(image: Image, transparency: float) -> None:
@@ -169,8 +178,8 @@ def transverse(image: Image) -> None:
     image.transverse()
 
 
-def wave(image: Image) -> None:
-    image.wave(amplitude=image.height / 32, wave_length=image.width / 4)
+def wave(image: Image, method: PixelInterpolateMethods) -> None:
+    image.wave(amplitude=image.height / 32, wave_length=image.width / 5, method=method)
 
 
 def cube(image: Image, filename: str) -> Image:
@@ -195,7 +204,7 @@ def cube(image: Image, filename: str) -> Image:
 
 def sphere(image: Image, filename: str) -> Image:
 
-    image.colorize(Color("transparent"), alpha=Color("rgb(1%, 1%, 1%)"))  # Necessary because the spherize script doesn't like colourless images??
+    image.colorize(Color("transparent"), alpha=Color("rgb(1%, 1%, 1%)"))
     image.resize(width=1000, height=1000)
 
     PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/sphere/{filename}"))
@@ -240,6 +249,7 @@ COMMON_GIF_SITES = ["tenor.com", "giphy.com", "gifer.com"]
 
 
 async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> bytes:
+
     async with session.get(url) as request:
 
         if yarl.URL(url).host in COMMON_GIF_SITES:
@@ -255,7 +265,6 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
             )
 
         if request.headers.get("Content-Type") not in VALID_CONTENT_TYPES:
-            print(request.headers.get("Content-Type"))
             raise exceptions.EmbedError(
                     colour=colours.RED,
                     emoji=emojis.CROSS,
@@ -273,6 +282,7 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
 
 
 async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> discord.Embed:
+
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
     image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
 
@@ -303,8 +313,8 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
 
 
 def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs) -> None:
-    try:
 
+    try:
         with Image(blob=image_bytes) as image, Color("transparent") as colour:
 
             if edit_function in {cube, sphere, tshirt, pixel}:
@@ -314,9 +324,11 @@ def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: m
 
                 else:
                     image.coalesce()
+
                     for index, x in enumerate(image.sequence):
                         image.sequence[index] = edit_function(Image(x), **kwargs)
                     image.format = "GIF"
+
                     image.optimize_transparency()
 
             elif image.format != "GIF":
@@ -326,9 +338,9 @@ def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: m
             else:
                 image.coalesce()
                 image.iterator_reset()
-
+                
+                image.background_color = colour
                 edit_function(image, **kwargs)
-
                 while image.iterator_next():
                     image.background_color = colour
                     edit_function(image, **kwargs)
