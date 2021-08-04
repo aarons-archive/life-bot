@@ -10,11 +10,11 @@ class ImageConverter(commands.Converter):
 
         try:
             member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
-        except commands.BadArgument:
+        except commands.MemberNotFound:
             pass
         else:
-            await ctx.reply(f'Editing the avatar of `{member}`. If this is a mistake please specify the user/image you would like to edit before any extra arguments.')
-            return utils.avatar(person=member)
+            await ctx.reply(f"Editing **{member}**'s avatar. If this is a mistake please specify the user/image you would like to edit before any extra arguments.")
+            return utils.avatar(member)
 
         if (check := yarl.URL(argument)) and check.scheme and check.host:
             return argument
@@ -33,8 +33,8 @@ class ImageConverter(commands.Converter):
         else:
             return str(partial_emoji.url)
 
-        url = f'https://twemoji.maxcdn.com/v/latest/72x72/{ord(argument[0]):x}.png'
-        async with ctx.bot.session.get(url) as response:
+        url = f"https://twemoji.maxcdn.com/v/latest/72x72/{ord(argument[0]):x}.png"
+        async with ctx.bot.session.get(url=f"https://twemoji.maxcdn.com/v/latest/72x72/{ord(argument[0]):x}.png") as response:
             if response.status == 200:
                 return url
 
