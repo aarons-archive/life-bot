@@ -8,7 +8,6 @@ from typing import Any, Callable, Literal
 
 import aiohttp
 import bs4
-import discord
 import humanize
 import yarl
 from wand.color import Color
@@ -28,8 +27,8 @@ PixelInterpolateMethods = Literal["undefined", "average", "average9", "average16
 NoiseTypes = Literal["undefined", "uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"]
 
 
-def blur(image: Image, area: float, amount: float) -> None:
-    image.blur(radius=area, sigma=amount)
+def blur(image: Image, radius: float, sigma: float) -> None:
+    image.blur(radius=radius, sigma=sigma)
 
 
 def adaptive_blur(image: Image, radius: float, sigma: float) -> None:
@@ -223,7 +222,7 @@ def tshirt(image: Image, filename: str) -> Image:
 
     COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
 
-    print(subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd()))
+    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
     return Image(filename=f"{PATH}_edited.png")
 
 
@@ -281,7 +280,9 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
         return await request.read()
 
 
-async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> discord.Embed:
+async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
+
+    message = await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji="<a:loading:872608197314220154>", description="| Processing image"))
 
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
     image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
@@ -290,10 +291,6 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
     process.start()
 
     data = await ctx.bot.loop.run_in_executor(None, receiving_pipe.recv)
-    if isinstance(data, EOFError):
-        process.terminate()
-        process.close()
-        raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Something went wrong while trying to edit that image, try again.")
 
     process.join()
 
@@ -302,14 +299,15 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
     process.terminate()
     process.close()
 
+    if data is ValueError or data is EOFError:
+        await message.edit(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Image edit failed."))
+        raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Something went wrong while editing that image, try again.")
+
     url = await utils.upload_file(ctx.bot.session, file_bytes=data[0], file_format=data[1])
-
-    embed = discord.Embed(colour=colours.MAIN)
-    embed.set_image(url=url)
-
     del data
 
-    return embed
+    await message.edit(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Image edit success."))
+    await ctx.reply(url)
 
 
 def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs) -> None:
@@ -338,7 +336,7 @@ def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: m
             else:
                 image.coalesce()
                 image.iterator_reset()
-                
+
                 image.background_color = colour
                 edit_function(image, **kwargs)
                 while image.iterator_next():
