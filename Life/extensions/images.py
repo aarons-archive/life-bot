@@ -59,8 +59,8 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            amount: float = 3,
-            area: float = 0
+            radius: float = 10,
+            sigma: float = 5
     ) -> None:
         """
         Blurs the given image.
@@ -68,14 +68,12 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if 0 < amount > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**amount** must be between **0** and **30**.")
-        if 0 < area > 30:
+        if 0 < radius > 30:
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**radius** must be between **0** and **30**.")
+        if 0 < sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**sigma** must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.blur, url=str(image), amount=amount, area=area)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.blur, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="adaptive_blur", aliases=["ab"])
@@ -93,13 +91,11 @@ class Images(commands.Cog):
         """
 
         if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**radius** must be between **0** and **30**.")
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_blur, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_blur, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="adaptive_sharpen", aliases=["as"])
@@ -121,9 +117,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 50:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **50**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_sharpen, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_sharpen, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="blue_shift", aliases=["blueshift", "bs"])
@@ -143,9 +137,7 @@ class Images(commands.Cog):
         if factor < 0 or factor > 20:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Factor must be between **0** and **20**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.blueshift, url=str(image), factor=factor)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.blueshift, url=str(image), factor=factor)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="border")
@@ -168,9 +160,7 @@ class Images(commands.Cog):
 
         colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.border, url=str(image), colour=colour_code, width=width, height=height)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.border, url=str(image), colour=colour_code, width=width, height=height)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="edge")
@@ -196,9 +186,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.edge, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.edge, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="charcoal")
@@ -224,9 +212,7 @@ class Images(commands.Cog):
         if sigma < -5 or sigma > 5:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **-5.0** and **5.0**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.charcoal, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.charcoal, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="colorize", aliases=["colourise"])
@@ -245,9 +231,7 @@ class Images(commands.Cog):
 
         colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=colour_code)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=colour_code)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="despeckle")
@@ -262,9 +246,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.despeckle, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.despeckle, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="floor")
@@ -279,9 +261,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.floor, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.floor, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="emboss")
@@ -307,9 +287,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.emboss, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.emboss, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="enhance")
@@ -324,9 +302,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.enhance, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.enhance, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="flip")
@@ -341,9 +317,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.flip, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.flip, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="flop")
@@ -358,9 +332,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.flop, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.flop, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="frame")
@@ -388,9 +360,7 @@ class Images(commands.Cog):
 
         colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.frame, url=str(image), matte=colour_code, height=height, width=width, inner_bevel=inner, outer_bevel=outer)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.frame, url=str(image), matte=colour_code, height=height, width=width, inner_bevel=inner, outer_bevel=outer)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="gaussian_blur", aliases=["gb"])
@@ -416,9 +386,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.gaussian_blur, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.gaussian_blur, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="implode", aliases=["explode"])
@@ -438,9 +406,7 @@ class Images(commands.Cog):
         if amount < -20 or amount > 20:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Amount must be between **-20** and **20**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, url=str(image), amount=amount)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, url=str(image), amount=amount)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kmeans")
@@ -461,9 +427,7 @@ class Images(commands.Cog):
         if colors > 1024:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**colors** must be less than **1024**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, url=str(image), number_colours=colours)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, url=str(image), number_colours=colours)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kuwahara")
@@ -489,9 +453,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 20:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **20**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.kuwahara, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.kuwahara, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="motion_blur", aliases=["mb"])
@@ -519,9 +481,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.motion_blur, url=str(image), radius=radius, sigma=sigma, angle=angle)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.motion_blur, url=str(image), radius=radius, sigma=sigma, angle=angle)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="negate")
@@ -536,9 +496,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.negate, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.negate, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="noise")
@@ -562,9 +520,7 @@ class Images(commands.Cog):
         if attenuate < 0 or attenuate > 1:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Attenuate must be between **0.0** and **1.0**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.noise, url=str(image), method=method, attenuate=attenuate)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.noise, url=str(image), method=method, attenuate=attenuate)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="oil_paint", aliases=["op"])
@@ -590,9 +546,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 30:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.oil_paint, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.oil_paint, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="polaroid")
@@ -616,9 +570,7 @@ class Images(commands.Cog):
         if caption and len(caption) > 100:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Caption must be **100** characters or less.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, url=str(image), angle=angle, caption=caption)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, url=str(image), angle=angle, caption=caption)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="rotate")
@@ -638,9 +590,7 @@ class Images(commands.Cog):
         if degree < -360 or degree > 360:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Degree must be between **-360** and **360**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="sepia_tone", aliases=["st"])
@@ -660,9 +610,7 @@ class Images(commands.Cog):
         if threshold < 0 or threshold > 1:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Threshold must be between **0.0** and **1.0**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.sepia_tone, url=str(image), threshold=threshold)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sepia_tone, url=str(image), threshold=threshold)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="sharpen")
@@ -688,9 +636,7 @@ class Images(commands.Cog):
         if sigma < 0 or sigma > 50:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **50**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, url=str(image), radius=radius, sigma=sigma)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="solarize")
@@ -710,9 +656,7 @@ class Images(commands.Cog):
         if threshold < 0 or threshold > 1:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Threshold must be between **0.0** and **1.0**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.solarize, url=str(image), threshold=threshold)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.solarize, url=str(image), threshold=threshold)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="spread")
@@ -732,9 +676,7 @@ class Images(commands.Cog):
         if radius < 0 or radius > 50:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **50**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, url=str(image), radius=radius)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, url=str(image), radius=radius)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="swirl")
@@ -754,9 +696,7 @@ class Images(commands.Cog):
         if degree < -360 or degree > 360:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Degree must be between **-360** and **360**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, url=str(image), degree=degree)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, url=str(image), degree=degree)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="transparentize")
@@ -776,9 +716,7 @@ class Images(commands.Cog):
         if transparency < 0.0 or transparency > 1.0:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Transparency must be between **0.0** and **1.0**.")
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.transparentize, url=str(image), transparency=transparency)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.transparentize, url=str(image), transparency=transparency)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="transpose")
@@ -793,9 +731,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.transpose, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.transpose, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="transverse")
@@ -810,9 +746,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.transverse, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.transverse, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="wave")
@@ -827,9 +761,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image))
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image))
 
     # In development commands.
 
@@ -846,9 +778,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f'{ctx.author}')
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f'{ctx.author}')
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="sphere")
@@ -863,9 +793,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f'{ctx.author}')
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f'{ctx.author}')
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="tshirt", aliases=['shirt'])
@@ -880,9 +808,7 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f'{ctx.author}')
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f'{ctx.author}')
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="pixel")
@@ -898,6 +824,4 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
         """
 
-        async with ctx.channel.typing():
-            embed = await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f'{ctx.author}', method=method)
-            await ctx.reply(embed=embed)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f'{ctx.author}', method=method)
