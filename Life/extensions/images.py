@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 import discord
 from discord.ext import commands
 
-from core import colours, emojis
+from core import colours, config, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, imaging, utils
 
@@ -53,6 +53,16 @@ class Images(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
+    @staticmethod
+    def limit(person: discord.User | discord.Member, name: str, value: float, minimum: float, maximum: float) -> None:
+
+        if (minimum < value > maximum) and person.id not in config.OWNER_IDS:
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{name}** must be between **{minimum}** and **{maximum}**.")
+
+    @staticmethod
+    def random_colour() -> str:
+        return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="blur")
     async def blur(
@@ -68,10 +78,8 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if 0 < radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**radius** must be between **0** and **30**.")
-        if 0 < sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**sigma** must be between **0** and **30**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.blur, url=str(image), radius=radius, sigma=sigma)
 
@@ -81,21 +89,39 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            radius: float = 8,
-            sigma: float = 4
+            radius: float = 10,
+            sigma: float = 5
     ) -> None:
         """
-        Blurs the image only where edges are not detected.
+        Blurs the image where there are no edges.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**radius** must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_blur, url=str(image), radius=radius, sigma=sigma)
+
+    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
+    @commands.command(name="sharpen")
+    async def sharpen(
+            self,
+            ctx: context.Context,
+            image: Optional[converters.ImageConverter],
+            radius: float = 10,
+            sigma: float = 5
+    ) -> None:
+        """
+        Sharpens the given image.
+
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+        """
+
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
+
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="adaptive_sharpen", aliases=["as"])
@@ -103,24 +129,22 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            radius: float = 8,
-            sigma: float = 4
+            radius: float = 10,
+            sigma: float = 5
     ) -> None:
         """
-        Sharpens the image only where edges are detected.
+        Sharpens the image where edges are detected.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 50:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **50**.")
-        if sigma < 0 or sigma > 50:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **50**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_sharpen, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="blue_shift", aliases=["blueshift", "bs"])
+    @commands.command(name="blueshift", aliases=["blue-shift", "blue_shift", "bs"])
     async def blueshift(
             self,
             ctx: context.Context,
@@ -128,14 +152,14 @@ class Images(commands.Cog):
             factor: float = 1.25
     ) -> None:
         """
-        Creates a 'nighttime moonlight' effect by shifting blue colours.
+        Creates a night time moonlight effect by shifting blue colour values.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        **factor**: The factor to shift blue colours by.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
+        **factor**: The factor to shift blue colour values by.
         """
 
-        if factor < 0 or factor > 20:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Factor must be between **0** and **20**.")
+        self.limit(person=ctx.author, name="factor", value=factor, minimum=0, maximum=20)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.blueshift, url=str(image), factor=factor)
 
@@ -145,77 +169,34 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            colour: Optional[commands.ColourConverter],
-            width: int = 10,
-            height: int = 10
+            colour: commands.ColourConverter = utils.MISSING,
+            width: int = 20,
+            height: int = 20
     ) -> None:
         """
         Creates a border around the given image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        **colour**: The colour of the border. Possible formats include **0x<hex>**, **#<hex>**, **0x#<hex>** and **rgb(<number>, <number>, <number>)**. **<number>** can be **0 - 255** or **0% to 100%** and **<hex>** can be **#FFF** or **#FFFFFF**.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
+        **colour**: The colour of the border.
         **width**: The width of the border.
         **height**: The height of the border.
+
+        __**Colour formats**__:
+        - 0x<hex>
+        - #<hex>
+        - 0x#<hex>
+        - rgb(<number>, <number>, <number>)
+        - Any colour from [this](https://discordpy.readthedocs.io/en/master/api.html?highlight=colour#discord.Colour) list.
+
+         **<number>** can be in the range of **0** to **255** or **0%** to **100%**
+         **<hex>** can be **#FFF** or **#FFFFFF**.
         """
 
-        colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.border, url=str(image), colour=colour_code, width=width, height=height)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.border, url=str(image), colour=str(colour) if colour else self.random_colour(), width=width, height=height)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="edge")
-    async def edge(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter],
-            radius: float = 0,
-            sigma: float = 1
-    ) -> None:
-        """
-        Outline edges within an image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, it"s probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
-        """
-
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.edge, url=str(image), radius=radius, sigma=sigma)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="charcoal")
-    async def charcoal(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter],
-            radius: float = 1.5,
-            sigma: float = 0.5
-    ) -> None:
-        """
-        Redraw the image as if it were drawn with charcoal.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
-        """
-
-        if radius < -10 or radius > 10:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **-10.0** and **10.0**.")
-        if sigma < -5 or sigma > 5:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **-5.0** and **5.0**.")
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.charcoal, url=str(image), radius=radius, sigma=sigma)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="colorize", aliases=["colourise"])
+    @commands.command(name="colorize", aliases=["colourize", "colorise", "colourise"])
     async def colorize(
             self,
             ctx: context.Context,
@@ -225,13 +206,21 @@ class Images(commands.Cog):
         """
         Colorizes the given image with a random colour.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        **colour**: The colour of the border. Possible formats include **0x<hex>**, **#<hex>**, **0x#<hex>** and **rgb(<number>, <number>, <number>)**. **<number>** can be **0 - 255** or **0% to 100%** and **<hex>** can be **#FFF** or **#FFFFFF**.
-        """
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+        **colour**: The colour of the border.
 
-        colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        __**Colour formats**__:
+        - 0x<hex>
+        - #<hex>
+        - 0x#<hex>
+        - rgb(<number>, <number>, <number>)
+        - Any colour from [this](https://discordpy.readthedocs.io/en/master/api.html?highlight=colour#discord.Colour) list.
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=colour_code)
+         **<number>** can be in the range of **0** to **255** or **0%** to **100%**
+         **<hex>** can be **#FFF** or **#FFFFFF**.
+         """
+
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=str(colour) if colour else self.random_colour())
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="despeckle")
@@ -243,7 +232,7 @@ class Images(commands.Cog):
         """
         Removes noise from an image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.despeckle, url=str(image))
@@ -258,7 +247,7 @@ class Images(commands.Cog):
         """
         Warps and tiles the image which makes it like a floor.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.floor, url=str(image))
@@ -275,17 +264,11 @@ class Images(commands.Cog):
         """
         Creates a 3D effect within the image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.emboss, url=str(image), radius=radius, sigma=sigma)
 
@@ -299,7 +282,7 @@ class Images(commands.Cog):
         """
         Removes noise from an image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.enhance, url=str(image))
@@ -314,7 +297,7 @@ class Images(commands.Cog):
         """
         Flips the image along the x-axis.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.flip, url=str(image))
@@ -329,7 +312,7 @@ class Images(commands.Cog):
         """
         Flips the image along the y-axis.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.flop, url=str(image))
@@ -349,44 +332,35 @@ class Images(commands.Cog):
         """
         Creates a frame around the given image with a 3D effect.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
 
-        **colour**: The colour of the frame. Possible formats include **0x<hex>**, **#<hex>**, **0x#<hex>** and **rgb(<number>, <number>, <number>)**. **<number>** can be **0 - 255** or **0% to 100%** and **<hex>** can be **#FFF** or **#FFFFFF**.
+        **colour**: The colour of the frame.
         **width**: The width of the frame.
         **height**: The height of the frame.
         **inner**: The inner bevel of the frame.
         **outer**: The outer bevel of the frame.
+
+        __**Colour formats**__:
+        - 0x<hex>
+        - #<hex>
+        - 0x#<hex>
+        - rgb(<number>, <number>, <number>)
+        - Any colour from [this](https://discordpy.readthedocs.io/en/master/api.html?highlight=colour#discord.Colour) list.
+
+         **<number>** can be in the range of **0** to **255** or **0%** to **100%**
+         **<hex>** can be **#FFF** or **#FFFFFF**.
         """
 
-        colour_code = str(colour) if colour else "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.frame, url=str(image), matte=colour_code, height=height, width=width, inner_bevel=inner, outer_bevel=outer)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="gaussian_blur", aliases=["gb"])
-    async def gaussian_blur(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter],
-            radius: float = 0,
-            sigma: float = 3
-    ) -> None:
-        """
-        Blurs the given image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
-        """
-
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.gaussian_blur, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(
+                ctx=ctx,
+                edit_function=imaging.frame,
+                url=str(image),
+                matte=str(colour) if colour else self.random_colour(),
+                height=height,
+                width=width,
+                inner_bevel=inner,
+                outer_bevel=outer
+        )
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="implode", aliases=["explode"])
@@ -394,19 +368,20 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            amount: float = 0.4
+            factor: float = 0.4,
+            *,
+            method: imaging.PixelInterpolateMethods = "undefined"
     ) -> None:
         """
         Pulls or pushes pixels from the center the image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        **amount**: The factor to push or pull pixels by, negative values will push, positives will pull. For the best results use -1.0 to 1.0.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+        **factor**: The factor to push or pull pixels by, negative values will push, positives will pull. For the best results use -1.0 to 1.0.
         """
 
-        if amount < -20 or amount > 20:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Amount must be between **-20** and **20**.")
+        self.limit(person=ctx.author, name="factor", value=factor, minimum=-20, maximum=20)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, url=str(image), amount=amount)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, url=str(image), amount=factor, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kmeans")
@@ -414,20 +389,18 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            *,
             colors: int = 10
     ) -> None:
         """
         Reduces the amount of colours in an image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         **colors**: The amount of colours to keep in the image.
         """
 
-        if colors > 1024:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**colors** must be less than **1024**.")
+        self.limit(person=ctx.author, name="colours", value=colors, minimum=0, maximum=1024)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, url=str(image), number_colours=colours)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, url=str(image), number_colours=colors)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kuwahara")
@@ -435,65 +408,52 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            radius: float = 3,
+            radius: float = 5,
             sigma: float = 2.5
     ) -> None:
         """
         Smooths the given image while preserving edges.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 20:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **20**.")
-        if sigma < 0 or sigma > 20:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **20**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=20)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=20)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.kuwahara, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="motion_blur", aliases=["mb"])
+    @commands.command(name="motionblur", aliases=["motion-blur", "motion_blue", "mb"])
     async def motion_blur(
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            radius: float = 20,
-            sigma: float = 10,
-            angle: int = 45
+            radius: float = 30,
+            sigma: float = 20,
+            angle: int = 90
     ) -> None:
         """
-        Apply a blur along an angle.
+        Applies a blur along an angle.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
-        **angle**: The angle at which to apply the blur.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.motion_blur, url=str(image), radius=radius, sigma=sigma, angle=angle)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="negate")
-    async def negate(
+    @commands.command(name="invert", aliases=["negate"])
+    async def invert(
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter]
     ) -> None:
         """
-        Negates the colours in an image.
+        Inverts the colours in an image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.negate, url=str(image))
@@ -505,20 +465,20 @@ class Images(commands.Cog):
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
             attenuate: float = 0.5,
-            method: Literal["uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"] = "impulse"
+            method: imaging.NoiseTypes = "impulse"
     ) -> None:
         """
         Adds random noise to an image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **attenuate**: The rate of noise distribution.
         **method**: The method to generate noise with.
 
-        Methods: **uniform**, **gaussian**, **multiplicative_gaussian**, **impulse**, **laplacian**, **poisson**, **random**.
+        Methods: **undefined**, **uniform**, **gaussian**, **multiplicative_gaussian**, **impulse**, **laplacian**, **poisson**, **random**.
         """
 
-        if attenuate < 0 or attenuate > 1:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Attenuate must be between **0.0** and **1.0**.")
+        self.limit(person=ctx.author, name="attenuate", value=attenuate, minimum=0.0, maximum=1.0)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.noise, url=str(image), method=method, attenuate=attenuate)
 
@@ -534,17 +494,11 @@ class Images(commands.Cog):
         """
         Edits the image to look like an oil painting.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        if radius < 0 or radius > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **30**.")
-        if sigma < 0 or sigma > 30:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **30**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
+        self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.oil_paint, url=str(image), radius=radius, sigma=sigma)
 
@@ -554,23 +508,24 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            angle: float = 0, *,
+            angle: float = 0,
+            *,
             caption: Optional[str]
     ) -> None:
         """
         Puts the image in the center of a polaroid-like card.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **angle**: The angle that the polaroid will be rotated at.
         **caption**: A caption that will appear on the polaroid.
         """
 
-        if angle < -360 or angle > 360:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Angle must be between **-360** and **360**.")
+        self.limit(person=ctx.author, name="angle", value=angle, minimum=-360, maximum=360)
         if caption and len(caption) > 100:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Caption must be **100** characters or less.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="**caption** must be **100** characters or less.")
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, url=str(image), angle=angle, caption=caption)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, url=str(image), angle=angle, caption=caption, method="undefined")
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="rotate")
@@ -583,14 +538,14 @@ class Images(commands.Cog):
         """
         Rotates the image an amount of degrees.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **degree**: The amount of degrees to rotate the image.
         """
 
-        if degree < -360 or degree > 360:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Degree must be between **-360** and **360**.")
+        self.limit(person=ctx.author, name="degree", value=degree, minimum=-360, maximum=360)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree, reset_coords=True)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="sepia_tone", aliases=["st"])
@@ -603,40 +558,14 @@ class Images(commands.Cog):
         """
         Applies a filter that simulates chemical photography.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **threshold**: The factor to tone the image by.
         """
 
-        if threshold < 0 or threshold > 1:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Threshold must be between **0.0** and **1.0**.")
+        self.limit(person=ctx.author, name="threshold", value=threshold, minimum=0.0, maximum=1.0)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.sepia_tone, url=str(image), threshold=threshold)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="sharpen")
-    async def sharpen(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter],
-            radius: float = 8,
-            sigma: float = 4
-    ) -> None:
-        """
-        Sharpens the given image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-
-        If you don"t know what these do, its probably best to leave them alone:
-        **radius**: Size of gaussian aperture. Should be larger than **sigma**.
-        **sigma**: Standard deviation of the gaussian filter.
-        """
-
-        if radius < 0 or radius > 50:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **50**.")
-        if sigma < 0 or sigma > 50:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Sigma must be between **0** and **50**.")
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, url=str(image), radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="solarize")
@@ -649,12 +578,12 @@ class Images(commands.Cog):
         """
         Replaces pixels above the threshold with negated ones.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **threshold**: Threshold to select pixels with.
         """
 
-        if threshold < 0 or threshold > 1:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Threshold must be between **0.0** and **1.0**.")
+        self.limit(person=ctx.author, name="threshold", value=threshold, minimum=0.0, maximum=1.0)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.solarize, url=str(image), threshold=threshold)
 
@@ -664,19 +593,21 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            radius: float = 2.0
+            radius: float = 2.0,
+            *,
+            method: imaging.PixelInterpolateMethods = "undefined"
     ) -> None:
         """
         Replaces each pixel with one from the surrounding area.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **radius**: The area in which to search around a pixel to replace it with.
         """
 
-        if radius < 0 or radius > 50:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Radius must be between **0** and **50**.")
+        self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, url=str(image), radius=radius)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, url=str(image), radius=radius, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="swirl")
@@ -684,19 +615,21 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
-            degree: int = 45
+            degree: int = 45,
+            *,
+            method: imaging.PixelInterpolateMethods = "undefined"
     ) -> None:
         """
         Swirls pixels around the center of the image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
         **degree**: The degree to swirl the pixels by, negative numbers will go clockwise and positives counter-clockwise.
         """
 
-        if degree < -360 or degree > 360:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Degree must be between **-360** and **360**.")
+        self.limit(person=ctx.author, name="degree", value=degree, minimum=-360, maximum=360)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, url=str(image), degree=degree)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, url=str(image), degree=degree, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="transparentize")
@@ -709,59 +642,31 @@ class Images(commands.Cog):
         """
         Makes an image transparent.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        **degree**: The degree to swirl the pixels by, negative numbers will go clockwise and positives counter-clockwise.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
+
+        **degree**: The transparency of the new image, 0.0 being 0% and 1.0 being 100%.
         """
 
-        if transparency < 0.0 or transparency > 1.0:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Transparency must be between **0.0** and **1.0**.")
+        self.limit(person=ctx.author, name="transparency", value=transparency, minimum=0.0, maximum=1.0)
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.transparentize, url=str(image), transparency=transparency)
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="transpose")
-    async def transpose(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter]
-    ) -> None:
-        """
-        Creates a vertical mirror image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.transpose, url=str(image))
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="transverse")
-    async def transverse(
-            self,
-            ctx: context.Context,
-            image: Optional[converters.ImageConverter]
-    ) -> None:
-        """
-        Creates a horizontal mirror image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.transverse, url=str(image))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="wave")
     async def wave(
             self,
             ctx: context.Context,
-            image: Optional[converters.ImageConverter]
+            image: Optional[converters.ImageConverter],
+            *,
+            method: imaging.PixelInterpolateMethods = "undefined"
     ) -> None:
         """
         Creates a wave like effect on the image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image), method=method)
 
     # In development commands.
 
@@ -773,9 +678,9 @@ class Images(commands.Cog):
             image: Optional[converters.ImageConverter]
     ) -> None:
         """
-        Creates a cube!
+        Creates a cube from the given image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f'{ctx.author}')
@@ -788,9 +693,9 @@ class Images(commands.Cog):
             image: Optional[converters.ImageConverter]
     ) -> None:
         """
-        Creates a sphere!
+        Turns the given image into a sphere.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f'{ctx.author}')
@@ -803,9 +708,9 @@ class Images(commands.Cog):
             image: Optional[converters.ImageConverter]
     ) -> None:
         """
-        Creates a tshirt!
+        Creates a tshirt with the given image.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f'{ctx.author}')
@@ -816,12 +721,13 @@ class Images(commands.Cog):
             self,
             ctx: context.Context,
             image: Optional[converters.ImageConverter],
+            *,
             method: Literal['square', 's', 'hexagon', 'h', 'random', 'r'] = 'random'
     ) -> None:
         """
-        Creates a pixel art!
+        Turns the image into a pixel art.
 
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or an image url.
+        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f'{ctx.author}', method=method)
