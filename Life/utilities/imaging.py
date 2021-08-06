@@ -35,6 +35,10 @@ def adaptive_blur(image: Image, radius: float, sigma: float) -> None:
     image.adaptive_blur(radius=radius, sigma=sigma)
 
 
+def sharpen(image: Image, radius: float, sigma: float) -> None:
+    image.adaptive_sharpen(radius=radius, sigma=sigma)
+
+
 def adaptive_sharpen(image: Image, radius: float, sigma: float) -> None:
     image.adaptive_sharpen(radius=radius, sigma=sigma)
 
@@ -47,14 +51,6 @@ def border(image: Image, colour: str, width: int, height: int) -> None:
 
     with Color(colour) as color:
         image.border(color=color, width=width, height=height, compose="atop")
-
-
-def edge(image: Image, radius: float, sigma: float) -> None:
-    image.canny(radius=radius, sigma=sigma)
-
-
-def charcoal(image: Image, radius: float, sigma: float) -> None:
-    image.charcoal(radius=radius, sigma=sigma)
 
 
 def colorize(image: Image, colour: str) -> None:
@@ -105,10 +101,6 @@ def frame(image: Image, matte: str, width: int, height: int, inner_bevel: float,
         image.frame(matte=color, width=width, height=height, inner_bevel=inner_bevel, outer_bevel=outer_bevel, compose="atop")
 
 
-def gaussian_blur(image: Image, radius: float, sigma: float) -> None:
-    image.gaussian_blur(radius=radius, sigma=sigma)
-
-
 def implode(image: Image, amount: float, method: PixelInterpolateMethods) -> None:
     image.implode(amount=amount, method=method)
 
@@ -149,10 +141,6 @@ def sepia_tone(image: Image, threshold: float) -> None:
     image.sepia_tone(threshold=threshold)
 
 
-def sharpen(image: Image, radius: float, sigma: float) -> None:
-    image.adaptive_sharpen(radius=radius, sigma=sigma)
-
-
 def solarize(image: Image, threshold: float) -> None:
     image.solarize(threshold=threshold, channel="rgb")
 
@@ -167,14 +155,6 @@ def swirl(image: Image, degree: float, method: PixelInterpolateMethods) -> None:
 
 def transparentize(image: Image, transparency: float) -> None:
     image.transparentize(transparency=transparency)
-
-
-def transpose(image: Image) -> None:
-    image.transpose()
-
-
-def transverse(image: Image) -> None:
-    image.transverse()
 
 
 def wave(image: Image, method: PixelInterpolateMethods) -> None:
