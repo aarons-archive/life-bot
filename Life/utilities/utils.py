@@ -160,17 +160,16 @@ def format_command(command: commands.Command) -> str:
 
 
 def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
+
     if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
         return 'Automatic'
 
     if region is discord.VoiceRegion.hongkong:
-        region_name = 'Hong Kong'
+        return 'Hong Kong'
     elif region is discord.VoiceRegion.southafrica:
-        region_name = 'South Africa'
-    else:
-        region_name = obj.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
+        return 'South Africa'
 
-    return region_name
+    return obj.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
 
 
 def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:
