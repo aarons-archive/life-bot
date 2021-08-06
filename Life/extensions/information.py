@@ -61,10 +61,14 @@ class RoleCountOptions(commands.FlagConverter, delimiter=" ", prefix="--", case_
     sorted: bool = False
 
 
+def setup(bot: Life) -> None:
+    bot.add_cog(Information(bot=bot))
+
+
 class Information(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
-        self.bot: Life = bot
+        self.bot = bot
 
     @commands.guild_only()
     @commands.command(name="serverinfo", aliases=["server-info", "server_info", "server", "guildinfo", "guild-info", "guild_info", "guild"])
@@ -471,7 +475,3 @@ class Information(commands.Cog):
         else:
             location = module.replace('.', '/') + '.py'
             await ctx.reply(f'<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>')
-
-
-def setup(bot: Life) -> None:
-    bot.add_cog(Information(bot=bot))
