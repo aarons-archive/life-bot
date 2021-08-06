@@ -164,13 +164,16 @@ def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guil
         return 'Automatic'
 
     if region is discord.VoiceRegion.hongkong:
-        region_name = 'Hong Kong'
+        return 'Hong Kong'
     elif region is discord.VoiceRegion.southafrica:
-        region_name = 'South Africa'
+        return 'South Africa'
     else:
-        region_name = obj.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
-
-    return region_name
+        return (
+            obj.name.title()
+            .replace('Vip', 'VIP')
+            .replace('_', '-')
+            .replace('Us-', 'US-')
+        )
 
 
 def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:

@@ -148,7 +148,14 @@ class Voice(commands.Cog):
             await voice_client.send(embed=embed)
             return
 
-        if all([member.voice.self_deaf or member.voice.deaf for member in voice_client.voice_channel.members if not member.bot]) and (not voice_client.paused):
+        if (
+            all(
+                member.voice.self_deaf or member.voice.deaf
+                for member in voice_client.voice_channel.members
+                if not member.bot
+            )
+            and not voice_client.paused
+        ):
             await voice_client.set_pause(True)
             embed = utils.embed(colour=colours.RED, emoji=emojis.PAUSED, description=f"The player is now **paused** because everyone in {voice_client.voice_channel.mention} is deafened.")
             await voice_client.send(embed=embed)

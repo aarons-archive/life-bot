@@ -12,7 +12,10 @@ class TagNameConverter(commands.clean_content):
             raise commands.BadArgument
 
         if argument.split(' ')[0] in (names := ctx.bot.get_command('tag').all_commands.keys()):
-            raise exceptions.ArgumentError(f'Tag names can not start with a tag subcommand name. ({", ".join([f"`{name}`" for name in names])})')
+            raise exceptions.ArgumentError(
+                f'Tag names can not start with a tag subcommand name. ({", ".join(f"`{name}`" for name in names)})'
+            )
+
         if len(argument) < 3 or len(argument) > 50:
             raise exceptions.ArgumentError('Tag names must be between 3 and 50 characters long.')
 
