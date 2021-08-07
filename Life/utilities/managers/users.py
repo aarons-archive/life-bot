@@ -176,9 +176,9 @@ class UserManager:
         leaderboard = self.leaderboard(guild_id=guild_id)
         return leaderboard.index(self.get_config(user_id)) + 1
 
-    def timezones(self, *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
+    def timezones(self, *, guild_id: int) -> list[objects.UserConfig]:
 
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
+        if not (guild := self.bot.get_guild(guild_id)):
             raise ValueError(f'guild with id \'{guild_id}\' was not found.')
 
         return sorted(
@@ -401,10 +401,10 @@ class UserManager:
 
     # Grid cards
 
-    async def create_timecard(self, *, guild_id: Optional[int] = None) -> discord.File:
+    async def create_timecard(self, *, guild_id: int) -> discord.File:
 
         if not (timezones := self.timezones(guild_id=guild_id)):
-            raise exceptions.ArgumentError('There are no users who have set their timezone, or everyone has set them to be private.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="No one has set their timezone, or everyone has set them to be private.")
 
         timezone_avatars = {}
 
