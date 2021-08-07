@@ -83,13 +83,13 @@ class Fun(commands.Cog):
 
     # Commands
 
-    @commands.command(name='rps')
+    @commands.command(name="rps")
     async def rps(self, ctx: context.Context) -> None:
         """
         Play rock, paper, scissors with the bot.
         """
 
-        CHOICES = ['\U0001faa8', '\U0001f4f0', '\U00002702']
+        CHOICES = ["\U0001faa8", "\U0001f4f0", "\U00002702"]
         MY_CHOICE = random.choice(CHOICES)
 
         ROCK = "\U0001faa8"

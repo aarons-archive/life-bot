@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from core import colours, emojis
-from utilities import exceptions, objects, paginators
+from utilities import exceptions, objects, paginators, utils
 
 
 if TYPE_CHECKING:
@@ -118,7 +118,7 @@ class Context(commands.Context):
             try:
                 response = await self.bot.wait_for("message", check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
             except asyncio.TimeoutError:
-                raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You took too long to respond, try again.")
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You took too long to respond, try again.")
 
             if response.content == "cancel":
                 break
@@ -126,14 +126,14 @@ class Context(commands.Context):
             try:
                 number = int(response.content) - 1
             except (ValueError, KeyError):
-                embed = discord.Embed(colour=colours.RED, description=f"{emojis.CROSS}  That was not a valid choice, try again or send `cancel` to exit.")
+                embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="That was not a valid choice, try again or send `cancel` to exit.")
                 await self.reply(embed=embed)
                 continue
 
             await paginator.stop(delete=True)
             return number
 
-        raise exceptions.EmbedError(colour=colours.GREEN, description=f"{emojis.TICK}  Exiting choice selection.")
+        raise exceptions.EmbedError(colour=colours.GREEN, emoji=emojis.TICK, description="Exiting choice selection.")
 
     # Miscellaneous
 

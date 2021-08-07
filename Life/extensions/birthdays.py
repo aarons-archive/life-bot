@@ -42,7 +42,7 @@ class Birthdays(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @_birthday.command(name='set')
+    @_birthday.command(name="set")
     async def _birthday_set(self, ctx: context.Context, *, date: converters.DatetimeConverter) -> None:
         """
         Sets your birthday.
@@ -61,7 +61,7 @@ class Birthdays(commands.Cog):
         _, birthday = entries[choice]
 
         if birthday > pendulum.now(tz="UTC").subtract(years=13):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f'Your birthday must allow you to be more than 13 years old.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday must allow you to be more than 13 years old.")
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
         await user_config.set_birthday(birthday)
@@ -89,7 +89,7 @@ class Birthdays(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
         if user_config.birthday_private is True:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f'Your birthday is already **private**.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **private**.")
 
         await user_config.set_birthday(user_config.birthday, private=True)
 
@@ -104,7 +104,7 @@ class Birthdays(commands.Cog):
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
         if user_config.birthday_private is False:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f'Your birthday is already **public**.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **public**.")
 
         await user_config.set_birthday(user_config.birthday, private=False)
 

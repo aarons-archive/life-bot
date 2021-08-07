@@ -10,7 +10,7 @@ IGNORE_EXTENSIONS = ["jishaku"]
 
 
 def path_from_extension(extension: str) -> pathlib.Path:
-    return pathlib.Path(extension.replace('.', os.sep)+'.py')
+    return pathlib.Path(extension.replace(".", os.sep)+".py")
 
 
 def setup(bot: Life):

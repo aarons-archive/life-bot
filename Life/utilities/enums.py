@@ -2,26 +2,26 @@ import enum
 
 
 class Environment(enum.Enum):
-    PROD = 'prod'
-    DEV = 'dev'
+    PROD = "prod"
+    DEV = "dev"
 
 
 class Operation(enum.Enum):
-    SET = 'set'
+    SET = "set"
     UPDATE = SET
 
-    RESET = 'reset'
+    RESET = "reset"
 
-    ADD = 'add'
+    ADD = "add"
     PLUS = ADD
 
-    MINUS = 'remove'
+    MINUS = "remove"
     REMOVE = MINUS
 
 
 class Updateable(enum.Enum):
-    COINS = 'coins'
-    XP = 'xp'
+    COINS = "coins"
+    XP = "xp"
 
 
 class EmbedSize(enum.Enum):

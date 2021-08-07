@@ -184,4 +184,4 @@ class Life(commands.AutoShardedBot):
         await self.user_manager.load()
         await self.guild_manager.load()
 
-        await self.cogs['Voice'].load()
+        await self.cogs["Voice"].load()

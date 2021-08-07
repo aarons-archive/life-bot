@@ -14,7 +14,7 @@ from utilities import enums, objects, utils
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__: logging.Logger = logging.getLogger('utilities.objects.reminder')
+__log__: logging.Logger = logging.getLogger("utilities.objects.reminder")
 
 REPEAT_TYPES = {
     1:  lambda dt: dt.add(minutes=30),
@@ -42,20 +42,20 @@ class Reminder:
         self._bot = bot
         self._user_config = user_config
 
-        self._id: int = data['id']
-        self._user_id: int = data['user_id']
-        self._channel_id: int = data['channel_id']
-        self._created_at: pendulum.DateTime = pendulum.instance(data['created_at'], tz='UTC')
-        self._content: str = data['content']
-        self._jump_url: str = data['jump_url']
-        self._repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType(data['repeat_type'])
-        self._notified: bool = data['notified']
-        self._datetime: pendulum.DateTime = pendulum.instance(data['datetime'], tz='UTC')
+        self._id: int = data["id"]
+        self._user_id: int = data["user_id"]
+        self._channel_id: int = data["channel_id"]
+        self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
+        self._content: str = data["content"]
+        self._jump_url: str = data["jump_url"]
+        self._repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType(data["repeat_type"])
+        self._notified: bool = data["notified"]
+        self._datetime: pendulum.DateTime = pendulum.instance(data["datetime"], tz="UTC")
 
         self._task: Optional[aioscheduler.task.Task] = None
 
     def __repr__(self) -> str:
-        return f'<Reminder id=\'{self.id}\' channel_id=\'{self.channel_id}\' user_id=\'{self.user_id}\' datetime={self.datetime} notified={self.notified} done={self.done}>'
+        return f"<Reminder id=\"{self.id}\" channel_id=\"{self.channel_id}\" user_id=\"{self.user_id}\" datetime={self.datetime} notified={self.notified} done={self.done}>"
 
     # Properties
 
@@ -111,7 +111,7 @@ class Reminder:
 
     @property
     def done(self) -> bool:
-        return pendulum.now(tz='UTC') > self.datetime
+        return pendulum.now(tz="UTC") > self.datetime
 
     # Misc
 
@@ -120,7 +120,7 @@ class Reminder:
         if not self.done:
             self.bot.scheduler.cancel(self.task)
 
-        await self.bot.db.execute('DELETE FROM reminders WHERE id = $1', self.id)
+        await self.bot.db.execute("DELETE FROM reminders WHERE id = $1", self.id)
         del self.user_config.reminders[self.id]
 
     # Handling
@@ -128,7 +128,7 @@ class Reminder:
     def schedule(self) -> None:
 
         self._task = self.bot.scheduler.schedule(self.handle_notification(), when=self.datetime.naive())
-        __log__.info(f'[REMINDER] Scheduled reminder with id \'{self.id}\' for \'{self.datetime}\'.')
+        __log__.info(f"[REMINDER] Scheduled reminder with id \"{self.id}\" for \"{self.datetime}\".")
 
     async def handle_notification(self) -> None:
 
@@ -139,17 +139,17 @@ class Reminder:
 
         embed = discord.Embed(
                 colour=colours.MAIN,
-                title='Reminder:',
-                description=f'[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}'
+                title="Reminder:",
+                description=f"[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}"
         )
 
         try:
-            await channel.send(f'{user.mention if isinstance(user, discord.User) else f"<@{self.user_id}>"}', embed=embed)
+            await channel.send(f"{user.mention if isinstance(user, discord.User) else f'<@{self.user_id}>'}", embed=embed)
         except (discord.Forbidden, AttributeError):
             try:
                 await user.send(embed=embed)
             except (discord.Forbidden, AttributeError):
-                __log__.warning(f'[REMINDER] Reminded with id \'{self.id}\' failed because channel or user no longer exist.')
+                __log__.warning(f"[REMINDER] Reminded with id \"{self.id}\" failed because channel or user no longer exist.")
 
         await self.set_notified()
         if self.repeat_type != enums.ReminderRepeatType.NEVER:
@@ -168,21 +168,21 @@ class Reminder:
 
     async def set_notified(self, notified: bool = True) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE reminders SET notified = $1 WHERE id = $2 RETURNING notified', notified, self.id)
-        self._notified = data['notified']
+        data = await self.bot.db.fetchrow("UPDATE reminders SET notified = $1 WHERE id = $2 RETURNING notified", notified, self.id)
+        self._notified = data["notified"]
 
     async def change_datetime(self, datetime: pendulum.DateTime) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE reminders SET datetime = $1 WHERE id = $2 RETURNING datetime', datetime, self.id)
-        self._datetime = pendulum.instance(data['datetime'], tz='UTC')
+        data = await self.bot.db.fetchrow("UPDATE reminders SET datetime = $1 WHERE id = $2 RETURNING datetime", datetime, self.id)
+        self._datetime = pendulum.instance(data["datetime"], tz="UTC")
 
     async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
-        self._content = data['content']
-        self._jump_url = data['jump_url'] or self.jump_url
+        data = await self.bot.db.fetchrow("UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
+        self._content = data["content"]
+        self._jump_url = data["jump_url"] or self.jump_url
 
     async def change_repeat_type(self, repeat_type: enums.ReminderRepeatType) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE reminders SET repeat_type = $1 WHERE id = $2 RETURNING repeat_type', repeat_type.value, self.id)
-        self._repeat_type = enums.ReminderRepeatType(data['repeat_type'])
+        data = await self.bot.db.fetchrow("UPDATE reminders SET repeat_type = $1 WHERE id = $2 RETURNING repeat_type", repeat_type.value, self.id)
+        self._repeat_type = enums.ReminderRepeatType(data["repeat_type"])

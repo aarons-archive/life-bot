@@ -22,7 +22,7 @@ class EmbedsPaginator(paginators.BasePaginator):
 
     @property
     def content(self) -> str:
-        return self._content or f'Page: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}'
+        return self._content or f"Page: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}"
 
     # Abstract methods
 

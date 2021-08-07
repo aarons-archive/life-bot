@@ -1,6 +1,5 @@
 from typing import Optional
 
-import discord
 from discord.ext import commands
 
 from core import colours, emojis
@@ -69,7 +68,7 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
         if len(user_config.todos) > 100:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You have 100 todos, try finishing some before adding any more.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You have 100 todos, try finishing some before adding any more.")
 
         todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
 
@@ -146,12 +145,12 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have any todos.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
         if not (todo := user_config.get_todo(todo_id)):
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have a todo with id **{todo_id}**.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"You don't have a todo with id **{todo_id}**.")
 
         await todo.change_content(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = discord.Embed(colour=colours.GREEN, description=f"{emojis.TICK}  Edited content of todo.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of todo.")
         await ctx.reply(embed=embed)

@@ -121,7 +121,7 @@ class Voice(commands.Cog):
             pass
 
         title = getattr(track or player.current, "title", "Not Found")
-        await player.send(f"Something went wrong while playing the track **{title}**. Use `{config.PREFIX}support` for more help.")
+        await player.send(f"Something went wrong while playing the track **{title}**. Use **{config.PREFIX}support** for more help.")
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -195,13 +195,13 @@ class Voice(commands.Cog):
         """
         Queues tracks with the given name or url.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--music`: Searches [youtube music](https://music.youtube.com/) for results.
-        `--soundcloud`: Searches [soundcloud](https://soundcloud.com/) for results.
-        `--next`: Puts the track that is found at the start of the queue.
-        `--now`: Skips the current track and plays the track that is found.
+        **--music**: Searches [youtube music](https://music.youtube.com/) for results.
+        **--soundcloud**: Searches [soundcloud](https://soundcloud.com/) for results.
+        **--next**: Puts the track that is found at the start of the queue.
+        **--now**: Skips the current track and plays the track that is found.
 
         **Usage:**
         `l-play If I Can't Have You by Shawn Mendes --now`
@@ -219,13 +219,13 @@ class Voice(commands.Cog):
         """
         Choose which track to play based on a search.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--music`: Searches [youtube music](https://music.youtube.com/) for results.
-        `--soundcloud`: Searches [soundcloud](https://soundcloud.com/) for results.
-        `--next`: Puts the track that is found at the start of the queue.
-        `--now`: Skips the current track and plays the track that is found.
+        **--music**: Searches [youtube music](https://music.youtube.com/) for results.
+        **--soundcloud**: Searches [soundcloud](https://soundcloud.com/) for results.
+        **--next**: Puts the track that is found at the start of the queue.
+        **--now**: Skips the current track and plays the track that is found.
 
         **Usage:**
         `l-search If I Can't Have You by Shawn Mendes --now`
@@ -245,11 +245,11 @@ class Voice(commands.Cog):
         """
         Queues tracks from youtube music with the given name or url.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--next`: Puts the track that is found at the start of the queue.
-        `--now`: Skips the current track and plays the track that is found.
+        **--next**: Puts the track that is found at the start of the queue.
+        **--now**: Skips the current track and plays the track that is found.
 
         **Usage:**
         `l-youtube-music Lost In Japan by Shawn Mendes --now`
@@ -266,11 +266,11 @@ class Voice(commands.Cog):
         """
         Queues tracks from soundcloud with the given name or url.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--next`: Puts the track that is found at the start of the queue.
-        `--now`: Skips the current track and plays the track that is found.
+        **--next**: Puts the track that is found at the start of the queue.
+        **--now**: Skips the current track and plays the track that is found.
 
         **Usage:**
         `l-soundcloud Lost In Japan by Shawn Mendes --now`
@@ -289,11 +289,11 @@ class Voice(commands.Cog):
         """
         Queues tracks at the start of the queue.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--music`: Searches [youtube music](https://music.youtube.com/) for results.
-        `--soundcloud`: Searches [soundcloud](https://soundcloud.com/) for results.
+        **--music**: Searches [youtube music](https://music.youtube.com/) for results.
+        **--soundcloud**: Searches [soundcloud](https://soundcloud.com/) for results.
 
         **Usage:**
         `l-play-next Lost In Japan by Shawn Mendes --music`
@@ -310,11 +310,11 @@ class Voice(commands.Cog):
         """
         Queues tracks and skips the current track.
 
-        `query`: The query to search for tracks with.
+        **query**: The query to search for tracks with.
 
         **Flags:**
-        `--music`: Searches [youtube music](https://music.youtube.com/) for results.
-        `--soundcloud`: Searches [soundcloud](https://soundcloud.com/) for results.
+        **--music**: Searches [youtube music](https://music.youtube.com/) for results.
+        **--soundcloud**: Searches [soundcloud](https://soundcloud.com/) for results.
 
         **Usage:**
         `l-play-now Lost In Japan by Shawn Mendes --music`
@@ -365,7 +365,7 @@ class Voice(commands.Cog):
         """
         Seeks to a position in the current track.
 
-        `time`: The position to seek too.
+        **time**: The position to seek too.
         """
 
         # noinspection PyTypeChecker
@@ -392,7 +392,7 @@ class Voice(commands.Cog):
         """
         Seeks forward on the current track.
 
-        `time`: The amount of time to seek forward.
+        **time**: The amount of time to seek forward.
         """
 
         # noinspection PyTypeChecker
@@ -422,7 +422,7 @@ class Voice(commands.Cog):
         """
         Seeks backward on the current track.
 
-        `time`: The amount of time to seek backward.
+        **time**: The amount of time to seek backward.
         """
 
         # noinspection PyTypeChecker
@@ -583,11 +583,11 @@ class Voice(commands.Cog):
                     colour=colours.MAIN,
                     title=ctx.voice_client.current.title,
                     url=ctx.voice_client.current.uri,
-                    description=f"`Author:` {ctx.voice_client.current.author}\n"
-                                f"`Source:` {ctx.voice_client.current.source.value.title()}\n"
-                                f"`Length:` {utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}\n"
-                                f"`Live:` {ctx.voice_client.current.is_stream()}\n"
-                                f"`Seekable:` {ctx.voice_client.current.is_seekable()}"
+                    description=f"**Author:** {ctx.voice_client.current.author}\n"
+                                f"**Source:** {ctx.voice_client.current.source.value.title()}\n"
+                                f"**Length:** {utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}\n"
+                                f"**Live:** {ctx.voice_client.current.is_stream()}\n"
+                                f"**Seekable:** {ctx.voice_client.current.is_seekable()}"
             ).set_image(
                     url=ctx.voice_client.current.thumbnail
             )
@@ -603,9 +603,9 @@ class Voice(commands.Cog):
         """
         Displays lyrics for the given song.
 
-        `query`: The query to search for lyrics with, If not provided the bot will try to display lyrics for the song you are listening to on spotify, or the track playing in a voice chat the bot is in.
+        **query**: The query to search for lyrics with, If not provided the bot will try to display lyrics for the song you are listening to on spotify, or the track playing in a voice chat the bot is in.
 
-        You can also force it to display lyrics from either of these by specifying the `query` argument as `spotify` or `player`.
+        You can also force it to display lyrics from either of these by specifying the **query** argument as **spotify** or **player**.
         """
 
         def get_spotify_query() -> Optional[str]:
@@ -640,7 +640,7 @@ class Voice(commands.Cog):
         except ksoftapi.NoResults:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"No results were found for the search **{query}**.")
         except ksoftapi.APIError:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='The API used to fetch lyrics is currently unavailable.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The API used to fetch lyrics is currently unavailable.")
 
         choice = await ctx.choice(
                 entries=[f"`{index + 1}:` {result.artist} - {result.name}" for index, result in enumerate(results)],
@@ -651,7 +651,7 @@ class Voice(commands.Cog):
         result = results[choice]
 
         entries = []
-        for line in result.lyrics.split('\n'):
+        for line in result.lyrics.split("\n"):
 
             if not entries:
                 entries.append(line)
@@ -662,18 +662,18 @@ class Voice(commands.Cog):
                 entries.append(line)
                 continue
 
-            entries[-1] += f'\n{line}'
+            entries[-1] += f"\n{line}"
 
         await ctx.paginate_embed(
                 entries=entries,
                 per_page=1,
-                title=f'Lyrics for **{result.name}** by **{result.artist}**:',
-                additional_footer='Lyrics provided by KSoft.Si API'
+                title=f"Lyrics for **{result.name}** by **{result.artist}**:",
+                additional_footer="Lyrics provided by KSoft.Si API"
         )
 
     # Queue commands
 
-    @commands.group(name='queue', aliases=['q'], invoke_without_command=True)
+    @commands.group(name="queue", aliases=["q"], invoke_without_command=True)
     @checks.queue_not_empty()
     @checks.has_voice_client(try_join=False)
     async def queue(self, ctx: context.Context) -> None:
@@ -690,8 +690,8 @@ class Voice(commands.Cog):
                 entries=entries,
                 per_page=10,
                 title="Queue:",
-                header=f"`Total tracks:` {len(ctx.voice_client.queue)}\n"
-                       f"`Total time:` {utils.format_seconds(sum(track.length for track in ctx.voice_client.queue) // 1000, friendly=True)}\n\n"
+                header=f"**Total tracks:** {len(ctx.voice_client.queue)}\n"
+                       f"**Total time:** {utils.format_seconds(sum(track.length for track in ctx.voice_client.queue) // 1000, friendly=True)}\n\n"
         )
 
     @queue.command(name="detailed", aliases=["d"])
@@ -710,12 +710,12 @@ class Voice(commands.Cog):
                     colour=colours.MAIN,
                     description=f"Showing detailed information about track **{index + 1}** out of **{len(ctx.voice_client.queue)}** in the queue.\n\n"
                                 f"[{track.title}]({track.uri})\n\n"
-                                f"`Author:` {track.author}\n"
-                                f"`Source:` {track.source.name.title()}\n" \
-                                f"`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n" \
-                                f"`Live:` {track.is_stream()}\n"
-                                f"`Seekable:` {track.is_seekable()}\n"
-                                f"`Requester:` {track.requester.mention}"
+                                f"**Author:** {track.author}\n"
+                                f"**Source:** {track.source.name.title()}\n" \
+                                f"**Length:** {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n" \
+                                f"**Live:** {track.is_stream()}\n"
+                                f"**Seekable:** {track.is_seekable()}\n"
+                                f"**Requester:** {track.requester.mention}"
             ).set_image(
                     url=track.thumbnail
             )
@@ -742,8 +742,8 @@ class Voice(commands.Cog):
                 entries=entries,
                 per_page=10,
                 title="Queue:",
-                header=f"`Total tracks:` {len(history)}\n"
-                       f"`Total time:` {utils.format_seconds(sum(track.length for track in history) // 1000, friendly=True)}\n\n"
+                header=f"**Total tracks:** {len(history)}\n"
+                       f"**Total time:** {utils.format_seconds(sum(track.length for track in history) // 1000, friendly=True)}\n\n"
         )
 
     @queue_history.command(name="detailed", aliases=["d"])
@@ -764,12 +764,12 @@ class Voice(commands.Cog):
                     colour=colours.MAIN,
                     description=f"Showing detailed information about track **{index + 1}** out of **{len(history)}** in the queue history.\n\n"
                                 f"[{track.title}]({track.uri})\n\n"
-                                f"`Author:` {track.author}\n"
-                                f"`Source:` {track.source.name.title()}\n" \
-                                f"`Length:` {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n" \
-                                f"`Live:` {track.is_stream()}\n"
-                                f"`Seekable:` {track.is_seekable()}\n"
-                                f"`Requester:` {track.requester.mention}"
+                                f"**Author:** {track.author}\n"
+                                f"**Source:** {track.source.name.title()}\n" \
+                                f"**Length:** {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n" \
+                                f"**Live:** {track.is_stream()}\n"
+                                f"**Seekable:** {track.is_seekable()}\n"
+                                f"**Requester:** {track.requester.mention}"
             ).set_image(
                     url=track.thumbnail
             )
@@ -823,13 +823,13 @@ class Voice(commands.Cog):
         """
         Sorts the queue.
 
-        `method`: The method to sort the queue with. Can be `title`, `length` or `author`.
-        `reverse`: Whether to reverse the sort, as in `5, 3, 2, 4, 1` -> `5, 4, 3, 2, 1` instead of `5, 3, 2, 4, 1` -> `1, 2, 3, 4, 5`. Defaults to False.
+        **method**: The method to sort the queue with. Can be **title**, **length** or **author**.
+        **reverse**: Whether to reverse the sort, as in **5, 3, 2, 4, 1** -> **5, 4, 3, 2, 1** instead of **5, 3, 2, 4, 1** -> **1, 2, 3, 4, 5**. Defaults to False.
 
         **Usage:**
         `l-sort title True`
         `l-sort author`
-        `l-sort length True
+        `l-sort length True`
         """
 
         if method == "title":
@@ -849,7 +849,7 @@ class Voice(commands.Cog):
         """
         Removes a track from the queue.
 
-        `entry`: The position of the track you want to remove.
+        **entry**: The position of the track you want to remove.
         """
 
         if entry <= 0 or entry > len(ctx.voice_client.queue):
@@ -866,8 +866,8 @@ class Voice(commands.Cog):
         """
         Move a track in the queue to a different position.
 
-        `entry_1`: The position of the track you want to move from.
-        `entry_2`: The position of the track you want to move too.
+        **entry_1**: The position of the track you want to move from.
+        **entry_2**: The position of the track you want to move too.
         """
 
         if entry_1 <= 0 or entry_1 > len(ctx.voice_client.queue):
@@ -891,7 +891,7 @@ class Voice(commands.Cog):
 
     # Effect commands
 
-    @commands.command(name='8d')
+    @commands.command(name="8d")
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def _8d(self, ctx: context.Context) -> None:
@@ -909,7 +909,7 @@ class Voice(commands.Cog):
             await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="**8D** audio effect is now **active**."))
             ctx.voice_client.enabled_filters.add(enums.EnabledFilters.ROTATION)
 
-    @commands.command(name='nightcore')
+    @commands.command(name="nightcore")
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def nightcore(self, ctx: context.Context) -> None:

@@ -9,7 +9,7 @@ from utilities import context, paginators
 class TextPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = '\n',
+            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n",
             header: Optional[str] = None, footer: Optional[str] = None
     ) -> None:
         super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter)

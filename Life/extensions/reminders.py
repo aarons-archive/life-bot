@@ -38,7 +38,7 @@ class Reminders(commands.Cog):
         )
         _, datetime = entries[choice]
 
-        if datetime < pendulum.now(tz='UTC'):
+        if datetime < pendulum.now(tz="UTC"):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The date/time detected was in the past.")
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)

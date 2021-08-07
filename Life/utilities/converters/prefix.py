@@ -11,9 +11,9 @@ class PrefixConverter(commands.clean_content):
         if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument
 
-        if '`' in argument:
-            raise exceptions.ArgumentError('Your prefix can not contain backtick characters.')
+        if "`" in argument:
+            raise exceptions.ArgumentError("Your prefix can not contain backtick characters.")
         if len(argument) > 15:
-            raise exceptions.ArgumentError('Your prefix can not be more than 15 characters.')
+            raise exceptions.ArgumentError("Your prefix can not be more than 15 characters.")
 
         return argument

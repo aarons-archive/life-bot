@@ -107,10 +107,10 @@ class Player(obsidian.ObsidianPlayer):
             if track.source is slate.Source.SPOTIFY:
 
                 try:
-                    search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
+                    search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
                 except exceptions.EmbedError:
                     try:
-                        search = await self.search(query=f'{track.author} - {track.title}', ctx=track.ctx, source=slate.Source.YOUTUBE)
+                        search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE)
                     except exceptions.EmbedError as error:
                         await self.send(embed=error.embed)
                         continue
@@ -172,7 +172,7 @@ class Player(obsidian.ObsidianPlayer):
                 if len(self.queue) > 5:
                     entries.append(f"`...`\n`{len(self.queue)}.` [{self.queue[-1].title}]({self.queue[-1].uri})")
 
-                embed.add_field(name="Up next:", value='\n'.join(entries), inline=False)
+                embed.add_field(name="Up next:", value="\n".join(entries), inline=False)
 
         elif self.current.ctx.guild_config.embed_size is enums.EmbedSize.MEDIUM:
 
