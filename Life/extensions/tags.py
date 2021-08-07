@@ -81,7 +81,9 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There is already a tag with the name **{tag_check.name}**.")
 
         tag = await guild_config.create_tag(user_id=ctx.author.id, name=name, content=content, jump_url=ctx.message.jump_url)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Created tag with name **{tag.name}**."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Created tag with name **{tag.name}**.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="alias")
     async def tag_alias(self, ctx: context.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
@@ -107,7 +109,9 @@ class Tags(commands.Cog):
             original_tag = guild_config.get_tag(tag_id=original_tag.alias)
 
         tag = await guild_config.create_tag_alias(user_id=ctx.author.id, name=alias, original=original_tag.id, jump_url=ctx.message.jump_url)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Tag alias from **{tag.name}** to **{original}** was created."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Tag alias from **{tag.name}** to **{original}** was created.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="claim")
     async def tag_claim(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -127,7 +131,9 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The owner of that tag is still in this server.")
 
         await tag.change_owner(ctx.author.id)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Transferred tag to you."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Transferred tag to you.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="transfer")
     async def tag_transfer(self, ctx: context.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
@@ -152,7 +158,9 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You can not transfer tags to yourself.")
 
         await tag.change_owner(user_id=member.id)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Transferred tag from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Transferred tag from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="edit")
     async def tag_edit(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
@@ -174,7 +182,9 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not own that tag.")
 
         await tag.change_content(content)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of tag with name **{name}**."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of tag with name **{name}**.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="delete", aliases=["remove"])
     async def tag_delete(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -193,7 +203,9 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not own that tag.")
 
         await tag.delete()
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Deleted tag with name **{name}**."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Deleted tag with name **{name}**.")
+        await ctx.reply(embed=embed)
 
     @tag.command(name="search")
     async def tag_search(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:

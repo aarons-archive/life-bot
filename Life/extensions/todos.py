@@ -72,7 +72,9 @@ class Todo(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You have 100 todos, try finishing some before adding any more.")
 
         todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Todo **{todo.id}** created."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Todo **{todo.id}** created.")
+        await ctx.reply(embed=embed)
 
     @todo.command(name="delete", aliases=["remove"])
     async def todo_delete(self, ctx: Context, todo_ids: commands.Greedy[int]) -> None:
@@ -126,7 +128,8 @@ class Todo(commands.Cog):
         for todo in user_config.todos.copy().values():
             await todo.delete()
 
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Cleared your todo list."))
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Cleared your todo list.")
+        await ctx.reply(embed=embed)
 
     @todo.command(name="edit", aliases=["update"])
     async def todo_edit(self, ctx: Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:

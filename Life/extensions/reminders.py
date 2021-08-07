@@ -126,7 +126,8 @@ class Reminders(commands.Cog):
         content = await utils.safe_content(self.bot.mystbin, content, max_characters=1500)
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of reminder with id **{reminder.id}**."))
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of reminder with id **{reminder.id}**.")
+        await ctx.reply(embed=embed)
 
         #
 
@@ -162,7 +163,9 @@ class Reminders(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"That reminder is already done.")
 
         await reminder.change_repeat_type(repeat_type)
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited repeat type of reminder with id **{reminder.id}**."))
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited repeat type of reminder with id **{reminder.id}**.")
+        await ctx.reply(embed=embed)
 
     @_reminders.command(name="info")
     async def _reminders_info(self, ctx: context.Context, reminder: objects.Reminder) -> None:
