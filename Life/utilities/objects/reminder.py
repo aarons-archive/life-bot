@@ -135,7 +135,7 @@ class Reminder:
         # TODO user user_configs user attribute here.
 
         user = self.bot.get_user(self.user_id)
-        channel = self.bot.get_channel(self.channel_id)
+        channel: Any = self.bot.get_channel(self.channel_id)
 
         embed = discord.Embed(
                 colour=colours.MAIN,
