@@ -25,7 +25,7 @@ class Birthdays(commands.Cog):
         """
 
         member = person or ctx.author
-        user_config = self.bot.user_manager.get_config(member.id)
+        user_config = await self.bot.user_manager.get_or_create_config(member.id)
 
         if not user_config.birthday:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{member.mention}** has not set their birthday.")

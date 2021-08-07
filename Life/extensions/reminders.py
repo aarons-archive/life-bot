@@ -21,7 +21,7 @@ class Reminders(commands.Cog):
         """
         Creates a reminder.
 
-        **when**: The subject you want to be reminded about, should include some form of time such as `tomorrow`, `10am`, or `3 hours`.
+        **when**: The subject you want to be reminded about, should include some form of time such as **tomorrow**, **10am**, or **3 hours**.
 
         **Usage:**
         `l-remind in 3 hours do that thing you talked about doing.`
@@ -87,7 +87,7 @@ class Reminders(commands.Cog):
         Alias of the base reminder command.
         """
 
-        await ctx.invoke(self.bot.get_command("reminders"))
+        await ctx.invoke(self._reminders)
 
     @_reminders.command(name="all", aliases=["a"])
     async def _reminders_all(self, ctx: context.Context) -> None:

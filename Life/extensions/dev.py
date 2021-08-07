@@ -1,5 +1,6 @@
 import collections
 import time
+from typing import Optional
 
 from discord.ext import commands
 
@@ -135,7 +136,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_users.command(name="add", hidden=True)
-    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: str = utils.MISSING) -> None:
+    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: Optional[str]) -> None:
         """
         Adds a user to the blacklist.
 
@@ -197,7 +198,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist_guilds.command(name="add", hidden=True)
-    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: str = utils.MISSING) -> None:
+    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: Optional[str]) -> None:
         """
         Adds a guild to the blacklist.
 
