@@ -28,5 +28,5 @@ class ReminderRepeatTypeConverter(commands.Converter):
         if enum := getattr(enums.ReminderRepeatType, argument.replace(" ", "_").upper(), None):
             return enum
 
-        valid = [f'{repeat_type.name.replace("_", " ").lower()}' for repeat_type in enums.ReminderRepeatType]
+        valid = [f"{repeat_type.name.replace('_', ' ').lower()}" for repeat_type in enums.ReminderRepeatType]
         raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Repeat type must be one of:\n{f'{values.NL}'.join([f'- {v}' for v in valid])}")

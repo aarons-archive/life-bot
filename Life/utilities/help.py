@@ -4,7 +4,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from core import colours, config, values
+from core import colours, config, emojis, values
 from utilities import context, exceptions
 
 
@@ -15,15 +15,15 @@ class HelpCommand(commands.HelpCommand):
         self.context: Optional[context.Context] = None
 
         super().__init__(command_attrs={
-            'help': textwrap.dedent(
-                    '''
+            "help": textwrap.dedent(
+                    """
                     Shows help for the bot, a category or a command.
                     
                     `<argument>` means the argument is required.
                     `[argument]` means the argument is optional.
                     `[a|b]` means it can be `a` or `b`.
                     `[argument...]` means you can have multiple arguments.
-                    '''
+                    """
             )
         })
 
@@ -43,10 +43,10 @@ class HelpCommand(commands.HelpCommand):
         formatted_commands = []
 
         for command in unformatted_command:
-            command_help = command.help.strip().split('\n')[0] if command.help else 'No help provided for this command.'
-            space = f'{values.ZWSP} {values.ZWSP}  ' * (len(command.parents) - 1)
-            indent = '`╚╡` ' if command.parents else ''
-            formatted_commands.append(f'**{space}{indent}{command.name}** - {command_help}')
+            command_help = command.help.strip().split("\n")[0] if command.help else "No help provided for this command."
+            space = f"{values.ZWSP} {values.ZWSP}  " * (len(command.parents) - 1)
+            indent = "`╚╡` " if command.parents else ""
+            formatted_commands.append(f"**{space}{indent}{command.name}** - {command_help}")
 
         return formatted_commands
 
@@ -55,27 +55,27 @@ class HelpCommand(commands.HelpCommand):
         entries = []
 
         if not self.context.bot.cogs:
-            raise exceptions.ArgumentError('There are no loaded cogs.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no loaded cogs.")
 
         for cog in sorted(self.context.bot.cogs.values(), key=lambda c: len(list(c.walk_commands())), reverse=True):
 
             if not (cog_commands := self.get_cog_commands(cog=cog)):
                 continue
 
-            entries.append(f'__**{cog.qualified_name}:**__\n{"".join(f"`{command.qualified_name}`{values.ZWSP} " for command in cog_commands)}')
+            entries.append(f"__**{cog.qualified_name}:**__\n{''.join(f'`{command.qualified_name}`{values.ZWSP} ' for command in cog_commands)}")
 
-        title = f'__{self.context.bot.user.name}\'s help page__'
-        header = f'Use `{config.PREFIX}help [Command/Category]` for more help with a command or category.\n\n'
+        title = f"__{self.context.bot.user.name}\"s help page__"
+        header = f"Use `{config.PREFIX}help [Command/Category]` for more help with a command or category.\n\n"
         await self.context.paginate_embed(entries=entries, per_page=5, title=title, header=header)
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
 
         if (cog_commands := self.get_cog_commands(cog=cog)) is None:
-            raise exceptions.ArgumentError('This cog has no commands. (Or you are not allowed to see them).')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="This cog has no commands. (Or you are not allowed to see them).")
 
         entries = self.format_commands(unformatted_command=cog_commands)
-        title = f'__**{cog.qualified_name} help page:**__\n'
-        header = f'{cog.description}\n\n' if cog.description else ''
+        title = f"__**{cog.qualified_name} help page:**__\n"
+        header = f"{cog.description}\n\n" if cog.description else ""
 
         await self.context.paginate_embed(entries=entries, per_page=20, title=title, header=header)
 
@@ -89,34 +89,34 @@ class HelpCommand(commands.HelpCommand):
             filtered_commands.append(command)
 
         if not filtered_commands:
-            raise exceptions.ArgumentError('That command has no subcommands that you are able to see.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That command has no subcommands that you are able to see.")
 
-        command_help = group.help if group.help else 'No help provided for this command.'
-        aliases = f'**Aliases:** {"/".join(group.aliases)}\n\n' if group.aliases else ''
+        command_help = group.help if group.help else "No help provided for this command."
+        aliases = f"**Aliases:** {'/'.join(group.aliases)}\n\n" if group.aliases else ""
 
         entries = self.format_commands(unformatted_command=filtered_commands)
-        title = f'{group.qualified_name} {group.signature if group.signature else ""}'
-        header = f'{aliases}{command_help}\n\n__**Subcommands:**__\n'
+        title = f"{group.qualified_name} {group.signature if group.signature else ''}"
+        header = f"{aliases}{command_help}\n\n__**Subcommands:**__\n"
 
         await self.context.paginate_embed(entries=entries, per_page=20, title=title, header=header)
 
     async def send_command_help(self, command: commands.Command) -> None:
 
-        command_help = command.help.strip('\n') if command.help else 'No help provided for this command.'
-        aliases = f'**Aliases:** {"/".join(command.aliases)}\n\n'
+        command_help = command.help.strip("\n") if command.help else "No help provided for this command."
+        aliases = f"**Aliases:** {'/'.join(command.aliases)}\n\n"
 
-        title = f'{command.qualified_name} {command.signature if command.signature else ""}'
-        description = f'{aliases if command.aliases else ""}{command_help}'
+        title = f"{command.qualified_name} {command.signature if command.signature else ''}"
+        description = f"{aliases if command.aliases else ''}{command_help}"
         embed = discord.Embed(colour=colours.MAIN, title=title, description=description)
 
         await self.context.paginate_embeds(entries=[embed])
 
     def command_not_found(self, string: str) -> str:
-        return f'There are no commands or categories with the name `{string}`. Be sure to capitalize the first letter if you are looking for the help of a category.'
+        return f"There are no commands or categories with the name `{string}`. Be sure to capitalize the first letter if you are looking for the help of a category."
 
     def subcommand_not_found(self, command: commands.Command | commands.Group, string: str) -> str:
 
         if isinstance(command, commands.Group):
-            return f'The command `{command.qualified_name}` has no sub-commands called `{string}`.'
+            return f"The command `{command.qualified_name}` has no sub-commands called `{string}`."
 
-        return f'The command `{command.qualified_name}` has no sub-commands.'
+        return f"The command `{command.qualified_name}` has no sub-commands."

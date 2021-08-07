@@ -12,6 +12,6 @@ class TodoContentConverter(commands.clean_content):
             raise commands.BadArgument
 
         if len(argument) > 150:
-            raise exceptions.EmbedError(colour=colours.RED, description=f'{emojis.CROSS}  Your todo content must be under 150 characters.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your todo content must be under 150 characters.")
 
         return argument

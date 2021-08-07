@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import traceback
 from typing import Any, Optional
 
 import discord
@@ -165,7 +164,7 @@ class Events(commands.Cog):
 
     async def handle_traceback(self, ctx: context.Context, exception: Exception) -> None:
 
-        embed = discord.Embed(colour=colours.RED, description=f"{emojis.CROSS}  Something went wrong! Join my [support server](https://discord.gg/w9f6NkQbde) for help.")
+        embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"Something went wrong! Join my [support server](https://discord.gg/w9f6NkQbde) for help.")
         await ctx.reply(embed=embed)
 
         message = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))

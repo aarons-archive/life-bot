@@ -448,7 +448,7 @@ class Information(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @commands.command(name='source', aliases=['src'])
+    @commands.command(name="source", aliases=["src"])
     async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
 
         if not command:
@@ -469,9 +469,9 @@ class Information(commands.Cog):
             filename = source.co_filename
 
         lines, start_line_number = inspect.getsourcelines(source)
-        if not module.startswith('discord'):
-            location = os.path.relpath(filename).replace('\\', '/')
-            await ctx.reply(f'https://github.com/Axelancerr/Life/blob/rewrite/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>')
+        if not module.startswith("discord"):
+            location = os.path.relpath(filename).replace("\\", "/")
+            await ctx.reply(f"https://github.com/Axelancerr/Life/blob/rewrite/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
         else:
-            location = module.replace('.', '/') + '.py'
-            await ctx.reply(f'<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>')
+            location = module.replace(".", "/") + ".py"
+            await ctx.reply(f"<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")

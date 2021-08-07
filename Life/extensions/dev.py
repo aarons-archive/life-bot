@@ -25,7 +25,7 @@ class Dev(commands.Cog):
         Base command for bot developer commands.
         """
 
-        await ctx.invoke(self.bot.get_command('jsk'))
+        await ctx.invoke(self.bot.get_command("jsk"))
 
     @commands.is_owner()
     @dev.command(name="cleanup", aliases=["clean"], hidden=True)
@@ -43,12 +43,12 @@ class Dev(commands.Cog):
 
         s = "s" if len(messages) > 1 else ""
         await ctx.reply(
-                embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f'Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s}.'),
+                embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s}."),
                 delete_after=10
         )
 
     @commands.is_owner()
-    @dev.command(name="guilds", aliases=["g", 'servers', 's'], hidden=True)
+    @dev.command(name="guilds", aliases=["g", "servers", "s"], hidden=True)
     async def dev_guilds(self, ctx: context.Context) -> None:
         """
         Displays a list of servers the bot is in.

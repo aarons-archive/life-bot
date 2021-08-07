@@ -11,7 +11,7 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__: logging.Logger = logging.getLogger('utilities.objects.tag')
+__log__: logging.Logger = logging.getLogger("utilities.objects.tag")
 
 
 class Tag:
@@ -21,17 +21,17 @@ class Tag:
         self._bot = bot
         self._guild_config = guild_config
 
-        self._id: int = data['id']
-        self._user_id: int = data['user_id']
-        self._guild_id: int = data['guild_id']
-        self._created_at: pendulum.DateTime = pendulum.instance(data['created_at'], tz='UTC')
-        self._name: str = data['name']
-        self._alias: Optional[int] = data['alias']
-        self._content: Optional[str] = data['content']
-        self._jump_url: Optional[str] = data['jump_url']
+        self._id: int = data["id"]
+        self._user_id: int = data["user_id"]
+        self._guild_id: int = data["guild_id"]
+        self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
+        self._name: str = data["name"]
+        self._alias: Optional[int] = data["alias"]
+        self._content: Optional[str] = data["content"]
+        self._jump_url: Optional[str] = data["jump_url"]
 
     def __repr__(self) -> str:
-        return f'<Tag id=\'{self.id}\' user_id=\'{self.user_id}\' guild_id=\'{self.guild_id}\' name=\'{self.name}\' alias=\'{self.alias}\'>'
+        return f"<Tag id=\"{self.id}\" user_id=\"{self.user_id}\" guild_id=\"{self.guild_id}\" name=\"{self.name}\" alias=\"{self.alias}\">"
 
     # Properties
 
@@ -79,19 +79,19 @@ class Tag:
 
     async def delete(self) -> None:
 
-        tags = await self.bot.db.fetch('DELETE FROM tags WHERE id = $1 or alias = $1 RETURNING name', self.id)
+        tags = await self.bot.db.fetch("DELETE FROM tags WHERE id = $1 or alias = $1 RETURNING name", self.id)
         for tag in tags:
-            del self.guild_config.tags[tag['name']]
+            del self.guild_config.tags[tag["name"]]
 
     # Config
 
     async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE tags SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url', content, jump_url, self.id)
-        self._content = data['content']
-        self._jump_url = data['jump_url'] or self.jump_url
+        data = await self.bot.db.fetchrow("UPDATE tags SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
+        self._content = data["content"]
+        self._jump_url = data["jump_url"] or self.jump_url
 
     async def change_owner(self, user_id: int) -> None:
 
-        data = await self.bot.db.fetchrow('UPDATE tags SET user_id = $1 WHERE id = $2 RETURNING user_id', user_id, self.id)
-        self._user_id = data['user_id']
+        data = await self.bot.db.fetchrow("UPDATE tags SET user_id = $1 WHERE id = $2 RETURNING user_id", user_id, self.id)
+        self._user_id = data["user_id"]

@@ -27,6 +27,6 @@ class DatetimeConverter(commands.Converter):
 
         searches: Any = dateparser.search.search_dates(argument, languages=["en"], settings=SETTINGS)
         if not searches:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  I couldn't find a time or date in that input.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I couldn't find a time or date in that input.")
 
         return argument, {phrase: pendulum.instance(datetime, tz="UTC") for phrase, datetime in searches}

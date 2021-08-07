@@ -9,7 +9,7 @@ from utilities import objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__: logging.Logger = logging.getLogger('utilities.objects.notifications')
+__log__: logging.Logger = logging.getLogger("utilities.objects.notifications")
 
 
 class Notifications:
@@ -18,13 +18,13 @@ class Notifications:
         self._bot = bot
         self._user_config = user_config
 
-        self._id: int = data.get('id', 0)
-        self._user_id: int = data.get('user_id', 0)
+        self._id: int = data.get("id", 0)
+        self._user_id: int = data.get("user_id", 0)
 
-        self._level_ups: bool = data.get('level_ups', False)
+        self._level_ups: bool = data.get("level_ups", False)
 
     def __repr__(self) -> str:
-        return f'<Notifications id=\'{self.id}\' user_id=\'{self.user_id}\' level_ups={self.level_ups}>'
+        return f"<Notifications id=\"{self.id}\" user_id=\"{self.user_id}\" level_ups={self.level_ups}>"
 
     # Properties
 

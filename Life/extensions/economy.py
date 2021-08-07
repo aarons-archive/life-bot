@@ -77,7 +77,7 @@ class Economy(commands.Cog):
         """
 
         if not (leaderboard := self.bot.user_manager.leaderboard(guild_id=getattr(ctx.guild, "id", None))):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description='There are no leaderboard stats.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no leaderboard stats.")
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
