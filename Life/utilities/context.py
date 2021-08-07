@@ -116,7 +116,6 @@ class Context(commands.Context):
         for _ in range(5):
 
             try:
-                # noinspection PyTypeChecker
                 response = await self.bot.wait_for("message", check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
             except asyncio.TimeoutError:
                 raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You took too long to respond, try again.")
