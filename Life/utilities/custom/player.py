@@ -97,7 +97,8 @@ class Player(obsidian.ObsidianPlayer):
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    await self.send(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Nothing was added to the queue for two minutes, cya next time!"))
+                    embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Nothing was added to the queue for two minutes, cya next time!")
+                    await self.send(embed=embed)
                     await self.disconnect()
                     break
 
@@ -122,7 +123,8 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                await self.send(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"There was an error while playing the track [{self.current.title}]({self.current.uri})."))
+                embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).")
+                await self.send(embed=embed)
                 continue
 
             await self.invoke_controller()
@@ -238,4 +240,5 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
 
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description))
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description)
+        await ctx.reply(embed=embed)
