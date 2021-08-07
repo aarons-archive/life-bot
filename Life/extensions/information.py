@@ -471,7 +471,7 @@ class Information(commands.Cog):
         lines, start_line_number = inspect.getsourcelines(source)
         if not module.startswith("discord"):
             location = os.path.relpath(filename).replace("\\", "/")
-            await ctx.reply(f"https://github.com/Axelancerr/Life/blob/rewrite/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
+            await ctx.reply(f"https://github.com/Axelancerr/Life/blob/main/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
         else:
             location = module.replace(".", "/") + ".py"
             await ctx.reply(f"<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
