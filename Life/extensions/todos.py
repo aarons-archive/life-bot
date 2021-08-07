@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 import discord
@@ -6,11 +5,8 @@ from discord.ext import commands
 
 from core import colours, emojis
 from core.bot import Life
-from utilities import converters, exceptions
+from utilities import converters, exceptions, utils
 from utilities.context import Context
-
-
-__log__: logging.Logger = logging.getLogger("cogs.todos")
 
 
 def setup(bot: Life) -> None:
@@ -27,7 +23,7 @@ class Todo(commands.Cog):
         """
         Creates a todo.
 
-        `content`: The content of your todo. Must be under 150 characters.
+        **content**: The content of your todo. Must be under 150 characters.
 
         **Usage:**
         `l-todo Finish documentation`
@@ -40,10 +36,10 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have any todos.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
         await ctx.paginate_embed(
-                entries=[f"[`**{todo.id}:**`]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
+                entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
                 per_page=10,
                 title=f"Todo list for **{ctx.author}**:"
         )
@@ -64,7 +60,7 @@ class Todo(commands.Cog):
         """
         Creates a todo.
 
-        `content`: The content of your todo. Must be under 150 characters.
+        **content**: The content of your todo. Must be under 150 characters.
 
         **Usage:**
         `l-todo Finish documentation`
@@ -76,16 +72,14 @@ class Todo(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You have 100 todos, try finishing some before adding any more.")
 
         todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
-
-        embed = discord.Embed(colour=colours.GREEN, description=f"{emojis.TICK}  Todo **{todo.id}** created.")
-        await ctx.reply(embed=embed)
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Todo **{todo.id}** created."))
 
     @todo.command(name="delete", aliases=["remove"])
     async def todo_delete(self, ctx: Context, todo_ids: commands.Greedy[int]) -> None:
         """
         Deletes todos.
 
-        `todo_ids`: A list of todo ids to delete, separated by spaces.
+        **todo_ids**: A list of todo ids to delete, separated by spaces.
 
         **Usage:**
         `l-todo delete 1 2`
@@ -94,14 +88,14 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have any todos.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
         todos = set()
 
         for todo_id in todo_ids:
 
             if not (todo := user_config.get_todo(todo_id)):
-                raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have a todo with id **{todo_id}**.")
+                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"You don't have a todo with id **{todo_id}**.")
 
             todos.add(todo)
 
@@ -109,10 +103,10 @@ class Todo(commands.Cog):
             await todo.delete()
 
         await ctx.paginate_embed(
-                entries=[f"[`**{todo.id}:**`]({todo.jump_url}) {todo.content}" for todo in todos],
+                entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in todos],
                 per_page=10,
                 colour=colours.GREEN,
-                title=f"{emojis.TICK}  Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:"
+                title=f"Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:"
         )
 
     @todo.command(name="clear")
@@ -127,21 +121,23 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
 
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, description=f"{emojis.CROSS}  You don't have any todos.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
         for todo in user_config.todos.copy().values():
             await todo.delete()
 
-        embed = discord.Embed(colour=colours.GREEN, description=f"{emojis.TICK}  Cleared your todo list.")
-        await ctx.reply(embed=embed)
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Cleared your todo list."))
 
     @todo.command(name="edit", aliases=["update"])
     async def todo_edit(self, ctx: Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:
         """
         Edits a todo.
 
-        `todo_id`: The id of the todo to edit.
-        `content`: The content of the todo.
+        **todo_id**: The id of the todo to edit.
+        **content**: The content of the todo.
+
+        **Usage:**
+        `l-todo edit 1 new content here`
         """
 
         user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
