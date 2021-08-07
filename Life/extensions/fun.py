@@ -134,7 +134,7 @@ class Fun(commands.Cog):
                 await message.edit(content=LOSE)
 
     @commands.command(name="8ball")
-    async def magic_8_ball(self, ctx: context.Context, *, question: str = utils.MISSING) -> None:
+    async def magic_8_ball(self, ctx: context.Context, *, question: Optional[str]) -> None:
         """
         Ask the magic 8 ball a question.
 
