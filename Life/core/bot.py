@@ -4,7 +4,7 @@ import logging
 import re
 import time
 import traceback
-from typing import Optional, Type
+from typing import Any, Callable, Optional, Type
 
 import aiohttp
 import aioredis
@@ -17,15 +17,24 @@ import psutil
 import slate
 import spotify
 from discord.ext import commands
+# noinspection PyUnresolvedReferences
+from discord.ext.alternatives import converter_dict
 
 from core import config
-from utilities import checks, context, help, managers
+from utilities import checks, context, converters, enums, help, managers, objects
 
 
 __log__: logging.Logger = logging.getLogger("bot")
 
 
+CONVERTERS = {
+    objects.Reminder: converters.ReminderConverter,
+    enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
+}
+
+
 class Life(commands.AutoShardedBot):
+    converters: dict[type, Callable[..., Any]]
 
     def __init__(self) -> None:
         super().__init__(
@@ -64,6 +73,8 @@ class Life(commands.AutoShardedBot):
         self.start_time: float = time.time()
 
         self.add_check(checks.global_check, call_once=True)
+
+        self.converters |= CONVERTERS
 
     #
 
