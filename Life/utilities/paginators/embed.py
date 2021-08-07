@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -36,7 +14,7 @@ class EmbedPaginator(paginators.BasePaginator):
             self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n",
             header: Optional[str] = None, footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None,
             thumbnail: Optional[str] = None, author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None,
-            url: Optional[str] = None, colour: discord.Colour = colours.MAIN
+            url: Optional[str] = None, colour: discord.Colour = colours.MAIN, additional_footer: Optional[str] = None
     ) -> None:
         super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter)
 
@@ -56,6 +34,8 @@ class EmbedPaginator(paginators.BasePaginator):
         self.embed_title: Optional[str] = title
         self.embed_url: Optional[str] = url
         self.embed_colour: discord.Colour = colour
+
+        self.additional_footer = additional_footer
 
         self.embed: discord.Embed = discord.Embed(colour=self.embed_colour)
 
@@ -79,7 +59,8 @@ class EmbedPaginator(paginators.BasePaginator):
 
     @property
     def _embed_footer(self) -> Optional[str]:
-        return (self.embed_footer or f"Page: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}") if len(self.pages) != 1 else None
+        return (self.embed_footer or f"Page: {self.page + 1}/{len(self.pages)} | Total entries: {len(self.entries)}"
+                                     f"{f' | {self.additional_footer}' if self.additional_footer else ''}") if len(self.pages) != 1 else None
 
     # Abstract methods
 

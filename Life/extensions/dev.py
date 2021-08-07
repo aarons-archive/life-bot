@@ -1,24 +1,16 @@
-#  Life
-#  Copyright (C) 2020 Axel#3456
-#
-#  Life is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#  Life is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-#  PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License along with Life. If not, see https://www.gnu.org/licenses/.
-#
-
 import collections
 import time
+from typing import Optional
 
-import discord
 from discord.ext import commands
 
-from core import colours, config
+from core import colours, config, emojis
 from core.bot import Life
-from utilities import context, converters, exceptions
+from utilities import context, converters, exceptions, utils
+
+
+def setup(bot: Life) -> None:
+    bot.add_cog(Dev(bot=bot))
 
 
 class Dev(commands.Cog):
@@ -27,19 +19,21 @@ class Dev(commands.Cog):
         self.bot = bot
 
     @commands.is_owner()
-    @commands.group(name='dev', hidden=True, invoke_without_command=True)
+    @commands.group(name="dev", hidden=True, invoke_without_command=True)
     async def dev(self, ctx: context.Context) -> None:
         """
         Base command for bot developer commands.
         """
 
-    @commands.is_owner()
-    @dev.command(name='cleanup', aliases=['clean'], hidden=True)
-    async def dev_cleanup(self, ctx: context.Context, limit: int = 50) -> None:
-        """
-        Clean up the bots messages.
+        await ctx.invoke(self.bot.get_command("jsk"))
 
-        `limit`: The amount of messages to check back through. Defaults to 50.
+    @commands.is_owner()
+    @dev.command(name="cleanup", aliases=["clean"], hidden=True)
+    async def dev_cleanup(self, ctx: context.Context, limit: int = 100) -> None:
+        """
+        Deletes the bots messages.
+
+        **limit**: The amount of messages to check back through to delete.
         """
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
@@ -47,16 +41,17 @@ class Dev(commands.Cog):
         else:
             messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
 
-        s = 's' if len(messages) > 1 else ''
-        await ctx.send(f'Found and deleted `{len(messages)}` of my message{s} out of the last `{limit}` message{s}.', delete_after=5)
+        s = "s" if len(messages) > 1 else ""
+        await ctx.reply(
+                embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s}."),
+                delete_after=10
+        )
 
     @commands.is_owner()
-    @dev.command(name='guilds', aliases=['g'], hidden=True)
-    async def dev_guilds(self, ctx: context.Context, guilds: int = 20) -> None:
+    @dev.command(name="guilds", aliases=["g", "servers", "s"], hidden=True)
+    async def dev_guilds(self, ctx: context.Context) -> None:
         """
-        Display a list of guilds the bot is in.
-
-        `guilds`: The amount of guilds to show per page.
+        Displays a list of servers the bot is in.
         """
 
         entries = []
@@ -66,156 +61,182 @@ class Dev(commands.Cog):
             total = len(guild.members)
             members = sum(not m.bot for m in guild.members)
             bots = sum(1 for m in guild.members if m.bot)
-            percent_bots = f'{round((bots / total) * 100, 2)}%'
+            percent_bots = f"{round((bots / total) * 100, 2)}%"
 
-            entries.append(f'{guild.id:<19} |{total:<10}|{members:<10}|{bots:<10}|{percent_bots:10}|{guild.name}')
+            entries.append(f"║ {guild.id:<19} ║ {total:<8} ║ {members:<8} ║ {bots:<8} ║ {percent_bots:8} ║ {guild.name}")
 
-        header = 'Guild id            |Total     |Members   |Bots      |Percent   |Name\n'
-        await ctx.paginate(entries=entries, per_page=guilds, header=header, codeblock=True)
+        await ctx.paginate(
+                entries=entries,
+                per_page=20,
+                header="╔═════════════════════╦══════════╦══════════╦══════════╦══════════╦═════════════════════\n"
+                       "║ Guild id            ║ Total    ║ Members  ║ Bots     ║ Percent  ║ Name\n"
+                       "╠═════════════════════╬══════════╬══════════╬══════════╬══════════╬═════════════════════\n",
+                footer="\n"
+                       "╚═════════════════════╩══════════╩══════════╩══════════╩══════════╩═════════════════════",
+                codeblock=True
+        )
 
     @commands.is_owner()
-    @dev.command(name='socketstats', aliases=['ss'], hidden=True)
+    @dev.command(name="socketstats", aliases=["ss"], hidden=True)
     async def dev_socket_stats(self, ctx: context.Context) -> None:
         """
         Displays a list of socket event counts since bot startup.
         """
 
         event_stats = collections.OrderedDict(sorted(self.bot.socket_stats.items(), key=lambda kv: kv[1], reverse=True))
-        events_total = sum(event_stats.values())
-        events_per_second = round(events_total / round(time.time() - self.bot.start_time))
+        total = sum(event_stats.values())
+        per_second = round(total / round(time.time() - self.bot.start_time))
 
-        description = [f'```py\n{events_total} socket events observed at a rate of {events_per_second} per second.\n']
-
-        for event, count in event_stats.items():
-            description.append(f'{event:29} | {count}')
-
-        description.append('```')
-
-        embed = discord.Embed(title=f'{self.bot.user.name} socket stats.', colour=colours.MAIN, description='\n'.join(description))
-        await ctx.reply(embed=embed)
+        await ctx.paginate(
+                entries=[f"║ {event:40} ║ {count:<8} ║" for event, count in event_stats.items()],
+                per_page=20,
+                header=f"{total} socket events observed at a rate of {per_second} per second.\n"
+                       "╔══════════════════════════════════════════╦══════════╗\n"
+                       "║ Event                                    ║ Count    ║\n"
+                       "╠══════════════════════════════════════════╬══════════╣\n",
+                footer="\n"
+                       "╚══════════════════════════════════════════╩══════════╝",
+                codeblock=True
+        )
 
     #
 
     @commands.is_owner()
-    @commands.group(name='blacklist', aliases=['bl'], hidden=True, invoke_without_command=True)
+    @commands.group(name="blacklist", aliases=["bl"], hidden=True, invoke_without_command=True)
     async def blacklist(self, ctx: context.Context) -> None:
         """
         Base command for blacklisting.
         """
 
-        await ctx.reply(f'Choose a valid subcommand. Use `{config.PREFIX}help dev blacklist` for more information.')
+        embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Choose a valid subcommand.")
+        await ctx.reply(embed=embed)
 
     #
 
     @commands.is_owner()
-    @blacklist.group(name='users', aliases=['user', 'u'], hidden=True, invoke_without_command=True)
+    @blacklist.group(name="users", aliases=["user", "u"], hidden=True, invoke_without_command=True)
     async def blacklist_users(self, ctx: context.Context) -> None:
         """
-        Display a list of blacklisted users.
+        Displays blacklisted users.
         """
 
         if not (blacklisted := [user_config for user_config in self.bot.user_manager.configs.values() if user_config.blacklisted is True]):
-            raise exceptions.ArgumentError('There are no blacklisted users.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no blacklisted users.")
 
-        entries = [f'{user_config.id:<19} | {user_config.blacklisted_reason}' for user_config in blacklisted]
-        header = 'User id             | Reason\n'
-        await ctx.paginate(entries=entries, per_page=15, header=header, codeblock=True)
+        await ctx.paginate(
+                entries=[f"║ {user_config.id:<19} ║ {user_config.blacklisted_reason:62} ║" for user_config in blacklisted],
+                per_page=15,
+                header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
+                       "║ User id             ║ Reason                                                         ║\n"
+                       "╠═════════════════════╬════════════════════════════════════════════════════════════════╣\n",
+                footer="\n"
+                       "╚═════════════════════╩════════════════════════════════════════════════════════════════╝",
+                codeblock=True
+        )
 
     @commands.is_owner()
-    @blacklist_users.command(name='add', hidden=True)
-    async def blacklist_users_add(self, ctx: context.Context, user: converters.UserConverter, *, reason: str = 'No reason') -> None:
+    @blacklist_users.command(name="add", hidden=True)
+    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: Optional[str]) -> None:
         """
-        Blacklist a user.
+        Adds a user to the blacklist.
 
-        `user`: The user to add to the blacklist.
-        `reason`: Reason why the user is being blacklisted.
+        **user**: The user to blacklist, can be their ID, Username, Nickname or @Mention.
+        **reason**: Reason why the user is being blacklisted.
         """
 
-        if reason == 'No reason':
-            reason = f'{user.name} - No reason'
+        reason = reason or f"{user} - No reason"
 
-        user_config = self.bot.user_manager.get_config(user.id)
+        user_config = await self.bot.user_manager.get_or_create_config(user.id)
         if user_config.blacklisted is True:
-            raise exceptions.ArgumentError('That user is already blacklisted.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is already blacklisted.")
 
         await user_config.set_blacklisted(True, reason=reason)
-        await ctx.reply(f'Added user `{user.id}` to the blacklist with reason:\n\n`{reason}`')
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Added **{user}** to the blacklist.")
+        await ctx.reply(embed=embed)
 
     @commands.is_owner()
-    @blacklist_users.command(name='remove', hidden=True)
-    async def blacklist_users_remove(self, ctx: context.Context, user: converters.UserConverter) -> None:
+    @blacklist_users.command(name="remove", hidden=True)
+    async def blacklist_users_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
         """
-        Unblacklist a user.
+        Removes a user from the blacklist.
 
-        `user`: The user to remove from the blacklist.
+        **user**: The user to remove from the blacklist, can be their ID, Username, Nickname or @Mention.
         """
 
-        user_config = self.bot.user_manager.get_config(user.id)
+        user_config = await self.bot.user_manager.get_or_create_config(user.id)
         if user_config.blacklisted is False:
-            raise exceptions.ArgumentError('That user is not blacklisted.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is not blacklisted.")
 
         await user_config.set_blacklisted(False)
-        await ctx.reply(f'Removed user `{user.id}` from the blacklist.')
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **{user}** from the blacklist.")
+        await ctx.reply(embed=embed)
 
     #
 
     @commands.is_owner()
-    @blacklist.group(name='guilds', aliases=['guild', 'g'], hidden=True, invoke_without_command=True)
+    @blacklist.group(name="guilds", aliases=["guild", "g"], hidden=True, invoke_without_command=True)
     async def blacklist_guilds(self, ctx: context.Context) -> None:
         """
-        Display a list of blacklisted guilds.
+        Displays blacklisted guilds.
         """
 
         if not (blacklisted := [guild_config for guild_config in self.bot.guild_manager.configs.values() if guild_config.blacklisted is True]):
-            raise exceptions.ArgumentError('There are no blacklisted guilds.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no blacklisted guilds.")
 
-        entries = [f'{guild_config.id:<19} | {guild_config.blacklisted_reason}' for guild_config in blacklisted]
-        header = 'Guild id            | Reason\n'
-        await ctx.paginate(entries=entries, per_page=10, header=header, codeblock=True)
+        await ctx.paginate(
+                entries=[f"║ {guild_config.id:<19} ║ {guild_config.blacklisted_reason:62} ║" for guild_config in blacklisted],
+                per_page=15,
+                header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
+                       "║ Guild id            ║ Reason                                                         ║\n"
+                       "╠═════════════════════╬════════════════════════════════════════════════════════════════╣\n",
+                footer="\n"
+                       "╚═════════════════════╩════════════════════════════════════════════════════════════════╝",
+                codeblock=True
+        )
 
     @commands.is_owner()
-    @blacklist_guilds.command(name='add', hidden=True)
-    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: str = 'No reason') -> None:
+    @blacklist_guilds.command(name="add", hidden=True)
+    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: Optional[str]) -> None:
         """
-        Blacklist a guild.
+        Adds a guild to the blacklist.
 
-        `guild`: The guild id to add to the blacklist.
-        `reason`: Reason why the guild is being blacklisted.
+        **guild**: The guild to add to the blacklist.
+        **reason**: Reason why the guild is being blacklisted.
         """
 
-        if 17 > guild_id > 20:
-            raise exceptions.ArgumentError('That is not a valid guild id.')
+        reason = reason or "No reason"
 
-        if (guild := self.bot.get_guild(guild_id)) and reason == 'No reason':
-            reason = f'{guild.name} - No reason'
+        if guild := self.bot.get_guild(guild_id):
+            reason = f"{guild.name} - {reason}"
             await guild.leave()
 
-        guild_config = self.bot.guild_manager.get_config(guild_id)
+        guild_config = await self.bot.guild_manager.get_or_create_config(guild_id)
         if guild_config.blacklisted is True:
-            raise exceptions.ArgumentError('The guild is already blacklisted.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{guild or guild_id}** is already blacklisted.")
 
         await guild_config.set_blacklisted(True, reason=reason)
-        await ctx.reply(f'Blacklisted guild `{guild_id}` with reason:\n\n`{reason}`')
+
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Added **{guild or guild_id}** to the blacklist.")
+        await ctx.reply(embed=embed)
 
     @commands.is_owner()
-    @blacklist_guilds.command(name='remove', hidden=True)
+    @blacklist_guilds.command(name="remove", hidden=True)
     async def blacklist_guilds_remove(self, ctx: context.Context, guild_id: int) -> None:
         """
-        Unblacklist a guild.
+        Removes a guild from the blacklist.
 
-        `guild`: The guild id to remove from the blacklist.
+        **guild**: The guild to remove from the blacklist.
         """
 
-        if 17 > guild_id > 20:
-            raise exceptions.ArgumentError('That is not a valid guild id.')
+        guild = self.bot.get_guild(guild_id)
 
-        guild_config = self.bot.guild_manager.get_config(guild_id)
+        guild_config = await self.bot.guild_manager.get_or_create_config(guild_id)
         if guild_config.blacklisted is False:
-            raise exceptions.ArgumentError('That guild is not blacklisted.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{guild or guild_id}** is already blacklisted.")
 
         await guild_config.set_blacklisted(False)
-        await ctx.reply(f'Unblacklisted guild `{guild_id}`.')
 
-
-def setup(bot: Life) -> None:
-    bot.add_cog(Dev(bot=bot))
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **{guild or guild_id}** from the blacklist.")
+        await ctx.reply(embed=embed)

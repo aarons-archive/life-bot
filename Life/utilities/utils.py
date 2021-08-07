@@ -1,32 +1,10 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import colorsys
 import datetime as dt
 import io
 import logging
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 import aiohttp
 import discord
@@ -35,46 +13,45 @@ import mystbin
 import pendulum
 from discord.ext import commands
 
-from core import config, emojis
+from core import colours, config, emojis, values
 from utilities import exceptions
 
 
-__log__ = logging.getLogger('utilities.utils')
+__log__: logging.Logger = logging.getLogger("utilities.utils")
 
 
-def convert_datetime(datetime: Union[dt.datetime, pendulum.DateTime]) -> pendulum.DateTime:
-
+def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:
     datetime.replace(microsecond=0)
 
     if type(datetime) is dt.datetime and datetime.tzinfo == dt.timezone.utc:
         datetime = datetime.replace(tzinfo=None)
 
-    return pendulum.instance(datetime, tz='UTC')
+    return pendulum.instance(datetime, tz="UTC")
 
 
-def format_datetime(datetime: Union[dt.datetime, pendulum.DateTime], *, seconds: bool = False) -> str:
-    return convert_datetime(datetime).format(f'dddd MMMM Do YYYY [at] hh:mm{":ss" if seconds else ""} A zzZZ')
+def format_datetime(datetime: dt.datetime | pendulum.DateTime, *, seconds: bool = False) -> str:
+    return convert_datetime(datetime).format(f"dddd MMMM Do YYYY [at] hh:mm{':ss' if seconds else ''} A")
 
 
 def format_date(date: pendulum.Date) -> str:
-    return date.format('dddd MMMM Do YYYY')
+    return date.format("dddd MMMM Do YYYY")
 
 
 def format_time(time: pendulum.Time) -> str:
-    return time.format(f'hh:mm:ss')
+    return time.format(f"hh:mm:ss")
 
 
-def format_difference(datetime: Union[dt.datetime, pendulum.DateTime], *, suppress: Optional[tuple[str]] = None) -> str:
-
+def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tuple[str] = ('seconds',)) -> str:
     datetime = convert_datetime(datetime)
 
     now = pendulum.now(tz=datetime.timezone)
     now.replace(microsecond=0)
 
-    return humanize.precisedelta(now.diff(datetime), format='%0.0f', suppress=suppress or [])
+    return humanize.precisedelta(now.diff(datetime), format="%0.0f", suppress=suppress)
 
 
-def format_seconds(seconds: int, *, friendly: bool = False) -> str:
+def format_seconds(seconds: float, *, friendly: bool = False) -> str:
+    seconds = round(seconds)
 
     minute, second = divmod(seconds, 60)
     hour, minute = divmod(minute, 60)
@@ -83,54 +60,52 @@ def format_seconds(seconds: int, *, friendly: bool = False) -> str:
     days, hours, minutes, seconds = round(day), round(hour), round(minute), round(second)
 
     if friendly is True:
-        return f'{f"{days}d " if not days == 0 else ""}{f"{hours}h " if not hours == 0 or not days == 0 else ""}{minutes}m {seconds}s'
+        return f"{f'{days}d ' if not days == 0 else ''}{f'{hours}h ' if not hours == 0 or not days == 0 else ''}{minutes}m {seconds}s"
 
-    return f'{f"{days:02d}:" if not days == 0 else ""}{f"{hours:02d}:" if not hours == 0 or not days == 0 else ""}{minutes:02d}:{seconds:02d}'
+    return f"{f'{days:02d}:' if not days == 0 else ''}{f'{hours:02d}:' if not hours == 0 or not days == 0 else ''}{minutes:02d}:{seconds:02d}"
 
 
-def channel_emoji(channel: Union[discord.TextChannel, discord.VoiceChannel, discord.StageChannel], *, guild: discord.Guild, member: discord.Member) -> str:
-
+def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel, *, guild: discord.Guild, member: discord.Member) -> str:
     overwrites = channel.permissions_for(member)
 
     if isinstance(channel, discord.StageChannel):
-        emoji_name = 'STAGE' if overwrites.connect else 'STAGE_LOCKED'
+        emoji_name = "STAGE" if overwrites.connect else "STAGE_LOCKED"
     elif isinstance(channel, discord.VoiceChannel):
-        emoji_name = 'VOICE' if overwrites.connect else 'VOICE_LOCKED'
+        emoji_name = "VOICE" if overwrites.connect else "VOICE_LOCKED"
     elif channel == guild.rules_channel:
-        emoji_name = 'RULES'
+        emoji_name = "RULES"
     elif channel.is_news():
-        emoji_name = 'ANNOUNCEMENT' if overwrites.read_messages else 'ANNOUNCEMENT_LOCKED'
+        emoji_name = "ANNOUNCEMENT" if overwrites.read_messages else "ANNOUNCEMENT_LOCKED"
     elif channel.is_nsfw():
-        emoji_name = 'TEXT_NSFW'
+        emoji_name = "TEXT_NSFW"
     else:
-        emoji_name = 'TEXT' if overwrites.read_messages else 'TEXT_LOCKED'
+        emoji_name = "TEXT" if overwrites.read_messages else "TEXT_LOCKED"
 
     return emojis.CHANNELS[emoji_name]
 
 
-def badge_emojis(person: Union[discord.User, discord.Member]) -> str:
-
+def badge_emojis(person: discord.User | discord.Member) -> str:
     badges = [badge for badge_name, badge in emojis.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
-    if dict(person.public_flags)['verified_bot'] is False and person.bot:
+    if dict(person.public_flags)["verified_bot"] is False and person.bot:
         badges.append(emojis.BOT)
-    if isinstance(person, discord.Member) and person.premium_since:
-        badges.append(emojis.BADGES)
 
-    if person.avatar.is_animated():
-        badges.append(emojis.NITRO)
-
-    elif isinstance(person, discord.Member) and ((activity_list := [activity for activity in person.activities if isinstance(activity, discord.CustomActivity)]) is not None):
-        if activity_list[0].emoji and activity_list[0].emoji.is_custom_emoji():
+    if isinstance(person, discord.Member):
+        if person.premium_since:
+            badges.append(emojis.BOOSTER)
+        if ((activity := discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)) is not None) and activity.emoji and activity.emoji.is_custom_emoji():
             badges.append(emojis.NITRO)
 
-    return ' '.join(badges) if badges else 'N/A'
+    if person.avatar.is_animated() and emojis.NITRO not in badges:
+        badges.append(emojis.NITRO)
+
+    return " ".join(badges) if badges else "N/A"
 
 
 def activities(member: discord.Member) -> str:  # sourcery no-metrics
 
     if not member.activities:
-        return 'N/A'
+        return "• N/A"
 
     message = []
 
@@ -139,95 +114,90 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
         if isinstance(activity, discord.Activity):
 
             if activity.type is discord.ActivityType.playing:
-                message.append(f'• Playing **{activity.name}** {f" | **{activity.details}**" if activity.details else ""}{f" | **{activity.state}**" if activity.state else ""}')
+                message.append(f"• Playing **{activity.name}** {f' | **{activity.details}**' if activity.details else ''}{f' | **{activity.state}**' if activity.state else ''}")
 
             elif activity.type is discord.ActivityType.watching:
-                message.append(f'• Watching **{activity.name}**')
+                message.append(f"• Watching **{activity.name}**")
 
             elif activity.type is discord.ActivityType.competing:
-                message.append(f'• Competing in **{activity.name}**')
+                message.append(f"• Competing in **{activity.name}**")
 
         elif isinstance(activity, discord.Spotify):
 
-            album = f" from their album **{activity.album}**" if activity.album and activity.album != activity.title else ""
-            message.append(f'• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{", ".join(activity.artists)}** {album}')
+            album = f" from the album **{activity.album}**" if activity.album and activity.album != activity.title else ""
+            message.append(f"• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{', '.join(activity.artists)}** {album}")
 
         elif isinstance(activity, discord.Game):
-            message.append(f'• Playing **{activity.name}**')
+            message.append(f"• Playing **{activity.name}**")
 
         elif isinstance(activity, discord.Streaming):
-            message.append(f'• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**')
+            message.append(f"• Streaming **[{activity.name}]({activity.url})** on **{activity.platform}**")
 
-        elif isinstance(activity, discord.CustomActivity):
-            message.append(f'• {f"{activity.emoji} " if activity.emoji else ""}{f"{activity.name}" if activity.name else ""}')
+        else:
+            message.append(f"• {f'{activity.emoji} ' if activity.emoji else ''}{f'{activity.name}' if activity.name else ''}")
 
-    return '\n'.join(message)
-
-
-def avatar(person: Union[discord.User, discord.Member], *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
-    return str(person.avatar.replace(format=format or ('gif' if person.avatar.is_animated() else 'png'), size=size)) if person.avatar else None
+    return "\n".join(message)
 
 
-def icon(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
-    return str(guild.icon.replace(format=format or ('gif' if guild.icon.is_animated() else 'png'), size=size)) if guild.icon else None
+def avatar(person: discord.User | discord.Member, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+    return str(person.avatar.replace(format=format or ("gif" if person.avatar.is_animated() else "png"), size=size)) if person.avatar else None
 
 
-def banner(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
-    return str(guild.banner.replace(format=format or ('gif' if guild.banner.is_animated() else 'png'), size=size)) if guild.banner else None
+def icon(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.icon.replace(format=format or ("gif" if guild.icon.is_animated() else "png"), size=size)) if guild.icon else None
 
 
-def splash(guild: discord.Guild, *, format: Optional[Literal['webp', 'jpeg', 'jpg', 'png', 'gif']] = None, size: int = 1024) -> Optional[str]:
-    return str(guild.splash.replace(format=format or ('gif' if guild.splash.is_animated() else 'png'), size=size)) if guild.splash else None
+def banner(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.banner.replace(format=format or ("gif" if guild.banner.is_animated() else "png"), size=size)) if guild.banner else None
+
+
+def splash(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+    return str(guild.splash.replace(format=format or ("gif" if guild.splash.is_animated() else "png"), size=size)) if guild.splash else None
 
 
 def format_command(command: commands.Command) -> str:
-    return f'{config.PREFIX}{command.qualified_name}'
+    return f"{config.PREFIX}{command.qualified_name}"
 
 
-def voice_region(obj: Union[discord.VoiceChannel, discord.StageChannel, discord.Guild]) -> str:
+def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
 
     if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
-        return 'Automatic'
+        return "Automatic"
 
     if region is discord.VoiceRegion.hongkong:
-        region_name = 'Hong Kong'
+        return "Hong Kong"
     elif region is discord.VoiceRegion.southafrica:
-        region_name = 'South Africa'
-    else:
-        region_name = obj.name.title().replace('Vip', 'VIP').replace('_', '-').replace('Us-', 'US-')
+        return "South Africa"
 
-    return region_name
+    return obj.name.title().replace("Vip", "VIP").replace("_", "-").replace("Us-", "US-")
 
 
-def name(person: Union[discord.Member, discord.User], *, guild: Optional[discord.Guild] = None) -> str:
-
+def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:
     if guild and isinstance(person, discord.User):
         member = guild.get_member(person.id)
-        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, 'name', 'Unknown')
+        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, "name", "Unknown")
 
-    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, 'name', 'Unknown')
+    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, "name", "Unknown")
 
 
 #
 
 
-async def upload_image(session: aiohttp.ClientSession, *, buffer: io.BytesIO, file_format: str = 'png') -> str:
-
+async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
     data = aiohttp.FormData()
-    data.add_field('file', buffer, filename=f'file.{file_format.lower()}')
+    data.add_field("file", value=file_bytes, filename=f"file.{file_format.lower()}")
 
-    async with session.post('https://cdn.axelancerr.xyz/api/media', headers={'Authorization': config.AXEL_WEB_TOKEN}, data=data) as response:
+    async with session.post("https://cdn.axelancerr.xyz/api/media", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
 
         if response.status == 413:
-            raise exceptions.GeneralError('The image produced was too large to upload.')
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The image produced was too large to upload.")
 
         post = await response.json()
 
-    return f'https://cdn.axelancerr.xyz/{post.get("filename")}'
+    return f"https://cdn.axelancerr.xyz/{post.get('filename')}"
 
 
-async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = 'txt', max_characters: int = 1024) -> str:
-
+async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = "txt", max_characters: int = 1024) -> str:
     if len(content) <= max_characters:
         return content
 
@@ -238,11 +208,7 @@ async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: 
         return content[:max_characters]
 
 
-#
-
-
 def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
-
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
@@ -252,3 +218,44 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
+
+
+def embed(
+        footer_url: Optional[str] = None, footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
+        author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
+        colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
+) -> discord.Embed:
+
+    e = discord.Embed(colour=colour)
+
+    if footer:
+        e.set_footer(text=footer, icon_url=footer_url or discord.embeds.EmptyEmbed)
+    if image:
+        e.set_image(url=image)
+    if thumbnail:
+        e.set_thumbnail(url=thumbnail)
+    if author:
+        e.set_author(name=author, url=author_url or discord.embeds.EmptyEmbed, icon_url=author_icon_url or discord.embeds.EmptyEmbed)
+    if title:
+        e.title = title
+    if description:
+        e.description = f"{emoji} {values.ZWSP} {description}" if emoji else description
+    if url:
+        e.url = url
+
+    return e
+
+
+class _MissingSentinel:
+
+    def __eq__(self, other):
+        return False
+
+    def __bool__(self):
+        return False
+
+    def __repr__(self):
+        return "..."
+
+
+MISSING: Any = _MissingSentinel()

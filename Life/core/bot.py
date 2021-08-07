@@ -1,32 +1,10 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 import collections
 import copy
 import logging
 import re
 import time
 import traceback
-from typing import Optional, Type, Union
+from typing import Any, Callable, Optional, Type
 
 import aiohttp
 import aioredis
@@ -39,20 +17,31 @@ import psutil
 import slate
 import spotify
 from discord.ext import commands
+# noinspection PyUnresolvedReferences
+from discord.ext.alternatives import converter_dict
+from pendulum.tz.timezone import Timezone
 
 from core import config
-from utilities import checks, context, help, managers
+from utilities import checks, context, converters, enums, help, managers, objects
 
 
-__log__ = logging.getLogger('bot')
+__log__: logging.Logger = logging.getLogger("bot")
+
+
+CONVERTERS = {
+    objects.Reminder: converters.ReminderConverter,
+    enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
+    Timezone: converters.TimezoneConverter
+}
 
 
 class Life(commands.AutoShardedBot):
+    converters: dict[type, Callable[..., Any]]
 
     def __init__(self) -> None:
         super().__init__(
                 status=discord.Status.dnd,
-                activity=discord.Activity(type=discord.ActivityType.playing, name='aaaaa!'),
+                activity=discord.Activity(type=discord.ActivityType.playing, name="aaaaa!"),
                 allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False),
                 help_command=help.HelpCommand(),
                 intents=discord.Intents.all(),
@@ -85,17 +74,19 @@ class Life(commands.AutoShardedBot):
         self.first_ready: bool = True
         self.start_time: float = time.time()
 
-        self.add_check(checks.bot_check, call_once=True)
+        self.add_check(checks.global_check, call_once=True)
+
+        self.converters |= CONVERTERS
 
     #
 
     async def get_prefix(self, message: discord.Message) -> list[str]:
 
         if not message.guild:
-            return commands.when_mentioned_or(config.PREFIX, 'I-', '')(self, message)
+            return commands.when_mentioned_or(config.PREFIX, "I-", "")(self, message)
 
         guild_config = self.guild_manager.get_config(message.guild.id)
-        return commands.when_mentioned_or(config.PREFIX, 'I-', *guild_config.prefixes)(self, message)
+        return commands.when_mentioned_or(config.PREFIX, "I-", *guild_config.prefixes)(self, message)
 
     async def process_commands(self, message: discord.Message) -> None:
 
@@ -104,7 +95,7 @@ class Life(commands.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        if ctx.command and ctx.command.name in ['play', 'yt-music', 'soundcloud', 'search', 'play-now', 'play-next']:
+        if ctx.command and ctx.command.name in ["play", "yt-music", "soundcloud", "search", "play-now", "play-next", "rolecounts"]:
 
             content = message.content
             start = content.index(ctx.invoked_with) + len(ctx.invoked_with) + 1
@@ -123,10 +114,10 @@ class Life(commands.AutoShardedBot):
 
         await self.invoke(ctx)
 
-    async def get_context(self, message: discord.Message, *, cls=context.Context) -> context.Context:
+    async def get_context(self, message: discord.Message, *, cls: Type[context.Context] = context.Context) -> context.Context:
         return await super().get_context(message=message, cls=cls)
 
-    async def is_owner(self, user: Union[discord.User, discord.Member]) -> bool:
+    async def is_owner(self, user: discord.User | discord.Member) -> bool:
         return user.id in config.OWNER_IDS
 
     #
@@ -134,55 +125,52 @@ class Life(commands.AutoShardedBot):
     async def start(self, token: str, *, reconnect: bool = True) -> None:
 
         try:
-            __log__.debug('[POSTGRESQL] Attempting connection.')
+            __log__.debug("[POSTGRESQL] Attempting connection.")
             db = await asyncpg.create_pool(**config.POSTGRESQL, max_inactive_connection_lifetime=0)
         except Exception as e:
-            __log__.critical(f'[POSTGRESQL] Error while connecting.\n{e}\n')
+            __log__.critical(f"[POSTGRESQL] Error while connecting.\n{e}\n")
             raise ConnectionError()
         else:
-            __log__.info('[POSTGRESQL] Successful connection.')
+            __log__.info("[POSTGRESQL] Successful connection.")
             self.db = db
 
         try:
-            __log__.debug('[REDIS] Attempting connection.')
+            __log__.debug("[REDIS] Attempting connection.")
             redis = aioredis.from_url(url=config.REDIS, decode_responses=True, retry_on_timeout=True)
             await redis.ping()
         except (aioredis.ConnectionError, aioredis.ResponseError) as e:
-            __log__.critical(f'[REDIS] Error while connecting.\n{e}\n')
+            __log__.critical(f"[REDIS] Error while connecting.\n{e}\n")
             raise ConnectionError()
         else:
-            __log__.info('[REDIS] Successful connection.')
+            __log__.info("[REDIS] Successful connection.")
             self.redis = redis
 
         for extension in config.EXTENSIONS:
             try:
                 self.load_extension(extension)
-                __log__.info(f'[EXTENSIONS] Loaded - {extension}')
+                __log__.info(f"[EXTENSIONS] Loaded - {extension}")
             except commands.ExtensionNotFound:
-                __log__.warning(f'[EXTENSIONS] Extension not found - {extension}')
+                __log__.warning(f"[EXTENSIONS] Extension not found - {extension}")
             except commands.NoEntryPointError:
-                __log__.warning(f'[EXTENSIONS] No entry point - {extension}')
+                __log__.warning(f"[EXTENSIONS] No entry point - {extension}")
             except commands.ExtensionFailed as error:
-                __log__.warning(f'[EXTENSIONS] Failed - {extension} - Reason: {traceback.print_exception(type(error), error, error.__traceback__)}')
+                __log__.warning(f"[EXTENSIONS] Failed - {extension} - Reason: {traceback.print_exception(type(error), error, error.__traceback__)}")
 
         await super().start(token=token, reconnect=reconnect)
 
     async def close(self) -> None:
 
-        __log__.info('[AIOHTTP] Closing ClientSessions.')
         await self.session.close()
         await self.ksoft.close()
         await self.spotify.close()
         await self.spotify_http.close()
 
-        __log__.info('[POSTGRESQL] Closing connection.')
-        await self.db.close()
-
-        __log__.info('[REDIS] Closing connection.')
-        await self.redis.close()
+        if self.db:
+            await self.db.close()
+        if self.redis:
+            await self.redis.close()
 
         await super().close()
-        __log__.info('BYE BYE!!!')
 
     # Events
 
@@ -196,6 +184,4 @@ class Life(commands.AutoShardedBot):
         await self.user_manager.load()
         await self.guild_manager.load()
 
-        for cog in self.cogs.values():
-            if hasattr(cog, 'load'):
-                await cog.load()
+        await self.cogs["Voice"].load()

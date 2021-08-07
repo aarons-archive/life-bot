@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import abc
@@ -51,9 +29,8 @@ class PaginatorButtons(discord.ui.View):
 
     #
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.FIRST)
-    async def first(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def first(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -62,9 +39,8 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=0)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.BACKWARD)
-    async def backward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def backward(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -73,18 +49,16 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page - 1)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
         await self.paginator.stop(self.paginator.delete_message)
         self.stop()
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.FORWARD)
-    async def forward(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def forward(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -93,9 +67,8 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page + 1)
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.LAST)
-    async def last(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def last(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
@@ -125,9 +98,8 @@ class PaginatorStopButton(discord.ui.View):
 
     #
 
-    # noinspection PyUnusedLocal
     @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
 
         await interaction.response.defer()
 
