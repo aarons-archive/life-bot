@@ -170,6 +170,7 @@ class Voice(commands.Cog):
         if ctx.voice_client and ctx.voice_client.is_connected() is True:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"I am already connected to {ctx.voice_client.voice_channel.mention}.")
 
+        # noinspection PyTypeChecker
         await ctx.author.voice.channel.connect(cls=custom.Player)
         ctx.voice_client._text_channel = ctx.channel
 

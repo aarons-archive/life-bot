@@ -296,7 +296,7 @@ class UserManager:
             raise ValueError(f"guild with id \"{guild_id}\" was not found.")
 
         if not (leaderboard := self.leaderboard(guild_id=guild_id)):
-            raise exceptions.ArgumentError("There are no users who have gained any xp yet.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no users who have gained any xp yet.")
 
         data = []
 
