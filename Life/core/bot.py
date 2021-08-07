@@ -19,6 +19,7 @@ import spotify
 from discord.ext import commands
 # noinspection PyUnresolvedReferences
 from discord.ext.alternatives import converter_dict
+from pendulum.tz.timezone import Timezone
 
 from core import config
 from utilities import checks, context, converters, enums, help, managers, objects
@@ -30,6 +31,7 @@ __log__: logging.Logger = logging.getLogger("bot")
 CONVERTERS = {
     objects.Reminder: converters.ReminderConverter,
     enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
+    Timezone: converters.TimezoneConverter
 }
 
 
