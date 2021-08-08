@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 __log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 
 
-class DefaultGuildConfig:
+class GuildConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
         self._bot = bot
@@ -69,12 +69,6 @@ class DefaultGuildConfig:
     @property
     def tags(self) -> dict[str, objects.Tag]:
         return self._tags
-
-
-class GuildConfig(DefaultGuildConfig):
-
-    def __repr__(self) -> str:
-        return f"<GuildConfig id=\"{self.id}\" blacklisted={self.blacklisted} embed_size={self.embed_size}>"
 
     # Config
 
@@ -166,10 +160,3 @@ class GuildConfig(DefaultGuildConfig):
             return
 
         await tag.delete()
-
-    # Misc
-
-    async def delete(self) -> None:
-
-        await self.bot.db.execute("DELETE FROM guilds WHERE id = $1", self.id)
-        del self.bot.guild_manager.configs[self.id]

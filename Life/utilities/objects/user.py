@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")
 
 
-class DefaultUserConfig:
+class UserConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
@@ -44,7 +44,7 @@ class DefaultUserConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f"<DefaultUserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
+        return f"<UserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
 
     # Properties
 
@@ -144,12 +144,6 @@ class DefaultUserConfig:
     @property
     def next_level_xp(self) -> int:
         return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
-
-
-class UserConfig(DefaultUserConfig):
-
-    def __repr__(self) -> str:
-        return f"<UserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
 
     # Config
 
@@ -252,15 +246,3 @@ class UserConfig(DefaultUserConfig):
             return
 
         await todo.delete()
-
-    # Misc
-
-    async def delete(self) -> None:
-
-        await self.bot.db.execute("DELETE FROM users WHERE id = $1", self.id)
-
-        for reminder in self.reminders.values():
-            if not reminder.done:
-                self.bot.scheduler.cancel(reminder.task)
-
-        del self.bot.user_manager.configs[self.id]

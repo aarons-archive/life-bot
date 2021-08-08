@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from core import colours, emojis
-from utilities import exceptions, objects, paginators, utils
+from utilities import exceptions, paginators, utils
 
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class Context(commands.Context):
         self.message: discord.Message = kwargs["message"]
         self.bot: Life = kwargs.get("bot")
 
-    # Properties
+    # Overwritten properties
 
     @property
     def voice_client(self) -> Optional[Player]:
@@ -33,16 +33,6 @@ class Context(commands.Context):
     @discord.utils.cached_property
     def author(self) -> discord.User | discord.Member:
         return self.message.author
-
-    # Custom properties
-
-    @property
-    def user_config(self) -> objects.DefaultUserConfig | objects.UserConfig:
-        return self.bot.user_manager.get_config(getattr(self.author, "id", None))
-
-    @property
-    def guild_config(self) -> objects.DefaultGuildConfig | objects.GuildConfig:
-        return self.bot.guild_manager.get_config(getattr(self.guild, "id", None))
 
     # Paginators
 
@@ -135,7 +125,7 @@ class Context(commands.Context):
 
         raise exceptions.EmbedError(colour=colours.GREEN, emoji=emojis.TICK, description="Exiting choice selection.")
 
-    # Miscellaneous
+    # Utilities
 
     async def try_dm(self, *args, **kwargs) -> Optional[discord.Message]:
 
