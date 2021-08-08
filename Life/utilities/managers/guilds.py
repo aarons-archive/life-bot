@@ -55,7 +55,7 @@ class GuildManager:
 
         async with self.bot.db.acquire(timeout=300) as db:
 
-            requires_updating = {guild_id: guild_config for guild_id, guild_config in self.configs.items() if len(guild_config._requires_db_update) >= 1}
+            requires_updating = {guild_id: guild_config for guild_id, guild_config in self.cache.items() if len(guild_config._requires_db_update) >= 1}
             for guild_id, guild_config in requires_updating.items():
 
                 query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(guild_config._requires_db_update))

@@ -23,21 +23,13 @@ class Economy(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
-        if message.author.bot:
-            return
-
-        if await self.bot.redis.exists(f"{message.author.id}_xp_gain") is True:
+        if bool(await self.bot.redis.exists(f"{message.author.id}_xp_gain")) is True:
             return
 
         user_config = await self.bot.user_manager.get_config(message.author.id)
-
         xp = random.randint(10, 25)
 
-        if xp >= user_config.next_level_xp:
-
-            if not user_config.notifications.level_ups:
-                return
-
+        if xp >= user_config.next_level_xp and user_config.notifications.level_ups:
             await message.reply(f"You are now level `{user_config.level}`!")
 
         user_config.change_xp(xp)

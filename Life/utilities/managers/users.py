@@ -96,7 +96,7 @@ class UserManager:
 
         async with self.bot.db.acquire(timeout=300) as db:
 
-            requires_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config._requires_db_update) >= 1}
+            requires_updating = {user_id: user_config for user_id, user_config in self.cache.items() if len(user_config._requires_db_update) >= 1}
             for user_id, user_config in requires_updating.items():
 
                 query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(user_config._requires_db_update))
