@@ -148,7 +148,9 @@ class Player(obsidian.ObsidianPlayer):
                 url=self.current.thumbnail
         )
 
-        if self.current.ctx.guild_config.embed_size is enums.EmbedSize.LARGE:
+        guild_config = await self.bot.guild_manager.get_config(self.current.ctx.guild.id)
+
+        if guild_config.embed_size is enums.EmbedSize.LARGE:
 
             embed.add_field(
                     name="Player info:",
@@ -174,7 +176,7 @@ class Player(obsidian.ObsidianPlayer):
 
                 embed.add_field(name="Up next:", value="\n".join(entries), inline=False)
 
-        elif self.current.ctx.guild_config.embed_size is enums.EmbedSize.MEDIUM:
+        elif guild_config.embed_size is enums.EmbedSize.MEDIUM:
 
             embed.add_field(
                     name="Player info:",

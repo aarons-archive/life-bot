@@ -13,7 +13,7 @@ from core.bot import Life
 from utilities import context, enums, exceptions, utils
 
 
-__log__: logging.Logger = logging.getLogger(__name__)
+__log__: logging.Logger = logging.getLogger("extensions.events")
 
 BAD_ARGUMENT_ERRORS = {
     commands.BadArgument:                   "I couldn't convert one of the arguments you passed. Use **{help}** for help.",

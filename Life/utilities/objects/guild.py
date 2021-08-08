@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, Optional, TYPE_CHECKING
 
 import pendulum
@@ -12,10 +11,8 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 
-
-class DefaultGuildConfig:
+class GuildConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
         self._bot = bot
@@ -34,7 +31,7 @@ class DefaultGuildConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f"<GuildConfig id=\"{self.id}\" blacklisted={self.blacklisted} embed_size={self.embed_size}>"
+        return f"<GuildConfig id=\"{self.id}\" embed_size={self.embed_size}>"
 
     # Properties
 
@@ -51,14 +48,6 @@ class DefaultGuildConfig:
         return self._created_at
 
     @property
-    def blacklisted(self) -> bool:
-        return self._blacklisted
-
-    @property
-    def blacklisted_reason(self) -> Optional[str]:
-        return self._blacklisted_reason
-
-    @property
     def embed_size(self) -> enums.EmbedSize:
         return self._embed_size
 
@@ -70,22 +59,7 @@ class DefaultGuildConfig:
     def tags(self) -> dict[str, objects.Tag]:
         return self._tags
 
-
-class GuildConfig(DefaultGuildConfig):
-
-    def __repr__(self) -> str:
-        return f"<GuildConfig id=\"{self.id}\" blacklisted={self.blacklisted} embed_size={self.embed_size}>"
-
     # Config
-
-    async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
-
-        data = await self.bot.db.fetchrow(
-                "UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason",
-                blacklisted, reason, self.id
-        )
-        self._blacklisted = data["blacklisted"]
-        self._blacklisted_reason = data["blacklisted_reason"]
 
     async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
@@ -117,7 +91,6 @@ class GuildConfig(DefaultGuildConfig):
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
         self._tags[tag.name] = tag
 
-        __log__.info(f"[TAGS] Created tag with id \"{tag.id}\" for guild with id \"{tag.guild_id}\".")
         return tag
 
     async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: Optional[str] = None) -> objects.Tag:
@@ -130,7 +103,6 @@ class GuildConfig(DefaultGuildConfig):
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
         self._tags[tag.name] = tag
 
-        __log__.info(f"[TAGS] Created tag alias with id \"{tag.id}\" for guild with id \"{tag.guild_id}\".")
         return tag
 
     def get_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> Optional[objects.Tag]:
@@ -166,10 +138,3 @@ class GuildConfig(DefaultGuildConfig):
             return
 
         await tag.delete()
-
-    # Misc
-
-    async def delete(self) -> None:
-
-        await self.bot.db.execute("DELETE FROM guilds WHERE id = $1", self.id)
-        del self.bot.guild_manager.configs[self.id]

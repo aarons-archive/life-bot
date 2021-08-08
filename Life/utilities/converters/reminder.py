@@ -13,7 +13,7 @@ class ReminderConverter(commands.Converter):
         except ValueError:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That was not a valid reminder id.")
 
-        user_config = await ctx.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await ctx.bot.user_manager.get_config(ctx.author.id)
 
         if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have a reminder with that id.")

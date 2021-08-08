@@ -23,20 +23,13 @@ class Economy(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
-        if message.author.bot:
+        if bool(await self.bot.redis.exists(f"{message.author.id}_xp_gain")) is True:
             return
 
-        if await self.bot.redis.exists(f"{message.author.id}_xp_gain") is True:
-            return
-
-        user_config = await self.bot.user_manager.get_or_create_config(message.author.id)
-
+        user_config = await self.bot.user_manager.get_config(message.author.id)
         xp = random.randint(10, 25)
 
-        if xp >= user_config.next_level_xp:
-
-            if not user_config.notifications.level_ups:
-                return
+        if xp >= user_config.next_level_xp and user_config.notifications.level_ups:
             await message.reply(f"You are now level `{user_config.level}`!")
 
         user_config.change_xp(xp)
@@ -79,7 +72,7 @@ class Economy(commands.Cog):
         if not (leaderboard := self.bot.user_manager.leaderboard(guild_id=getattr(ctx.guild, "id", None))):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no leaderboard stats.")
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         entries = [
             f"║ {index + 1:<5} ║ {user_config.xp:<9} ║ {user_config.level:<5} ║ {utils.name(person=self.bot.get_user(user_config.id), guild=ctx.guild):<37} ║"

@@ -19,33 +19,34 @@ class GuildManager:
     def __init__(self, bot: Life) -> None:
         self.bot: Life = bot
 
-        self.DEFAULT_CONFIG = objects.DefaultGuildConfig(bot=self.bot, data={})
+        self.cache: dict[int, objects.GuildConfig] = {}
 
-        self.configs: dict[int, objects.GuildConfig] = {}
+    async def fetch_config(self, guild_id: int) -> objects.GuildConfig:
 
-    async def load(self) -> None:
+        data = await self.bot.db.fetchrow("INSERT INTO guilds (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", guild_id)
 
-        configs = await self.bot.db.fetch("SELECT * FROM guilds")
+        guild_config = objects.GuildConfig(bot=self.bot, data=data)
+        self.cache[guild_config.id] = guild_config
 
-        for config in configs:
-            self.configs[config["id"]] = objects.GuildConfig(bot=self.bot, data=config)
+        __log__.info(f"[GUILDS] Cached config for '{guild_id}'.")
+        return guild_config
 
-        __log__.info(f"[GUILD MANAGER] Loaded guild configs. [{len(configs)} guilds]")
+    async def get_config(self, guild_id: int) -> objects.GuildConfig:
 
-        await self.load_tags()
+        if (guild_config := self.cache.get(guild_id)) is not None:
+            return guild_config
 
-        self.update_database_task.start()
+        return await self.fetch_config(guild_id)
 
-    async def load_tags(self) -> None:
+    async def delete_config(self, guild_id: int) -> None:
 
-        tags = await self.bot.db.fetch("SELECT * FROM tags")
+        await self.bot.db.execute("DELETE FROM guilds WHERE id = $1", guild_id)
+        try:
+            del self.cache[guild_id]
+        except KeyError:
+            pass
 
-        for tag in tags:
-            guild_config = self.get_config(tag["guild_id"])
-            tag = objects.Tag(bot=self.bot, guild_config=guild_config, data=tag)
-            guild_config._tags[tag.name] = tag
-
-        __log__.info(f"[GUILD MANAGER] Loaded tags. [{len(tags)} tags]")
+        __log__.info(f"[GUILDS] Deleted config for '{guild_id}'.")
 
     # Background task
 
@@ -54,7 +55,7 @@ class GuildManager:
 
         async with self.bot.db.acquire(timeout=300) as db:
 
-            requires_updating = {guild_id: guild_config for guild_id, guild_config in self.configs.items() if len(guild_config._requires_db_update) >= 1}
+            requires_updating = {guild_id: guild_config for guild_id, guild_config in self.cache.items() if len(guild_config._requires_db_update) >= 1}
             for guild_id, guild_config in requires_updating.items():
 
                 query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(guild_config._requires_db_update))
@@ -62,32 +63,3 @@ class GuildManager:
                 await db.execute(f"UPDATE users SET {query} WHERE id = $1", guild_id, *args)
 
                 guild_config._requires_db_update = set()
-
-    # Config management
-
-    async def create_config(self, guild_id: int) -> objects.GuildConfig:
-
-        data = await self.bot.db.fetchrow("INSERT INTO guilds (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", guild_id)
-
-        guild_config = objects.GuildConfig(bot=self.bot, data=data)
-        self.configs[guild_config.id] = guild_config
-
-        __log__.info(f"[GUILD MANAGER] Created config for guild with id \"{guild_id}\".")
-        return guild_config
-
-    def get_config(self, guild_id: int) -> objects.DefaultGuildConfig | objects.GuildConfig:
-        return self.configs.get(guild_id, self.DEFAULT_CONFIG)
-
-    async def get_or_create_config(self, guild_id: int) -> objects.GuildConfig:
-
-        if type((config := self.get_config(guild_id))) is objects.DefaultGuildConfig:
-            config = await self.create_config(guild_id)
-
-        return config
-
-    async def delete_config(self, guild_id: int) -> None:
-
-        if not (config := self.get_config(guild_id)):
-            return
-
-        await config.delete()

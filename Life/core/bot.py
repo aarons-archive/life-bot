@@ -85,7 +85,7 @@ class Life(commands.AutoShardedBot):
         if not message.guild:
             return commands.when_mentioned_or(config.PREFIX, "I-", "")(self, message)
 
-        guild_config = self.guild_manager.get_config(message.guild.id)
+        guild_config = await self.guild_manager.get_config(message.guild.id)
         return commands.when_mentioned_or(config.PREFIX, "I-", *guild_config.prefixes)(self, message)
 
     async def process_commands(self, message: discord.Message) -> None:
@@ -103,9 +103,8 @@ class Life(commands.AutoShardedBot):
                 end = content.index(" --")
             except ValueError:
                 end = len(content)
-            query = '"' + content[start:end] + '"'
 
-            content = content[:start] + query + content[end:]
+            content = (content[:start] + ('"' + content[start:end] + '"') + content[end:]).replace('""', "")
 
             message = copy.copy(message)
             message.content = re.sub(r"--([^\s]+)\s*", r"--\1 true ", content)
@@ -180,8 +179,5 @@ class Life(commands.AutoShardedBot):
             self.first_ready = False
 
         self.scheduler.start()
-
-        await self.user_manager.load()
-        await self.guild_manager.load()
 
         await self.cogs["Voice"].load()

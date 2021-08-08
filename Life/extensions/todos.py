@@ -4,8 +4,7 @@ from discord.ext import commands
 
 from core import colours, emojis
 from core.bot import Life
-from utilities import converters, exceptions, utils
-from utilities.context import Context
+from utilities import context, converters, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -18,7 +17,7 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name="todo", aliases=["todos"], invoke_without_command=True)
-    async def todo(self, ctx: Context, *, content: Optional[str]) -> None:
+    async def todo(self, ctx: context.Context, *, content: Optional[str]) -> None:
         """
         Creates a todo.
 
@@ -32,8 +31,7 @@ class Todo(commands.Cog):
             await ctx.invoke(self.todo_add, content=content)
             return
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
-
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
@@ -44,7 +42,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="list")
-    async def todo_list(self, ctx: Context) -> None:
+    async def todo_list(self, ctx: context.Context) -> None:
         """
         Shows your todos.
 
@@ -55,7 +53,7 @@ class Todo(commands.Cog):
         await ctx.invoke(self.todo, content=None)
 
     @todo.command(name="add", aliases=["make", "create"])
-    async def todo_add(self, ctx: Context, *, content: converters.TodoContentConverter) -> None:
+    async def todo_add(self, ctx: context.Context, *, content: converters.TodoContentConverter) -> None:
         """
         Creates a todo.
 
@@ -65,7 +63,7 @@ class Todo(commands.Cog):
         `l-todo Finish documentation`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if len(user_config.todos) > 100:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You have 100 todos, try finishing some before adding any more.")
@@ -76,7 +74,7 @@ class Todo(commands.Cog):
         await ctx.reply(embed=embed)
 
     @todo.command(name="delete", aliases=["remove"])
-    async def todo_delete(self, ctx: Context, todo_ids: commands.Greedy[int]) -> None:
+    async def todo_delete(self, ctx: context.Context, todo_ids: commands.Greedy[int]) -> None:
         """
         Deletes todos.
 
@@ -86,8 +84,7 @@ class Todo(commands.Cog):
         `l-todo delete 1 2`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
-
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
@@ -111,7 +108,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="clear")
-    async def todo_clear(self, ctx: Context) -> None:
+    async def todo_clear(self, ctx: context.Context) -> None:
         """
         Clears your todos.
 
@@ -119,8 +116,7 @@ class Todo(commands.Cog):
         `l-todo clear`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
-
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 
@@ -131,7 +127,7 @@ class Todo(commands.Cog):
         await ctx.reply(embed=embed)
 
     @todo.command(name="edit", aliases=["update"])
-    async def todo_edit(self, ctx: Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:
+    async def todo_edit(self, ctx: context.Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:
         """
         Edits a todo.
 
@@ -142,8 +138,7 @@ class Todo(commands.Cog):
         `l-todo edit 1 new content here`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
-
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
 

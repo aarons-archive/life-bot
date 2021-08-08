@@ -8,13 +8,14 @@ from utilities import context, exceptions
 
 async def global_check(ctx: context.Context) -> Literal[True]:
 
-    if ctx.user_config.blacklisted is True or ctx.guild_config.blacklisted is True:
+    user_config = await ctx.bot.user_manager.get_config(ctx.author.id)
+
+    if user_config.blacklisted is True:
         raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
                 description=f"You are blacklisted from using this bot.\n\n"
                             f"*If you would like to appeal this please join my [support server]({values.SUPPORT_LINK}).*"
-
         )
 
     current = dict(ctx.channel.permissions_for(ctx.me))

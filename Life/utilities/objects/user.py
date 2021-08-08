@@ -13,10 +13,11 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
+
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")
 
 
-class DefaultUserConfig:
+class UserConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
 
@@ -44,7 +45,7 @@ class DefaultUserConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f"<DefaultUserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
+        return f"<UserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
 
     # Properties
 
@@ -145,12 +146,6 @@ class DefaultUserConfig:
     def next_level_xp(self) -> int:
         return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
 
-
-class UserConfig(DefaultUserConfig):
-
-    def __repr__(self) -> str:
-        return f"<UserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
-
     # Config
 
     async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
@@ -201,6 +196,41 @@ class UserConfig(DefaultUserConfig):
 
         self._requires_db_update.add(enums.Updateable.XP)
 
+    # Caching
+
+    async def fetch_notifications(self) -> None:
+
+        notification = await self.bot.db.fetchrow("INSERT INTO notifications (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *", self.id)
+        self._notifications = objects.Notifications(bot=self.bot, user_config=self, data=notification)
+
+        __log__.debug(f"[USERS] Fetched and cached notification settings for '{self.id}'.")
+
+    async def fetch_todos(self) -> None:
+
+        if not (todos := await self.bot.db.fetch("SELECT * FROM todos WHERE user_id = $1", self.id)):
+            return
+
+        for todo in todos:
+            todo = objects.Todo(bot=self.bot, user_config=self, data=todo)
+            self._todos[todo.id] = todo
+
+        __log__.debug(f"[USERS] Fetched and cached todos ({len(todos)}) for '{self.id}'.")
+
+    async def fetch_reminders(self) -> None:
+
+        if not (reminders := await self.bot.db.fetch("SELECT * FROM reminders WHERE user_id = $1", self.id)):
+            return
+
+        for reminder in reminders:
+
+            reminder = objects.Reminder(bot=self.bot, user_config=self, data=reminder)
+            if not reminder.done:
+                reminder.schedule()
+
+            self._reminders[reminder.id] = reminder
+
+        __log__.debug(f"[USERS] Fetched and cached reminders ({len(reminders)}) for '{self.id}'.")
+
     # Reminders
 
     async def create_reminder(
@@ -218,7 +248,6 @@ class UserConfig(DefaultUserConfig):
         if not reminder.done:
             reminder.schedule()
 
-        __log__.info(f"[REMINDERS] Created reminder with id \"{reminder.id}\"for user with id \"{reminder.user_id}\".")
         return reminder
 
     def get_reminder(self, reminder_id: int) -> Optional[objects.Reminder]:
@@ -240,7 +269,6 @@ class UserConfig(DefaultUserConfig):
         todo = objects.Todo(bot=self.bot, user_config=self, data=data)
         self._todos[todo.id] = todo
 
-        __log__.info(f"[TODOS] Created todo with id \"{todo.id}\"for user with id \"{todo.user_id}\".")
         return todo
 
     def get_todo(self, todo_id: int) -> Optional[objects.Todo]:
@@ -252,15 +280,3 @@ class UserConfig(DefaultUserConfig):
             return
 
         await todo.delete()
-
-    # Misc
-
-    async def delete(self) -> None:
-
-        await self.bot.db.execute("DELETE FROM users WHERE id = $1", self.id)
-
-        for reminder in self.reminders.values():
-            if not reminder.done:
-                self.bot.scheduler.cancel(reminder.task)
-
-        del self.bot.user_manager.configs[self.id]

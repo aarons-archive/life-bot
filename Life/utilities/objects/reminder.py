@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, Optional, TYPE_CHECKING
 
 import aioscheduler.task
@@ -14,7 +13,6 @@ from utilities import enums, objects, utils
 if TYPE_CHECKING:
     from core.bot import Life
 
-__log__: logging.Logger = logging.getLogger("utilities.objects.reminder")
 
 REPEAT_TYPES = {
     1:  lambda dt: dt.add(minutes=30),
@@ -126,9 +124,7 @@ class Reminder:
     # Handling
 
     def schedule(self) -> None:
-
         self._task = self.bot.scheduler.schedule(self.handle_notification(), when=self.datetime.naive())
-        __log__.info(f"[REMINDER] Scheduled reminder with id \"{self.id}\" for \"{self.datetime}\".")
 
     async def handle_notification(self) -> None:
 
@@ -149,7 +145,7 @@ class Reminder:
             try:
                 await user.send(embed=embed)
             except (discord.Forbidden, AttributeError):
-                __log__.warning(f"[REMINDER] Reminded with id \"{self.id}\" failed because channel or user no longer exist.")
+                return
 
         await self.set_notified()
         if self.repeat_type != enums.ReminderRepeatType.NEVER:

@@ -99,32 +99,19 @@ class Dev(commands.Cog):
                 codeblock=True
         )
 
-    #
-
     @commands.is_owner()
     @commands.group(name="blacklist", aliases=["bl"], hidden=True, invoke_without_command=True)
     async def blacklist(self, ctx: context.Context) -> None:
         """
-        Base command for blacklisting.
-        """
-
-        embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Choose a valid subcommand.")
-        await ctx.reply(embed=embed)
-
-    #
-
-    @commands.is_owner()
-    @blacklist.group(name="users", aliases=["user", "u"], hidden=True, invoke_without_command=True)
-    async def blacklist_users(self, ctx: context.Context) -> None:
-        """
         Displays blacklisted users.
         """
 
-        if not (blacklisted := [user_config for user_config in self.bot.user_manager.configs.values() if user_config.blacklisted is True]):
+        blacklisted = await self.bot.db.fetch("SELECT * FROM users WHERE blacklisted = $1", True)
+        if not blacklisted:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no blacklisted users.")
 
         await ctx.paginate(
-                entries=[f"║ {user_config.id:<19} ║ {user_config.blacklisted_reason:62} ║" for user_config in blacklisted],
+                entries=[f"║ {user_config['id']:<19} ║ {user_config['blacklisted_reason']:62} ║" for user_config in blacklisted],
                 per_page=15,
                 header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
                        "║ User id             ║ Reason                                                         ║\n"
@@ -135,8 +122,8 @@ class Dev(commands.Cog):
         )
 
     @commands.is_owner()
-    @blacklist_users.command(name="add", hidden=True)
-    async def blacklist_users_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: Optional[str]) -> None:
+    @blacklist.command(name="add", hidden=True)
+    async def blacklist_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: Optional[str]) -> None:
         """
         Adds a user to the blacklist.
 
@@ -146,7 +133,7 @@ class Dev(commands.Cog):
 
         reason = reason or f"{user} - No reason"
 
-        user_config = await self.bot.user_manager.get_or_create_config(user.id)
+        user_config = await self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is True:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is already blacklisted.")
 
@@ -156,87 +143,19 @@ class Dev(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.is_owner()
-    @blacklist_users.command(name="remove", hidden=True)
-    async def blacklist_users_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
+    @blacklist.command(name="remove", hidden=True)
+    async def blacklist_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
         """
         Removes a user from the blacklist.
 
         **user**: The user to remove from the blacklist, can be their ID, Username, Nickname or @Mention.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(user.id)
+        user_config = await self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is False:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is not blacklisted.")
 
         await user_config.set_blacklisted(False)
 
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **{user}** from the blacklist.")
-        await ctx.reply(embed=embed)
-
-    #
-
-    @commands.is_owner()
-    @blacklist.group(name="guilds", aliases=["guild", "g"], hidden=True, invoke_without_command=True)
-    async def blacklist_guilds(self, ctx: context.Context) -> None:
-        """
-        Displays blacklisted guilds.
-        """
-
-        if not (blacklisted := [guild_config for guild_config in self.bot.guild_manager.configs.values() if guild_config.blacklisted is True]):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no blacklisted guilds.")
-
-        await ctx.paginate(
-                entries=[f"║ {guild_config.id:<19} ║ {guild_config.blacklisted_reason:62} ║" for guild_config in blacklisted],
-                per_page=15,
-                header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
-                       "║ Guild id            ║ Reason                                                         ║\n"
-                       "╠═════════════════════╬════════════════════════════════════════════════════════════════╣\n",
-                footer="\n"
-                       "╚═════════════════════╩════════════════════════════════════════════════════════════════╝",
-                codeblock=True
-        )
-
-    @commands.is_owner()
-    @blacklist_guilds.command(name="add", hidden=True)
-    async def blacklist_guilds_add(self, ctx: context.Context, guild_id: int, *, reason: Optional[str]) -> None:
-        """
-        Adds a guild to the blacklist.
-
-        **guild**: The guild to add to the blacklist.
-        **reason**: Reason why the guild is being blacklisted.
-        """
-
-        reason = reason or "No reason"
-
-        if guild := self.bot.get_guild(guild_id):
-            reason = f"{guild.name} - {reason}"
-            await guild.leave()
-
-        guild_config = await self.bot.guild_manager.get_or_create_config(guild_id)
-        if guild_config.blacklisted is True:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{guild or guild_id}** is already blacklisted.")
-
-        await guild_config.set_blacklisted(True, reason=reason)
-
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Added **{guild or guild_id}** to the blacklist.")
-        await ctx.reply(embed=embed)
-
-    @commands.is_owner()
-    @blacklist_guilds.command(name="remove", hidden=True)
-    async def blacklist_guilds_remove(self, ctx: context.Context, guild_id: int) -> None:
-        """
-        Removes a guild from the blacklist.
-
-        **guild**: The guild to remove from the blacklist.
-        """
-
-        guild = self.bot.get_guild(guild_id)
-
-        guild_config = await self.bot.guild_manager.get_or_create_config(guild_id)
-        if guild_config.blacklisted is False:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{guild or guild_id}** is already blacklisted.")
-
-        await guild_config.set_blacklisted(False)
-
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **{guild or guild_id}** from the blacklist.")
         await ctx.reply(embed=embed)

@@ -55,58 +55,39 @@ class UserManager:
     def __init__(self, bot: Life) -> None:
         self.bot: Life = bot
 
-        self.DEFAULT_CONFIG = objects.DefaultUserConfig(bot=self.bot, data={})
+        self.cache: dict[int, objects.UserConfig] = {}
 
-        self.configs: dict[int, objects.UserConfig] = {}
+    async def fetch_config(self, user_id: int) -> objects.UserConfig:
 
-    async def load(self) -> None:
+        data = await self.bot.db.fetchrow("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", user_id)
 
-        configs = await self.bot.db.fetch("SELECT * FROM users")
+        user_config = objects.UserConfig(bot=self.bot, data=data)
 
-        for config in configs:
-            self.configs[config["id"]] = objects.UserConfig(bot=self.bot, data=config)
+        await user_config.fetch_notifications()
+        await user_config.fetch_todos()
+        await user_config.fetch_reminders()
 
-        __log__.info(f"[USER MANAGER] Loaded user configs. [{len(configs)} users]")
+        self.cache[user_config.id] = user_config
 
-        await self.load_notifications()
-        await self.load_reminders()
-        await self.load_todos()
+        __log__.debug(f"[USERS] Cached config for '{user_id}'.")
+        return user_config
 
-        self.update_database_task.start()
+    async def get_config(self, user_id: int) -> objects.UserConfig:
 
-    async def load_notifications(self) -> None:
+        if (user_config := self.cache.get(user_id)) is not None:
+            return user_config
 
-        notifications = await self.bot.db.fetch("SELECT * FROM notifications")
+        return await self.fetch_config(user_id)
 
-        for notification in notifications:
-            user_config = self.get_config(notification["user_id"])
-            user_config._notifications = objects.Notifications(bot=self.bot, user_config=user_config, data=notification)
+    async def delete_config(self, user_id: int) -> None:
 
-    async def load_reminders(self) -> None:
+        await self.bot.db.execute("DELETE FROM users WHERE id = $1", user_id)
+        try:
+            del self.cache[user_id]
+        except KeyError:
+            pass
 
-        reminders = await self.bot.db.fetch("SELECT * FROM reminders")
-
-        for reminder in reminders:
-            user_config = self.get_config(reminder["user_id"])
-
-            reminder = objects.Reminder(bot=self.bot, user_config=user_config, data=reminder)
-            if not reminder.done:
-                reminder.schedule()
-
-            user_config._reminders[reminder.id] = reminder
-
-        __log__.info(f"[USER MANAGER] Loaded reminders. [{len(reminders)} reminders]")
-
-    async def load_todos(self) -> None:
-
-        todos = await self.bot.db.fetch("SELECT * FROM todos")
-
-        for todo in todos:
-            user_config = self.get_config(todo["user_id"])
-            todo = objects.Todo(bot=self.bot, user_config=user_config, data=todo)
-            user_config._todos[todo.id] = todo
-
-        __log__.info(f"[USER MANAGER] Loaded todos. [{len(todos)} todos]")
+        __log__.info(f"[USERS] Deleted config for '{user_id}'.")
 
     # Background task
 
@@ -115,7 +96,7 @@ class UserManager:
 
         async with self.bot.db.acquire(timeout=300) as db:
 
-            requires_updating = {user_id: user_config for user_id, user_config in self.configs.items() if len(user_config._requires_db_update) >= 1}
+            requires_updating = {user_id: user_config for user_id, user_config in self.cache.items() if len(user_config._requires_db_update) >= 1}
             for user_id, user_config in requires_updating.items():
 
                 query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(user_config._requires_db_update))
@@ -123,38 +104,6 @@ class UserManager:
                 await db.execute(f"UPDATE users SET {query} WHERE id = $1", user_id, *args)
 
                 user_config._requires_db_update = set()
-
-    # Config management
-
-    async def create_config(self, user_id: int) -> objects.UserConfig:
-
-        data = await self.bot.db.fetchrow("INSERT INTO users (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", user_id)
-        notifications = await self.bot.db.fetchrow("INSERT INTO notifications (user_id) values ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *", user_id)
-
-        user_config = objects.UserConfig(bot=self.bot, data=data)
-        user_config._notifications = objects.Notifications(bot=self.bot, user_config=user_config, data=notifications)
-
-        self.configs[user_config.id] = user_config
-
-        __log__.info(f"[USER MANAGER] Created config for user with id \"{user_config.id}\".")
-        return user_config
-
-    def get_config(self, user_id: int) -> objects.DefaultUserConfig | objects.UserConfig:
-        return self.configs.get(user_id, self.DEFAULT_CONFIG)
-
-    async def get_or_create_config(self, user_id: int) -> objects.UserConfig:
-
-        if type((config := self.get_config(user_id))) is objects.DefaultUserConfig:
-            config = await self.create_config(user_id)
-
-        return config
-
-    async def delete_config(self, user_id: int) -> None:
-
-        if not (config := self.get_config(user_id)):
-            return
-
-        await config.delete()
 
     # Ranking
 
@@ -210,7 +159,7 @@ class UserManager:
             raise ValueError(f"guild with id \"{guild_id}\" was not found.")
 
         user = guild.get_member(user_id) if guild else self.bot.get_user(user_id)
-        user_config = self.get_config(user_id)
+        user_config = await self.get_config(user_id)
         avatar_bytes = io.BytesIO(await (user.avatar.replace(format="png", size=512)).read())
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, (user, user_config, avatar_bytes), guild)

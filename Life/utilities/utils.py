@@ -3,7 +3,6 @@ from __future__ import annotations
 import colorsys
 import datetime as dt
 import io
-import logging
 from typing import Any, Literal, Optional
 
 import aiohttp
@@ -15,9 +14,6 @@ from discord.ext import commands
 
 from core import colours, config, emojis, values
 from utilities import exceptions
-
-
-__log__: logging.Logger = logging.getLogger("utilities.utils")
 
 
 def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:

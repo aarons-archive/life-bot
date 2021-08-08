@@ -25,7 +25,7 @@ class Birthdays(commands.Cog):
         """
 
         member = person or ctx.author
-        user_config = await self.bot.user_manager.get_or_create_config(member.id)
+        user_config = await self.bot.user_manager.get_config(member.id)
 
         if not user_config.birthday:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{member.mention}** has not set their birthday.")
@@ -63,7 +63,7 @@ class Birthdays(commands.Cog):
         if birthday > pendulum.now(tz="UTC").subtract(years=13):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday must allow you to be more than 13 years old.")
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_birthday(birthday)
 
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Birthday set to **{utils.format_date(user_config.birthday)}**")
@@ -75,7 +75,7 @@ class Birthdays(commands.Cog):
         Resets your birthday.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_birthday()
 
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Birthday reset.")
@@ -87,7 +87,7 @@ class Birthdays(commands.Cog):
         Makes your birthday private.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.birthday_private is True:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **private**.")
 
@@ -102,7 +102,7 @@ class Birthdays(commands.Cog):
         Makes your birthday public.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.birthday_private is False:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **public**.")
 
