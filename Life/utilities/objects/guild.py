@@ -34,7 +34,7 @@ class GuildConfig:
         self._requires_db_update: set[enums.Updateable] = set()
 
     def __repr__(self) -> str:
-        return f"<GuildConfig id=\"{self.id}\" blacklisted={self.blacklisted} embed_size={self.embed_size}>"
+        return f"<GuildConfig id=\"{self.id}\" embed_size={self.embed_size}>"
 
     # Properties
 
@@ -51,14 +51,6 @@ class GuildConfig:
         return self._created_at
 
     @property
-    def blacklisted(self) -> bool:
-        return self._blacklisted
-
-    @property
-    def blacklisted_reason(self) -> Optional[str]:
-        return self._blacklisted_reason
-
-    @property
     def embed_size(self) -> enums.EmbedSize:
         return self._embed_size
 
@@ -71,15 +63,6 @@ class GuildConfig:
         return self._tags
 
     # Config
-
-    async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
-
-        data = await self.bot.db.fetchrow(
-                "UPDATE guilds SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason",
-                blacklisted, reason, self.id
-        )
-        self._blacklisted = data["blacklisted"]
-        self._blacklisted_reason = data["blacklisted_reason"]
 
     async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
 
