@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import math
 from typing import Literal, Optional
 
@@ -48,9 +47,6 @@ def get_source(flags: Options | SearchOptions) -> slate.Source:
         return slate.Source.HTTP
 
     return slate.Source.YOUTUBE
-
-
-__log__: logging.Logger = logging.getLogger("extensions.voice")
 
 
 class Voice(commands.Cog):

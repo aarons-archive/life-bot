@@ -1,6 +1,5 @@
 import collections
 import inspect
-import logging
 import os
 import platform
 import re
@@ -18,8 +17,6 @@ from core import colours, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
 
-
-__log__: logging.Logger = logging.getLogger("extensions.information")
 
 COLOURS: dict[discord.Status, int] = {
     discord.Status.online:    0x008000,

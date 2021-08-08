@@ -13,6 +13,7 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
+
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")
 
 
@@ -195,6 +196,41 @@ class UserConfig:
 
         self._requires_db_update.add(enums.Updateable.XP)
 
+    # Caching
+
+    async def fetch_notifications(self) -> None:
+
+        notification = await self.bot.db.fetchrow("INSERT INTO notifications (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *", self.id)
+        self._notifications = objects.Notifications(bot=self.bot, user_config=self, data=notification)
+
+        __log__.debug(f"[USERS] Fetched and cached notification settings for '{self.id}'.")
+
+    async def fetch_todos(self) -> None:
+
+        if not (todos := await self.bot.db.fetch("SELECT * FROM todos WHERE user_id = $1", self.id)):
+            return
+
+        for todo in todos:
+            todo = objects.Todo(bot=self.bot, user_config=self, data=todo)
+            self._todos[todo.id] = todo
+
+        __log__.debug(f"[USERS] Fetched and cached todos ({len(todos)}) for '{self.id}'.")
+
+    async def fetch_reminders(self) -> None:
+
+        if not (reminders := await self.bot.db.fetch("SELECT * FROM reminders WHERE user_id = $1", self.id)):
+            return
+
+        for reminder in reminders:
+
+            reminder = objects.Reminder(bot=self.bot, user_config=self, data=reminder)
+            if not reminder.done:
+                reminder.schedule()
+
+            self._reminders[reminder.id] = reminder
+
+        __log__.debug(f"[USERS] Fetched and cached reminders ({len(reminders)}) for '{self.id}'.")
+
     # Reminders
 
     async def create_reminder(
@@ -212,7 +248,6 @@ class UserConfig:
         if not reminder.done:
             reminder.schedule()
 
-        __log__.info(f"[REMINDERS] Created reminder with id \"{reminder.id}\"for user with id \"{reminder.user_id}\".")
         return reminder
 
     def get_reminder(self, reminder_id: int) -> Optional[objects.Reminder]:
@@ -234,7 +269,6 @@ class UserConfig:
         todo = objects.Todo(bot=self.bot, user_config=self, data=data)
         self._todos[todo.id] = todo
 
-        __log__.info(f"[TODOS] Created todo with id \"{todo.id}\"for user with id \"{todo.user_id}\".")
         return todo
 
     def get_todo(self, todo_id: int) -> Optional[objects.Todo]:

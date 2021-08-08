@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, TYPE_CHECKING
 
 from utilities import objects
@@ -8,8 +7,6 @@ from utilities import objects
 
 if TYPE_CHECKING:
     from core.bot import Life
-
-__log__: logging.Logger = logging.getLogger("utilities.objects.notifications")
 
 
 class Notifications:

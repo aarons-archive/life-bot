@@ -57,16 +57,19 @@ class UserManager:
 
         self.cache: dict[int, objects.UserConfig] = {}
 
-    async def fetch_config(self, user_id: int, *, cache: bool = True) -> objects.UserConfig:
+    async def fetch_config(self, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", user_id)
+
         user_config = objects.UserConfig(bot=self.bot, data=data)
-        __log__.info(f"[USERS] Fetched config for '{user_id}'.")
 
-        if cache:
-            self.cache[user_config.id] = user_config
-            __log__.info(f"[USERS] Cached config for '{user_id}'.")
+        await user_config.fetch_notifications()
+        await user_config.fetch_todos()
+        await user_config.fetch_reminders()
 
+        self.cache[user_config.id] = user_config
+
+        __log__.debug(f"[USERS] Cached config for '{user_id}'.")
         return user_config
 
     async def get_config(self, user_id: int) -> objects.UserConfig:
@@ -74,7 +77,6 @@ class UserManager:
         if (user_config := self.cache.get(user_id)) is not None:
             return user_config
 
-        __log__.debug(f"[USERS] Fetching config from database for '{user_id}'.")
         return await self.fetch_config(user_id)
 
     async def delete_config(self, user_id: int) -> None:
@@ -157,7 +159,7 @@ class UserManager:
             raise ValueError(f"guild with id \"{guild_id}\" was not found.")
 
         user = guild.get_member(user_id) if guild else self.bot.get_user(user_id)
-        user_config = self.get_config(user_id)
+        user_config = await self.get_config(user_id)
         avatar_bytes = io.BytesIO(await (user.avatar.replace(format="png", size=512)).read())
 
         buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, (user, user_config, avatar_bytes), guild)

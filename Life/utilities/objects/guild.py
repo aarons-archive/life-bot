@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, Optional, TYPE_CHECKING
 
 import pendulum
@@ -11,8 +10,6 @@ from utilities import enums, objects
 
 if TYPE_CHECKING:
     from core.bot import Life
-
-__log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 
 
 class GuildConfig:
@@ -94,7 +91,6 @@ class GuildConfig:
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
         self._tags[tag.name] = tag
 
-        __log__.info(f"[TAGS] Created tag with id \"{tag.id}\" for guild with id \"{tag.guild_id}\".")
         return tag
 
     async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: Optional[str] = None) -> objects.Tag:
@@ -107,7 +103,6 @@ class GuildConfig:
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
         self._tags[tag.name] = tag
 
-        __log__.info(f"[TAGS] Created tag alias with id \"{tag.id}\" for guild with id \"{tag.guild_id}\".")
         return tag
 
     def get_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> Optional[objects.Tag]:
