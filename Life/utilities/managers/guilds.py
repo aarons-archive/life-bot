@@ -28,7 +28,7 @@ class GuildManager:
         guild_config = objects.GuildConfig(bot=self.bot, data=data)
         self.cache[guild_config.id] = guild_config
 
-        __log__.info(f"[GUILDS] Cached config for '{guild_id}'.")
+        __log__.debug(f"[GUILDS] Cached config for '{guild_id}'.")
         return guild_config
 
     async def get_config(self, guild_id: int) -> objects.GuildConfig:
