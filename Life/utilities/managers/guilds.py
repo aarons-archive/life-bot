@@ -36,7 +36,6 @@ class GuildManager:
     async def get_config(self, guild_id: int) -> objects.GuildConfig:
 
         if (guild_config := self.cache.get(guild_id)) is not None:
-            __log__.debug(f"[GUILDS] Loaded config from cache for '{guild_id}'.")
             return guild_config
 
         __log__.debug(f"[GUILDS] Fetching config from database for '{guild_id}'.")

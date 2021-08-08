@@ -72,7 +72,6 @@ class UserManager:
     async def get_config(self, user_id: int) -> objects.UserConfig:
 
         if (user_config := self.cache.get(user_id)) is not None:
-            __log__.debug(f"[USERS] Loaded config from cache for '{user_id}'.")
             return user_config
 
         __log__.debug(f"[USERS] Fetching config from database for '{user_id}'.")
