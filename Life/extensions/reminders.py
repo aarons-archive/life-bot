@@ -41,7 +41,7 @@ class Reminders(commands.Cog):
         if datetime < pendulum.now(tz="UTC"):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The date/time detected was in the past.")
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         reminder = await user_config.create_reminder(
                 channel_id=ctx.channel.id,
@@ -62,7 +62,7 @@ class Reminders(commands.Cog):
         Base reminder command, displays a list of active reminders.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not (reminders := [reminder for reminder in user_config.reminders.values() if not reminder.done]):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have any active reminders.")
@@ -95,7 +95,7 @@ class Reminders(commands.Cog):
         Displays a list of all your reminders.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.reminders:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have any reminders.")

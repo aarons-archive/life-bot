@@ -24,7 +24,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_tags_matching(name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")
@@ -48,7 +48,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_tags_matching(name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")
@@ -75,7 +75,7 @@ class Tags(commands.Cog):
         name = str(name)
         content = str(content)
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if tag_check := guild_config.get_tag(tag_name=name):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There is already a tag with the name **{tag_check.name}**.")
@@ -97,7 +97,7 @@ class Tags(commands.Cog):
         alias = str(alias)
         original = str(original)
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if tag_check := guild_config.get_tag(tag_name=alias):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There is already a tag with the name **{tag_check.name}**.")
@@ -122,7 +122,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")
@@ -145,7 +145,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if member.bot:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You can not transfer tags to bots.")
@@ -174,7 +174,7 @@ class Tags(commands.Cog):
         name = str(name)
         content = str(content)
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")
@@ -195,7 +195,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")
@@ -216,7 +216,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_tags_matching(name=name, limit=100)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags similar to the search **{name}**.")
@@ -234,7 +234,7 @@ class Tags(commands.Cog):
 
         member = person or ctx.author
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_user_tags(member.id)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{member}** does not have any tags.")
@@ -248,7 +248,7 @@ class Tags(commands.Cog):
         Gets a list of all tags in this server.
         """
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_all_tags()):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no tags.")
@@ -265,7 +265,7 @@ class Tags(commands.Cog):
         """
 
         name = str(name)
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tag := guild_config.get_tag(tag_name=name)):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"There are no tags with the name **{name}**.")

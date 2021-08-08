@@ -32,7 +32,7 @@ class Todo(commands.Cog):
             await ctx.invoke(self.todo_add, content=content)
             return
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
@@ -65,7 +65,7 @@ class Todo(commands.Cog):
         `l-todo Finish documentation`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if len(user_config.todos) > 100:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You have 100 todos, try finishing some before adding any more.")
@@ -86,7 +86,7 @@ class Todo(commands.Cog):
         `l-todo delete 1 2`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
@@ -119,7 +119,7 @@ class Todo(commands.Cog):
         `l-todo clear`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
@@ -142,7 +142,7 @@ class Todo(commands.Cog):
         `l-todo edit 1 new content here`
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.todos:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")

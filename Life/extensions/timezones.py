@@ -65,11 +65,12 @@ class Time(commands.Cog):
         **timezone**: The timezone or users Name, Nickname, ID, or @Mention that you want to get.
         """
 
+        author_user_config = await self.bot.user_manager.get_config(ctx.author.id)
         member: Optional[discord.Member] = None
 
         if not timezone:
             member = ctx.author
-            found_timezone = ctx.user_config.timezone
+            found_timezone = author_user_config.timezone
         else:
             try:
                 found_timezone = pendulum.timezone(timezone)
@@ -80,7 +81,7 @@ class Time(commands.Cog):
                     msg = "\n".join(f"- {match}" for match, _, _ in rapidfuzz.process.extract(query=timezone, choices=pendulum.timezones))
                     raise exceptions.EmbedError(colour=colours.RED, description=f"I did not recognise that timezone or user. Maybe you meant one of these?\n{msg}")
                 else:
-                    if (user_config := self.bot.user_manager.get_config(member.id)).timezone_private is True and member.id != ctx.author.id:
+                    if (user_config := await self.bot.user_manager.get_config(member.id)).timezone_private is True and member.id != ctx.author.id:
                         raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That users timezone is private.")
                     found_timezone = user_config.timezone
 
@@ -113,7 +114,7 @@ class Time(commands.Cog):
         **timezone**: The timezone to use. See [here](https://skeletonclique.axelancerr.xyz/timezones) for a list of timezones in an easier to navigate format.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_timezone(timezone)
 
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone has been set to **{user_config.timezone.name}**.")
@@ -125,7 +126,7 @@ class Time(commands.Cog):
         Resets your timezone.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_timezone()
 
         embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone has been reset back to `{user_config.timezone.name}`.")
@@ -137,7 +138,7 @@ class Time(commands.Cog):
         Make your timezone private.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.timezone_private is True:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your timezone is already **private**.")
 
@@ -152,7 +153,7 @@ class Time(commands.Cog):
         Make your timezone public.
         """
 
-        user_config = await self.bot.user_manager.get_or_create_config(ctx.author.id)
+        user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.timezone_private is False:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your timezone is already **public**.")
 
