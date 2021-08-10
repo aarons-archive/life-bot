@@ -122,9 +122,12 @@ class UserManager:
     async def leaderboard(self, *, guild_id: int, page: int, limit: Optional[int] = 10) -> list[asyncpg.Record]:
 
         data = await self.bot.db.fetch(
-                f"SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
-                guild_id, limit, (page - 1) * (limit or 0)
+            'SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3',
+            guild_id,
+            limit,
+            (page - 1) * (limit or 0),
         )
+
         return data
 
     async def rank(self, *, guild_id: int, user_id: int) -> int:
