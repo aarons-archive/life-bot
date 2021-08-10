@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from typing import Any, Optional, TYPE_CHECKING
 
 import pendulum
@@ -23,29 +22,25 @@ class UserConfig:
 
         self._bot: Life = bot
 
-        self._id: int = data.get("id", 0)
-        self._created_at: pendulum.DateTime = pendulum.instance(created_at, tz="UTC") if (created_at := data.get("created_at")) else pendulum.now(tz="UTC")
+        self._id: int = data["id"]
+        self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
 
-        self._blacklisted: bool = data.get("blacklisted", False)
-        self._blacklisted_reason: Optional[str] = data.get("blacklisted_reason")
+        self._blacklisted: bool = data["blacklisted"]
+        self._blacklisted_reason: Optional[str] = data["blacklisted_reason"]
 
-        self._timezone: Optional[Timezone] = pendulum.timezone(timezone) if (timezone := data.get("timezone")) else None
-        self._timezone_private: bool = data.get("timezone_private", False)
+        self._timezone: Optional[Timezone] = pendulum.timezone(timezone) if (timezone := data["timezone"]) else None
+        self._timezone_private: bool = data["timezone_private"]
 
-        self._birthday: Optional[pendulum.Date] = pendulum.Date(birthday.year, birthday.month, birthday.day) if (birthday := data.get("birthday")) else None
-        self._birthday_private: bool = data.get("birthday_private", False)
-
-        self._xp: int = data.get("xp", 0)
-        self._coins: int = data.get("coins", 0)
+        self._birthday: Optional[pendulum.Date] = pendulum.Date(birthday.year, birthday.month, birthday.day) if (birthday := data["birthday"]) else None
+        self._birthday_private: bool = data["birthday_private"]
 
         self._notifications: Optional[objects.Notifications] = None
         self._reminders: dict[int, objects.Reminder] = {}
         self._todos: dict[int, objects.Todo] = {}
-
-        self._requires_db_update: set[enums.Updateable] = set()
+        self._member_configs: dict[int, objects.MemberConfig] = {}
 
     def __repr__(self) -> str:
-        return f"<UserConfig id=\"{self.id}\" blacklisted={self.blacklisted} timezone=\"{self.timezone}\" xp={self.xp} coins={self.coins} level={self.level}>"
+        return f"<UserConfig id={self.id}>"
 
     # Properties
 
@@ -85,16 +80,10 @@ class UserConfig:
     def birthday_private(self) -> bool:
         return self._birthday_private
 
-    @property
-    def xp(self) -> int:
-        return self._xp
+    #
 
     @property
-    def coins(self) -> int:
-        return self._coins
-
-    @property
-    def notifications(self) -> Optional[objects.Notifications]:
+    def notifications(self) -> objects.Notifications:
         return self._notifications
 
     @property
@@ -105,7 +94,11 @@ class UserConfig:
     def todos(self) -> dict[int, objects.Todo]:
         return self._todos
 
-    # Dynamic properties
+    @property
+    def member_configs(self) -> dict[int, objects.MemberConfig]:
+        return self._member_configs
+
+    #
 
     @property
     def age(self) -> Optional[int]:
@@ -138,14 +131,6 @@ class UserConfig:
 
         return pendulum.now(tz=self.timezone)
 
-    @property
-    def level(self) -> int:
-        return math.floor((((self.xp / 100) ** (1.0 / 1.5)) / 3))
-
-    @property
-    def next_level_xp(self) -> int:
-        return round((((((self.level + 1) * 3) ** 1.5) * 100) - self.xp))
-
     # Config
 
     async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
@@ -174,28 +159,6 @@ class UserConfig:
         self._birthday = pendulum.Date(year=birthday.year, month=birthday.month, day=birthday.day) if (birthday := data.get("birthday")) else None
         self._birthday_private = private
 
-    def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
-
-        if operation == enums.Operation.SET:
-            self._coins = coins
-        elif operation == enums.Operation.ADD:
-            self._coins += coins
-        elif operation == enums.Operation.MINUS:
-            self._coins -= coins
-
-        self._requires_db_update.add(enums.Updateable.COINS)
-
-    def change_xp(self, xp: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
-
-        if operation == enums.Operation.SET:
-            self._xp = xp
-        elif operation == enums.Operation.ADD:
-            self._xp += xp
-        elif operation == enums.Operation.MINUS:
-            self._xp -= xp
-
-        self._requires_db_update.add(enums.Updateable.XP)
-
     # Caching
 
     async def fetch_notifications(self) -> None:
@@ -210,8 +173,8 @@ class UserConfig:
         if not (todos := await self.bot.db.fetch("SELECT * FROM todos WHERE user_id = $1", self.id)):
             return
 
-        for todo in todos:
-            todo = objects.Todo(bot=self.bot, user_config=self, data=todo)
+        for todo_data in todos:
+            todo = objects.Todo(bot=self.bot, user_config=self, data=todo_data)
             self._todos[todo.id] = todo
 
         __log__.debug(f"[USERS] Fetched and cached todos ({len(todos)}) for '{self.id}'.")
@@ -221,15 +184,47 @@ class UserConfig:
         if not (reminders := await self.bot.db.fetch("SELECT * FROM reminders WHERE user_id = $1", self.id)):
             return
 
-        for reminder in reminders:
+        for reminder_data in reminders:
 
-            reminder = objects.Reminder(bot=self.bot, user_config=self, data=reminder)
+            reminder = objects.Reminder(bot=self.bot, user_config=self, data=reminder_data)
             if not reminder.done:
                 reminder.schedule()
 
             self._reminders[reminder.id] = reminder
 
         __log__.debug(f"[USERS] Fetched and cached reminders ({len(reminders)}) for '{self.id}'.")
+
+    async def fetch_member_configs(self) -> None:
+
+        if not (member_configs := await self.bot.db.fetch("SELECT * FROM members WHERE user_id = $1", self.id)):
+            return
+
+        for member_config_data in member_configs:
+            member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=member_config_data)
+            self._member_configs[member_config.guild_id] = member_config
+
+        __log__.debug(f"[USERS] Fetched and cached member configs ({len(member_configs)}) for '{self.id}'.")
+
+    # Todos
+
+    async def create_todo(self, *, content: str, jump_url: Optional[str] = None) -> objects.Todo:
+
+        data = await self.bot.db.fetchrow("INSERT INTO todos (user_id, content, jump_url) VALUES ($1, $2, $3) RETURNING *", self.id, content, jump_url)
+
+        todo = objects.Todo(bot=self.bot, user_config=self, data=data)
+        self._todos[todo.id] = todo
+
+        return todo
+
+    def get_todo(self, todo_id: int) -> Optional[objects.Todo]:
+        return self.todos.get(todo_id)
+
+    async def delete_todo(self, todo_id: int) -> None:
+
+        if not (todo := self.get_todo(todo_id)):
+            return
+
+        await todo.delete()
 
     # Reminders
 
@@ -260,23 +255,34 @@ class UserConfig:
 
         await reminder.delete()
 
-    # Todos
+    # Member configs
 
-    async def create_todo(self, *, content: str, jump_url: Optional[str] = None) -> objects.Todo:
+    async def fetch_member_config(self, guild_id: int) -> objects.MemberConfig:
 
-        data = await self.bot.db.fetchrow("INSERT INTO todos (user_id, content, jump_url) VALUES ($1, $2, $3) RETURNING *", self.id, content, jump_url)
+        data = await self.bot.db.fetchrow(
+                "INSERT INTO members (user_id, guild_id) VALUES ($1, $2) ON CONFLICT (user_id, guild_id) DO UPDATE SET user_id = excluded.user_id RETURNING *",
+                self.id, guild_id
+        )
+        member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=data)
 
-        todo = objects.Todo(bot=self.bot, user_config=self, data=data)
-        self._todos[todo.id] = todo
+        self._member_configs[member_config.guild_id] = member_config
 
-        return todo
+        __log__.debug(f"[USERS] Cached member config for user '{self.id}' in guild '{guild_id}'.")
+        return member_config
 
-    def get_todo(self, todo_id: int) -> Optional[objects.Todo]:
-        return self.todos.get(todo_id)
+    async def get_member_config(self, guild_id: int) -> objects.MemberConfig:
 
-    async def delete_todo(self, todo_id: int) -> None:
+        if (member_config := self._member_configs.get(guild_id)) is not None:
+            return member_config
 
-        if not (todo := self.get_todo(todo_id)):
-            return
+        return await self.fetch_member_config(guild_id)
 
-        await todo.delete()
+    async def delete_config(self, guild_id: int) -> None:
+
+        await self.bot.db.execute("DELETE FROM members WHERE user_id = $1 AND guild_id = $2", self.id, guild_id)
+        try:
+            del self._member_configs[guild_id]
+        except KeyError:
+            pass
+
+        __log__.info(f"[USERS] Deleted member config for '{self.id}' in guild '{guild_id}'.")

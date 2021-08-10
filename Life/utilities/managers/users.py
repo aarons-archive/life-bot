@@ -6,12 +6,12 @@ import math
 import os
 import pathlib
 import random
-from typing import Literal, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
+import asyncpg
 import discord
 from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
-from discord.ext import tasks
 
 from core import colours, emojis
 from utilities import exceptions, objects, utils
@@ -60,12 +60,12 @@ class UserManager:
     async def fetch_config(self, user_id: int) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", user_id)
-
         user_config = objects.UserConfig(bot=self.bot, data=data)
 
         await user_config.fetch_notifications()
         await user_config.fetch_todos()
         await user_config.fetch_reminders()
+        await user_config.fetch_member_configs()
 
         self.cache[user_config.id] = user_config
 
@@ -89,41 +89,7 @@ class UserManager:
 
         __log__.info(f"[USERS] Deleted config for '{user_id}'.")
 
-    # Background task
-
-    @tasks.loop(seconds=60)
-    async def update_database_task(self) -> None:
-
-        async with self.bot.db.acquire(timeout=300) as db:
-
-            requires_updating = {user_id: user_config for user_id, user_config in self.cache.items() if len(user_config._requires_db_update) >= 1}
-            for user_id, user_config in requires_updating.items():
-
-                query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(user_config._requires_db_update))
-                args = [getattr(user_config, attribute.value) for attribute in user_config._requires_db_update]
-                await db.execute(f"UPDATE users SET {query} WHERE id = $1", user_id, *args)
-
-                user_config._requires_db_update = set()
-
-    # Ranking
-
-    def leaderboard(self, leaderboard_type: Literal["xp", "coins"] = "xp", *, guild_id: Optional[int] = None) -> list[objects.UserConfig]:
-
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
-            raise ValueError(f"guild with id \"{guild_id}\" was not found.")
-
-        return sorted(
-                filter(
-                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and getattr(config, leaderboard_type) != 0,
-                        self.configs.values()
-                ),
-                key=lambda config: getattr(config, leaderboard_type), reverse=True
-        )
-
-    def rank(self, user_id: int, *, guild_id: Optional[int] = None) -> int:
-
-        leaderboard = self.leaderboard(guild_id=guild_id)
-        return leaderboard.index(self.get_config(user_id)) + 1
+    # Stats
 
     def timezones(self, *, guild_id: int) -> list[objects.UserConfig]:
 
@@ -151,83 +117,207 @@ class UserManager:
                 key=lambda config: config.next_birthday
         )
 
-    # Level card
+    # Leaderboards
 
-    async def create_level_card(self, user_id: int, *, guild_id: Optional[int] = None) -> discord.File:
+    async def leaderboard(self, *, guild_id: int, page: int, limit: Optional[int] = 10) -> list[asyncpg.Record]:
 
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
-            raise ValueError(f"guild with id \"{guild_id}\" was not found.")
+        data = await self.bot.db.fetch(
+                f"SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
+                guild_id, limit, (page - 1) * (limit or 0)
+        )
+        return data
 
-        user = guild.get_member(user_id) if guild else self.bot.get_user(user_id)
+    async def rank(self, *, guild_id: int, user_id: int) -> int:
+
+        data = await self.bot.db.fetchrow(
+                "SELECT rank FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members WHERE guild_members.user_id = $2",
+                guild_id, user_id
+        )
+        return data["rank"]
+
+    # Images
+
+    async def create_leaderboard(self, *, guild_id: int, page: int) -> io.BytesIO:
+
+        if not (records := await self.leaderboard(guild_id=guild_id, page=page)):
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no users who have gained any xp yet.")
+
+        guild = self.bot.get_guild(guild_id)
+        data = []
+
+        for record in records:
+
+            member = guild.get_member(record["user_id"])
+            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+
+            data.append((member, record["xp"], record["rank"], avatar_bytes))
+
+        return await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data)
+
+    @staticmethod
+    def create_leaderboard_image(data: list[tuple[discord.Member, int, int, io.BytesIO]]) -> io.BytesIO:
+
+        with Image.open(fp=random.choice(IMAGES["SAI"]["leaderboard"])) as image:
+
+            draw = ImageDraw.Draw(im=image)
+            y = 100
+
+            # Title
+
+            title_text = "XP Leaderboard:"
+            title_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=93)
+            draw.text(xy=(10, 10 - title_font.getoffset(text=title_text)[1]), text=title_text, font=title_font, fill="#1F1E1C")
+
+            # Actual content
+
+            for member, xp, rank, avatar_bytes in data:
+
+                # Avatar
+
+                with Image.open(fp=avatar_bytes) as avatar:
+                    avatar = avatar.resize(size=(80, 80), resample=Image.LANCZOS)
+                    image.paste(im=avatar, box=(10, y), mask=avatar.convert("RGBA"))
+
+                avatar_bytes.close()
+
+                # Username
+
+                name_text = f"{member.nick or member.name}"
+                name_fontsize = 45
+                name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
+
+                while draw.textsize(text=name_text, font=name_font) > (600, 30):
+                    name_fontsize -= 1
+                    name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
+
+                draw.text(xy=(100, y - name_font.getoffset(text=name_text)[1]), text=name_text, font=name_font, fill="#1F1E1C")
+
+                #
+
+                y += 45
+
+                # Rank
+
+                rank_text = f"#{rank}"
+                rank_fontsize = 40
+                rank_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=rank_fontsize)
+
+                while draw.textsize(text=rank_text, font=rank_font) > (600, 30):
+                    rank_fontsize -= 1
+                    rank_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=rank_fontsize)
+
+                draw.text(xy=(100, y - rank_font.getoffset(text=rank_text)[1]), text=rank_text, font=rank_font, fill="#1F1E1C")
+
+                # Xp
+
+                level = utils.level(xp)
+                needed_xp = utils.needed_xp(level, xp)
+
+                xp_text = f"XP: {xp}/{xp + needed_xp}"
+                xp_fontsize = 40
+                xp_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=xp_fontsize)
+
+                while draw.textsize(text=xp_text, font=xp_font) > (320, 30):
+                    xp_fontsize -= 1
+                    xp_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=xp_fontsize)
+
+                draw.text(xy=(220, y - xp_font.getoffset(text=xp_text)[1]), text=xp_text, font=xp_font, fill="#1F1E1C")
+
+                # Level
+
+                level_text = f"Level: {level}"
+                level_fontsize = 40
+                level_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=level_fontsize)
+
+                while draw.textsize(text=level_text, font=level_font) > (150, 30):
+                    level_fontsize -= 1
+                    level_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=level_fontsize)
+
+                draw.text(xy=(545, y - level_font.getoffset(text=xp_text)[1]), text=level_text, font=level_font, fill="#1F1E1C")
+
+                #
+
+                y += 45
+
+            buffer = io.BytesIO()
+            image.save(buffer, "png")
+
+        buffer.seek(0)
+        return buffer
+
+    #
+
+    async def create_level_card(self, *, guild_id: int, user_id: int) -> io.BytesIO:
+
+        guild = self.bot.get_guild(guild_id)
         user_config = await self.get_config(user_id)
-        avatar_bytes = io.BytesIO(await (user.avatar.replace(format="png", size=512)).read())
 
-        buffer = await self.bot.loop.run_in_executor(None, self.create_level_card_image, (user, user_config, avatar_bytes), guild)
-        file = discord.File(fp=buffer, filename="level.png")
+        member = guild.get_member(user_id)
+        member_config = await user_config.get_member_config(guild_id)
+        rank = await self.rank(guild_id=guild_id, user_id=user_id)
+        avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
 
-        buffer.close()
-        avatar_bytes.close()
+        return await self.bot.loop.run_in_executor(None, self.create_level_card_image, (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes))
 
-        return file
+    @staticmethod
+    def create_level_card_image(data: tuple[discord.Member, int, int, int, int, io.BytesIO]) -> io.BytesIO:
 
-    def create_level_card_image(self, data: tuple[discord.User | discord.Member, objects.UserConfig, io.BytesIO], guild: Optional[discord.Guild] = None) -> io.BytesIO:
+        member, xp, needed_xp, level, rank, avatar_bytes = data
 
-        user, user_config, user_avatar_bytes = data
+        with Image.open(fp=random.choice(IMAGES["SAI"]["level_cards"])) as image:
 
-        with Image.open(random.choice(IMAGES["SAI"]["level_cards"])) as image:
+            draw = ImageDraw.Draw(im=image)
 
-            draw = ImageDraw.Draw(image)
+            with Image.open(fp=avatar_bytes) as avatar:
 
-            with Image.open(user_avatar_bytes) as avatar:
+                avatar = avatar.resize(size=(256, 256), resample=Image.LANCZOS) if avatar.size != (256, 256) else avatar
+                image.paste(im=avatar, box=(22, 22), mask=avatar.convert("RGBA"))
 
-                avatar = avatar.resize((256, 256), resample=Image.LANCZOS) if avatar.size != (256, 256) else avatar
-                image.paste(avatar, (22, 22), avatar.convert("RGBA"))
-
-                colour = ColorThief(user_avatar_bytes).get_color(quality=1)
+                colour = ColorThief(file=avatar_bytes).get_color(quality=1)
 
             # Username
 
-            name_text = getattr(user, "nick", None) or user.name
+            name_text = member.nick or member.name
             name_fontsize = 56
-            name_font = ImageFont.truetype(KABEL_BLACK_FONT, name_fontsize)
+            name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
 
-            while draw.textsize(name_text, font=name_font) > (690, 45):
+            while draw.textsize(text=name_text, font=name_font) > (690, 45):
                 name_fontsize -= 1
-                name_font = ImageFont.truetype(KABEL_BLACK_FONT, name_fontsize)
+                name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
 
-            draw.text((300, 22 - name_font.getoffset(name_text)[1]), name_text, font=name_font, fill=colour)
+            draw.text(xy=(300, 22 - name_font.getoffset(text=name_text)[1]), text=name_text, font=name_font, fill=colour)
 
             # Level
 
-            level_text = f"Level: {user_config.level}"
-            level_font = ImageFont.truetype(KABEL_BLACK_FONT, 40)
+            level_text = f"Level: {level}"
+            level_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=40)
 
-            draw.text((300, 72 - level_font.getoffset(level_text)[1]), level_text, font=level_font, fill="#1F1E1C")
+            draw.text(xy=(300, 72 - level_font.getoffset(text=level_text)[1]), text=level_text, font=level_font, fill="#1F1E1C")
 
             # XP
 
-            xp_text = f"XP: {user_config.xp} / {user_config.xp + user_config.next_level_xp}"
-            xp_font = ImageFont.truetype(KABEL_BLACK_FONT, 40)
+            xp_text = f"XP: {xp} / {xp + needed_xp}"
+            xp_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=40)
 
-            draw.text((300, 112 - xp_font.getoffset(xp_text)[1]), xp_text, font=xp_font, fill="#1F1E1C")
+            draw.text(xy=(300, 112 - xp_font.getoffset(text=xp_text)[1]), text=xp_text, font=xp_font, fill="#1F1E1C")
 
             # XP BAR
 
             bar_len = 678
-            outline = utils.darken_colour(*colour, 0.2)
+            outline = utils.darken_colour(*colour, factor=0.2)
 
-            draw.rounded_rectangle(((300, 152), (300 + bar_len, 192)), radius=10, outline=outline, fill="#1F1E1C", width=5)
+            draw.rounded_rectangle(xy=((300, 152), (300 + bar_len, 192)), radius=10, outline=outline, fill="#1F1E1C", width=5)
 
-            if user_config.xp > 0:
-                filled_len = int(round(bar_len * user_config.xp / float(user_config.xp + user_config.next_level_xp)))
-                draw.rounded_rectangle(((300, 152), (300 + filled_len, 192)), radius=10, outline=outline, fill=colour, width=5)
+            if xp > 0:
+                filled_len = int(round(bar_len * xp / float(xp + needed_xp)))
+                draw.rounded_rectangle(xy=((300, 152), (300 + filled_len, 192)), radius=10, outline=outline, fill=colour, width=5)
 
             # Rank
 
-            rank_text = f"#{self.rank(user.id, guild_id=getattr(guild, 'id', None))}"
-            rank_font = ImageFont.truetype(KABEL_BLACK_FONT, 110)
+            rank_text = f"#{rank}"
+            rank_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=110)
 
-            draw.text((300, 202 - rank_font.getoffset(rank_text)[1]), rank_text, font=rank_font, fill="#1F1E1C")
+            draw.text(xy=(300, 202 - rank_font.getoffset(text=rank_text)[1]), text=rank_text, font=rank_font, fill="#1F1E1C")
 
             #
 
@@ -237,118 +327,7 @@ class UserManager:
         buffer.seek(0)
         return buffer
 
-    # Leaderboard card
-
-    async def create_leaderboard(self, page: int = 0, *, guild_id: Optional[int] = None) -> io.BytesIO:
-
-        if not (guild := self.bot.get_guild(guild_id)) and guild_id:
-            raise ValueError(f"guild with id \"{guild_id}\" was not found.")
-
-        if not (leaderboard := self.leaderboard(guild_id=guild_id)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no users who have gained any xp yet.")
-
-        data = []
-
-        for user_config in leaderboard[page * 10:page * 10 + 10]:
-
-            user = guild.get_member(user_config.id) if guild else self.bot.get_user(user_config.id)
-            avatar_bytes = io.BytesIO(await (user.avatar.replace(format="png", size=256)).read())
-
-            data.append((user, user_config, avatar_bytes))
-
-        buffer = await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data, guild)
-
-        for _, _, avatar_bytes in data:
-            avatar_bytes.close()
-
-        return buffer
-
-    def create_leaderboard_image(self, data: list[tuple[discord.User | discord.Member, objects.UserConfig, io.BytesIO]], guild: Optional[discord.Guild] = None) -> io.BytesIO:
-
-        with Image.open(random.choice(IMAGES["SAI"]["leaderboard"])) as image:
-
-            draw = ImageDraw.Draw(image)
-            y = 100
-
-            # Title
-
-            title_text = "XP Leaderboard:"
-            title_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=93)
-            draw.text(xy=(10, 10 - title_font.getoffset(title_text)[1]), text=title_text, font=title_font, fill="#1F1E1C")
-
-            # Actual content
-
-            for user, user_config, user_avatar_bytes in data:
-
-                # Avatar
-
-                with Image.open(user_avatar_bytes) as avatar:
-                    avatar = avatar.resize((80, 80), resample=Image.LANCZOS)
-                    image.paste(avatar, (10, y), avatar.convert("RGBA"))
-
-                # Username
-
-                name_text = f"{getattr(user, 'nick', None) or user.name}"
-                name_fontsize = 45
-                name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
-
-                while draw.textsize(text=name_text, font=name_font) > (600, 30):
-                    name_fontsize -= 1
-                    name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
-
-                draw.text(xy=(100, y - name_font.getoffset(name_text)[1]), text=name_text, font=name_font, fill="#1F1E1C")
-
-                #
-
-                y += 45
-
-                # Rank
-
-                rank_text = f"#{self.rank(user.id, guild_id=getattr(guild, 'id', None))}"
-                rank_fontsize = 40
-                rank_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=rank_fontsize)
-
-                while draw.textsize(text=rank_text, font=rank_font) > (600, 30):
-                    rank_fontsize -= 1
-                    rank_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=rank_fontsize)
-
-                draw.text(xy=(100, y - rank_font.getoffset(rank_text)[1]), text=rank_text, font=rank_font, fill="#1F1E1C")
-
-                # Xp
-
-                xp_text = f"XP: {user_config.xp}/{user_config.xp + user_config.next_level_xp}"
-                xp_fontsize = 40
-                xp_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=xp_fontsize)
-
-                while draw.textsize(text=xp_text, font=xp_font) > (320, 30):
-                    xp_fontsize -= 1
-                    xp_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=xp_fontsize)
-
-                draw.text(xy=(220, y - xp_font.getoffset(xp_text)[1]), text=xp_text, font=xp_font, fill="#1F1E1C")
-
-                # Level
-
-                level_text = f"Level: {user_config.level}"
-                level_fontsize = 40
-                level_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=level_fontsize)
-
-                while draw.textsize(text=level_text, font=level_font) > (150, 30):
-                    level_fontsize -= 1
-                    level_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=level_fontsize)
-
-                draw.text(xy=(545, y - level_font.getoffset(xp_text)[1]), text=level_text, font=level_font, fill="#1F1E1C")
-
-                #
-
-                y += 45
-
-            buffer = io.BytesIO()
-            image.save(buffer, "png")
-
-        buffer.seek(0)
-        return buffer
-
-    # Grid cards
+    #
 
     async def create_timecard(self, *, guild_id: int) -> discord.File:
 

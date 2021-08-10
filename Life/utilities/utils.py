@@ -3,6 +3,7 @@ from __future__ import annotations
 import colorsys
 import datetime as dt
 import io
+import math
 from typing import Any, Literal, Optional
 
 import aiohttp
@@ -176,34 +177,6 @@ def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild
     return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, "name", "Unknown")
 
 
-#
-
-
-async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
-    data = aiohttp.FormData()
-    data.add_field("file", value=file_bytes, filename=f"file.{file_format.lower()}")
-
-    async with session.post("https://cdn.axelancerr.xyz/api/media", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
-
-        if response.status == 413:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The image produced was too large to upload.")
-
-        post = await response.json()
-
-    return f"https://cdn.axelancerr.xyz/{post.get('filename')}"
-
-
-async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = "txt", max_characters: int = 1024) -> str:
-    if len(content) <= max_characters:
-        return content
-
-    try:
-        paste = await mystbin_client.post(content, syntax=syntax)
-        return paste.url
-    except mystbin.APIError:
-        return content[:max_characters]
-
-
 def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
@@ -240,6 +213,45 @@ def embed(
         e.url = url
 
     return e
+
+
+def level(_xp: int) -> int:
+    return math.floor((((_xp / 100) ** (1.0 / 1.5)) / 3))
+
+
+def needed_xp(_level: int, xp: int) -> int:
+    return round((((((_level + 1) * 3) ** 1.5) * 100) - xp))
+
+
+#
+
+
+async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
+    data = aiohttp.FormData()
+    data.add_field("file", value=file_bytes, filename=f"file.{file_format.lower()}")
+
+    async with session.post("https://cdn.axelancerr.xyz/api/media", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
+
+        if response.status == 413:
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The image produced was too large to upload.")
+
+        post = await response.json()
+
+    return f"https://cdn.axelancerr.xyz/{post.get('filename')}"
+
+
+async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = "txt", max_characters: int = 1024) -> str:
+    if len(content) <= max_characters:
+        return content
+
+    try:
+        paste = await mystbin_client.post(content, syntax=syntax)
+        return paste.url
+    except mystbin.APIError:
+        return content[:max_characters]
+
+
+#
 
 
 class _MissingSentinel:

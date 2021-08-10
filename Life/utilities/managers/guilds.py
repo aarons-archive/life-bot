@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from discord.ext import tasks
-
 from utilities import objects
 
 
@@ -47,19 +45,3 @@ class GuildManager:
             pass
 
         __log__.info(f"[GUILDS] Deleted config for '{guild_id}'.")
-
-    # Background task
-
-    @tasks.loop(seconds=60)
-    async def update_database_task(self) -> None:
-
-        async with self.bot.db.acquire(timeout=300) as db:
-
-            requires_updating = {guild_id: guild_config for guild_id, guild_config in self.cache.items() if len(guild_config._requires_db_update) >= 1}
-            for guild_id, guild_config in requires_updating.items():
-
-                query = ",".join(f"{editable.value} = ${index + 2}" for index, editable in enumerate(guild_config._requires_db_update))
-                args = [getattr(guild_config, attribute.value) for attribute in guild_config._requires_db_update]
-                await db.execute(f"UPDATE users SET {query} WHERE id = $1", guild_id, *args)
-
-                guild_config._requires_db_update = set()
