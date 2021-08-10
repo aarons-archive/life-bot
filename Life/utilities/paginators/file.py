@@ -27,7 +27,7 @@ class FilePaginator(paginators.BasePaginator):
 
     async def set_page(self, *, page: int) -> None:
 
-        buffer = await self.entries[page](page=page)
+        buffer = await self.entries[page]()
         url = await utils.upload_file(self.ctx.bot.session, file_bytes=buffer, file_format="png")
         buffer.close()
 
