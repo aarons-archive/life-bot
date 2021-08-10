@@ -61,7 +61,7 @@ class Birthdays(commands.Cog):
         _, birthday = entries[choice]
 
         if birthday > pendulum.now(tz="UTC").subtract(years=13):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday must allow you to be more than 13 years old.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your birthday must allow you to be more than 13 years old.")
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_birthday(birthday)
@@ -78,7 +78,7 @@ class Birthdays(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_birthday()
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Birthday reset.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Birthday reset.")
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="private")
@@ -89,11 +89,11 @@ class Birthdays(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.birthday_private is True:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **private**.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your birthday is already **private**.")
 
         await user_config.set_birthday(user_config.birthday, private=True)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your birthday is now **private**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Your birthday is now **private**.")
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="public")
@@ -104,11 +104,11 @@ class Birthdays(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if user_config.birthday_private is False:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"Your birthday is already **public**.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your birthday is already **public**.")
 
         await user_config.set_birthday(user_config.birthday, private=False)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your birthday is now **public**.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Your birthday is now **public**.")
         await ctx.reply(embed=embed)
 
     @commands.guild_only()

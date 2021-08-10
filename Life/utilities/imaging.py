@@ -17,7 +17,7 @@ from core import colours, emojis
 from utilities import context, exceptions, utils
 
 
-CMD = f"bash" if sys.platform == "win32" else f"/bin/bash"
+CMD = "bash" if sys.platform == "win32" else "/bin/bash"
 
 PixelInterpolateMethods = Literal["undefined", "average", "average9", "average16", "background", "bilinear", "blend", "catrom", "integer", "mesh", "nearest", "spline"]
 NoiseTypes = Literal["undefined", "uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"]

@@ -593,7 +593,7 @@ class Voice(commands.Cog):
             await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Saved the current track to our DM's."))
 
         except discord.Forbidden:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"I am unable to DM you.")
+            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I am unable to DM you.")
 
     @commands.command(name="lyrics", aliases=["ly"])
     async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:

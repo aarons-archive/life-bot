@@ -23,7 +23,7 @@ class MemberConfig:
         self._coins: int = data["coins"]
 
     def __repr__(self) -> str:
-        return f"<UserEconomy>"
+        return "<UserEconomy>"
 
     # Properties
 

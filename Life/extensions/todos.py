@@ -147,5 +147,5 @@ class Todo(commands.Cog):
 
         await todo.change_content(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of todo.")
+        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Edited content of todo.")
         await ctx.reply(embed=embed)

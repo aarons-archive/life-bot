@@ -35,7 +35,7 @@ def format_date(date: pendulum.Date) -> str:
 
 
 def format_time(time: pendulum.Time) -> str:
-    return time.format(f"hh:mm:ss")
+    return time.format("hh:mm:ss")
 
 
 def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tuple[str] = ('seconds',)) -> str:
