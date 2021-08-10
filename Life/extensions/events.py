@@ -165,11 +165,16 @@ class Events(commands.Cog):
 
     async def handle_traceback(self, ctx: context.Context, exception: Exception) -> None:
 
-        embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"Something went wrong! Join my [support server](https://discord.gg/w9f6NkQbde) for help.")
+        embed = utils.embed(
+            colour=colours.RED,
+            emoji=emojis.CROSS,
+            description='Something went wrong! Join my [support server](https://discord.gg/w9f6NkQbde) for help.',
+        )
+
         await ctx.reply(embed=embed)
 
         message = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-        __log__.error(f"Traceback:", exc_info=exception)
+        __log__.error('Traceback:', exc_info=exception)
 
         embed = discord.Embed(
                 colour=colours.RED,

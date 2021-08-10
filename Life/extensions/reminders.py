@@ -140,7 +140,12 @@ class Reminders(commands.Cog):
         """
 
         if not reminders:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"One or more of the reminder id's provided were invalid.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="One or more of the reminder id's provided were invalid.",
+            )
+
 
         for reminder in reminders:
             await reminder.delete()
@@ -160,7 +165,12 @@ class Reminders(commands.Cog):
         """
 
         if reminder.done:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"That reminder is already done.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description='That reminder is already done.',
+            )
+
 
         await reminder.change_repeat_type(repeat_type)
 

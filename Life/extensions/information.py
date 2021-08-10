@@ -449,7 +449,13 @@ class Information(commands.Cog):
     async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
 
         if not command:
-            await ctx.reply(embed=utils.embed(emoji="\U0001f4da", description=f"My source code can be viewed here: **https://github.com/Axelancerr/Life/**"))
+            await ctx.reply(
+                embed=utils.embed(
+                    emoji="\U0001f4da",
+                    description='My source code can be viewed here: **https://github.com/Axelancerr/Life/**',
+                )
+            )
+
             return
 
         if command == "help":

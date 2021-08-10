@@ -144,7 +144,12 @@ class Time(commands.Cog):
 
         await user_config.set_timezone(user_config.timezone, private=True)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone is now **private**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description='Your timezone is now **private**.',
+        )
+
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="public")
@@ -159,5 +164,10 @@ class Time(commands.Cog):
 
         await user_config.set_timezone(user_config.timezone, private=True)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone is now **public**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description='Your timezone is now **public**.',
+        )
+
         await ctx.reply(embed=embed)

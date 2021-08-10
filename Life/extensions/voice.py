@@ -593,7 +593,11 @@ class Voice(commands.Cog):
             await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Saved the current track to our DM's."))
 
         except discord.Forbidden:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"I am unable to DM you.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description='I am unable to DM you.',
+            )
 
     @commands.command(name="lyrics", aliases=["ly"])
     async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
@@ -679,9 +683,10 @@ class Voice(commands.Cog):
         """
 
         entries = [
-            f"**{index + 1}.** [{str(track.title)}]({track.uri}) | {utils.format_seconds(track.length // 1000)} | {track.requester.mention}"
+            f'**{index + 1}.** [{track.title}]({track.uri}) | {utils.format_seconds(track.length // 1000)} | {track.requester.mention}'
             for index, track in enumerate(ctx.voice_client.queue)
         ]
+
 
         await ctx.paginate_embed(
                 entries=entries,
@@ -731,9 +736,10 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The queue history is empty.")
 
         entries = [
-            f"**{index + 1}.** [{str(track.title)}]({track.uri}) | {utils.format_seconds(track.length // 1000)} | {track.requester.mention}"
+            f'**{index + 1}.** [{track.title}]({track.uri}) | {utils.format_seconds(track.length // 1000)} | {track.requester.mention}'
             for index, track in enumerate(history)
         ]
+
 
         await ctx.paginate_embed(
                 entries=entries,
