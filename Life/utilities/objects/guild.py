@@ -17,21 +17,16 @@ class GuildConfig:
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
         self._bot = bot
 
-        self._id: int = data.get("id", 0)
-        self._created_at: pendulum.DateTime = pendulum.instance(created_at, tz="UTC") if (created_at := data.get("created_at")) else pendulum.now(tz="UTC")
+        self._id: int = data["id"]
+        self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
 
-        self._blacklisted: bool = data.get("blacklisted", False)
-        self._blacklisted_reason: Optional[str] = data.get("blacklisted_reason")
-
-        self._embed_size: enums.EmbedSize = enums.EmbedSize(data.get("embed_size", 0))
-        self._prefixes: list[str] = data.get("prefixes", [])
+        self._embed_size: enums.EmbedSize = enums.EmbedSize(data["embed_size"])
+        self._prefixes: list[str] = data["prefixes"]
 
         self._tags: dict[str, objects.Tag] = {}
 
-        self._requires_db_update: set[enums.Updateable] = set()
-
     def __repr__(self) -> str:
-        return f"<GuildConfig id=\"{self.id}\" embed_size={self.embed_size}>"
+        return f"<GuildConfig id={self.id}>"
 
     # Properties
 
@@ -54,6 +49,8 @@ class GuildConfig:
     @property
     def prefixes(self) -> list[str]:
         return self._prefixes
+
+    #
 
     @property
     def tags(self) -> dict[str, objects.Tag]:

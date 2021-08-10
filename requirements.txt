@@ -3,7 +3,7 @@ aiohttp>=3.7.4post0
 aioredis>=2.0.0
 aioscheduler>=1.4.2
 async_timeout>=3.0.1
-asyncpg>=0.23.0
+asyncpg>=0.24.0
 beautifulsoup4>=4.9.3
 cchardet>=2.1.7
 colorthief>=0.2.1
@@ -24,5 +24,5 @@ https://github.com/Axelancerr/Slate/archive/main.zip
 soupsieve>=2.2.1
 https://github.com/Axelancerr/spotify.py/archive/master.zip
 Wand>=0.6.6
-wheel>=0.36.2
+wheel>=0.37.0
 yarl>=1.6.3

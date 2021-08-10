@@ -19,7 +19,7 @@ class Operation(enum.Enum):
     REMOVE = MINUS
 
 
-class Updateable(enum.Enum):
+class LeaderboardType(enum.Enum):
     COINS = "coins"
     XP = "xp"
 

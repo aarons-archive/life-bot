@@ -15,13 +15,13 @@ class Notifications:
         self._bot = bot
         self._user_config = user_config
 
-        self._id: int = data.get("id", 0)
-        self._user_id: int = data.get("user_id", 0)
+        self._id: int = data["id"]
+        self._user_id: int = data["user_id"]
 
-        self._level_ups: bool = data.get("level_ups", False)
+        self._level_ups: bool = data["level_ups"]
 
     def __repr__(self) -> str:
-        return f"<Notifications id=\"{self.id}\" user_id=\"{self.user_id}\" level_ups={self.level_ups}>"
+        return f"<Notifications id={self.id} user_id={self.user_id} level_ups={self.level_ups}>"
 
     # Properties
 
@@ -40,6 +40,8 @@ class Notifications:
     @property
     def user_id(self) -> int:
         return self._user_id
+
+    # Notifications
 
     @property
     def level_ups(self) -> bool:
