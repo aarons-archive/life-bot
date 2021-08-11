@@ -14,9 +14,9 @@ from utilities import decorators, context, exceptions
 def setup(bot: Life) -> None:
   bot.add_cog(Colors(bot=bot))
 
-class Colors(commands.Cog) -> None:
+class Colors(commands.Cog):
   
-  def __init__(self, bot: Life):
+  def __init__(self, bot: Life) -> None:
     self.bot = bot
     
     @decorators.AsyncExecutor
