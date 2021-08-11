@@ -48,6 +48,7 @@ class Life(commands.AutoShardedBot):
             case_insensitive=True,
             owner_ids=config.OWNER_IDS,
         )
+        self._BotBase__cogs = commands.core._CaseInsensitiveDict()
 
         self.session: aiohttp.ClientSession = aiohttp.ClientSession()
         self.process: psutil.Process = psutil.Process()
