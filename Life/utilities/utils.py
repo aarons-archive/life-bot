@@ -11,7 +11,6 @@ import discord
 import humanize
 import mystbin
 import pendulum
-from discord.ext import commands
 
 from core import colours, config, emojis, values
 from utilities import exceptions
@@ -152,10 +151,6 @@ def splash(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jp
     return str(guild.splash.replace(format=format or ("gif" if guild.splash.is_animated() else "png"), size=size)) if guild.splash else None
 
 
-def format_command(command: commands.Command) -> str:
-    return f"{config.PREFIX}{command.qualified_name}"
-
-
 def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
 
     if not (region := obj.rtc_region if isinstance(obj, (discord.VoiceChannel, discord.StageChannel)) else obj.region):
@@ -167,14 +162,6 @@ def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guil
         return "South Africa"
 
     return obj.name.title().replace("Vip", "VIP").replace("_", "-").replace("Us-", "US-")
-
-
-def name(person: discord.Member | discord.User, *, guild: Optional[discord.Guild] = None) -> str:
-    if guild and isinstance(person, discord.User):
-        member = guild.get_member(person.id)
-        return member.nick or member.name if isinstance(member, discord.Member) else getattr(person, "name", "Unknown")
-
-    return person.nick or person.name if isinstance(person, discord.Member) else getattr(person, "name", "Unknown")
 
 
 def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
