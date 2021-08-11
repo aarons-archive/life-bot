@@ -69,5 +69,5 @@ reportUnusedCallResult = "none"
 reportUnusedCoroutine = "error"
 
 executionEnvironments = [
-  { root = "code"},
+    { root = "code" },
 ]
