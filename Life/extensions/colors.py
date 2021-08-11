@@ -19,7 +19,7 @@ class Colors(commands.Cog) -> None:
   def __init__(self, bot: Life):
     self.bot = bot
     
-    @AsyncExecutor
+    @decorators.AsyncExecutor
     def generate_colour(self, colour: tuple):
         image = Image.new("RGB", (256, 100), colour)
 
@@ -31,7 +31,7 @@ class Colors(commands.Cog) -> None:
 
         return buffer
 
-    @AsyncExecutor
+    @decorators.AsyncExecutor
     def closest_colour(self, requested_colour):
         min_colours = {}
         for key, name in webcolors.css3_hex_to_names.items():
