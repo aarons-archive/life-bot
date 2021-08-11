@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional, TYPE_CHECKING
 
 import pendulum
@@ -10,6 +11,8 @@ from utilities import enums, objects
 
 if TYPE_CHECKING:
     from core.bot import Life
+
+__log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 
 
 class GuildConfig:
@@ -75,6 +78,19 @@ class GuildConfig:
             raise TypeError(f"change_prefixes expected one of {enums.Operation.ADD, enums.Operation.REMOVE, enums.Operation.RESET}, got {operation!r}.")
 
         self._prefixes = data["prefixes"]
+
+    # Caching
+
+    async def fetch_tags(self) -> None:
+
+        if not (tags := await self.bot.db.fetch("SELECT * FROM tags WHERE guild_id = $1", self.id)):
+            return
+
+        for tag_data in tags:
+            tag = objects.Tag(bot=self.bot, guild_config=self, data=tag_data)
+            self._tags[tag.name] = tag
+
+        __log__.debug(f"[GUILDS] Fetched and cached tags ({len(tags)}) for '{self.id}'.")
 
     # Tags
 

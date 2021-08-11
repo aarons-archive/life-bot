@@ -22,8 +22,10 @@ class GuildManager:
     async def fetch_config(self, guild_id: int) -> objects.GuildConfig:
 
         data = await self.bot.db.fetchrow("INSERT INTO guilds (id) values ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", guild_id)
-
         guild_config = objects.GuildConfig(bot=self.bot, data=data)
+
+        await guild_config.fetch_tags()
+
         self.cache[guild_config.id] = guild_config
 
         __log__.debug(f"[GUILDS] Cached config for '{guild_id}'.")
