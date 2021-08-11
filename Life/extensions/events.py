@@ -300,7 +300,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
-        if config.ENV == enums.Environment.DEV:
+        if config.ENV == enums.Environment.DEVELOPMENT:
             return
 
         if message.guild or message.is_system():

@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from core.bot import Life
-from utilities import context, converters, utils
+from utilities import context, converters, enums, utils
 
 
 def setup(bot: Life) -> None:
@@ -36,7 +36,7 @@ class Economy(commands.Cog):
         if xp >= member_config.needed_xp and user_config.notifications.level_ups:
             await message.reply(f"You are now level `{member_config.level}`!")
 
-        await member_config.change_xp(xp)
+        await member_config.change_xp(xp, operation=enums.Operation.ADD)
         await self.bot.redis.setex(name=f"{message.author.id}_{message.guild.id}_xp_gain", time=60, value="")
 
     #

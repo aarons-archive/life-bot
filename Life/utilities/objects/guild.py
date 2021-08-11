@@ -61,21 +61,21 @@ class GuildConfig:
 
     # Config
 
-    async def set_embed_size(self, embed_size: enums.EmbedSize = enums.EmbedSize.LARGE) -> None:
+    async def set_embed_size(self, embed_size: enums.EmbedSize) -> None:
 
         data = await self.bot.db.fetchrow("UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size", embed_size.value, self.id)
         self._embed_size = enums.EmbedSize(data["embed_size"])
 
-    async def change_prefixes(self, operation: enums.Operation, *, prefix: Optional[str] = None) -> None:
+    async def change_prefixes(self, prefix: Optional[str] = None, *, operation: enums.Operation) -> None:
 
-        if operation == enums.Operation.ADD:
+        if operation == enums.Operation.RESET:
+            data = await self.bot.db.fetchrow("UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes", [], self.id)
+        elif operation == enums.Operation.ADD:
             data = await self.bot.db.fetchrow("UPDATE guilds SET prefixes = array_append(prefixes, $1) WHERE id = $2 RETURNING prefixes", prefix, self.id)
         elif operation == enums.Operation.REMOVE:
             data = await self.bot.db.fetchrow("UPDATE guilds SET prefixes = array_remove(prefixes, $1) WHERE id = $2 RETURNING prefixes", prefix, self.id)
-        elif operation == enums.Operation.RESET:
-            data = await self.bot.db.fetchrow("UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes", [], self.id)
         else:
-            raise TypeError(f"change_prefixes expected one of {enums.Operation.ADD, enums.Operation.REMOVE, enums.Operation.RESET}, got {operation!r}.")
+            raise ValueError(f"'change_prefixes' expected one of {enums.Operation.ADD, enums.Operation.REMOVE, enums.Operation.RESET}, got '{operation!r}'.")
 
         self._prefixes = data["prefixes"]
 

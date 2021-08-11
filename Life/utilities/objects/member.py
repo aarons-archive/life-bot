@@ -67,7 +67,7 @@ class MemberConfig:
 
     # Config
 
-    async def change_coins(self, coins: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
+    async def change_coins(self, coins: int, *, operation: enums.Operation) -> None:
 
         if operation == enums.Operation.SET:
             self._coins = coins
@@ -75,10 +75,12 @@ class MemberConfig:
             self._coins += coins
         elif operation == enums.Operation.MINUS:
             self._coins -= coins
+        else:
+            raise ValueError(f"'change_coins' expected one of {enums.Operation.SET, enums.Operation.ADD, enums.Operation.MINUS}, got '{operation!r}'.")
 
         await self.bot.db.execute("UPDATE members SET coins = $1 WHERE user_id = $2 AND guild_id = $3", self.coins, self.user_id, self.guild_id)
 
-    async def change_xp(self, xp: int, *, operation: enums.Operation = enums.Operation.ADD) -> None:
+    async def change_xp(self, xp: int, *, operation: enums.Operation) -> None:
 
         if operation == enums.Operation.SET:
             self._xp = xp
@@ -86,5 +88,7 @@ class MemberConfig:
             self._xp += xp
         elif operation == enums.Operation.MINUS:
             self._xp -= xp
+        else:
+            raise ValueError(f"'change_xp' expected one of {enums.Operation.SET, enums.Operation.ADD, enums.Operation.MINUS}, got '{operation!r}'.")
 
         await self.bot.db.execute("UPDATE members SET xp = $1 WHERE user_id = $2 AND guild_id = $3", self.xp, self.user_id, self.guild_id)

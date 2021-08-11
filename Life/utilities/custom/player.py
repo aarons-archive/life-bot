@@ -53,7 +53,7 @@ class Player(obsidian.ObsidianPlayer):
 
         self.skip_request_ids: set[int] = set()
 
-        self.enabled_filters: set[enums.EnabledFilters] = set()
+        self.enabled_filters: set[enums.Filters] = set()
 
     #
 

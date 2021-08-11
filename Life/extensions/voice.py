@@ -1070,9 +1070,9 @@ class Voice(commands.Cog):
         Sets an 8D audio filter on the player.
         """
 
-        if enums.EnabledFilters.ROTATION in ctx.voice_client.enabled_filters:
+        if enums.Filters.ROTATION in ctx.voice_client.enabled_filters:
             await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation()))
-            ctx.voice_client.enabled_filters.remove(enums.EnabledFilters.ROTATION)
+            ctx.voice_client.enabled_filters.remove(enums.Filters.ROTATION)
 
             embed = utils.embed(
                 colour=colours.GREEN,
@@ -1081,7 +1081,7 @@ class Voice(commands.Cog):
             )
         else:
             await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation(rotation_hertz=0.5)))
-            ctx.voice_client.enabled_filters.add(enums.EnabledFilters.ROTATION)
+            ctx.voice_client.enabled_filters.add(enums.Filters.ROTATION)
 
             embed = utils.embed(
                 colour=colours.GREEN,
@@ -1099,9 +1099,9 @@ class Voice(commands.Cog):
         Sets a nightcore audio filter on the player.
         """
 
-        if enums.EnabledFilters.NIGHTCORE in ctx.voice_client.enabled_filters:
+        if enums.Filters.NIGHTCORE in ctx.voice_client.enabled_filters:
             await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale()))
-            ctx.voice_client.enabled_filters.remove(enums.EnabledFilters.NIGHTCORE)
+            ctx.voice_client.enabled_filters.remove(enums.Filters.NIGHTCORE)
 
             embed = utils.embed(
                 colour=colours.GREEN,
@@ -1110,7 +1110,7 @@ class Voice(commands.Cog):
             )
         else:
             await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale(speed=1.12, pitch=1.12)))
-            ctx.voice_client.enabled_filters.add(enums.EnabledFilters.NIGHTCORE)
+            ctx.voice_client.enabled_filters.add(enums.Filters.NIGHTCORE)
 
             embed = utils.embed(
                 colour=colours.GREEN,
