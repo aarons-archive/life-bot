@@ -12,10 +12,10 @@ async def global_check(ctx: context.Context) -> Literal[True]:
 
     if user_config.blacklisted is True:
         raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"You are blacklisted from using this bot.\n\n"
-                            f"*If you would like to appeal this please join my [support server]({values.SUPPORT_LINK}).*"
+            colour=colours.RED,
+            emoji=emojis.CROSS,
+            description=f"You are blacklisted from using this bot.\n\n"
+                        f"*If you would like to appeal this please join my [support server]({values.SUPPORT_LINK}).*"
         )
 
     current = dict(ctx.channel.permissions_for(ctx.me))

@@ -19,7 +19,6 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = [f"\u001b[{30 + i}m" for
 
 @contextlib.contextmanager
 def logger():
-
     loggers: dict[str, logging.Logger] = {
         "discord":    logging.getLogger("discord"),
         "bot":        logging.getLogger("bot"),
@@ -43,8 +42,8 @@ def logger():
         file_handler.setFormatter(file_formatter)
 
         stream_formatter = logging.Formatter(
-                fmt=f"{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s",
-                datefmt="%I:%M:%S %p %d/%m/%Y"
+            fmt=f"{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s",
+            datefmt="%I:%M:%S %p %d/%m/%Y"
         )
         stream_handler.setFormatter(stream_formatter)
 
@@ -70,6 +69,8 @@ if __name__ == "__main__":
 
     try:
         import uvloop
+
+
         if sys.platform != "win32":
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     except ImportError:

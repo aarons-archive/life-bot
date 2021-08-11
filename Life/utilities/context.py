@@ -37,69 +37,169 @@ class Context(commands.Context):
     # Paginators
 
     async def paginate(
-            self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n", header: Optional[str] = None,
-            footer: Optional[str] = None
+        self,
+        *,
+        entries: list[Any],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = True,
+        codeblock: bool = False,
+        splitter: str = "\n",
+        header: Optional[str] = None,
+        footer: Optional[str] = None
     ) -> paginators.TextPaginator:
 
         paginator = paginators.TextPaginator(
-                ctx=self, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter, header=header, footer=footer
+            ctx=self,
+            entries=entries,
+            per_page=per_page,
+            timeout=timeout,
+            delete_message=delete_message,
+            codeblock=codeblock,
+            splitter=splitter,
+            header=header,
+            footer=footer
         )
 
         await paginator.paginate()
         return paginator
 
     async def paginate_embed(
-            self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n", header: Optional[str] = None,
-            footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None,
-            author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,
-            colour: discord.Colour = colours.MAIN, additional_footer: Optional[str] = None
+        self,
+        *,
+        entries: list[Any],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = True,
+        codeblock: bool = False,
+        splitter: str = "\n",
+        header: Optional[str] = None,
+        footer: Optional[str] = None,
+        embed_footer_url: Optional[str] = None,
+        embed_footer: Optional[str] = None,
+        image: Optional[str] = None,
+        thumbnail: Optional[str] = None,
+        author: Optional[str] = None,
+        author_url: Optional[str] = None,
+        author_icon_url: Optional[str] = None,
+        title: Optional[str] = None,
+        url: Optional[str] = None,
+        colour: discord.Colour = colours.MAIN,
+        additional_footer: Optional[str] = None
     ) -> paginators.EmbedPaginator:
 
         paginator = paginators.EmbedPaginator(
-                ctx=self, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter, header=header, footer=footer,
-                embed_footer_url=embed_footer_url, embed_footer=embed_footer, image=image, thumbnail=thumbnail, author=author, author_url=author_url, author_icon_url=author_icon_url, title=title,
-                url=url, colour=colour, additional_footer=additional_footer
+            ctx=self,
+            entries=entries,
+            per_page=per_page,
+            timeout=timeout,
+            delete_message=delete_message,
+            codeblock=codeblock,
+            splitter=splitter,
+            header=header,
+            footer=footer,
+            embed_footer_url=embed_footer_url,
+            embed_footer=embed_footer,
+            image=image,
+            thumbnail=thumbnail,
+            author=author,
+            author_url=author_url,
+            author_icon_url=author_icon_url,
+            title=title,
+            url=url,
+            colour=colour,
+            additional_footer=additional_footer
         )
 
         await paginator.paginate()
         return paginator
 
     async def paginate_file(
-            self, *, entries: list[functools.partial], timeout: int = 300, delete_message: bool = True, header: Optional[str] = None
+        self,
+        *,
+        entries: list[functools.partial],
+        timeout: int = 300,
+        delete_message: bool = True,
+        header: Optional[str] = None
     ) -> paginators.FilePaginator:
 
         paginator = paginators.FilePaginator(
-                ctx=self, entries=entries, timeout=timeout, delete_message=delete_message, header=header
+            ctx=self,
+            entries=entries,
+            timeout=timeout,
+            delete_message=delete_message,
+            header=header
         )
 
         await paginator.paginate()
         return paginator
 
     async def paginate_embeds(
-            self, *, entries: list[discord.Embed], timeout: int = 300, delete_message: bool = True, content: Optional[str] = None
+        self,
+        *,
+        entries: list[discord.Embed],
+        timeout: int = 300,
+        delete_message: bool = True,
+        content: Optional[str] = None
     ) -> paginators.EmbedsPaginator:
 
         paginator = paginators.EmbedsPaginator(
-                ctx=self, entries=entries, timeout=timeout, delete_message=delete_message, content=content
+            ctx=self,
+            entries=entries,
+            timeout=timeout,
+            delete_message=delete_message,
+            content=content
         )
 
         await paginator.paginate()
         return paginator
 
     async def choice(
-            self, *, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n", header: Optional[str] = None,
-            footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None,
-            author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, url: Optional[str] = None,
-            colour: discord.Colour = colours.MAIN
+        self,
+        *,
+        entries: list[Any],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = True,
+        codeblock: bool = False,
+        splitter: str = "\n",
+        header: Optional[str] = None,
+        footer: Optional[str] = None,
+        embed_footer_url: Optional[str] = None,
+        embed_footer: Optional[str] = None,
+        image: Optional[str] = None,
+        thumbnail: Optional[str] = None,
+        author: Optional[str] = None,
+        author_url: Optional[str] = None,
+        author_icon_url: Optional[str] = None,
+        title: Optional[str] = None,
+        url: Optional[str] = None,
+        colour: discord.Colour = colours.MAIN
     ) -> int:
 
         if len(entries) == 1:
             return 0
 
         paginator = paginators.EmbedPaginator(
-                ctx=self, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter, header=header, footer=footer,
-                embed_footer_url=embed_footer_url, embed_footer=embed_footer, image=image, thumbnail=thumbnail, author=author, author_url=author_url, author_icon_url=author_icon_url, title=title,
-                url=url, colour=colour
+            ctx=self,
+            entries=entries,
+            per_page=per_page,
+            timeout=timeout,
+            delete_message=delete_message,
+            codeblock=codeblock,
+            splitter=splitter,
+            header=header,
+            footer=footer,
+            embed_footer_url=embed_footer_url,
+            embed_footer=embed_footer,
+            image=image,
+            thumbnail=thumbnail,
+            author=author,
+            author_url=author_url,
+            author_icon_url=author_icon_url,
+            title=title,
+            url=url,
+            colour=colour
         )
         await paginator.paginate()
 
@@ -108,7 +208,11 @@ class Context(commands.Context):
             try:
                 response = await self.bot.wait_for("message", check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
             except asyncio.TimeoutError:
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You took too long to respond, try again.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="You took too long to respond, try again."
+                )
 
             if response.content == "cancel":
                 break
@@ -116,14 +220,22 @@ class Context(commands.Context):
             try:
                 number = int(response.content) - 1
             except (ValueError, KeyError):
-                embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="That was not a valid choice, try again or send `cancel` to exit.")
+                embed = utils.embed(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="That was not a valid choice, try again or send `cancel` to exit."
+                )
                 await self.reply(embed=embed)
                 continue
 
             await paginator.stop(delete=True)
             return number
 
-        raise exceptions.EmbedError(colour=colours.GREEN, emoji=emojis.TICK, description="Exiting choice selection.")
+        raise exceptions.EmbedError(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description="Exiting choice selection."
+        )
 
     # Utilities
 

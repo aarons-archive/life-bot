@@ -27,11 +27,10 @@ from utilities import checks, context, converters, enums, help, managers, object
 
 __log__: logging.Logger = logging.getLogger("bot")
 
-
 CONVERTERS = {
-    objects.Reminder: converters.ReminderConverter,
+    objects.Reminder:         converters.ReminderConverter,
     enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
-    Timezone: converters.TimezoneConverter
+    Timezone:                 converters.TimezoneConverter
 }
 
 
@@ -40,14 +39,14 @@ class Life(commands.AutoShardedBot):
 
     def __init__(self) -> None:
         super().__init__(
-                status=discord.Status.dnd,
-                activity=discord.Activity(type=discord.ActivityType.playing, name="aaaaa!"),
-                allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False),
-                help_command=help.HelpCommand(),
-                intents=discord.Intents.all(),
-                command_prefix=self.get_prefix,
-                case_insensitive=True,
-                owner_ids=config.OWNER_IDS,
+            status=discord.Status.dnd,
+            activity=discord.Activity(type=discord.ActivityType.playing, name="aaaaa!"),
+            allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False),
+            help_command=help.HelpCommand(),
+            intents=discord.Intents.all(),
+            command_prefix=self.get_prefix,
+            case_insensitive=True,
+            owner_ids=config.OWNER_IDS,
         )
 
         self.session: aiohttp.ClientSession = aiohttp.ClientSession()

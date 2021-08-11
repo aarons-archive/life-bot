@@ -11,7 +11,11 @@ def queue_not_empty():
     async def predicate(ctx: context.Context) -> Literal[True]:
 
         if not ctx.voice_client or ctx.voice_client.queue.is_empty():
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The queue is empty.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="The queue is empty."
+            )
 
         return True
 

@@ -110,7 +110,15 @@ class PaginatorStopButton(discord.ui.View):
 class BasePaginator(abc.ABC):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n"
+        self,
+        *,
+        ctx: context.Context,
+        entries: list[Any],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = True,
+        codeblock: bool = False,
+        splitter: str = "\n"
     ) -> None:
 
         self.ctx: context.Context = ctx

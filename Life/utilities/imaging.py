@@ -63,13 +63,13 @@ def floor(image: Image) -> None:
 
     image.virtual_pixel = "tile"
     image.distort(
-            method="perspective",
-            arguments=(
-                0, 0, image.width * 0.2, image.height * 0.5,
-                image.width, 0, image.width * 0.8, image.height * 0.5,
-                0, image.height, image.width * 0.1, image.height,
-                image.width, image.height, image.width * 0.9, image.height
-            )
+        method="perspective",
+        arguments=(
+            0, 0, image.width * 0.2, image.height * 0.5,
+            image.width, 0, image.width * 0.8, image.height * 0.5,
+            0, image.height, image.width * 0.1, image.height,
+            image.width, image.height, image.width * 0.9, image.height
+        )
     )
 
 
@@ -185,7 +185,8 @@ def sphere(image: Image, filename: str) -> Image:
     PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/sphere/{filename}"))
     image.save(filename=f"{PATH}.png")
 
-    COMMAND = r"./sphere.sh -a 1.1 -b none -s -t resources/sphere/{filename}.png resources/sphere/{filename}_edited.png".format(filename=filename)
+    COMMAND = r"./sphere.sh -a 1.1 -b none -s -t resources/sphere/{filename}.png " \
+              r"resources/sphere/{filename}_edited.png".format(filename=filename)
 
     subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
     return Image(filename=f"{PATH}_edited.png")
@@ -196,7 +197,8 @@ def tshirt(image: Image, filename: str) -> Image:
     PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/tshirt/{filename}"))
     image.save(filename=f"{PATH}.png")
 
-    COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
+    COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png " \
+              r"tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
 
     subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
     return Image(filename=f"{PATH}_edited.png")
@@ -209,7 +211,8 @@ def pixel(image: Image, filename: str, method: Literal["square", "s", "hexagon",
     PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/pixel/{filename}"))
     image.save(filename=f"{PATH}.png")
 
-    COMMAND = r"./pixel.sh -k {method} -t 0 -b 150 resources/pixel/{filename}.png resources/pixel/{filename}_edited.png".format(filename=filename, method=method)
+    COMMAND = r"./pixel.sh -k {method} -t 0 -b 150 resources/pixel/{filename}.png " \
+              r"resources/pixel/{filename}_edited.png".format(filename=filename, method=method)
 
     subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
     return Image(filename=f"{PATH}_edited.png")
@@ -234,23 +237,23 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
 
         if request.status != 200:
             raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description="I was unable to fetch that image. Check the URL or try again later."
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="I was unable to fetch that image. Check the URL or try again later."
             )
 
         if request.headers.get("Content-Type") not in VALID_CONTENT_TYPES:
             raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description="That image format is not allowed, valid formats are **GIF**, **HEIC**, **JPEG**, **PNG**, **WEBP**, **AVIF** and **SVG**."
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That image format is not allowed, valid formats are **GIF**, **HEIC**, **JPEG**, **PNG**, **WEBP**, **AVIF** and **SVG**."
             )
 
         if int((request.headers.get("Content-Length") or "0")) > MAX_CONTENT_SIZE:
             raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description=f"That image is too big to edit, maximum file size is **{humanize.naturalsize(MAX_CONTENT_SIZE)}**."
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"That image is too big to edit, maximum file size is **{humanize.naturalsize(MAX_CONTENT_SIZE)}**."
             )
 
         return await request.read()
@@ -258,7 +261,12 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
 
 async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
 
-    message = await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji="<a:loading:872608197314220154>", description="| Processing image"))
+    embed = utils.embed(
+        colour=colours.GREEN,
+        emoji="<a:loading:872608197314220154>",
+        description="| Processing image"
+    )
+    message = await ctx.reply(embed=embed)
 
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
     image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
@@ -276,14 +284,31 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
     process.close()
 
     if data is ValueError or data is EOFError:
-        await message.edit(embed=utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Image edit failed."))
-        raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Something went wrong while editing that image, try again.")
+
+        embed = utils.embed(
+            colour=colours.RED,
+            emoji=emojis.CROSS,
+            description="Image edit failed."
+        )
+        await message.edit(embed=embed)
+
+        raise exceptions.EmbedError(
+            colour=colours.RED,
+            emoji=emojis.CROSS,
+            description="Something went wrong while editing that image, try again."
+        )
 
     url = await utils.upload_file(ctx.bot.session, file_bytes=data[0], file_format=data[1])
-    del data
-
-    await message.edit(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Image edit success."))
     await ctx.reply(url)
+
+    embed = utils.embed(
+        colour=colours.GREEN,
+        emoji=emojis.TICK,
+        description="Image edit success."
+    )
+    await message.edit(embed=embed)
+
+    del data
 
 
 def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs) -> None:

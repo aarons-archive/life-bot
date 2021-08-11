@@ -105,9 +105,17 @@ class Fun(commands.Cog):
             await message.add_reaction(choice)
 
         try:
-            reaction, _ = await self.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in CHOICES, timeout=45.0, )
+            reaction, _ = await self.bot.wait_for(
+                "reaction_add",
+                check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in CHOICES,
+                timeout=45.0
+            )
         except asyncio.TimeoutError:
-            raise exceptions.EmbedError(emoji=emojis.CROSS, colour=colours.RED, description="You took too long to respond!")
+            raise exceptions.EmbedError(
+                emoji=emojis.CROSS,
+                colour=colours.RED,
+                description="You took too long to respond!"
+            )
 
         if (player_choice := reaction.emoji) == ROCK:
             if player_choice == MY_CHOICE:
@@ -142,7 +150,11 @@ class Fun(commands.Cog):
         """
 
         if not question:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.UNKNOWN, description="c'mon kid, you have to ask me something, how can I predict something from nothing?")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.UNKNOWN,
+                description="c'mon kid, you have to ask me something, how can I predict something from nothing?"
+            )
 
         question = "".join(str(question).split("\n"))
 
@@ -201,7 +213,11 @@ class Fun(commands.Cog):
         """
 
         if len(choices) <= 1:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Not enough choices to choose from.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Not enough choices to choose from."
+            )
 
         await ctx.reply(random.choice(list(map(str, choices))))
 
@@ -215,20 +231,28 @@ class Fun(commands.Cog):
         """
 
         if len(choices) <= 1:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Not enough choices to choose from.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Not enough choices to choose from."
+            )
         if times and times > 999999999:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That a bit too many times...")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That a bit too many times..."
+            )
 
         times = min(10001, max(1, (len(choices) ** 3) + 1 if not times else times))
         counter = collections.Counter(random.choice(list(map(str, choices))) for _ in range(times))
 
         await ctx.paginate(
-                entries=[f"║ {item[:28] + (item[28:] and '..'):30} ║ {f'{count / times:.2%}':<10} ║" for item, count in counter.most_common()],
-                per_page=10,
-                header="╔════════════════════════════════╦════════════╗\n"
-                       "║ Choice                         ║ Percentage ║\n"
-                       "╠════════════════════════════════╬════════════╣\n",
-                footer="\n"
-                       "╚════════════════════════════════╩════════════╝",
-                codeblock=True,
+            entries=[f"║ {item[:28] + (item[28:] and '..'):30} ║ {f'{count / times:.2%}':<10} ║" for item, count in counter.most_common()],
+            per_page=10,
+            header="╔════════════════════════════════╦════════════╗\n"
+                   "║ Choice                         ║ Percentage ║\n"
+                   "╠════════════════════════════════╬════════════╣\n",
+            footer="\n"
+                   "╚════════════════════════════════╩════════════╝",
+            codeblock=True,
         )

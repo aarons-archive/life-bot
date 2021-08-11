@@ -1,4 +1,3 @@
-import textwrap
 from typing import Optional
 
 import discord
@@ -14,18 +13,15 @@ class HelpCommand(commands.HelpCommand):
 
         self.context: Optional[context.Context] = None
 
-        super().__init__(command_attrs={
-            "help": textwrap.dedent(
-                    """
-                    Shows help for the bot, a category or a command.
-                    
-                    `<argument>` means the argument is required.
-                    `[argument]` means the argument is optional.
-                    `[a|b]` means it can be `a` or `b`.
-                    `[argument...]` means you can have multiple arguments.
-                    """
-            )
-        })
+        super().__init__(
+            command_attrs={
+                "help": "Shows help for the bot, a category or a command.\n\n"
+                        "`<argument>` means the argument is required.\n"
+                        "`[argument]` means the argument is optional.\n"
+                        "`[a|b]` means it can be `a` or `b`.\n"
+                        "`[argument...]` means you can have multiple arguments."
+            }
+        )
 
     def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[commands.Command | commands.Group]]:
 
@@ -55,7 +51,11 @@ class HelpCommand(commands.HelpCommand):
         entries = []
 
         if not self.context.bot.cogs:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no loaded cogs.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="There are no loaded cogs."
+            )
 
         for cog in sorted(self.context.bot.cogs.values(), key=lambda c: len(list(c.walk_commands())), reverse=True):
 
@@ -71,7 +71,11 @@ class HelpCommand(commands.HelpCommand):
     async def send_cog_help(self, cog: commands.Cog) -> None:
 
         if (cog_commands := self.get_cog_commands(cog=cog)) is None:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="This cog has no commands. (Or you are not allowed to see them).")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="This cog has no commands. (Or you are not allowed to see them)."
+            )
 
         entries = self.format_commands(unformatted_command=cog_commands)
         title = f"__**{cog.qualified_name} help page:**__\n"
@@ -89,7 +93,11 @@ class HelpCommand(commands.HelpCommand):
             filtered_commands.append(command)
 
         if not filtered_commands:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That command has no subcommands that you are able to see.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That command has no subcommands that you are able to see."
+            )
 
         command_help = group.help if group.help else "No help provided for this command."
         aliases = f"**Aliases:** {'/'.join(group.aliases)}\n\n" if group.aliases else ""

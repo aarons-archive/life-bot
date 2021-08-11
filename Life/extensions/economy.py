@@ -52,7 +52,6 @@ class Economy(commands.Cog):
         user = person or ctx.author
 
         async with ctx.typing():
-
             buffer = await self.bot.user_manager.create_level_card(guild_id=ctx.guild.id, user_id=user.id)
             url = await utils.upload_file(self.bot.session, file_bytes=buffer, file_format="png")
             buffer.close()
@@ -66,7 +65,9 @@ class Economy(commands.Cog):
         """
 
         pages = ((await self.bot.db.fetchrow("SELECT count(*) FROM members WHERE guild_id = $1", ctx.guild.id))["count"] // 10) + 1
-        await ctx.paginate_file(entries=[functools.partial(self.bot.user_manager.create_leaderboard, guild_id=ctx.guild.id, page=page + 1) for page in range(pages)])
+        await ctx.paginate_file(
+            entries=[functools.partial(self.bot.user_manager.create_leaderboard, guild_id=ctx.guild.id, page=page + 1) for page in range(pages)]
+        )
 
     @leaderboard.command(name="text")
     async def leaderboard_text(self, ctx: context.Context) -> None:
@@ -86,17 +87,19 @@ class Economy(commands.Cog):
 
             entries.append(f"║ {record['rank']:<5} ║ {record['xp']:<9} ║ {utils.level(record['xp']):<5} ║ {member.nick or member.name:<37} ║")
 
+        author_stats = f"║ {await self.bot.user_manager.rank(guild_id=ctx.guild.id, user_id=ctx.author.id):<5} ║ {member_config['xp']:<9} " \
+                       f"║ {utils.level(member_config['xp']):<5} ║ {ctx.author.nick or ctx.author.name:<37} ║\n"
+
         await ctx.paginate(
-                entries=entries,
-                per_page=10,
-                header="╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n"
-                       "║ Rank  ║ XP        ║ Level ║ Name                                  ║\n"
-                       "╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n",
-                footer=f"\n"
-                       f"║       ║           ║       ║                                       ║\n"
-                       f"╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n"
-                       f"║ {await self.bot.user_manager.rank(guild_id=ctx.guild.id, user_id=ctx.author.id):<5} ║ {member_config['xp']:<9} ║ {utils.level(member_config['xp']):<5} "
-                       f"║ {ctx.author.nick or ctx.author.name:<37} ║\n"
-                       f"╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n",
-                codeblock=True
+            entries=entries,
+            per_page=10,
+            header="╔═══════╦═══════════╦═══════╦═══════════════════════════════════════╗\n"
+                   "║ Rank  ║ XP        ║ Level ║ Name                                  ║\n"
+                   "╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n",
+            footer=f"\n"
+                   f"║       ║           ║       ║                                       ║\n"
+                   f"╠═══════╬═══════════╬═══════╬═══════════════════════════════════════╣\n"
+                   f"{author_stats}"
+                   f"╚═══════╩═══════════╩═══════╩═══════════════════════════════════════╝\n",
+            codeblock=True
         )

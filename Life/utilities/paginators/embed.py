@@ -11,12 +11,39 @@ from utilities import context, paginators
 class EmbedPaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[Any], per_page: int, timeout: int = 300, delete_message: bool = True, codeblock: bool = False, splitter: str = "\n",
-            header: Optional[str] = None, footer: Optional[str] = None, embed_footer_url: Optional[str] = None, embed_footer: Optional[str] = None, image: Optional[str] = None,
-            thumbnail: Optional[str] = None, author: Optional[str] = None, author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None,
-            url: Optional[str] = None, colour: discord.Colour = colours.MAIN, additional_footer: Optional[str] = None
+        self,
+        *,
+        ctx: context.Context,
+        entries: list[Any],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = True,
+        codeblock: bool = False,
+        splitter: str = "\n",
+        header: Optional[str] = None,
+        footer: Optional[str] = None,
+        embed_footer_url: Optional[str] = None,
+        embed_footer: Optional[str] = None,
+        image: Optional[str] = None,
+        thumbnail: Optional[str] = None,
+        author: Optional[str] = None,
+        author_url: Optional[str] = None,
+        author_icon_url: Optional[str] = None,
+        title: Optional[str] = None,
+        url: Optional[str] = None,
+        colour: discord.Colour = colours.MAIN,
+        additional_footer: Optional[str] = None
     ) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=per_page, timeout=timeout, delete_message=delete_message, codeblock=codeblock, splitter=splitter)
+
+        super().__init__(
+            ctx=ctx,
+            entries=entries,
+            per_page=per_page,
+            timeout=timeout,
+            delete_message=delete_message,
+            codeblock=codeblock,
+            splitter=splitter
+        )
 
         self.header: str = header or ""
         self.footer: str = footer or ""

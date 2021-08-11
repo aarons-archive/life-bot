@@ -9,9 +9,22 @@ from utilities import context, paginators, utils
 class FilePaginator(paginators.BasePaginator):
 
     def __init__(
-            self, *, ctx: context.Context, entries: list[functools.partial], timeout: int = 300, delete_message: bool = True, header: Optional[str] = None
+        self,
+        *,
+        ctx: context.Context,
+        entries: list[functools.partial],
+        timeout: int = 300,
+        delete_message: bool = True,
+        header: Optional[str] = None
     ) -> None:
-        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message=delete_message)
+
+        super().__init__(
+            ctx=ctx,
+            entries=entries,
+            per_page=1,
+            timeout=timeout,
+            delete_message=delete_message
+        )
 
         self._header: Optional[str] = header
 

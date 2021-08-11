@@ -37,15 +37,27 @@ class Dev(commands.Cog):
         """
 
         if ctx.channel.permissions_for(ctx.me).manage_messages:
-            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me or message.content.startswith(config.PREFIX), bulk=True, limit=limit)
+            messages = await ctx.channel.purge(
+                check=lambda message: message.author == ctx.me or message.content.startswith(config.PREFIX),
+                bulk=True,
+                limit=limit
+            )
         else:
-            messages = await ctx.channel.purge(check=lambda message: message.author == ctx.me, bulk=False, limit=limit)
+            messages = await ctx.channel.purge(
+                check=lambda message: message.author == ctx.me,
+                bulk=False,
+                limit=limit
+            )
 
         s = "s" if len(messages) > 1 else ""
-        await ctx.reply(
-                embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s}."),
-                delete_after=10
+        s1 = "s" if limit > 1 else ""  # TODO: Pluraliser or something??
+
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s1}."
         )
+        await ctx.reply(embed=embed, delete_after=10)
 
     @commands.is_owner()
     @dev.command(name="guilds", aliases=["g", "servers", "s"], hidden=True)
@@ -66,14 +78,14 @@ class Dev(commands.Cog):
             entries.append(f"║ {guild.id:<19} ║ {total:<8} ║ {members:<8} ║ {bots:<8} ║ {percent_bots:8} ║ {guild.name}")
 
         await ctx.paginate(
-                entries=entries,
-                per_page=20,
-                header="╔═════════════════════╦══════════╦══════════╦══════════╦══════════╦═════════════════════\n"
-                       "║ Guild id            ║ Total    ║ Members  ║ Bots     ║ Percent  ║ Name\n"
-                       "╠═════════════════════╬══════════╬══════════╬══════════╬══════════╬═════════════════════\n",
-                footer="\n"
-                       "╚═════════════════════╩══════════╩══════════╩══════════╩══════════╩═════════════════════",
-                codeblock=True
+            entries=entries,
+            per_page=20,
+            header="╔═════════════════════╦══════════╦══════════╦══════════╦══════════╦═════════════════════\n"
+                   "║ Guild id            ║ Total    ║ Members  ║ Bots     ║ Percent  ║ Name\n"
+                   "╠═════════════════════╬══════════╬══════════╬══════════╬══════════╬═════════════════════\n",
+            footer="\n"
+                   "╚═════════════════════╩══════════╩══════════╩══════════╩══════════╩═════════════════════",
+            codeblock=True
         )
 
     @commands.is_owner()
@@ -88,15 +100,15 @@ class Dev(commands.Cog):
         per_second = round(total / round(time.time() - self.bot.start_time))
 
         await ctx.paginate(
-                entries=[f"║ {event:40} ║ {count:<8} ║" for event, count in event_stats.items()],
-                per_page=20,
-                header=f"{total} socket events observed at a rate of {per_second} per second.\n"
-                       "╔══════════════════════════════════════════╦══════════╗\n"
-                       "║ Event                                    ║ Count    ║\n"
-                       "╠══════════════════════════════════════════╬══════════╣\n",
-                footer="\n"
-                       "╚══════════════════════════════════════════╩══════════╝",
-                codeblock=True
+            entries=[f"║ {event:40} ║ {count:<8} ║" for event, count in event_stats.items()],
+            per_page=20,
+            header=f"{total} socket events observed at a rate of {per_second} per second.\n"
+                   "╔══════════════════════════════════════════╦══════════╗\n"
+                   "║ Event                                    ║ Count    ║\n"
+                   "╠══════════════════════════════════════════╬══════════╣\n",
+            footer="\n"
+                   "╚══════════════════════════════════════════╩══════════╝",
+            codeblock=True
         )
 
     @commands.is_owner()
@@ -108,17 +120,21 @@ class Dev(commands.Cog):
 
         blacklisted = await self.bot.db.fetch("SELECT * FROM users WHERE blacklisted = $1", True)
         if not blacklisted:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no blacklisted users.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="There are no blacklisted users."
+            )
 
         await ctx.paginate(
-                entries=[f"║ {user_config['id']:<19} ║ {user_config['blacklisted_reason']:62} ║" for user_config in blacklisted],
-                per_page=15,
-                header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
-                       "║ User id             ║ Reason                                                         ║\n"
-                       "╠═════════════════════╬════════════════════════════════════════════════════════════════╣\n",
-                footer="\n"
-                       "╚═════════════════════╩════════════════════════════════════════════════════════════════╝",
-                codeblock=True
+            entries=[f"║ {user_config['id']:<19} ║ {user_config['blacklisted_reason']:62} ║" for user_config in blacklisted],
+            per_page=15,
+            header="╔═════════════════════╦════════════════════════════════════════════════════════════════╗\n"
+                   "║ User id             ║ Reason                                                         ║\n"
+                   "╠═════════════════════╬════════════════════════════════════════════════════════════════╣\n",
+            footer="\n"
+                   "╚═════════════════════╩════════════════════════════════════════════════════════════════╝",
+            codeblock=True
         )
 
     @commands.is_owner()
@@ -135,11 +151,19 @@ class Dev(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is True:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is already blacklisted.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"**{user}** is already blacklisted."
+            )
 
         await user_config.set_blacklisted(True, reason=reason)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Added **{user}** to the blacklist.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Added **{user}** to the blacklist."
+        )
         await ctx.reply(embed=embed)
 
     @commands.is_owner()
@@ -153,9 +177,17 @@ class Dev(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(user.id)
         if user_config.blacklisted is False:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"**{user}** is not blacklisted.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"**{user}** is not blacklisted."
+            )
 
         await user_config.set_blacklisted(False)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **{user}** from the blacklist.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Removed **{user}** from the blacklist."
+        )
         await ctx.reply(embed=embed)

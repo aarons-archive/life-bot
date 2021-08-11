@@ -97,7 +97,11 @@ class Player(obsidian.ObsidianPlayer):
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description="Nothing was added to the queue for two minutes, cya next time!")
+                    embed = utils.embed(
+                        colour=colours.RED,
+                        emoji=emojis.CROSS,
+                        description="Nothing was added to the queue for two minutes, cya next time!"
+                    )
                     await self.send(embed=embed)
                     await self.disconnect()
                     break
@@ -123,7 +127,11 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                embed = utils.embed(colour=colours.RED, emoji=emojis.CROSS, description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).")
+                embed = utils.embed(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"There was an error while playing the track [{self.current.title}]({self.current.uri})."
+                )
                 await self.send(embed=embed)
                 continue
 
@@ -141,11 +149,11 @@ class Player(obsidian.ObsidianPlayer):
             return
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title="Now playing:",
-                description=f"**[{self.current.title}]({self.current.uri})**"
+            colour=colours.MAIN,
+            title="Now playing:",
+            description=f"**[{self.current.title}]({self.current.uri})**"
         ).set_thumbnail(
-                url=self.current.thumbnail
+            url=self.current.thumbnail
         )
 
         guild_config = await self.bot.guild_manager.get_config(self.current.ctx.guild.id)
@@ -153,19 +161,19 @@ class Player(obsidian.ObsidianPlayer):
         if guild_config.embed_size is enums.EmbedSize.LARGE:
 
             embed.add_field(
-                    name="Player info:",
-                    value=f"`Paused:` {self.paused}\n"
-                          f"`Loop mode:` {self.queue.loop_mode.name.title()}\n"
-                          f"`Filter:` {getattr(self.filter, 'name', None)}\n"
-                          f"`Queue entries:` {len(self.queue)}\n"
-                          f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n"
+                name="Player info:",
+                value=f"`Paused:` {self.paused}\n"
+                      f"`Loop mode:` {self.queue.loop_mode.name.title()}\n"
+                      f"`Filter:` {getattr(self.filter, 'name', None)}\n"
+                      f"`Queue entries:` {len(self.queue)}\n"
+                      f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n"
             ).add_field(
-                    name="Track info:",
-                    value=f"`Time:` {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
-                          f"`Author:` {self.current.author}\n"
-                          f"`Source:` {self.current.source.value.title()}\n"
-                          f"`Requester:` {self.current.requester.mention}\n"
-                          f"`Seekable:` {self.current.is_seekable()}\n"
+                name="Track info:",
+                value=f"`Time:` {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
+                      f"`Author:` {self.current.author}\n"
+                      f"`Source:` {self.current.source.value.title()}\n"
+                      f"`Requester:` {self.current.requester.mention}\n"
+                      f"`Seekable:` {self.current.is_seekable()}\n"
             )
 
             if not self.queue.is_empty():
@@ -179,15 +187,15 @@ class Player(obsidian.ObsidianPlayer):
         elif guild_config.embed_size is enums.EmbedSize.MEDIUM:
 
             embed.add_field(
-                    name="Player info:",
-                    value=f"`Paused:` {self.paused}\n"
-                          f"`Loop mode:` {self.queue.loop_mode.value.title()}\n"
-                          f"`Filter:` {getattr(self.filter, 'name', None)}\n"
+                name="Player info:",
+                value=f"`Paused:` {self.paused}\n"
+                      f"`Loop mode:` {self.queue.loop_mode.value.title()}\n"
+                      f"`Filter:` {getattr(self.filter, 'name', None)}\n"
             ).add_field(
-                    name="Track info:",
-                    value=f"`Time:` {utils.format_seconds(seconds=self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
-                          f"`Author:` {self.current.author}\n"
-                          f"`Source:` {self.current.source.value.title()}\n"
+                name="Track info:",
+                value=f"`Time:` {utils.format_seconds(seconds=self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
+                      f"`Author:` {self.current.author}\n"
+                      f"`Source:` {self.current.source.value.title()}\n"
             )
 
         await self.send(embed=embed)
@@ -207,12 +215,24 @@ class Player(obsidian.ObsidianPlayer):
             search = await self.node.search(search=query, ctx=ctx, source=source)
 
         except (slate.HTTPError, obsidian.ObsidianSearchError):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There was an error while searching for results.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="There was an error while searching for results."
+            )
         except slate.NoMatchesFound as error:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query."
+            )
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources."
+            )
 
         return search
 
@@ -222,17 +242,17 @@ class Player(obsidian.ObsidianPlayer):
 
         if choose:
             choice = await ctx.choice(
-                    entries=[f"`{index + 1:}:` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
-                    per_page=10,
-                    title="Select the number of the track you want to play:"
+                entries=[f"`{index + 1:}:` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
+                per_page=10,
+                title="Select the number of the track you want to play:"
             )
             tracks = search.tracks[choice]
         else:
             tracks = search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks
 
         self.queue.put(
-                items=tracks,
-                position=0 if (now or next) else None
+            items=tracks,
+            position=0 if (now or next) else None
         )
         if now:
             await self.stop()
@@ -242,5 +262,9 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description)
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=description
+        )
         await ctx.reply(embed=embed)

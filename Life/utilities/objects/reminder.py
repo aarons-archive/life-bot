@@ -134,9 +134,9 @@ class Reminder:
         channel: Any = self.bot.get_channel(self.channel_id)
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title="Reminder:",
-                description=f"[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}"
+            colour=colours.MAIN,
+            title="Reminder:",
+            description=f"[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}"
         )
 
         try:

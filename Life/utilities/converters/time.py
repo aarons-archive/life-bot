@@ -30,6 +30,10 @@ class TimeConverter(commands.Converter):
             try:
                 total = int(argument)
             except ValueError:
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That time format was not recognized.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="That time format was not recognized."
+                )
 
         return total

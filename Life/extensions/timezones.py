@@ -30,7 +30,11 @@ class Time(commands.Cog):
         """
 
         if not (timezones := self.bot.user_manager.timezones(guild_id=ctx.guild.id)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="No one has set their timezone, or everyone has set them to be private.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="No one has set their timezone, or everyone has set them to be private."
+            )
 
         timezone_users = collections.defaultdict(list)
 
@@ -38,9 +42,9 @@ class Time(commands.Cog):
             timezone_users[user_config.time.format("HH:mm (ZZ)")].append(f"{ctx.guild.get_member(user_config.id)} - {user_config.timezone.name}")
 
         await ctx.paginate_embed(
-                entries=[f"`{timezone}:`\n{values.NL.join(members)}\n" for timezone, members in timezone_users.items()],
-                per_page=5,
-                title=f"Timezones for **{ctx.guild}:**"
+            entries=[f"`{timezone}:`\n{values.NL.join(members)}\n" for timezone, members in timezone_users.items()],
+            per_page=5,
+            title=f"Timezones for **{ctx.guild}:**"
         )
 
     @commands.command(name="timezones", aliases=["tzs"])
@@ -50,9 +54,10 @@ class Time(commands.Cog):
         """
 
         await ctx.paginate_embed(
-                entries=list(pendulum.timezones),
-                per_page=20,
-                title="Available timezones:", header="Click [here](https://skeletonclique.axelancerr.xyz/timezones) to view a list of timezones.\n\n"
+            entries=list(pendulum.timezones),
+            per_page=20,
+            title="Available timezones:",
+            header="Click [here](https://skeletonclique.axelancerr.xyz/timezones) to view a list of timezones.\n\n"
         )
 
     #
@@ -79,19 +84,30 @@ class Time(commands.Cog):
                     member = await commands.MemberConverter().convert(ctx=ctx, argument=timezone)
                 except commands.BadArgument:
                     msg = "\n".join(f"- {match}" for match, _, _ in rapidfuzz.process.extract(query=timezone, choices=pendulum.timezones))
-                    raise exceptions.EmbedError(colour=colours.RED, description=f"I did not recognise that timezone or user. Maybe you meant one of these?\n{msg}")
+                    raise exceptions.EmbedError(
+                        colour=colours.RED,
+                        description=f"I did not recognise that timezone or user. Maybe you meant one of these?\n{msg}"
+                    )
                 else:
                     if (user_config := await self.bot.user_manager.get_config(member.id)).timezone_private is True and member.id != ctx.author.id:
-                        raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That users timezone is private.")
+                        raise exceptions.EmbedError(
+                            colour=colours.RED,
+                            emoji=emojis.CROSS,
+                            description="That users timezone is private."
+                        )
                     found_timezone = user_config.timezone
 
         if not found_timezone:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That user has not set their timezone.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That user has not set their timezone."
+            )
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Time in **{found_timezone.name}**{f' for **{member}**' if member else ''}:",
-                description=f"```\n{utils.format_datetime(pendulum.now(tz=found_timezone))}\n```"
+            colour=colours.MAIN,
+            title=f"Time in **{found_timezone.name}**{f' for **{member}**' if member else ''}:",
+            description=f"```\n{utils.format_datetime(pendulum.now(tz=found_timezone))}\n```"
         )
         await ctx.reply(embed=embed)
 
@@ -117,7 +133,11 @@ class Time(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_timezone(timezone)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone has been set to **{user_config.timezone.name}**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Your timezone has been set to **{user_config.timezone.name}**."
+        )
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="reset")
@@ -129,7 +149,11 @@ class Time(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_timezone()
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Your timezone has been reset back to `{user_config.timezone.name}`.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Your timezone has been reset back to **{user_config.timezone.name}**."
+        )
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="private")
@@ -139,12 +163,21 @@ class Time(commands.Cog):
         """
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
+
         if user_config.timezone_private is True:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your timezone is already **private**.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Your timezone is already **private**."
+            )
 
         await user_config.set_timezone(user_config.timezone, private=True)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Your timezone is now **private**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description="Your timezone is now **private**."
+        )
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="public")
@@ -154,10 +187,19 @@ class Time(commands.Cog):
         """
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
+
         if user_config.timezone_private is False:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your timezone is already **public**.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Your timezone is already **public**."
+            )
 
         await user_config.set_timezone(user_config.timezone, private=True)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Your timezone is now **public**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description="Your timezone is now **public**."
+        )
         await ctx.reply(embed=embed)

@@ -97,11 +97,11 @@ class UserManager:
             raise ValueError(f"guild with id \"{guild_id}\" was not found.")
 
         return sorted(
-                filter(
-                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.timezone_private and config.timezone is not None,
-                        self.configs.values()
-                ),
-                key=lambda config: config.time.offset_hours
+            filter(
+                lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.timezone_private and config.timezone is not None,
+                self.configs.values()
+            ),
+            key=lambda config: config.time.offset_hours
         )
 
     def birthdays(self, *, guild_id: int) -> list[objects.UserConfig]:
@@ -110,11 +110,11 @@ class UserManager:
             raise ValueError(f"guild with id \"{guild_id}\" was not found.")
 
         return sorted(
-                filter(
-                        lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
-                        self.configs.values()
-                ),
-                key=lambda config: config.next_birthday
+            filter(
+                lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
+                self.configs.values()
+            ),
+            key=lambda config: config.next_birthday
         )
 
     # Leaderboards
@@ -122,16 +122,16 @@ class UserManager:
     async def leaderboard(self, *, guild_id: int, page: int, limit: Optional[int] = 10) -> list[asyncpg.Record]:
 
         data = await self.bot.db.fetch(
-                "SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
-                guild_id, limit, (page - 1) * (limit or 0)
+            "SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
+            guild_id, limit, (page - 1) * (limit or 0)
         )
         return data
 
     async def rank(self, *, guild_id: int, user_id: int) -> int:
 
         data = await self.bot.db.fetchrow(
-                "SELECT rank FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members WHERE guild_members.user_id = $2",
-                guild_id, user_id
+            "SELECT rank FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members WHERE guild_members.user_id = $2",
+            guild_id, user_id
         )
         return data["rank"]
 
@@ -140,7 +140,11 @@ class UserManager:
     async def create_leaderboard(self, *, guild_id: int, page: int) -> io.BytesIO:
 
         if not (records := await self.leaderboard(guild_id=guild_id, page=page)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="There are no users who have gained any xp yet.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="There are no users who have gained any xp yet."
+            )
 
         guild = self.bot.get_guild(guild_id)
         data = []
@@ -332,7 +336,11 @@ class UserManager:
     async def create_timecard(self, *, guild_id: int) -> discord.File:
 
         if not (timezones := self.timezones(guild_id=guild_id)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="No one has set their timezone, or everyone has set them to be private.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="No one has set their timezone, or everyone has set them to be private."
+            )
 
         timezone_avatars = {}
 
@@ -360,7 +368,11 @@ class UserManager:
     async def create_birthday_card(self, *, guild_id: int) -> discord.File:
 
         if not (birthdays := self.birthdays(guild_id=guild_id)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="No one has set their birthday, or everyone has set them to be private.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="No one has set their birthday, or everyone has set them to be private."
+            )
 
         birthday_avatars = {}
 

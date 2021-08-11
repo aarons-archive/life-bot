@@ -12,7 +12,6 @@ from utilities import enums, objects
 if TYPE_CHECKING:
     from core.bot import Life
 
-
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")
 
 
@@ -136,8 +135,8 @@ class UserConfig:
     async def set_blacklisted(self, blacklisted: bool, *, reason: Optional[str] = None) -> None:
 
         data = await self.bot.db.fetchrow(
-                "UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason",
-                blacklisted, reason, self.id
+            "UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason",
+            blacklisted, reason, self.id
         )
 
         self._blacklisted = data["blacklisted"]
@@ -229,12 +228,18 @@ class UserConfig:
     # Reminders
 
     async def create_reminder(
-            self, *, channel_id: int, datetime: pendulum.DateTime, content: str, jump_url: Optional[str] = None, repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
+        self,
+        *,
+        channel_id: int,
+        datetime: pendulum.DateTime,
+        content: str,
+        jump_url: Optional[str] = None,
+        repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
     ) -> objects.Reminder:
 
         data = await self.bot.db.fetchrow(
-                "INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-                self.id, channel_id, datetime, content, jump_url, repeat_type.value
+            "INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            self.id, channel_id, datetime, content, jump_url, repeat_type.value
         )
 
         reminder = objects.Reminder(bot=self.bot, user_config=self, data=data)
@@ -260,8 +265,8 @@ class UserConfig:
     async def fetch_member_config(self, guild_id: int) -> objects.MemberConfig:
 
         data = await self.bot.db.fetchrow(
-                "INSERT INTO members (user_id, guild_id) VALUES ($1, $2) ON CONFLICT (user_id, guild_id) DO UPDATE SET user_id = excluded.user_id RETURNING *",
-                self.id, guild_id
+            "INSERT INTO members (user_id, guild_id) VALUES ($1, $2) ON CONFLICT (user_id, guild_id) DO UPDATE SET user_id = excluded.user_id RETURNING *",
+            self.id, guild_id
         )
         member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=data)
 

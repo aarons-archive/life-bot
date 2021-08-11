@@ -13,8 +13,16 @@ class PrefixConverter(commands.clean_content):
             raise commands.BadArgument
 
         if "`" in argument:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your prefix can not contain backtick characters.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Your prefix can not contain backtick characters."
+            )
         if len(argument) > 15:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="Your prefix can not be more than 15 characters.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Your prefix can not be more than 15 characters."
+            )
 
         return argument

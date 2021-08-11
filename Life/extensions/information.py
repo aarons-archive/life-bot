@@ -30,8 +30,10 @@ VERIFICATION_LEVELS: dict[discord.VerificationLevel, str] = {
     discord.VerificationLevel.none:    "None - No criteria set.",
     discord.VerificationLevel.low:     "Low - Must have a verified email.",
     discord.VerificationLevel.medium:  "Medium - Must have a verified email and be registered on discord for more than 5 minutes.",
-    discord.VerificationLevel.high:    "High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the server for more than 10 minutes.",
-    discord.VerificationLevel.highest: "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the server for more than 10 minutes, and have a "
+    discord.VerificationLevel.high:    "High - Must have a verified email, be registered on discord for more than 5 minutes and be a member of the server for "
+                                       "more than 10 minutes.",
+    discord.VerificationLevel.highest: "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the server for "
+                                       "more than 10 minutes, and have a "
                                        "verified phone number."
 }
 
@@ -79,32 +81,35 @@ class Information(commands.Cog):
         guild = server or ctx.guild
 
         status_counts: collections.Counter[Any] = collections.Counter([member.status for member in guild.members])
-        status_counts[discord.Streaming] = len([member for member in guild.members if discord.utils.find(lambda activity: isinstance(activity, discord.Streaming), member.activities)])
+        status_counts[discord.Streaming] = len([m for m in guild.members if discord.utils.find(lambda a: isinstance(a, discord.Streaming), m.activities)])
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Information for **{guild.name}**:",
-                description=f"**Owner:** {guild.owner} {emojis.OWNER}\n"
-                            f"**Created on:** {utils.format_datetime(guild.created_at)}\n"
-                            f"**Created:** {utils.format_difference(guild.created_at)} ago\n"
-                            f"**Members:** {guild.member_count} | {emojis.ONLINE}{status_counts[discord.Status.online]} | {emojis.IDLE}{status_counts[discord.Status.idle]} | "
-                            f"{emojis.DND}{status_counts[discord.Status.dnd]} | {emojis.OFFLINE}{status_counts[discord.Status.offline]} | {emojis.STREAMING}{status_counts[discord.Streaming]}\n"
-                            f"**Verification level:** {VERIFICATION_LEVELS[guild.verification_level]}\n"
-                            f"**Content filter level:** {CONTENT_FILTER_LEVELS[guild.explicit_content_filter]}\n"
-                            f"**NSFW level:** {NSFW_LEVELS[guild.nsfw_level]}\n"
-                            f"**2FA required:** {MFA_LEVELS[guild.mfa_level]}\n"
-                            f"**Nitro tier:** {guild.premium_tier} | **Boosters:** {guild.premium_subscription_count}\n"
-                            f"**Max file size:** {humanize.naturalsize(guild.filesize_limit)} | **Max bitrate:** {humanize.naturalsize(guild.bitrate_limit)}\n"
-                            f"**Max emoji:** {guild.emoji_limit} | **Max video channel users:** {guild.max_video_channel_users}\n"
-                            f"**AFK channel:** {guild.afk_channel.mention if guild.afk_channel else 'Not set'} | **AFK timeout:** {int(ctx.guild.afk_timeout / 60)}m\n"
-                            f"**Rules channel:** {guild.rules_channel.mention if guild.rules_channel else 'Not set'}\n"
-                            f"**Updates channel:** {guild.public_updates_channel.mention if guild.public_updates_channel else 'Not set'}\n"
-                            f"**System channel:** {guild.system_channel.mention if guild.system_channel else 'Not set'}\n"
-                            f"**Preferred locale:** {guild.preferred_locale or 'Not set'}"
+            colour=colours.MAIN,
+            title=f"Information for **{guild.name}**:",
+            description=f"**Owner:** {guild.owner} {emojis.OWNER}\n"
+                        f"**Created on:** {utils.format_datetime(guild.created_at)}\n"
+                        f"**Created:** {utils.format_difference(guild.created_at)} ago\n"
+                        f"**Members:** {guild.member_count} | {emojis.ONLINE}{status_counts[discord.Status.online]} | "
+                        f"{emojis.IDLE}{status_counts[discord.Status.idle]} | {emojis.DND}{status_counts[discord.Status.dnd]} | "
+                        f"{emojis.OFFLINE}{status_counts[discord.Status.offline]} | {emojis.STREAMING}{status_counts[discord.Streaming]}\n"
+                        f"**Verification level:** {VERIFICATION_LEVELS[guild.verification_level]}\n"
+                        f"**Content filter level:** {CONTENT_FILTER_LEVELS[guild.explicit_content_filter]}\n"
+                        f"**NSFW level:** {NSFW_LEVELS[guild.nsfw_level]}\n"
+                        f"**2FA required:** {MFA_LEVELS[guild.mfa_level]}\n"
+                        f"**Nitro tier:** {guild.premium_tier} | **Boosters:** {guild.premium_subscription_count}\n"
+                        f"**Max file size:** {humanize.naturalsize(guild.filesize_limit)} | "
+                        f"**Max bitrate:** {humanize.naturalsize(guild.bitrate_limit)}\n"
+                        f"**Max emoji:** {guild.emoji_limit} | **Max video channel users:** {guild.max_video_channel_users}\n"
+                        f"**AFK channel:** {guild.afk_channel.mention if guild.afk_channel else 'Not set'} | "
+                        f"**AFK timeout:** {int(ctx.guild.afk_timeout / 60)}m\n"
+                        f"**Rules channel:** {guild.rules_channel.mention if guild.rules_channel else 'Not set'}\n"
+                        f"**Updates channel:** {guild.public_updates_channel.mention if guild.public_updates_channel else 'Not set'}\n"
+                        f"**System channel:** {guild.system_channel.mention if guild.system_channel else 'Not set'}\n"
+                        f"**Preferred locale:** {guild.preferred_locale or 'Not set'}"
         ).set_footer(
-                text=f"ID: {guild.id} | Owner ID: {guild.owner.id}"
+            text=f"ID: {guild.id} | Owner ID: {guild.owner.id}"
         ).set_thumbnail(
-                url=utils.icon(guild)
+            url=utils.icon(guild)
         )
         await ctx.reply(embed=embed)
 
@@ -120,19 +125,19 @@ class Information(commands.Cog):
         role = role or ctx.author.top_role
 
         embed = discord.Embed(
-                colour=role.colour,
-                title=f"Information about role **{role}**:",
-                description=f"**Name:** {role.name}\n"
-                            f"**Created on:** {utils.format_datetime(role.created_at)}\n"
-                            f"**Created:** {utils.format_difference(role.created_at)} ago\n"
-                            f"**Hoisted:** {str(role.hoist).replace('True', 'Yes').replace('False', 'No')}\n"
-                            f"**Managed:** {str(role.managed).replace('True', 'Yes').replace('False', 'No')}\n"
-                            f"**Mentionable:** {str(role.mentionable).replace('True', 'Yes').replace('False', 'No')}\n"
-                            f"**Position (from bottom):** {role.position}\n"
-                            f"**Colour:** {str(role.colour).upper()}\n"
-                            f"**Role members:** {len(role.members)}\n"
+            colour=role.colour,
+            title=f"Information about role **{role}**:",
+            description=f"**Name:** {role.name}\n"
+                        f"**Created on:** {utils.format_datetime(role.created_at)}\n"
+                        f"**Created:** {utils.format_difference(role.created_at)} ago\n"
+                        f"**Hoisted:** {str(role.hoist).replace('True', 'Yes').replace('False', 'No')}\n"
+                        f"**Managed:** {str(role.managed).replace('True', 'Yes').replace('False', 'No')}\n"
+                        f"**Mentionable:** {str(role.mentionable).replace('True', 'Yes').replace('False', 'No')}\n"
+                        f"**Position (from bottom):** {role.position}\n"
+                        f"**Colour:** {str(role.colour).upper()}\n"
+                        f"**Role members:** {len(role.members)}\n"
         ).set_footer(
-                text=f"ID: {role.id}"
+            text=f"ID: {role.id}"
         )
         await ctx.reply(embed=embed)
 
@@ -148,18 +153,22 @@ class Information(commands.Cog):
         guild = server or ctx.guild
 
         if not guild.icon:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"The server **{guild.name}** does not have an icon.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"The server **{guild.name}** does not have an icon."
+            )
 
         description = f"[PNG]({utils.icon(guild, format='png')}) | [JPG]({utils.icon(guild, format='jpg')}) | [WEBP]({utils.icon(guild, format='webp')}) "
         if guild.icon.is_animated():
             description += f" | [GIF]({utils.icon(guild, format='gif')})"
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Icon for **{guild.name}**:",
-                description=description
+            colour=colours.MAIN,
+            title=f"Icon for **{guild.name}**:",
+            description=description
         ).set_image(
-                url=utils.icon(guild)
+            url=utils.icon(guild)
         )
         await ctx.reply(embed=embed)
 
@@ -175,18 +184,22 @@ class Information(commands.Cog):
         guild = server or ctx.guild
 
         if not guild.banner:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"The server **{guild.name}** does not have a banner.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"The server **{guild.name}** does not have a banner."
+            )
 
         description = f"[PNG]({utils.banner(guild, format='png')}) | [JPG]({utils.banner(guild, format='jpg')}) | [WEBP]({utils.banner(guild, format='webp')}) "
         if guild.banner.is_animated():
             description += f" | [GIF]({utils.banner(guild, format='gif')})"
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Banner for **{guild.name}**:",
-                description=description
+            colour=colours.MAIN,
+            title=f"Banner for **{guild.name}**:",
+            description=description
         ).set_image(
-                url=utils.banner(guild)
+            url=utils.banner(guild)
         )
         await ctx.reply(embed=embed)
 
@@ -202,18 +215,22 @@ class Information(commands.Cog):
         guild = server or ctx.guild
 
         if not guild.splash:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"The server **{guild.name}** does not have a splash.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"The server **{guild.name}** does not have a splash."
+            )
 
         description = f"[PNG]({utils.splash(guild, format='png')}) | [JPG]({utils.splash(guild, format='jpg')}) | [WEBP]({utils.splash(guild, format='webp')}) "
         if guild.splash.is_animated():
             description += f" | [GIF]({utils.splash(guild, format='gif')})"
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Invite splash for **{guild.name}**:",
-                description=description
+            colour=colours.MAIN,
+            title=f"Invite splash for **{guild.name}**:",
+            description=description
         ).set_image(
-                url=utils.splash(guild)
+            url=utils.splash(guild)
         )
         await ctx.reply(embed=embed)
 
@@ -232,9 +249,9 @@ class Information(commands.Cog):
             counts = dict(sorted(counts.items(), key=lambda kv: kv[1], reverse=True))
 
         await ctx.paginate(
-                entries=[f"{role_name[:20] + (role_name[20:] and '..'):23} | {role_count}" for role_name, role_count in counts.items()],
-                per_page=20,
-                codeblock=True
+            entries=[f"{role_name[:20] + (role_name[20:] and '..'):23} | {role_count}" for role_name, role_count in counts.items()],
+            per_page=20,
+            codeblock=True
         )
 
     @commands.command(name="channels")
@@ -250,7 +267,7 @@ class Information(commands.Cog):
         channels = [channel for channel in guild.channels if not isinstance(channel, discord.CategoryChannel) and not channel.category]
         categories = [category for category in guild.channels if isinstance(category, discord.CategoryChannel)]
 
-        entries = [f"{utils.channel_emoji(channel, guild=guild, member=ctx.author)}{channel}" for channel in sorted(channels, key=lambda channel: channel.position)]
+        entries = [f"{utils.channel_emoji(c, guild=guild, member=ctx.author)}{c}" for c in sorted(channels, key=lambda channel: channel.position)]
 
         space = "\u200b " * 5
         for category in sorted(categories, key=lambda category: category.position):
@@ -259,9 +276,9 @@ class Information(commands.Cog):
                 entries.append(f"{space}{utils.channel_emoji(channel, guild=guild, member=ctx.author)}{channel}")
 
         await ctx.paginate_embed(
-                entries=entries,
-                per_page=30,
-                title=f"Channels in **{guild}**:"
+            entries=entries,
+            per_page=30,
+            title=f"Channels in **{guild}**:"
         )
 
     #
@@ -288,24 +305,24 @@ class Information(commands.Cog):
                            f"**Activity:**\n{utils.activities(user)}\n"
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Information about **{user}**:",
-                description=description
+            colour=colours.MAIN,
+            title=f"Information about **{user}**:",
+            description=description
         ).set_footer(
-                text=f"ID: {user.id}"
+            text=f"ID: {user.id}"
         ).set_thumbnail(
-                url=utils.avatar(user)
+            url=utils.avatar(user)
         )
 
         if isinstance(user, discord.Member):
             embed.add_field(
-                    name="Server related information:",
-                    value=f"**Nickname:** {user.nick}\n"
-                          f"**Joined on:** {utils.format_datetime(user.joined_at)}\n"
-                          f"**Joined:** {utils.format_difference(user.joined_at)} ago\n"
-                          f"**Join Position:** {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}\n"
-                          f"**Top role:** {user.top_role.mention}\n"
-                          f"**Role count:** {len(user.roles) - 1}\n",
+                name="Server related information:",
+                value=f"**Nickname:** {user.nick}\n"
+                      f"**Joined on:** {utils.format_datetime(user.joined_at)}\n"
+                      f"**Joined:** {utils.format_difference(user.joined_at)} ago\n"
+                      f"**Join Position:** {sorted(ctx.guild.members, key=lambda m: m.joined_at).index(user) + 1}\n"
+                      f"**Top role:** {user.top_role.mention}\n"
+                      f"**Role count:** {len(user.roles) - 1}\n",
             )
 
         await ctx.reply(embed=embed)
@@ -325,11 +342,11 @@ class Information(commands.Cog):
             description += f" | [GIF]({utils.avatar(user, format='gif')})"
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Avatar for **{user}**:",
-                description=description
+            colour=colours.MAIN,
+            title=f"Avatar for **{user}**:",
+            description=description
         ).set_image(
-                url=utils.avatar(user)
+            url=utils.avatar(user)
         )
         await ctx.reply(embed=embed)
 
@@ -354,20 +371,20 @@ class Information(commands.Cog):
         redis_end = time.perf_counter()
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title="Ping:",
+            colour=colours.MAIN,
+            title="Ping:",
         ).add_field(
-                name="Websocket:", value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
+            name="Websocket:", value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
         ).add_field(
-                name="API:", value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
+            name="API:", value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
         ).add_field(
-                name="\u200B", value="\u200B"
+            name="\u200B", value="\u200B"
         ).add_field(
-                name="PSQL:", value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
+            name="PSQL:", value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
         ).add_field(
-                name="Redis:", value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
+            name="Redis:", value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
         ).add_field(
-                name="\u200B", value="\u200B"
+            name="\u200B", value="\u200B"
         )
         await ctx.reply(embed=embed)
 
@@ -378,24 +395,24 @@ class Information(commands.Cog):
         """
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title="Stats:",
-                description=f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
-                            f"`Shards:` {len(self.bot.shards)}\n"
-                            f"`Servers:` {len(self.bot.guilds)}\n"
-                            f"`Members:` {sum(len(guild.members) for guild in self.bot.guilds)}\n"
-                            f"`Users:` {len(self.bot.users)}\n"
-                            f"`Extensions:` {len(self.bot.extensions)}\n"
-                            f"`Cogs:` {len(self.bot.cogs)}\n"
-                            f"`Commands:` {len(self.bot.commands)}\n\n"
-                            f"**Version Info:**\n"
-                            f"`discord.py:` {pkg_resources.get_distribution('discord.py').version}\n"
-                            f"`asyncpg:` {pkg_resources.get_distribution('asyncpg').version}\n"
-                            f"`aioredis:` {pkg_resources.get_distribution('aioredis').version}\n"
-                            f"`aiohttp:` {pkg_resources.get_distribution('aiohttp').version}\n"
-                            f"`slate:` {pkg_resources.get_distribution('slate').version}\n"
-                            f"`pillow:` {pkg_resources.get_distribution('pillow').version}\n"
-                            f"`wand:` {pkg_resources.get_distribution('wand').version}\n"
+            colour=colours.MAIN,
+            title="Stats:",
+            description=f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
+                        f"`Shards:` {len(self.bot.shards)}\n"
+                        f"`Servers:` {len(self.bot.guilds)}\n"
+                        f"`Members:` {sum(len(guild.members) for guild in self.bot.guilds)}\n"
+                        f"`Users:` {len(self.bot.users)}\n"
+                        f"`Extensions:` {len(self.bot.extensions)}\n"
+                        f"`Cogs:` {len(self.bot.cogs)}\n"
+                        f"`Commands:` {len(self.bot.commands)}\n\n"
+                        f"**Version Info:**\n"
+                        f"`discord.py:` {pkg_resources.get_distribution('discord.py').version}\n"
+                        f"`asyncpg:` {pkg_resources.get_distribution('asyncpg').version}\n"
+                        f"`aioredis:` {pkg_resources.get_distribution('aioredis').version}\n"
+                        f"`aiohttp:` {pkg_resources.get_distribution('aiohttp').version}\n"
+                        f"`slate:` {pkg_resources.get_distribution('slate').version}\n"
+                        f"`pillow:` {pkg_resources.get_distribution('pillow').version}\n"
+                        f"`wand:` {pkg_resources.get_distribution('wand').version}\n"
         )
         await ctx.reply(embed=embed)
 
@@ -412,36 +429,36 @@ class Information(commands.Cog):
         java_version = re.search(r'\"(\d+\.\d+).*\"', subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT).decode()).groups()[0]
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title="System stats:",
-                description=f"`OS:` {platform.platform()}\n"
-                            f"`Python version:` {platform.python_version()} ({platform.python_implementation()})\n"
-                            f"`Java version:` {java_version}\n"
-                            f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
+            colour=colours.MAIN,
+            title="System stats:",
+            description=f"`OS:` {platform.platform()}\n"
+                        f"`Python version:` {platform.python_version()} ({platform.python_implementation()})\n"
+                        f"`Java version:` {java_version}\n"
+                        f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
         ).add_field(
-                name="System CPU:",
-                value=f"`Frequency:` {round(cpu_freq.current, 2)} Mhz\n"
-                      f"`Cores (logical):` {psutil.cpu_count()}\n"
-                      f"`Overall Usage:` {psutil.cpu_percent(interval=0.1)}%"
+            name="System CPU:",
+            value=f"`Frequency:` {round(cpu_freq.current, 2)} Mhz\n"
+                  f"`Cores (logical):` {psutil.cpu_count()}\n"
+                  f"`Overall Usage:` {psutil.cpu_percent(interval=0.1)}%"
         ).add_field(
-                name="\u200B", value="\u200B"
+            name="\u200B", value="\u200B"
         ).add_field(
-                name="System Memory:",
-                value=f"`Available:` {humanize.naturalsize(memory_info.available, binary=True)}\n"
-                      f"`Total:` {humanize.naturalsize(memory_info.total, binary=True)}\n"
-                      f"`Used:` {humanize.naturalsize(memory_info.used, binary=True)}"
+            name="System Memory:",
+            value=f"`Available:` {humanize.naturalsize(memory_info.available, binary=True)}\n"
+                  f"`Total:` {humanize.naturalsize(memory_info.total, binary=True)}\n"
+                  f"`Used:` {humanize.naturalsize(memory_info.used, binary=True)}"
         ).add_field(
-                name="System Disk:",
-                value=f"`Total:` {humanize.naturalsize(disk_usage.total, binary=True)}\n"
-                      f"`Used:` {humanize.naturalsize(disk_usage.used, binary=True)}\n"
-                      f"`Free:` {humanize.naturalsize(disk_usage.free, binary=True)}"
+            name="System Disk:",
+            value=f"`Total:` {humanize.naturalsize(disk_usage.total, binary=True)}\n"
+                  f"`Used:` {humanize.naturalsize(disk_usage.used, binary=True)}\n"
+                  f"`Free:` {humanize.naturalsize(disk_usage.free, binary=True)}"
         ).add_field(
-                name="\u200B", value="\u200B"
+            name="\u200B", value="\u200B"
         ).add_field(
-                name="Process information:",
-                value=f"`Memory usage:` {humanize.naturalsize(self.bot.process.memory_full_info().rss, binary=True)}\n"
-                      f"`CPU usage:` {self.bot.process.cpu_percent()} %\n"
-                      f"`Threads:` {self.bot.process.num_threads()}"
+            name="Process information:",
+            value=f"`Memory usage:` {humanize.naturalsize(self.bot.process.memory_full_info().rss, binary=True)}\n"
+                  f"`CPU usage:` {self.bot.process.cpu_percent()} %\n"
+                  f"`Threads:` {self.bot.process.num_threads()}"
         )
         await ctx.reply(embed=embed)
 
@@ -449,7 +466,11 @@ class Information(commands.Cog):
     async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
 
         if not command:
-            await ctx.reply(embed=utils.embed(emoji="\U0001f4da", description=f"My source code can be viewed here: **https://github.com/Axelancerr/Life/**"))
+            embed = utils.embed(
+                emoji="\U0001f4da",
+                description=f"My source code can be viewed here: **https://github.com/Axelancerr/Life/**"
+            )
+            await ctx.reply(embed=embed)
             return
 
         if command == "help":
@@ -459,13 +480,18 @@ class Information(commands.Cog):
 
         else:
             if (obj := self.bot.get_command(command.replace(".", ""))) is None:
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I couldn't find that command.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="I couldn't find that command."
+                )
 
             source = obj.callback.__code__
             module = obj.callback.__module__
             filename = source.co_filename
 
         lines, start_line_number = inspect.getsourcelines(source)
+
         if not module.startswith("discord"):
             location = os.path.relpath(filename).replace("\\", "/")
             await ctx.reply(f"https://github.com/Axelancerr/Life/blob/main/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")

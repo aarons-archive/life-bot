@@ -81,8 +81,8 @@ class GuildConfig:
     async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: Optional[str] = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
-                "INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-                user_id, self.id, name, content, jump_url
+            "INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            user_id, self.id, name, content, jump_url
         )
 
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
@@ -93,8 +93,8 @@ class GuildConfig:
     async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: Optional[str] = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
-                "INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-                user_id, self.id, name, original, jump_url
+            "INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            user_id, self.id, name, original, jump_url
         )
 
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)

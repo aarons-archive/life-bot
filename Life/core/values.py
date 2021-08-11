@@ -7,13 +7,13 @@ ZWSP = "\u200b"
 NL = "\n"
 
 PERMISSIONS = discord.Permissions(
-        read_messages=True,
-        send_messages=True,
-        embed_links=True,
-        attach_files=True,
-        read_message_history=True,
-        add_reactions=True,
-        external_emojis=True,
+    read_messages=True,
+    send_messages=True,
+    embed_links=True,
+    attach_files=True,
+    read_message_history=True,
+    add_reactions=True,
+    external_emojis=True,
 )
 
 INVITE_LINK = discord.utils.oauth_url(client_id=config.BOT_ID, permissions=PERMISSIONS, scopes=["bot"])

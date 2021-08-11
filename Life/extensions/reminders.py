@@ -30,29 +30,34 @@ class Reminders(commands.Cog):
         entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(when[1].items())}
 
         choice = await ctx.choice(
-                entries=[f"**{index + 1}:** **{phrase}**\n`{utils.format_datetime(datetime)}`" for index, (phrase, datetime) in entries.items()],
-                per_page=5,
-                splitter="\n\n",
-                title="Multiple dates/times where detected in your reminder:",
-                header="Choose the option that best matches your intended reminder time.\n\n"
+            entries=[f"**{index + 1}:** **{phrase}**\n`{utils.format_datetime(datetime)}`" for index, (phrase, datetime) in entries.items()],
+            per_page=5,
+            splitter="\n\n",
+            title="Multiple dates/times where detected in your reminder:",
+            header="Choose the option that best matches your intended reminder time.\n\n"
         )
         _, datetime = entries[choice]
 
         if datetime < pendulum.now(tz="UTC"):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The date/time detected was in the past.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="The date/time detected was in the past."
+            )
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         reminder = await user_config.create_reminder(
-                channel_id=ctx.channel.id,
-                datetime=datetime,
-                content=await utils.safe_content(self.bot.mystbin, when[0], max_characters=1500),
-                jump_url=ctx.message.jump_url
+            channel_id=ctx.channel.id,
+            datetime=datetime,
+            content=await utils.safe_content(self.bot.mystbin, when[0], max_characters=1500),
+            jump_url=ctx.message.jump_url
         )
 
         embed = discord.Embed(
-                colour=colours.GREEN,
-                description=f"Reminder with id **{reminder.id}** created for **{utils.format_datetime(reminder.datetime)}**, which is in **{utils.format_difference(reminder.datetime)}**."
+            colour=colours.GREEN,
+            description=f"Reminder with id **{reminder.id}** created for **{utils.format_datetime(reminder.datetime)}**, "
+                        f"which is in **{utils.format_difference(reminder.datetime)}**."
         )
         await ctx.reply(embed=embed)
 
@@ -65,7 +70,11 @@ class Reminders(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not (reminders := [reminder for reminder in user_config.reminders.values() if not reminder.done]):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have any active reminders.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You do not have any active reminders."
+            )
 
         entries = [
             f"**{reminder.id}:** [__**In {utils.format_difference(reminder.datetime)}**__]({reminder.jump_url})\n"
@@ -76,9 +85,9 @@ class Reminders(commands.Cog):
         ]
 
         await ctx.paginate_embed(
-                entries=entries,
-                per_page=5,
-                title=f"Active reminders for **{ctx.author}**:"
+            entries=entries,
+            per_page=5,
+            title=f"Active reminders for **{ctx.author}**:"
         )
 
     @_reminders.command(name="list", aliases=["l"])
@@ -98,10 +107,15 @@ class Reminders(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if not user_config.reminders:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You do not have any reminders.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You do not have any reminders."
+            )
 
         entries = [
-            f"**{reminder.id}:** [__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}{' ago' if reminder.done else ''}**__]({reminder.jump_url})\n"
+            f"**{reminder.id}:** [__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}" \
+            f"{' ago' if reminder.done else ''}**__]({reminder.jump_url})\n"
             f"**When:** {utils.format_datetime(reminder.datetime, seconds=True)}\n"
             f"**Repeat:** {reminder.repeat_type.name.replace('_', ' ').lower().title()}\n"
             f"**Content:** {await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=80)}\n"
@@ -109,9 +123,9 @@ class Reminders(commands.Cog):
         ]
 
         await ctx.paginate_embed(
-                entries=entries,
-                per_page=5,
-                title=f"Reminders for **{ctx.author}**:"
+            entries=entries,
+            per_page=5,
+            title=f"Reminders for **{ctx.author}**:"
         )
 
     @_reminders.command(name="edit")
@@ -126,7 +140,11 @@ class Reminders(commands.Cog):
         content = await utils.safe_content(self.bot.mystbin, content, max_characters=1500)
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited content of reminder with id **{reminder.id}**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Edited content of reminder with id **{reminder.id}**."
+        )
         await ctx.reply(embed=embed)
 
         #
@@ -140,14 +158,22 @@ class Reminders(commands.Cog):
         """
 
         if not reminders:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="One or more of the reminder id's provided were invalid.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="One or more of the reminder id's provided were invalid."
+            )
 
         for reminder in reminders:
             await reminder.delete()
 
         s = "s" if len(reminders) > 1 else ""
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Deleted **{len(reminders)}** reminder{s} with id{s} {', '.join(f'**{reminder.id}**' for reminder in reminders)}.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Deleted **{len(reminders)}** reminder{s} with id{s} {', '.join(f'**{reminder.id}**' for reminder in reminders)}."
+        )
         await ctx.reply(embed=embed)
 
     @_reminders.command(name="repeat")
@@ -160,11 +186,19 @@ class Reminders(commands.Cog):
         """
 
         if reminder.done:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="That reminder is already done.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That reminder is already done."
+            )
 
         await reminder.change_repeat_type(repeat_type)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Edited repeat type of reminder with id **{reminder.id}**.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Edited repeat type of reminder with id **{reminder.id}**."
+        )
         await ctx.reply(embed=embed)
 
     @_reminders.command(name="info")
@@ -174,14 +208,15 @@ class Reminders(commands.Cog):
         """
 
         embed = discord.Embed(
-                colour=colours.MAIN,
-                title=f"Information for reminder **{reminder.id}:**",
-                description=f"[__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}{' ago' if reminder.done else ''}:**__]({reminder.jump_url})\n"
-                            f"**Created:** {utils.format_datetime(reminder.created_at, seconds=True)}\n"
-                            f"**When:** {utils.format_datetime(reminder.datetime, seconds=True)}\n"
-                            f"**Repeat:** {reminder.repeat_type.name.replace('_', ' ').lower().title()}\n"
-                            f"**Done:** {str(reminder.done).replace('False', 'No').replace('True', 'Yes')}\n"
-                            f"**Content:**\n\n"
-                            f"{await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=1000)}"
+            colour=colours.MAIN,
+            title=f"Information for reminder **{reminder.id}:**",
+            description=f"[__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}"
+                        f"{' ago' if reminder.done else ''}:**__]({reminder.jump_url})\n"
+                        f"**Created:** {utils.format_datetime(reminder.created_at, seconds=True)}\n"
+                        f"**When:** {utils.format_datetime(reminder.datetime, seconds=True)}\n"
+                        f"**Repeat:** {reminder.repeat_type.name.replace('_', ' ').lower().title()}\n"
+                        f"**Done:** {str(reminder.done).replace('False', 'No').replace('True', 'Yes')}\n"
+                        f"**Content:**\n\n"
+                        f"{await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=1000)}"
         )
         await ctx.reply(embed=embed)

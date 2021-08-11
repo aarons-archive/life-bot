@@ -190,9 +190,18 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
 
 
 def embed(
-        footer_url: Optional[str] = None, footer: Optional[str] = None, image: Optional[str] = None, thumbnail: Optional[str] = None, author: Optional[str] = None,
-        author_url: Optional[str] = None, author_icon_url: Optional[str] = None, title: Optional[str] = None, description: Optional[str] = None, url: Optional[str] = None,
-        colour: discord.Colour = colours.MAIN, emoji: Optional[str] = None
+    footer_url: Optional[str] = None,
+    footer: Optional[str] = None,
+    image: Optional[str] = None,
+    thumbnail: Optional[str] = None,
+    author: Optional[str] = None,
+    author_url: Optional[str] = None,
+    author_icon_url: Optional[str] = None,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    url: Optional[str] = None,
+    colour: discord.Colour = colours.MAIN,
+    emoji: Optional[str] = None
 ) -> discord.Embed:
 
     e = discord.Embed(colour=colour)
@@ -233,7 +242,11 @@ async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.
     async with session.post("https://cdn.axelancerr.xyz/api/media", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
 
         if response.status == 413:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="The image produced was too large to upload.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="The image produced was too large to upload."
+            )
 
         post = await response.json()
 

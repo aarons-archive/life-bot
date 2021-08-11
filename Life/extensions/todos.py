@@ -33,12 +33,16 @@ class Todo(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You don't have any todos."
+            )
 
         await ctx.paginate_embed(
-                entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
-                per_page=10,
-                title=f"Todo list for **{ctx.author}**:"
+            entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
+            per_page=10,
+            title=f"Todo list for **{ctx.author}**:"
         )
 
     @todo.command(name="list")
@@ -66,11 +70,19 @@ class Todo(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
 
         if len(user_config.todos) > 100:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You have 100 todos, try finishing some before adding any more.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You have 100 todos, try finishing some before adding any more."
+            )
 
         todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Todo **{todo.id}** created.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description=f"Todo **{todo.id}** created."
+        )
         await ctx.reply(embed=embed)
 
     @todo.command(name="delete", aliases=["remove"])
@@ -85,15 +97,24 @@ class Todo(commands.Cog):
         """
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
+
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You don't have any todos."
+            )
 
         todos = set()
 
         for todo_id in todo_ids:
 
             if not (todo := user_config.get_todo(todo_id)):
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"You don't have a todo with id **{todo_id}**.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"You don't have a todo with id **{todo_id}**."
+                )
 
             todos.add(todo)
 
@@ -101,10 +122,10 @@ class Todo(commands.Cog):
             await todo.delete()
 
         await ctx.paginate_embed(
-                entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in todos],
-                per_page=10,
-                colour=colours.GREEN,
-                title=f"Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:"
+            entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in todos],
+            per_page=10,
+            colour=colours.GREEN,
+            title=f"Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:"
         )
 
     @todo.command(name="clear")
@@ -118,12 +139,20 @@ class Todo(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You don't have any todos."
+            )
 
         for todo in user_config.todos.copy().values():
             await todo.delete()
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Cleared your todo list.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description="Cleared your todo list."
+        )
         await ctx.reply(embed=embed)
 
     @todo.command(name="edit", aliases=["update"])
@@ -140,12 +169,24 @@ class Todo(commands.Cog):
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         if not user_config.todos:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You don't have any todos.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="You don't have any todos."
+            )
 
         if not (todo := user_config.get_todo(todo_id)):
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"You don't have a todo with id **{todo_id}**.")
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"You don't have a todo with id **{todo_id}**."
+            )
 
         await todo.change_content(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Edited content of todo.")
+        embed = utils.embed(
+            colour=colours.GREEN,
+            emoji=emojis.TICK,
+            description="Edited content of todo."
+        )
         await ctx.reply(embed=embed)
