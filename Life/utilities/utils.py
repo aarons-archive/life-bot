@@ -17,6 +17,7 @@ from utilities import exceptions
 
 
 def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:
+
     datetime.replace(microsecond=0)
 
     if type(datetime) is dt.datetime and datetime.tzinfo == dt.timezone.utc:
@@ -38,6 +39,7 @@ def format_time(time: pendulum.Time) -> str:
 
 
 def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tuple[str] = ('seconds',)) -> str:
+
     datetime = convert_datetime(datetime)
 
     now = pendulum.now(tz=datetime.timezone)
@@ -47,6 +49,7 @@ def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tu
 
 
 def format_seconds(seconds: float, *, friendly: bool = False) -> str:
+
     seconds = round(seconds)
 
     minute, second = divmod(seconds, 60)
@@ -62,6 +65,7 @@ def format_seconds(seconds: float, *, friendly: bool = False) -> str:
 
 
 def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel, *, guild: discord.Guild, member: discord.Member) -> str:
+
     overwrites = channel.permissions_for(member)
 
     if isinstance(channel, discord.StageChannel):
@@ -81,6 +85,7 @@ def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.
 
 
 def badge_emojis(person: discord.User | discord.Member) -> str:
+
     badges = [badge for badge_name, badge in emojis.BADGES.items() if dict(person.public_flags)[badge_name] is True]
 
     if dict(person.public_flags)["verified_bot"] is False and person.bot:
@@ -165,12 +170,14 @@ def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guil
 
 
 def darken_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
+
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 - factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
 
 
 def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -> tuple[float, float, float]:
+
     h, l, s = colorsys.rgb_to_hls(red / 255.0, green / 255.0, blue / 255.0)
     red, green, blue = colorsys.hls_to_rgb(h, max(min(l * (1 + factor), 1.0), 0.0), s)
     return int(red * 255), int(green * 255), int(blue * 255)
@@ -223,6 +230,7 @@ def needed_xp(_level: int, xp: int) -> int:
 
 
 async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.BytesIO, file_format: str) -> str:
+
     data = aiohttp.FormData()
     data.add_field("file", value=file_bytes, filename=f"file.{file_format.lower()}")
 
@@ -241,6 +249,7 @@ async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.
 
 
 async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = "txt", max_characters: int = 1024) -> str:
+    
     if len(content) <= max_characters:
         return content
 
