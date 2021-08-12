@@ -1,9 +1,14 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from discord.ext import commands
 
+from core import colours, emojis
 from core.bot import Life
-from utilities import context, converters, enums, exceptions
+from utilities import checks, context, enums, exceptions, utils
+
+
+def setup(bot: Life) -> None:
+    bot.add_cog(Settings(bot=bot))
 
 
 class Settings(commands.Cog):
@@ -11,113 +16,186 @@ class Settings(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    @commands.group(name="settings", aliases=["config"], invoke_without_command=True)
-    async def settings(self, ctx: context.Context) -> None:
-        pass
-
-    #
-
-    @settings.group(name="user", invoke_without_command=True)
-    async def settings_user(self, ctx: context.Context) -> None:
-        pass
-
-    #
-
-    @settings.group(name="guild", invoke_without_command=True)
-    async def settings_guild(self, ctx: context.Context) -> None:
-        pass
-
-    @settings_guild.command(name="embed-size", aliases=["embedsize", "es"])
-    async def settings_guild_embed_size(self, ctx: context.Context, operation: Optional[Literal["set", "reset"]], size: Optional[Literal["large", "medium", "small"]]) -> None:
+    @commands.command(name="embedsize", aliases=["embed-size", "embed_size", "es"])
+    async def embed_size(
+        self,
+        ctx: context.Context,
+        operation: Literal["set", "reset"] = utils.MISSING,
+        size: Literal["large", "medium", "small"] = utils.MISSING
+    ) -> None:
         """
         Manage this servers embed size settings.
 
-        Please note that to view the current size, no permissions are needed, however to change it you require the `manage_guild` permission.
-
-        `operation`: The operation to perform, `set` to change it or `reset` to revert it to the default. If not provided the current size will be displayed.
-        `size`: The size to set embeds too. Can be `large`, `medium` or `small`.
+        **operation**: The operation to perform, can be **set** or **reset**.
+        **size**: The size to set embeds too. Can be **large**, **medium** or **small**.
         """
 
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
+
         if not operation:
-            await ctx.reply(f"This servers embed size is `{ctx.guild_config.embed_size.name.title()}`.")
+            embed = utils.embed(
+                description=f"The embed size is **{guild_config.embed_size.name.title()}**."
+            )
+            await ctx.reply(embed=embed)
             return
 
-        if await self.bot.is_owner(user=ctx.author) is False:
-            await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
+        try:
+            await checks.is_mod().predicate(ctx=ctx)
+        except commands.CheckAnyFailure:
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"You do not have permission to edit the bots embed size in this server."
+            )
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
-
-        if operation == "reset":
-
-            if guild_config.embed_size == enums.EmbedSize.LARGE:
-                raise exceptions.ArgumentError("This servers embed size is already the default.")
-
-            await guild_config.set_embed_size()
-            await ctx.reply("Reset this servers embed size.")
-
-        elif operation == "set":
+        if operation == "set":
 
             if not size:
-                raise exceptions.ArgumentError("You did not provide a valid size.")
-            if guild_config.embed_size == getattr(enums.EmbedSize, size.upper()):
-                raise exceptions.ArgumentError(f"This servers embed size is already `{guild_config.embed_size.name.title()}`.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"You didn't provide an embed size."
+                )
 
-            await guild_config.set_embed_size(getattr(enums.EmbedSize, size.upper()))
-            await ctx.reply(f"Set this servers embed size to `{guild_config.embed_size.name.title()}`.")
+            embed_size = getattr(enums.EmbedSize, size.upper(), None)
 
-    @settings_guild.command(name="prefix", aliases=["prefixes"])
-    async def settings_guild_prefix(self, ctx: context.Context, operation: Optional[Literal["add", "remove", "reset", "clear"]], prefix: Optional[converters.PrefixConverter]) -> None:
+            if guild_config.embed_size is embed_size:
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"The embed size is already **{embed_size.name.title()}**."
+                )
+
+            await guild_config.set_embed_size(embed_size)
+
+            embed = utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Set the embed size to **{embed_size.name.title()}**."
+            )
+            await ctx.reply(embed=embed)
+
+        elif operation == "reset":
+
+            if guild_config.embed_size is enums.EmbedSize.MEDIUM:
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"The embed size is already the default of **Medium**."
+                )
+
+            await guild_config.set_embed_size(enums.EmbedSize.MEDIUM)
+
+            embed = utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Reset the embed size to **Medium**."
+            )
+            await ctx.reply(embed=embed)
+
+    @commands.command(name="prefixes", aliases=["prefix"])
+    async def prefixes(
+        self,
+        ctx: context.Context,
+        operation: Literal["add", "remove", "reset", "clear"] = utils.MISSING,
+        prefix: str = utils.MISSING
+    ) -> None:
         """
         Manage this servers prefix settings.
 
-        Please note that to view the prefixes, no permissions are needed, however to change them you require the `manage_guild` permission.
-
-        `operation`: The operation to perform, `add` to add a prefix, `remove` to remove one, `reset` or `clear` to remove them all. If not provided a list of current prefixes will be displayed.
-        `prefix`: The prefix to add or remove. Must be less than 15 characters.
+        **operation**: The operation to perform, can be **add**, **remove** or **reset**/**clear**.
+        **prefix**: The prefix to add or remove. Must be less than 15 characters, and contain no backtick characters.
         """
 
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
-            clean_prefixes = [f"`1.` {prefixes[0]}", *[f"`{index + 2}.` `{prefix}`" for index, prefix in enumerate(prefixes[2:])]]
-            await ctx.paginate_embed(entries=clean_prefixes, per_page=10, title="List of usable prefixes.")
+            await ctx.paginate_embed(
+                entries=[f"`1.` {prefixes[0]}", *[f"`{index + 2}.` `{prefix}`" for index, prefix in enumerate(prefixes[2:])]],
+                per_page=10,
+                title="List of usable prefixes."
+            )
             return
 
-        if await self.bot.is_owner(ctx.author) is False:
-            await commands.has_guild_permissions(manage_guild=True).predicate(ctx=ctx)
+        try:
+            await checks.is_mod().predicate(ctx=ctx)
+        except commands.CheckAnyFailure:
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description=f"You do not have permission to edit the bots prefixes in this server."
+            )
 
-        guild_config = await self.bot.guild_manager.get_or_create_config(ctx.guild.id)
+        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if operation == "add":
 
             if not prefix:
-                raise exceptions.ArgumentError("You did not provide a prefix to add.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="You didn't provide a prefix to add."
+                )
             if prefix in guild_config.prefixes:
-                raise exceptions.ArgumentError(f"This server already has the prefix `{prefix}`.")
-
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"This server already has the prefix **{prefix}**."
+                )
             if len(guild_config.prefixes) > 20:
-                raise exceptions.ArgumentError("This server can not have more than 20 custom prefixes.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="This server can not have more than 20 custom prefixes."
+                )
 
-            await guild_config.change_prefixes(enums.Operation.ADD, prefix=str(prefix))
-            await ctx.reply(f"Added `{prefix}` to this servers prefixes.")
+            await guild_config.change_prefixes(prefix=prefix, operation=enums.Operation.ADD)
+
+            embed = utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Added **{prefix}** to this servers prefixes."
+            )
+            await ctx.reply(embed=embed)
 
         elif operation == "remove":
 
             if not prefix:
-                raise exceptions.ArgumentError("You did not provide a prefix to remove.")
-            if prefix not in guild_config.prefixes:
-                raise exceptions.ArgumentError(f"This server does not have the prefix `{prefix}`.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="You did not provide a prefix to remove."
 
-            await guild_config.change_prefixes(enums.Operation.REMOVE, prefix=str(prefix))
-            await ctx.reply(f"Removed `{prefix}` from this servers prefixes.")
+                )
+            if prefix not in guild_config.prefixes:
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description=f"This server does not have the prefix **{prefix}**."
+                )
+
+            await guild_config.change_prefixes(prefix=prefix, operation=enums.Operation.REMOVE)
+
+            embed = utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Remove **{prefix}** from this servers prefixes."
+            )
+            await ctx.reply(embed=embed)
 
         elif operation in {"reset", "clear"}:
 
             if not guild_config.prefixes:
-                raise exceptions.ArgumentError("This server does not have any custom prefixes.")
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    emoji=emojis.CROSS,
+                    description="This server does not have any custom prefixes."
+                )
 
-            await guild_config.change_prefixes(enums.Operation.RESET)
-            await ctx.reply("Cleared this servers prefixes.")
+            await guild_config.change_prefixes(operation=enums.Operation.RESET)
 
-
-def setup(bot: Life) -> None:
-    bot.add_cog(Settings(bot=bot))
+            embed = utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Cleared this servers prefixes."
+            )
+            await ctx.reply(embed=embed)
