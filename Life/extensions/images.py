@@ -1,4 +1,3 @@
-import random
 from inspect import Parameter
 from typing import Any, Literal, Optional
 
@@ -61,10 +60,6 @@ class Images(commands.Cog):
                 emoji=emojis.CROSS,
                 description=f"**{name}** must be between **{minimum}** and **{maximum}**."
             )
-
-    @staticmethod
-    def random_colour() -> str:
-        return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="blur")
@@ -200,7 +195,7 @@ class Images(commands.Cog):
             ctx=ctx,
             edit_function=imaging.border,
             url=str(image),
-            colour=str(colour) if colour else self.random_colour(),
+            colour=str(colour) if colour else utils.random_hex(),
             width=width,
             height=height
         )
@@ -230,7 +225,7 @@ class Images(commands.Cog):
          **<hex>** can be **#FFF** or **#FFFFFF**.
          """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=str(colour) if colour else self.random_colour())
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=str(colour) if colour else utils.random_hex())
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="despeckle")
@@ -365,7 +360,7 @@ class Images(commands.Cog):
             ctx=ctx,
             edit_function=imaging.frame,
             url=str(image),
-            matte=str(colour) if colour else self.random_colour(),
+            matte=str(colour) if colour else utils.random_hex(),
             height=height,
             width=width,
             inner_bevel=inner,

@@ -1,1 +1,1 @@
-from utilities.decorators.async_executor import AsyncExecutor
+from utilities.decorators.async_executor import async_executor

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import colorsys
 import datetime as dt
-import io
 import math
-from typing import Any, Literal, Optional
+import random
+from typing import Literal, Optional
 
 import aiohttp
 import discord
@@ -226,6 +226,10 @@ def needed_xp(_level: int, xp: int) -> int:
     return round((((((_level + 1) * 3) ** 1.5) * 100) - xp))
 
 
+def random_hex() -> str:
+    return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+
 #
 
 
@@ -249,7 +253,7 @@ async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.
 
 
 async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: str = "txt", max_characters: int = 1024) -> str:
-    
+
     if len(content) <= max_characters:
         return content
 
