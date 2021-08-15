@@ -28,7 +28,7 @@ reportUnusedVariable = "error"
 reportDuplicateImport = "error"
 reportWildcardImportFromLibrary = "warning"
 reportOptionalSubscript = "error"
-reportOptionalMemberAccess = "none"##
+reportOptionalMemberAccess = "none"
 reportOptionalCall = "error"
 reportOptionalIterable = "error"
 reportOptionalContextManager = "error"
@@ -44,9 +44,7 @@ reportIncompatibleMethodOverride = "error"
 reportIncompatibleVariableOverride = "error"
 reportOverlappingOverload = "error"
 reportInvalidStringEscapeSequence = "error"
-
 reportUnknownParameterType = "none"
-
 reportUnknownArgumentType = "none"
 reportUnknownLambdaType = "none"
 reportUnknownVariableType = "none"
