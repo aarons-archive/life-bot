@@ -151,10 +151,17 @@ class UserManager:
 
         for record in records:
 
-            member = guild.get_member(record["user_id"])
-            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+            if not (member := guild.get_member(record["user_id"])):
+                member = guild.get_member(self.bot.user.id)
 
-            data.append((member, record["xp"], record["rank"], avatar_bytes))
+            data.append(
+                (
+                    member,
+                    record["xp"],
+                    record["rank"],
+                    io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+                )
+            )
 
         return await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data)
 
