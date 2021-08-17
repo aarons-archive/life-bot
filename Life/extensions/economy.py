@@ -4,8 +4,9 @@ import random
 import discord
 from discord.ext import commands
 
+from core import colours, emojis
 from core.bot import Life
-from utilities import context, converters, enums, utils
+from utilities import context, converters, enums, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -76,7 +77,12 @@ class Economy(commands.Cog):
         """
 
         leaderboard = await self.bot.user_manager.leaderboard(guild_id=ctx.guild.id, page=0, limit=None)
-        member_config = discord.utils.find(lambda r: r['user_id'] == ctx.author.id, leaderboard)
+        if not (member_config := discord.utils.find(lambda r: r['user_id'] == ctx.author.id, leaderboard)):
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="Something went wrong while fetching the leaderboard."
+            )
 
         entries = []
 
