@@ -49,13 +49,9 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page - 1)
 
-    @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
-
+    @discord.ui.button(label="1")
+    async def page_label(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-
-        await self.paginator.stop(self.paginator.delete_message)
-        self.stop()
 
     @discord.ui.button(emoji=emojis.FORWARD)
     async def forward(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
@@ -76,6 +72,14 @@ class PaginatorButtons(discord.ui.View):
             return
 
         await self.paginator.change_page(page=len(self.paginator.pages) - 1)
+
+    @discord.ui.button(emoji=emojis.STOP)
+    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
+
+        await interaction.response.defer()
+
+        await self.paginator.stop(self.paginator.delete_message)
+        self.stop()
 
 
 class PaginatorStopButton(discord.ui.View):
@@ -131,7 +135,7 @@ class BasePaginator(abc.ABC):
         self.splitter: str = splitter
 
         self.message: Optional[discord.Message] = None
-        self.view: Optional[discord.ui.View] = None
+        self.view: Optional[PaginatorButtons | PaginatorStopButton] = None
 
         self.page: int = 0
         self.current_page: Optional[Any] = None
@@ -158,7 +162,11 @@ class BasePaginator(abc.ABC):
 
     @abc.abstractmethod
     async def change_page(self, *, page: int) -> None:
-        raise NotImplementedError
+
+        self.page = page
+        await self.set_page(page=page)
+
+        self.view.page_label.label = f"{page + 1}/{len(self.pages)}"
 
     @abc.abstractmethod
     async def paginate(self) -> None:

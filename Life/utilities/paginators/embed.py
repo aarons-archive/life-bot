@@ -100,10 +100,8 @@ class EmbedPaginator(paginators.BasePaginator):
 
     async def change_page(self, *, page: int) -> None:
 
-        self.page = page
-        await self.set_page(page=page)
-
-        await self.message.edit(embed=self.embed)
+        await super().change_page(page=page)
+        await self.message.edit(embed=self.embed, view=self.view)
 
     async def paginate(self) -> None:
 

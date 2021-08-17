@@ -44,10 +44,8 @@ class EmbedsPaginator(paginators.BasePaginator):
 
     async def change_page(self, *, page: int) -> None:
 
-        self.page = page
-        await self.set_page(page=page)
-
-        await self.message.edit(embed=self.current_page)
+        await super().change_page(page=page)
+        await self.message.edit(content=self.content, embed=self.current_page, view=self.view)
 
     async def paginate(self) -> None:
 

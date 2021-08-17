@@ -52,14 +52,12 @@ class TextPaginator(paginators.BasePaginator):
 
     async def change_page(self, *, page: int) -> None:
 
-        self.page = page
-        await self.set_page(page=page)
-
-        await self.message.edit(content=self.current_page)
+        await super().change_page(page=page)
+        await self.message.edit(content=self.current_page, view=self.view)
 
     async def paginate(self) -> None:
 
         await super().paginate()
 
         await self.set_page(page=self.page)
-        self.message = await self.ctx.reply(self.current_page, view=self.view)
+        self.message = await self.ctx.reply(content=self.current_page, view=self.view)
