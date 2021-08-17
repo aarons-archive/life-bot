@@ -1,14 +1,15 @@
 import asyncio
-import functools
-from typing import Any, Callable
+from collections.abc import Callable, Coroutine
+from typing import Any, ParamSpec, TypeVar
 
 
-def async_executor(function: Callable[..., Any]) -> Callable[..., Any]:
+T = TypeVar("T")
+P = ParamSpec("P")
 
-    @functools.wraps(function)
-    async def wrapper(*args: Any, **kwargs: Any) -> Callable[..., Any]:
 
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, functools.partial(function, *args, **kwargs))
+def async_executor(function: Callable[P, T]) -> Callable[P, Coroutine[Any, Any, T]]:
+
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Coroutine[Any, Any, T]:
+        return asyncio.to_thread(function, *args, **kwargs)
 
     return wrapper

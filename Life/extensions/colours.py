@@ -1,7 +1,6 @@
 import io
 import os
-from io import BytesIO
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import discord
 from PIL import Image, ImageDraw, ImageFont
@@ -26,18 +25,18 @@ class Colours(commands.Cog):
         self.bot = bot
 
     @decorators.async_executor
-    def generate_colour_image(self, colour: discord.Colour) -> io.BytesIO:
+    def generate_colour_square(self, colour: str) -> Any:
 
         with Image.new(mode="RGBA", size=(256, 100), color=colour) as image:
 
-            buffer = BytesIO()
+            buffer = io.BytesIO()
             image.save(buffer, "png")
 
         buffer.seek(0)
         return buffer
 
     @decorators.async_executor
-    def generate_colour_scheme(self, hex_codes: list[str], names: list[str]) -> io.BytesIO:
+    def generate_colour_scheme(self, hex_codes: list[str], names: list[str]) -> Any:
 
         with Image.new(mode="RGBA", size=(200 * len(hex_codes), 225), color="white") as image:
 
@@ -46,13 +45,13 @@ class Colours(commands.Cog):
 
             for hex_code, name in zip(hex_codes, names):
 
-                draw.rectangle(xy=[(x, 25), (x + 200, 225)], fill=hex_code)
+                draw.rectangle(xy=((x, 25), (x + 200, 225)), fill=hex_code)
                 draw.text(xy=(x + 5, 5), text=name, font=ImageFont.truetype(font=KABEL_BLACK_FONT, size=20), fill="#1F1E1C")
                 draw.text(xy=(x + 5, 30), text=hex_code, font=ImageFont.truetype(font=KABEL_BLACK_FONT, size=20), fill="#1F1E1C")
 
                 x += 200
 
-            buffer = BytesIO()
+            buffer = io.BytesIO()
             image.save(buffer, "png")
 
         buffer.seek(0)
@@ -84,7 +83,7 @@ class Colours(commands.Cog):
             name_is_exact_match = data["name"]["exact_match_name"]
             name_exact_match_hex = data["name"]["closest_named_hex"]
 
-        buffer = await self.generate_colour_image(hex)
+        buffer = await self.generate_colour_square(hex)
         url = await utils.upload_file(session=self.bot.session, file_bytes=buffer, file_format="png")
         buffer.close()
 
@@ -112,8 +111,10 @@ class Colours(commands.Cog):
         ctx: context.Context,
         seed: Optional[discord.Color] = utils.MISSING,
         mode: Optional[Modes] = "monochrome",
-        count: Optional[int] = 5
+        count: int = utils.MISSING
     ) -> None:
+
+        count = count or 5
 
         if count > 20:
             raise exceptions.EmbedError(
