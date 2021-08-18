@@ -9,7 +9,7 @@ import slate
 from discord.ext import commands
 from slate import obsidian
 
-from core import colours, config, emojis
+from core import colours, config, emojis, values
 from core.bot import Life
 from utilities import checks, context, converters, custom, enums, exceptions, utils
 
@@ -36,6 +36,7 @@ class SearchOptions(commands.FlagConverter, delimiter=" ", prefix="--", case_ins
 
 
 def get_source(flags: Options | SearchOptions) -> slate.Source:
+
     if flags.music:
         return slate.Source.YOUTUBE_MUSIC
     elif flags.soundcloud:
@@ -76,13 +77,21 @@ class Voice(commands.Cog):
     # Events
 
     @commands.Cog.listener()
-    async def on_obsidian_track_start(self, player: custom.Player, _: obsidian.ObsidianTrackStart) -> None:
+    async def on_obsidian_track_start(
+        self,
+        player: custom.Player,
+        _: obsidian.ObsidianTrackStart
+    ) -> None:
 
         player._track_start_event.set()
         player._track_start_event.clear()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_end(self, player: custom.Player, _: obsidian.ObsidianTrackEnd) -> None:
+    async def on_obsidian_track_end(
+        self,
+        player: custom.Player,
+        _: obsidian.ObsidianTrackEnd
+    ) -> None:
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -90,33 +99,18 @@ class Voice(commands.Cog):
         player.skip_request_ids = set()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_exception(self, player: custom.Player, event: obsidian.ObsidianTrackException) -> None:
+    async def on_obsidian_track_exception(
+        self,
+        player: custom.Player,
+        event: obsidian.ObsidianTrackException
+    ) -> None:
 
-        track = None
-        try:
-            track = await player.node.decode_track(track_id=event.track_id)
-        except slate.HTTPError:
-            pass
-
-        title = getattr(track or player.current, "title", "Not Found")
-        await player.send(f"There was an error of severity **{event.severity}** while playing the track **{title}**.\nReason: {event.message}")
-
-        player._track_end_event.set()
-        player._track_end_event.clear()
-
-        player.skip_request_ids = set()
-
-    @commands.Cog.listener()
-    async def on_obsidian_track_stuck(self, player: custom.Player, event: obsidian.ObsidianTrackStuck) -> None:
-
-        track = None
-        try:
-            track = await player.node.decode_track(track_id=event.track_id)
-        except slate.HTTPError:
-            pass
-
-        title = getattr(track or player.current, "title", "Not Found")
-        await player.send(f"Something went wrong while playing the track **{title}**. Use **{config.PREFIX}support** for more help.")
+        embed = utils.embed(
+            colour=colours.RED,
+            description=f"There was a **{event.severity}** error while playing the current track. "
+                        f"Join my [support server]({values.SUPPORT_LINK}) for more help."
+        )
+        await player.send(embed=embed)
 
         player._track_end_event.set()
         player._track_end_event.clear()
@@ -124,10 +118,31 @@ class Voice(commands.Cog):
         player.skip_request_ids = set()
 
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member, _: discord.VoiceState, __: discord.VoiceState) -> None:
+    async def on_obsidian_track_stuck(
+        self,
+        player: custom.Player,
+        _: obsidian.ObsidianTrackStuck
+    ) -> None:
 
-        if member.bot:
-            return
+        embed = utils.embed(
+            colour=colours.RED,
+            description=f"Something went wrong while playing the current track. "
+                        f"Join my [support server]({values.SUPPORT_LINK}) for more help."
+        )
+        await player.send(embed=embed)
+
+        player._track_end_event.set()
+        player._track_end_event.clear()
+
+        player.skip_request_ids = set()
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        _: discord.VoiceState
+    ) -> None:
 
         if not (guild := self.bot.get_guild(member.guild.id)):
             return
@@ -137,40 +152,18 @@ class Voice(commands.Cog):
         if not voice_client:
             return
 
-        if not [member for member in voice_client.voice_channel.members if not member.bot] and (not voice_client.paused):
-
-            await voice_client.set_pause(True)
-
-            embed = utils.embed(
-                colour=colours.RED,
-                emoji=emojis.PAUSED,
-                description=f"The player is now **paused** because there is no one in {voice_client.voice_channel.mention}."
-            )
-            await voice_client.send(embed=embed)
+        if before.channel.id != voice_client.voice_channel.id:
             return
 
-        if all(member.voice.self_deaf or member.voice.deaf for member in voice_client.voice_channel.members if not member.bot) and (not voice_client.paused):
+        members = [m for m in voice_client.voice_channel.members if m.bot is False]
+        all_deafened = all(m.voice.self_deaf or m.voice.deaf for m in members)
 
+        if (not members or all_deafened) and voice_client.is_paused() is False:
             await voice_client.set_pause(True)
-
-            embed = utils.embed(
-                colour=colours.RED,
-                emoji=emojis.PAUSED,
-                description=f"The player is now **paused** because everyone in {voice_client.voice_channel.mention} is deafened."
-            )
-            await voice_client.send(embed=embed)
             return
 
-        if voice_client.paused:
-
+        if voice_client.is_paused() is True:
             await voice_client.set_pause(False)
-
-            embed = utils.embed(
-                colour=colours.RED,
-                emoji=emojis.PLAYING,
-                description="The player is now **resumed** as at least one person is listening."
-            )
-            await voice_client.send(embed=embed)
 
     # Join/Leave commands
 
