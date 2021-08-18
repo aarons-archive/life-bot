@@ -15,8 +15,7 @@ class EmbedsPaginator(paginators.BasePaginator):
         ctx: context.Context,
         entries: list[Any],
         timeout: int = 300,
-        delete_message: bool = True,
-        content: Optional[str] = None
+        delete_message: bool = False,
     ) -> None:
 
         super().__init__(
@@ -27,15 +26,7 @@ class EmbedsPaginator(paginators.BasePaginator):
             delete_message=delete_message
         )
 
-        self._content: Optional[str] = content
-
         self.current_page: Optional[discord.Embed] = None
-
-    # Properties
-
-    @property
-    def content(self) -> str:
-        return self._content or f"Page: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}"
 
     # Abstract methods
 
@@ -45,11 +36,9 @@ class EmbedsPaginator(paginators.BasePaginator):
     async def change_page(self, *, page: int) -> None:
 
         await super().change_page(page=page)
-        await self.message.edit(content=self.content, embed=self.current_page, view=self.view)
+        await self.message.edit(embed=self.current_page, view=self.view)
 
     async def paginate(self) -> None:
 
-        await super().paginate()
-
         await self.set_page(page=self.page)
-        self.message = await self.ctx.reply(content=self.content, embed=self.current_page, view=self.view)
+        self.message = await self.ctx.reply(embed=self.current_page, view=self.view)

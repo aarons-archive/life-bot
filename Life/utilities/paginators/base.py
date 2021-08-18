@@ -5,29 +5,30 @@ from typing import Any, Optional
 
 import discord
 
-from core import config, emojis
+from core import config, emojis, values
 from utilities import context
 
 
 class PaginatorButtons(discord.ui.View):
 
-    def __init__(self, paginator: BasePaginator) -> None:
+    def __init__(self, *, paginator: BasePaginator) -> None:
         super().__init__(timeout=paginator.timeout)
 
         self.paginator: BasePaginator = paginator
 
-    #
+    # Overridden
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.message.id == getattr(self.paginator.message, "id", None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
+        return interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
 
     async def on_timeout(self) -> None:
-        await self.paginator.stop(delete=self.paginator.delete_message)
+        self.stop()
+        await self.paginator.stop()
 
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         return
 
-    #
+    # Buttons
 
     @discord.ui.button(emoji=emojis.FIRST)
     async def first(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
@@ -49,7 +50,7 @@ class PaginatorButtons(discord.ui.View):
 
         await self.paginator.change_page(page=self.paginator.page - 1)
 
-    @discord.ui.button(label="1")
+    @discord.ui.button(label="1/?")
     async def page_label(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
 
@@ -78,37 +79,8 @@ class PaginatorButtons(discord.ui.View):
 
         await interaction.response.defer()
 
-        await self.paginator.stop(self.paginator.delete_message)
         self.stop()
-
-
-class PaginatorStopButton(discord.ui.View):
-
-    def __init__(self, paginator: BasePaginator) -> None:
-        super().__init__(timeout=paginator.timeout)
-
-        self.paginator: BasePaginator = paginator
-
-    #
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.message.id == getattr(self.paginator.message, "id", None) and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
-
-    async def on_timeout(self) -> None:
-        await self.paginator.stop(delete=self.paginator.delete_message)
-
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        return
-
-    #
-
-    @discord.ui.button(emoji=emojis.STOP)
-    async def _stop(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
-
-        await interaction.response.defer()
-
-        await self.paginator.stop(self.paginator.delete_message)
-        self.stop()
+        await self.paginator.stop()
 
 
 class BasePaginator(abc.ABC):
@@ -120,7 +92,7 @@ class BasePaginator(abc.ABC):
         entries: list[Any],
         per_page: int,
         timeout: int = 300,
-        delete_message: bool = True,
+        delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n"
     ) -> None:
@@ -135,24 +107,31 @@ class BasePaginator(abc.ABC):
         self.splitter: str = splitter
 
         self.message: Optional[discord.Message] = None
-        self.view: Optional[PaginatorButtons | PaginatorStopButton] = None
+        self.view: PaginatorButtons = PaginatorButtons(paginator=self)
 
         self.page: int = 0
-        self.current_page: Optional[Any] = None
 
-        self.pages = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)] if self.per_page > 1 else self.entries
+        if self.per_page > 1:
+            self.pages: list[Any] = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)]
+        else:
+            self.pages: list[Any] = self.entries
+
+        self.CODEBLOCK_START = f"```{values.NL}" if self.codeblock else ""
+        self.CODEBLOCK_END = f"{values.NL}```" if self.codeblock else ""
 
     #
 
-    async def stop(self, delete: bool) -> None:
+    async def stop(self) -> None:
 
-        if self.message:
-            if delete:
-                await self.message.delete()
-                self.message = None
-            else:
-                await self.message.edit(view=None)
-                self.view = None
+        if not self.message:
+            return
+
+        if self.delete_message:
+            await self.message.delete()
+        else:
+            await self.message.edit(content="*Message was deleted.*", embed=None, view=None)
+
+        self.message = None
 
     # Abstract methods
 
@@ -170,4 +149,4 @@ class BasePaginator(abc.ABC):
 
     @abc.abstractmethod
     async def paginate(self) -> None:
-        self.view = PaginatorButtons(self) if len(self.pages) > 1 else PaginatorStopButton(self)
+        raise NotImplementedError

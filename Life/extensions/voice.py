@@ -793,7 +793,7 @@ class Voice(commands.Cog):
             entries=entries,
             per_page=1,
             title=f"Lyrics for **{result.name}** by **{result.artist}**:",
-            additional_footer="Lyrics provided by KSoft.Si API"
+            embed_footer="Lyrics provided by KSoft.Si API"
         )
 
     # Queue commands

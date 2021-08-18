@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import colorsys
 import datetime as dt
+import io
 import math
 import random
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import aiohttp
 import discord
@@ -184,8 +185,8 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
 
 
 def embed(
-    footer_url: Optional[str] = None,
     footer: Optional[str] = None,
+    footer_url: Optional[str] = None,
     image: Optional[str] = None,
     thumbnail: Optional[str] = None,
     author: Optional[str] = None,

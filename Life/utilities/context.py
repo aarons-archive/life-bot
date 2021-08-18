@@ -42,7 +42,7 @@ class Context(commands.Context):
         entries: list[Any],
         per_page: int,
         timeout: int = 300,
-        delete_message: bool = True,
+        delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
         header: Optional[str] = None,
@@ -70,13 +70,13 @@ class Context(commands.Context):
         entries: list[Any],
         per_page: int,
         timeout: int = 300,
-        delete_message: bool = True,
+        delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
         header: Optional[str] = None,
         footer: Optional[str] = None,
-        embed_footer_url: Optional[str] = None,
         embed_footer: Optional[str] = None,
+        embed_footer_url: Optional[str] = None,
         image: Optional[str] = None,
         thumbnail: Optional[str] = None,
         author: Optional[str] = None,
@@ -85,7 +85,6 @@ class Context(commands.Context):
         title: Optional[str] = None,
         url: Optional[str] = None,
         colour: discord.Colour = colours.MAIN,
-        additional_footer: Optional[str] = None
     ) -> paginators.EmbedPaginator:
 
         paginator = paginators.EmbedPaginator(
@@ -98,8 +97,8 @@ class Context(commands.Context):
             splitter=splitter,
             header=header,
             footer=footer,
-            embed_footer_url=embed_footer_url,
             embed_footer=embed_footer,
+            embed_footer_url=embed_footer_url,
             image=image,
             thumbnail=thumbnail,
             author=author,
@@ -108,7 +107,6 @@ class Context(commands.Context):
             title=title,
             url=url,
             colour=colour,
-            additional_footer=additional_footer
         )
 
         await paginator.paginate()
@@ -228,7 +226,7 @@ class Context(commands.Context):
                 await self.reply(embed=embed)
                 continue
 
-            await paginator.stop(delete=True)
+            await paginator.stop()
             return number
 
         raise exceptions.EmbedError(

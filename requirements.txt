@@ -23,6 +23,6 @@ setuptools>=57.4.0
 https://github.com/Axelancerr/Slate/archive/main.zip
 soupsieve>=2.2.1
 https://github.com/Axelancerr/spotify.py/archive/master.zip
-Wand>=0.6.6
+Wand>=0.6.7
 wheel>=0.37.0
 yarl>=1.6.3

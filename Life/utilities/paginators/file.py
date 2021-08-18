@@ -14,7 +14,7 @@ class FilePaginator(paginators.BasePaginator):
         ctx: context.Context,
         entries: list[functools.partial],
         timeout: int = 300,
-        delete_message: bool = True,
+        delete_message: bool = False,
         header: Optional[str] = None
     ) -> None:
 
@@ -26,15 +26,9 @@ class FilePaginator(paginators.BasePaginator):
             delete_message=delete_message
         )
 
-        self._header: Optional[str] = header
+        self.header: str = header or ""
 
         self.current_page: Optional[str] = None
-
-    # Properties
-
-    @property
-    def header(self) -> str:
-        return self._header or f"\n\nPage: {self.page + 1}/{len(self.entries)} | Total entries: {len(self.entries)}\n"
 
     # Abstract methods
 
@@ -52,8 +46,6 @@ class FilePaginator(paginators.BasePaginator):
         await self.message.edit(content=self.current_page, view=self.view)
 
     async def paginate(self) -> None:
-
-        await super().paginate()
 
         await self.set_page(page=self.page)
         self.message = await self.ctx.reply(content=self.current_page, view=self.view)
