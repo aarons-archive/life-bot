@@ -16,7 +16,7 @@ import mystbin
 import psutil
 import slate
 import spotify
-from discord.ext import commands
+from discord.ext import commands, ipc
 # noinspection PyUnresolvedReferences
 from discord.ext.alternatives import converter_dict
 from pendulum.tz.timezone import Timezone
@@ -67,6 +67,7 @@ class Life(commands.AutoShardedBot):
         self.spotify: spotify.Client = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.spotify_http: spotify.HTTPClient = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.slate: Type[slate.NodePool] = slate.NodePool
+        self.ipc = ipc.Server(bot=self, secret_key="aaaaaaaa")
 
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
         self.guild_manager: managers.GuildManager = managers.GuildManager(bot=self)

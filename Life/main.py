@@ -77,4 +77,6 @@ if __name__ == "__main__":
         del uvloop
 
     with logger():
-        bot.Life().run(config.TOKEN)
+        life = bot.Life()
+        life.ipc.start()
+        life.run(config.TOKEN)
