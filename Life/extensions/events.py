@@ -201,10 +201,8 @@ class Events(commands.Cog):
     # Bot events
 
     @commands.Cog.listener()
-    async def on_socket_response(self, message: dict[str, Any]) -> None:
-
-        if (event := message.get("t")) is not None:
-            self.bot.socket_stats[event] += 1
+    async def on_socket_event_type(self, event_type: str) -> None:
+        self.bot.socket_stats[event_type] += 1
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
