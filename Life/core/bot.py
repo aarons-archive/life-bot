@@ -67,7 +67,7 @@ class Life(commands.AutoShardedBot):
         self.spotify: spotify.Client = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.spotify_http: spotify.HTTPClient = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.slate: Type[slate.NodePool] = slate.NodePool
-        self.ipc = ipc.Server(bot=self, secret_key=config.SECRET_KEY)
+        self.ipc = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
 
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
         self.guild_manager: managers.GuildManager = managers.GuildManager(bot=self)
