@@ -182,3 +182,6 @@ class Life(commands.AutoShardedBot):
         self.scheduler.start()
 
         await self.cogs["Voice"].load()
+
+    async def on_ipc_error(self, endpoint, error):
+        print(endpoint, "raised", error)
