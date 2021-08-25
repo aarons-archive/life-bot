@@ -16,14 +16,22 @@ class IPC(commands.Cog):
         self.bot = bot
 
     @ipc.server.route()
-    async def basic_information(self, _) -> dict[str, Any]:
+    async def links(self, _) -> dict[str, Any]:
+        return {
+            "github_link": values.GITHUB_LINK,
+            "support_link": values.SUPPORT_LINK,
+            "invite_link": values.INVITE_LINK,
+        }
+
+    @ipc.server.route()
+    async def stats(self, _) -> dict[str, Any]:
 
         return {
             "users": len(self.bot.users),
             "guilds": len(self.bot.guilds),
-            "invite_link": values.INVITE_LINK,
-            "support_link": values.SUPPORT_LINK,
         }
+
+    #
 
     @ipc.server.route()
     async def mutual_guild_ids(self, data) -> Optional[list[int]]:

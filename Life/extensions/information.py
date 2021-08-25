@@ -13,7 +13,7 @@ import pkg_resources
 import psutil
 from discord.ext import commands
 
-from core import colours, emojis
+from core import colours, emojis, values
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
 
@@ -468,7 +468,7 @@ class Information(commands.Cog):
         if not command:
             embed = utils.embed(
                 emoji="\U0001f4da",
-                description=f"My source code can be viewed here: **https://github.com/Axelancerr/Life/**"
+                description=f"My source code can be viewed here: **{values.GITHUB_LINK}**"
             )
             await ctx.reply(embed=embed)
             return
@@ -494,7 +494,7 @@ class Information(commands.Cog):
 
         if not module.startswith("discord"):
             location = os.path.relpath(filename).replace("\\", "/")
-            await ctx.reply(f"https://github.com/Axelancerr/Life/blob/main/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
+            await ctx.reply(f"{values.GITHUB_LINK}/blob/main/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
         else:
             location = module.replace(".", "/") + ".py"
             await ctx.reply(f"<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
