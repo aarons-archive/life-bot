@@ -57,7 +57,7 @@ class Time(commands.Cog):
             entries=list(pendulum.timezones),
             per_page=20,
             title="Available timezones:",
-            header="Click [here](https://skeletonclique.axelancerr.xyz/timezones) to view a list of timezones.\n\n"
+            header="Click [here](https://skeletonclique.mrrandom.xyz/timezones) to view a list of timezones.\n\n"
         )
 
     #
@@ -127,7 +127,7 @@ class Time(commands.Cog):
         """
         Sets your timezone.
 
-        **timezone**: The timezone to use. See [here](https://skeletonclique.axelancerr.xyz/timezones) for a list of timezones in an easier to navigate format.
+        **timezone**: The timezone to use. See [here](https://skeletonclique.mrrandom.xyz/timezones) for a list of timezones in an easier to navigate format.
         """
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
