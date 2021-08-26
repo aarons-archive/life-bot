@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
-from discord.ext import commands, ipc
+from discord.ext import commands
+from discord.ext.ipc.server import route
 
 from core import values
 from core.bot import Life
@@ -15,15 +16,14 @@ class IPC(commands.Cog):
     def __init__(self, bot: Life) -> None:
         self.bot = bot
 
-    @ipc.server.route()
+    @route()
     async def links(self, _) -> dict[str, Any]:
         return {
             "github_link": values.GITHUB_LINK,
             "support_link": values.SUPPORT_LINK,
-            "invite_link": values.INVITE_LINK,
         }
 
-    @ipc.server.route()
+    @route()
     async def stats(self, _) -> dict[str, Any]:
 
         return {
@@ -33,7 +33,7 @@ class IPC(commands.Cog):
 
     #
 
-    @ipc.server.route()
+    @route()
     async def mutual_guild_ids(self, data) -> Optional[list[int]]:
 
         if not (user := self.bot.get_user(data.user_id)):
