@@ -64,7 +64,7 @@ class HelpCommand(commands.HelpCommand):
 
             entries.append(f"__**{cog.qualified_name}:**__\n{''.join(f'`{command.qualified_name}`{values.ZWSP} ' for command in cog_commands)}")
 
-        title = f"__{self.context.bot.user.name}\"s help page__"
+        title = f"__{self.context.bot.user.name}'s help page__"
         header = f"Use `{config.PREFIX}help [Command/Category]` for more help with a command or category.\n\n"
         await self.context.paginate_embed(entries=entries, per_page=5, title=title, header=header)
 
