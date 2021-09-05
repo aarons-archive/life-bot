@@ -8,7 +8,7 @@ import logging
 import re
 import time
 import traceback
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Type
 
 # Packages
 import aiohttp
@@ -64,8 +64,8 @@ class Life(commands.AutoShardedBot):
         self.GUILD_LOG: discord.Webhook = discord.Webhook.from_url(session=self.session, url=config.GUILD_WEBHOOK_URL)
         self.DMS_LOG: discord.Webhook = discord.Webhook.from_url(session=self.session, url=config.DM_WEBHOOK_URL)
 
-        self.db: Optional[asyncpg.Pool] = None
-        self.redis: Optional[aioredis.Redis] = None
+        self.db: asyncpg.Pool | None= None
+        self.redis: aioredis.Redis | None = None
 
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)

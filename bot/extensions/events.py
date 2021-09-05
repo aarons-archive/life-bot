@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import traceback
-from typing import Any, Optional
+from typing import Any
 
 # Packages
 import discord
@@ -97,7 +97,7 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: context.Context, error: Any) -> Optional[discord.Message]:
+    async def on_command_error(self, ctx: context.Context, error: Any) -> discord.Message | None:
 
         error = getattr(error, "original", error)
 

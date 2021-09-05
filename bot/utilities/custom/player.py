@@ -3,7 +3,6 @@ from __future__ import annotations
 
 # Standard Library
 import asyncio
-from typing import Optional
 
 # Packages
 import async_timeout
@@ -33,7 +32,7 @@ class Queue(slate.Queue):
 
     #
 
-    def put(self, items: list[Item] | Item, *, position: Optional[int] = None) -> None:
+    def put(self, items: list[Item] | Item, *, position: int | None = None) -> None:
         super().put(items=items, position=position)
 
         self.player._queue_add_event.set()
@@ -45,7 +44,7 @@ class Player(obsidian.ObsidianPlayer):
     def __init__(self, bot: Life, channel: discord.VoiceChannel) -> None:
         super().__init__(bot, channel)
 
-        self._text_channel: Optional[discord.TextChannel] = None
+        self._text_channel: discord.TextChannel | None = None
 
         self._queue: Queue = Queue(player=self)
 
@@ -53,7 +52,7 @@ class Player(obsidian.ObsidianPlayer):
         self._track_start_event: asyncio.Event = asyncio.Event()
         self._track_end_event: asyncio.Event = asyncio.Event()
 
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
         self.skip_request_ids: set[int] = set()
 
@@ -62,11 +61,11 @@ class Player(obsidian.ObsidianPlayer):
     #
 
     @property
-    def text_channel(self) -> Optional[discord.TextChannel]:
+    def text_channel(self) -> discord.TextChannel | None:
         return self._text_channel
 
     @property
-    def voice_channel(self) -> Optional[discord.VoiceChannel]:
+    def voice_channel(self) -> discord.VoiceChannel | None:
         return self.channel
 
     @property
@@ -75,7 +74,7 @@ class Player(obsidian.ObsidianPlayer):
 
     #
 
-    async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None, self_deaf: bool = True) -> None:
+    async def connect(self, *, timeout: float | None = None, reconnect: bool | None = None, self_deaf: bool = True) -> None:
 
         await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
         self._task = asyncio.create_task(self.loop())
@@ -213,7 +212,7 @@ class Player(obsidian.ObsidianPlayer):
 
     #
 
-    async def search(self, query: str, ctx: context.Context, source: slate.Source) -> Optional[slate.SearchResult]:
+    async def search(self, query: str, ctx: context.Context, source: slate.Source) -> slate.SearchResult | None:
 
         try:
             search = await self.node.search(search=query, ctx=ctx, source=source)

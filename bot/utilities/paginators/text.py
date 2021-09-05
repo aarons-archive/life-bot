@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Optional
+from typing import Any
 
 # My stuff
 from utilities import context, paginators
@@ -20,8 +20,8 @@ class TextPaginator(paginators.BasePaginator):
         delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
-        header: Optional[str] = None,
-        footer: Optional[str] = None
+        header: str | None = None,
+        footer: str | None = None
     ) -> None:
 
         super().__init__(
@@ -37,7 +37,7 @@ class TextPaginator(paginators.BasePaginator):
         self.header: str = header or ""
         self.footer: str = footer or ""
 
-        self.current_page: Optional[str] = None
+        self.current_page: str | None = None
 
     # Abstract methods
 

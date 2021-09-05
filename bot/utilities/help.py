@@ -1,9 +1,6 @@
 # Future
 from __future__ import annotations
 
-# Standard Library
-from typing import Optional
-
 # Packages
 import discord
 from discord.ext import commands
@@ -29,7 +26,7 @@ class HelpCommand(commands.HelpCommand):
             }
         )
 
-    def get_cog_commands(self, *, cog: commands.Cog) -> Optional[list[commands.Command | commands.Group]]:
+    def get_cog_commands(self, *, cog: commands.Cog) -> list[commands.Command | commands.Group] | None:
 
         return [
             command

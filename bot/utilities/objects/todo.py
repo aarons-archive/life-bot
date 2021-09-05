@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # Packages
 import pendulum
@@ -26,7 +26,7 @@ class Todo:
         self._user_id: int = data["user_id"]
         self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
         self._content: str = data["content"]
-        self._jump_url: Optional[str] = data["jump_url"]
+        self._jump_url: str | None = data["jump_url"]
 
     def __repr__(self) -> str:
         return f"<Todo id=\"{self.id}\" user_id=\"{self.user_id}\">"
@@ -58,7 +58,7 @@ class Todo:
         return self._content
 
     @property
-    def jump_url(self) -> Optional[str]:
+    def jump_url(self) -> str | None:
         return self._jump_url
 
     # Misc
@@ -69,7 +69,7 @@ class Todo:
 
     # Config
 
-    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
+    async def change_content(self, content: str, *, jump_url: str | None = None) -> None:
         data = await self.bot.db.fetchrow("UPDATE todos SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
         self._content = data["content"]
         self._jump_url = data["jump_url"] or self.jump_url

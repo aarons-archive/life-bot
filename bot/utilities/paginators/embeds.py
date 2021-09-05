@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Optional
+from typing import Any
 
 # Packages
 import discord
@@ -30,7 +30,7 @@ class EmbedsPaginator(paginators.BasePaginator):
             delete_message=delete_message
         )
 
-        self.current_page: Optional[discord.Embed] = None
+        self.current_page: discord.Embed | None = None
 
     # Abstract methods
 

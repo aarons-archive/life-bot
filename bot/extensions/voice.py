@@ -714,7 +714,7 @@ class Voice(commands.Cog):
         You can also force it to display lyrics from either of these by specifying the **query** argument as **spotify** or **player**.
         """
 
-        def get_spotify_query() -> Optional[str]:
+        def get_spotify_query() -> str | None:
 
             if not (activity := discord.utils.find(lambda a: isinstance(a, discord.Spotify), ctx.author.activities)):
                 return None
@@ -722,7 +722,7 @@ class Voice(commands.Cog):
             featuring = f" feat.{' & '.join(activity.artists[1:])}" if len(activity.artists) > 1 else ""
             return f"{activity.artist[:activity.artist.index(';')] if len(activity.artists) > 1 else activity.artist}{featuring} - {activity.title}"
 
-        def get_player_query() -> Optional[str]:
+        def get_player_query() -> str | None:
 
             if not ctx.voice_client or ctx.voice_client.is_playing() is False:
                 return None

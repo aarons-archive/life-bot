@@ -77,7 +77,7 @@ class Time(commands.Cog):
         """
 
         author_user_config = await self.bot.user_manager.get_config(ctx.author.id)
-        member: Optional[discord.Member] = None
+        member: discord.Member | None = None
 
         if not timezone:
             member = ctx.author

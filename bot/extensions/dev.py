@@ -4,7 +4,6 @@ from __future__ import annotations
 # Standard Library
 import collections
 import time
-from typing import Optional
 
 # Packages
 from discord.ext import commands
@@ -144,7 +143,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist.command(name="add", hidden=True)
-    async def blacklist_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: Optional[str]) -> None:
+    async def blacklist_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: str | None) -> None:
         """
         Adds a user to the blacklist.
 

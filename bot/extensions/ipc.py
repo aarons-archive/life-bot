@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 import re
-from typing import Any, Optional
+from typing import Any
 
 # Packages
 from discord.ext import commands
@@ -42,7 +42,7 @@ class IPC(commands.Cog):
     #
 
     @route()
-    async def mutual_guild_ids(self, data) -> Optional[list[int]]:
+    async def mutual_guild_ids(self, data) -> list[int] | None:
 
         if not (user := self.bot.get_user(data.user_id)):
             return None
@@ -50,7 +50,7 @@ class IPC(commands.Cog):
         return [guild.id for guild in user.mutual_guilds]
 
     @route()
-    async def additional_user_info(self, data) -> Optional[dict[str, Any]]:
+    async def additional_user_info(self, data) -> dict[str, Any] | None:
 
         if not (user := self.bot.get_user(data.user_id)):
             return None

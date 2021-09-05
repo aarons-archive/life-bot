@@ -3,7 +3,6 @@ from __future__ import annotations
 
 # Standard Library
 import functools
-from typing import Optional
 
 # My stuff
 from utilities import context, paginators, utils
@@ -18,7 +17,7 @@ class FilePaginator(paginators.BasePaginator):
         entries: list[functools.partial],
         timeout: int = 300,
         delete_message: bool = False,
-        header: Optional[str] = None
+        header: str | None = None
     ) -> None:
 
         super().__init__(
@@ -31,7 +30,7 @@ class FilePaginator(paginators.BasePaginator):
 
         self.header: str = header or ""
 
-        self.current_page: Optional[str] = None
+        self.current_page: str | None = None
 
     # Abstract methods
 

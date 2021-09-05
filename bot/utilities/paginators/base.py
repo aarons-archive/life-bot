@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 import abc
-from typing import Any, Optional
+from typing import Any
 
 # Packages
 import discord
@@ -110,7 +110,7 @@ class BasePaginator(abc.ABC):
         self.codeblock: bool = codeblock
         self.splitter: str = splitter
 
-        self.message: Optional[discord.Message] = None
+        self.message: discord.Message | None = None
         self.view: PaginatorButtons = PaginatorButtons(paginator=self)
 
         self.page: int = 0

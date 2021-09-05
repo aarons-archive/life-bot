@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # Packages
 import aioscheduler.task
@@ -55,7 +55,7 @@ class Reminder:
         self._notified: bool = data["notified"]
         self._datetime: pendulum.DateTime = pendulum.instance(data["datetime"], tz="UTC")
 
-        self._task: Optional[aioscheduler.task.Task] = None
+        self._task: aioscheduler.task.Task | None = None
 
     def __repr__(self) -> str:
         return f"<Reminder id=\"{self.id}\" channel_id=\"{self.channel_id}\" user_id=\"{self.user_id}\" datetime={self.datetime} notified={self.notified} done={self.done}>"
@@ -107,7 +107,7 @@ class Reminder:
         return self._datetime
 
     @property
-    def task(self) -> Optional[aioscheduler.task.Task]:
+    def task(self) -> aioscheduler.task.Task | None:
         return self._task
 
     #
@@ -177,7 +177,7 @@ class Reminder:
         data = await self.bot.db.fetchrow("UPDATE reminders SET datetime = $1 WHERE id = $2 RETURNING datetime", datetime, self.id)
         self._datetime = pendulum.instance(data["datetime"], tz="UTC")
 
-    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
+    async def change_content(self, content: str, *, jump_url: str | None = None) -> None:
 
         data = await self.bot.db.fetchrow("UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
         self._content = data["content"]

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # Packages
 import pendulum
@@ -28,9 +28,9 @@ class Tag:
         self._guild_id: int = data["guild_id"]
         self._created_at: pendulum.DateTime = pendulum.instance(data["created_at"], tz="UTC")
         self._name: str = data["name"]
-        self._alias: Optional[int] = data["alias"]
-        self._content: Optional[str] = data["content"]
-        self._jump_url: Optional[str] = data["jump_url"]
+        self._alias: int | None = data["alias"]
+        self._content: str | None = data["content"]
+        self._jump_url: str | None = data["jump_url"]
 
     def __repr__(self) -> str:
         return f"<Tag id=\"{self.id}\" user_id=\"{self.user_id}\" guild_id=\"{self.guild_id}\" name=\"{self.name}\" alias=\"{self.alias}\">"
@@ -66,15 +66,15 @@ class Tag:
         return self._name
 
     @property
-    def alias(self) -> Optional[int]:
+    def alias(self) -> int | None:
         return self._alias
 
     @property
-    def content(self) -> Optional[str]:
+    def content(self) -> str | None:
         return self._content
 
     @property
-    def jump_url(self) -> Optional[str]:
+    def jump_url(self) -> str | None:
         return self._jump_url
 
     # Misc
@@ -87,7 +87,7 @@ class Tag:
 
     # Config
 
-    async def change_content(self, content: str, *, jump_url: Optional[str] = None) -> None:
+    async def change_content(self, content: str, *, jump_url: str | None = None) -> None:
 
         data = await self.bot.db.fetchrow("UPDATE tags SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
         self._content = data["content"]

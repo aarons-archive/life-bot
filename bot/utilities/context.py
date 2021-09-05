@@ -4,7 +4,7 @@ from __future__ import annotations
 # Standard Library
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # Packages
 import discord
@@ -32,7 +32,7 @@ class Context(commands.Context):
     # Overwritten properties
 
     @property
-    def voice_client(self) -> Optional[Player]:
+    def voice_client(self) -> Player | None:
         return self.guild.voice_client if self.guild else None
 
     @discord.utils.cached_property
@@ -50,8 +50,8 @@ class Context(commands.Context):
         delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
-        header: Optional[str] = None,
-        footer: Optional[str] = None
+        header: str | None = None,
+        footer: str | None = None
     ) -> paginators.TextPaginator:
 
         paginator = paginators.TextPaginator(
@@ -78,17 +78,17 @@ class Context(commands.Context):
         delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
-        header: Optional[str] = None,
-        footer: Optional[str] = None,
-        embed_footer: Optional[str] = None,
-        embed_footer_url: Optional[str] = None,
-        image: Optional[str] = None,
-        thumbnail: Optional[str] = None,
-        author: Optional[str] = None,
-        author_url: Optional[str] = None,
-        author_icon_url: Optional[str] = None,
-        title: Optional[str] = None,
-        url: Optional[str] = None,
+        header: str | None = None,
+        footer: str | None = None,
+        embed_footer: str | None = None,
+        embed_footer_url: str | None = None,
+        image: str | None = None,
+        thumbnail: str | None = None,
+        author: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
         colour: discord.Colour = colours.MAIN,
     ) -> paginators.EmbedPaginator:
 
@@ -123,7 +123,7 @@ class Context(commands.Context):
         entries: list[functools.partial],
         timeout: int = 300,
         delete_message: bool = True,
-        header: Optional[str] = None
+        header: str | None = None
     ) -> paginators.FilePaginator:
 
         paginator = paginators.FilePaginator(
@@ -164,17 +164,17 @@ class Context(commands.Context):
         delete_message: bool = True,
         codeblock: bool = False,
         splitter: str = "\n",
-        header: Optional[str] = None,
-        footer: Optional[str] = None,
-        embed_footer_url: Optional[str] = None,
-        embed_footer: Optional[str] = None,
-        image: Optional[str] = None,
-        thumbnail: Optional[str] = None,
-        author: Optional[str] = None,
-        author_url: Optional[str] = None,
-        author_icon_url: Optional[str] = None,
-        title: Optional[str] = None,
-        url: Optional[str] = None,
+        header: str | None = None,
+        footer: str | None = None,
+        embed_footer_url: str | None = None,
+        embed_footer: str | None = None,
+        image: str | None = None,
+        thumbnail: str | None = None,
+        author: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
         colour: discord.Colour = colours.MAIN
     ) -> int:
 
@@ -240,7 +240,7 @@ class Context(commands.Context):
 
     # Utilities
 
-    async def try_dm(self, *args, **kwargs) -> Optional[discord.Message]:
+    async def try_dm(self, *args, **kwargs) -> discord.Message | None:
 
         try:
             return await self.author.send(*args, **kwargs)

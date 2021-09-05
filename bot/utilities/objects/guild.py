@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # Packages
 import pendulum
@@ -71,7 +71,7 @@ class GuildConfig:
         data = await self.bot.db.fetchrow("UPDATE guilds SET embed_size = $1 WHERE id = $2 RETURNING embed_size", embed_size.value, self.id)
         self._embed_size = enums.EmbedSize(data["embed_size"])
 
-    async def change_prefixes(self, prefix: Optional[str] = None, *, operation: enums.Operation) -> None:
+    async def change_prefixes(self, prefix: str | None = None, *, operation: enums.Operation) -> None:
 
         if operation == enums.Operation.RESET:
             data = await self.bot.db.fetchrow("UPDATE guilds SET prefixes = $1 WHERE id = $2 RETURNING prefixes", [], self.id)
@@ -99,7 +99,7 @@ class GuildConfig:
 
     # Tags
 
-    async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: Optional[str] = None) -> objects.Tag:
+    async def create_tag(self, *, user_id: int, name: str, content: str, jump_url: str | None = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
@@ -111,7 +111,7 @@ class GuildConfig:
 
         return tag
 
-    async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: Optional[str] = None) -> objects.Tag:
+    async def create_tag_alias(self, *, user_id: int, name: str, original: int, jump_url: str | None = None) -> objects.Tag:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
@@ -123,7 +123,7 @@ class GuildConfig:
 
         return tag
 
-    def get_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> Optional[objects.Tag]:
+    def get_tag(self, *, tag_name: str | None = None, tag_id: int | None = None) -> objects.Tag | None:
 
         if tag_name:
             tag = self.tags.get(tag_name)
@@ -138,16 +138,16 @@ class GuildConfig:
 
         return tag
 
-    def get_all_tags(self) -> Optional[list[objects.Tag]]:
+    def get_all_tags(self) -> list[objects.Tag] | None:
         return list(self.tags.values())
 
-    def get_user_tags(self, user_id: int) -> Optional[list[objects.Tag]]:
+    def get_user_tags(self, user_id: int) -> list[objects.Tag] | None:
         return [tag for tag in self.tags.values() if tag.user_id == user_id]
 
-    def get_tags_matching(self, name: str, *, limit: int = 5) -> Optional[list[objects.Tag]]:
+    def get_tags_matching(self, name: str, *, limit: int = 5) -> list[objects.Tag] | None:
         return [self.get_tag(tag_name=match) for match, _, _ in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
 
-    async def delete_tag(self, *, tag_name: Optional[str] = None, tag_id: Optional[int] = None) -> None:
+    async def delete_tag(self, *, tag_name: str | None = None, tag_id: int | None = None) -> None:
 
         if not tag_name or not tag_id:
             raise ValueError("\"tag_name\" or \"tag_id\" parameter must be specified.")

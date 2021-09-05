@@ -7,7 +7,7 @@ import datetime as dt
 import io
 import math
 import random
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 # Packages
 import aiohttp
@@ -145,19 +145,19 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
     return "\n".join(message)
 
 
-def avatar(person: discord.User | discord.Member, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+def avatar(person: discord.User | discord.Member, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
     return str(person.avatar.replace(format=format or ("gif" if person.avatar.is_animated() else "png"), size=size)) if person.avatar else None
 
 
-def icon(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+def icon(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
     return str(guild.icon.replace(format=format or ("gif" if guild.icon.is_animated() else "png"), size=size)) if guild.icon else None
 
 
-def banner(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+def banner(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
     return str(guild.banner.replace(format=format or ("gif" if guild.banner.is_animated() else "png"), size=size)) if guild.banner else None
 
 
-def splash(guild: discord.Guild, *, format: Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]] = None, size: int = 1024) -> Optional[str]:
+def splash(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
     return str(guild.splash.replace(format=format or ("gif" if guild.splash.is_animated() else "png"), size=size)) if guild.splash else None
 
 
@@ -189,18 +189,18 @@ def lighten_colour(red: float, green: float, blue: float, factor: float = 0.1) -
 
 
 def embed(
-    footer: Optional[str] = None,
-    footer_url: Optional[str] = None,
-    image: Optional[str] = None,
-    thumbnail: Optional[str] = None,
-    author: Optional[str] = None,
-    author_url: Optional[str] = None,
-    author_icon_url: Optional[str] = None,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    url: Optional[str] = None,
+    footer: str | None = None,
+    footer_url: str | None = None,
+    image: str | None = None,
+    thumbnail: str | None = None,
+    author: str | None = None,
+    author_url: str | None = None,
+    author_icon_url: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    url: str | None = None,
     colour: discord.Colour = colours.MAIN,
-    emoji: Optional[str] = None
+    emoji: str | None = None
 ) -> discord.Embed:
 
     e = discord.Embed(colour=colour)

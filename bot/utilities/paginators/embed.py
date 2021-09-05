@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Optional
+from typing import Any
 
 # Packages
 import discord
@@ -24,17 +24,17 @@ class EmbedPaginator(paginators.BasePaginator):
         delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
-        header: Optional[str] = None,
-        footer: Optional[str] = None,
-        embed_footer: Optional[str] = None,
-        embed_footer_url: Optional[str] = None,
-        image: Optional[str] = None,
-        thumbnail: Optional[str] = None,
-        author: Optional[str] = None,
-        author_url: Optional[str] = None,
-        author_icon_url: Optional[str] = None,
-        title: Optional[str] = None,
-        url: Optional[str] = None,
+        header: str | None = None,
+        footer: str | None = None,
+        embed_footer: str | None = None,
+        embed_footer_url: str | None = None,
+        image: str | None = None,
+        thumbnail: str | None = None,
+        author: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
         colour: discord.Colour = colours.MAIN,
     ) -> None:
 
@@ -51,18 +51,18 @@ class EmbedPaginator(paginators.BasePaginator):
         self.header: str = header or ""
         self.footer: str = footer or ""
 
-        self.embed_footer: Optional[str] = embed_footer
-        self.embed_footer_url: Optional[str] = embed_footer_url
+        self.embed_footer: str | None = embed_footer
+        self.embed_footer_url: str | None = embed_footer_url
 
-        self.embed_image: Optional[str] = image
-        self.embed_thumbnail: Optional[str] = thumbnail
+        self.embed_image: str | None = image
+        self.embed_thumbnail: str | None = thumbnail
 
-        self.embed_author: Optional[str] = author
-        self.embed_author_url: Optional[str] = author_url
-        self.embed_author_icon_url: Optional[str] = author_icon_url
+        self.embed_author: str | None = author
+        self.embed_author_url: str | None = author_url
+        self.embed_author_icon_url: str | None = author_icon_url
 
-        self.embed_title: Optional[str] = title
-        self.embed_url: Optional[str] = url
+        self.embed_title: str | None = title
+        self.embed_url: str | None = url
 
         self.embed_colour: discord.Colour = colour
 
