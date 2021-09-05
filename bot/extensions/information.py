@@ -500,7 +500,7 @@ class Information(commands.Cog):
 
         if not module.startswith("discord"):
             location = os.path.relpath(filename).replace("\\", "/")
-            await ctx.reply(f"{values.GITHUB_LINK}/blob/main/Life/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
+            await ctx.reply(f"{values.GITHUB_LINK}/blob/main/bot/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")
         else:
             location = module.replace(".", "/") + ".py"
             await ctx.reply(f"<https://github.com/Rapptz/discord.py/blob/master/{location}#L{start_line_number}-L{start_line_number + len(lines) - 1}>")

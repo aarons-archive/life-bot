@@ -1,9 +1,6 @@
 # Future
 from __future__ import annotations
 
-# Standard Library
-from typing import Optional
-
 # Packages
 import discord
 from discord.ext import commands
@@ -21,18 +18,18 @@ class EmbedError(LifeError):
 
     def __init__(
         self,
-        footer_url: Optional[str] = None,
-        footer: Optional[str] = None,
-        image: Optional[str] = None,
-        thumbnail: Optional[str] = None,
-        author: Optional[str] = None,
-        author_url: Optional[str] = None,
-        author_icon_url: Optional[str] = None,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        url: Optional[str] = None,
+        footer_url: str | None = None,
+        footer: str | None = None,
+        image: str | None = None,
+        thumbnail: str | None = None,
+        author: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        url: str | None = None,
         colour: discord.Colour = colours.MAIN,
-        emoji: Optional[str] = None
+        emoji: str | None = None
     ) -> None:
 
         self.embed = utils.embed(

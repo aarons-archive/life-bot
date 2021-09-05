@@ -178,7 +178,7 @@ class Life(commands.AutoShardedBot):
 
         await super().close()
 
-    # Events
+    #
 
     async def on_ready(self) -> None:
 
@@ -187,7 +187,7 @@ class Life(commands.AutoShardedBot):
 
         self.scheduler.start()
 
-        await self.cogs["Voice"].load()
+        await self.cogs["Voice"].load()  # type: ignore
 
-    async def on_ipc_error(self, endpoint, error):
+    async def on_ipc_error(self, endpoint: Any, error: Any) -> Any:
         print(endpoint, "raised", error)

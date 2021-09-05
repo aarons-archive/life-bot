@@ -14,9 +14,13 @@ from utilities import context
 T = TypeVar("T")
 
 
-def is_track_requester() -> Callable[[T], T]:
+def is_owner() -> Callable[[T], T]:
 
     async def predicate(ctx: context.Context) -> bool:
-        return getattr(getattr(getattr(ctx.voice_client, "current", None), "requester", None), "id", None) == ctx.author.id
+
+        if not await ctx.bot.is_owner(ctx.author):
+            raise commands.NotOwner('You do not own this bot.')
+
+        return True
 
     return commands.check(predicate)

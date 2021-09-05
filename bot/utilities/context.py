@@ -143,7 +143,6 @@ class Context(commands.Context):
         entries: list[discord.Embed],
         timeout: int = 300,
         delete_message: bool = True,
-        content: Optional[str] = None
     ) -> paginators.EmbedsPaginator:
 
         paginator = paginators.EmbedsPaginator(
@@ -151,7 +150,6 @@ class Context(commands.Context):
             entries=entries,
             timeout=timeout,
             delete_message=delete_message,
-            content=content
         )
 
         await paginator.paginate()

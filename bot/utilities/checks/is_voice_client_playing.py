@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Literal
+from typing import Callable, Literal, TypeVar
 
 # Packages
 from discord.ext import commands
@@ -12,7 +12,10 @@ from core import colours, emojis
 from utilities import context, exceptions
 
 
-def is_voice_client_playing():
+T = TypeVar("T")
+
+
+def is_voice_client_playing() -> Callable[[T], T]:
 
     async def predicate(ctx: context.Context) -> Literal[True]:
 

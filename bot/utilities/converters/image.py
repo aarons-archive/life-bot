@@ -43,4 +43,4 @@ class ImageConverter(commands.Converter):
             if response.status == 200:
                 return url
 
-        raise commands.ConversionError(self, original=argument)
+        raise commands.BadArgument(message=argument)

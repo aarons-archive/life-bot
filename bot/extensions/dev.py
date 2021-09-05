@@ -45,7 +45,6 @@ class Dev(commands.Cog):
         if ctx.channel.permissions_for(ctx.me).manage_messages:
             messages = await ctx.channel.purge(
                 check=lambda message: message.author == ctx.me or message.content.startswith(config.PREFIX),
-                bulk=True,
                 limit=limit
             )
         else:

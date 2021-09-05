@@ -53,6 +53,10 @@ def get_source(flags: Options | SearchOptions) -> slate.Source:
     return slate.Source.YOUTUBE
 
 
+def setup(bot: Life) -> None:
+    bot.add_cog(Voice(bot=bot))
+
+
 class Voice(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
@@ -65,7 +69,7 @@ class Voice(commands.Cog):
         for node in config.NODES:
             try:
                 await self.bot.slate.create_node(
-                    type=obsidian.ObsidianNode,
+                    node_type=obsidian.ObsidianNode,
                     bot=self.bot,
                     host=node["host"],
                     port=node["port"],
@@ -577,8 +581,8 @@ class Voice(commands.Cog):
         """
 
         try:
-            await commands.check_any(
-                commands.is_owner(), checks.is_guild_owner(), checks.is_track_requester(),
+            await commands.check_any(  # type: ignore
+                checks.is_owner(), checks.is_guild_owner(), checks.is_track_requester(),
                 checks.has_any_permissions(manage_guild=True, kick_members=True, ban_members=True, manage_messages=True, manage_channels=True)
             ).predicate(ctx=ctx)
 
@@ -628,8 +632,8 @@ class Voice(commands.Cog):
             try:
                 if track.requester.id != ctx.author.id:
                     raise commands.CheckAnyFailure(checks=[], errors=[])
-                await commands.check_any(
-                    commands.is_owner(), checks.is_guild_owner(),
+                await commands.check_any(  # type: ignore
+                    checks.is_owner(), checks.is_guild_owner(),
                     checks.has_any_permissions(manage_guild=True, kick_members=True, ban_members=True, manage_messages=True, manage_channels=True)
                 ).predicate(ctx=ctx)
             except commands.CheckAnyFailure:
@@ -1068,7 +1072,7 @@ class Voice(commands.Cog):
         """
 
         if enums.Filters.ROTATION in ctx.voice_client.enabled_filters:
-            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation()))
+            await ctx.voice_client.set_filter(obsidian.ObsidianFilter(filter=ctx.voice_client.filter, rotation=obsidian.ObsidianRotation()))
             ctx.voice_client.enabled_filters.remove(enums.Filters.ROTATION)
 
             embed = utils.embed(
@@ -1077,7 +1081,7 @@ class Voice(commands.Cog):
                 description="**8D** audio effect is now **inactive**."
             )
         else:
-            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, rotation=obsidian.Rotation(rotation_hertz=0.5)))
+            await ctx.voice_client.set_filter(obsidian.ObsidianFilter(filter=ctx.voice_client.filter, rotation=obsidian.ObsidianRotation(rotation_hertz=0.5)))
             ctx.voice_client.enabled_filters.add(enums.Filters.ROTATION)
 
             embed = utils.embed(
@@ -1097,7 +1101,7 @@ class Voice(commands.Cog):
         """
 
         if enums.Filters.NIGHTCORE in ctx.voice_client.enabled_filters:
-            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale()))
+            await ctx.voice_client.set_filter(obsidian.ObsidianFilter(filter=ctx.voice_client.filter, timescale=obsidian.ObsidianTimescale()))
             ctx.voice_client.enabled_filters.remove(enums.Filters.NIGHTCORE)
 
             embed = utils.embed(
@@ -1106,7 +1110,7 @@ class Voice(commands.Cog):
                 description="**Nightcore** audio effect is now **inactive**."
             )
         else:
-            await ctx.voice_client.set_filter(obsidian.Filter(filter=ctx.voice_client.filter, timescale=obsidian.Timescale(speed=1.12, pitch=1.12)))
+            await ctx.voice_client.set_filter(obsidian.ObsidianFilter(filter=ctx.voice_client.filter, timescale=obsidian.ObsidianTimescale(speed=1.12, pitch=1.12)))
             ctx.voice_client.enabled_filters.add(enums.Filters.NIGHTCORE)
 
             embed = utils.embed(
@@ -1115,7 +1119,3 @@ class Voice(commands.Cog):
                 description="**Nightcore** audio effect is now **active**."
             )
         await ctx.reply(embed=embed)
-
-
-def setup(bot: Life) -> None:
-    bot.add_cog(Voice(bot=bot))

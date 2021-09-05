@@ -80,6 +80,10 @@ OTHER_ERRORS = {
     commands.NSFWChannelRequired:           "This command can only be run in NSFW channels.",
 
     commands.DisabledCommand:               "This command is currently disabled.",
+
+    commands.MissingAnyRole:                "You are missing roles required to run this command.",
+    commands.BotMissingAnyRole:             "I am missing roles required to run this command.",
+
 }
 
 
@@ -149,14 +153,8 @@ class Events(commands.Cog):
         elif isinstance(error, commands.BadLiteralArgument):
             message = f"The argument **{error.param.name}** must be one of {', '.join([f'**{arg}**' for arg in error.literals])}."
 
-        elif isinstance(error, commands.MissingAnyRole):
-            message = f"You are missing any of the roles {', '.join([role.mention for role in error.missing_roles])} which are required to run this command."
-
-        elif isinstance(error, commands.BotMissingAnyRole):
-            message = f"I am missing any of the roles {', '.join([role.mention for role in error.missing_roles])} which are required to run this command."
-
         elif isinstance(error, commands.CommandOnCooldown):
-            message = f"This command is on cooldown **{COOLDOWN_BUCKETS.get(error.cooldown.type)}**. " \
+            message = f"This command is on cooldown **{COOLDOWN_BUCKETS.get(error.type)}**. " \
                       f"You can retry in `{utils.format_seconds(error.retry_after, friendly=True)}`"
 
         elif isinstance(error, commands.MaxConcurrencyReached):

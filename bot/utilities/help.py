@@ -10,14 +10,14 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, config, emojis, values
-from utilities import context, exceptions
+from utilities import context, exceptions, utils
 
 
 class HelpCommand(commands.HelpCommand):
 
     def __init__(self) -> None:
 
-        self.context: Optional[context.Context] = None
+        self.context: context.Context = utils.MISSING
 
         super().__init__(
             command_attrs={

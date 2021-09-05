@@ -25,6 +25,7 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = [f"\u001b[{30 + i}m" for
 
 @contextlib.contextmanager
 def logger():
+
     loggers: dict[str, logging.Logger] = {
         "discord":    logging.getLogger("discord"),
         "bot":        logging.getLogger("bot"),
