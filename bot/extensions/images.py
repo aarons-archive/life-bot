@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 from inspect import Parameter
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 # Packages
 import discord
@@ -683,67 +683,3 @@ class Images(commands.Cog):
         """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image), method=method)
-
-    # In development commands.
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="cube")
-    async def cube(
-        self,
-        ctx: context.Context,
-        image: Optional[converters.ImageConverter]
-    ) -> None:
-        """
-        Creates a cube from the given image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.cube, url=str(image), filename=f"{ctx.author}")
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="sphere")
-    async def sphere(
-        self,
-        ctx: context.Context,
-        image: Optional[converters.ImageConverter]
-    ) -> None:
-        """
-        Turns the given image into a sphere.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.sphere, url=str(image), filename=f"{ctx.author}")
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="tshirt", aliases=["shirt"])
-    async def tshirt(
-        self,
-        ctx: context.Context,
-        image: Optional[converters.ImageConverter]
-    ) -> None:
-        """
-        Creates a tshirt with the given image.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.tshirt, url=str(image), filename=f"{ctx.author}")
-
-    @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="pixel")
-    async def pixel(
-        self,
-        ctx: context.Context,
-        image: Optional[converters.ImageConverter],
-        *,
-        method: Literal["square", "s", "hexagon", "h", "random", "r"] = "random"
-    ) -> None:
-        """
-        Turns the image into a pixel art.
-
-        **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
-        """
-
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.pixel, url=str(image), filename=f"{ctx.author}", method=method)

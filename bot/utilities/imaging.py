@@ -4,9 +4,6 @@ from __future__ import annotations
 # Standard Library
 import multiprocessing
 import multiprocessing.connection
-import os
-import os.path
-import subprocess
 import sys
 from typing import Any, Callable, Literal
 
@@ -163,67 +160,6 @@ def wave(image: Image, method: PixelInterpolateMethods) -> None:
     image.wave(amplitude=image.height / 32, wave_length=image.width / 5, method=method)
 
 
-def cube(image: Image, filename: str) -> Image:
-
-    image.resize(width=1000, height=1000)
-
-    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/cube/{filename}"))
-    image.save(filename=f"{PATH}.png")
-
-    COMMAND = r"""
-    convert \
-        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent +distort Affine "0,1000 0,0  0,0 -200,-100  1000,1000 200,-100" \) \
-        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent -resize 1000x1000 +distort Affine "1000,0 0,0  0,0 -200,-100  1000,1000 0,200" \) \
-        \( ./resources/cube/{filename}.png -alpha set -virtual-pixel transparent -resize 1000x1000 +distort Affine "0,0 0,0  0,1000 0,200  1000,0 200,-100" \) \
-        \
-        -background none -compose plus -layers merge +repage -compose over ./resources/cube/{filename}_edited.png
-    """.format(filename=filename)
-
-    subprocess.run(f"{CMD} -c {COMMAND}", cwd=os.getcwd())
-    return Image(filename=f"{PATH}_edited.png")
-
-
-def sphere(image: Image, filename: str) -> Image:
-
-    image.colorize(Color("transparent"), alpha=Color("rgb(1%, 1%, 1%)"))
-    image.resize(width=1000, height=1000)
-
-    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/sphere/{filename}"))
-    image.save(filename=f"{PATH}.png")
-
-    COMMAND = r"./sphere.sh -a 1.1 -b none -s -t resources/sphere/{filename}.png " \
-              r"resources/sphere/{filename}_edited.png".format(filename=filename)
-
-    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
-    return Image(filename=f"{PATH}_edited.png")
-
-
-def tshirt(image: Image, filename: str) -> Image:
-
-    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/tshirt/{filename}"))
-    image.save(filename=f"{PATH}.png")
-
-    COMMAND = r"./tshirt.sh -r '130x130+275+175' -R -3 -o 5,0 lighting.png displace.png resources/tshirt/{filename}.png " \
-              r"tshirt_gray.png resources/tshirt/{filename}_edited.png".format(filename=filename)
-
-    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
-    return Image(filename=f"{PATH}_edited.png")
-
-
-def pixel(image: Image, filename: str, method: Literal["square", "s", "hexagon", "h", "random", "r"]) -> Image:
-
-    image.resize(width=1000, height=1000)
-
-    PATH = os.path.join(os.path.abspath(os.getcwd()), os.path.abspath(f"resources/pixel/{filename}"))
-    image.save(filename=f"{PATH}.png")
-
-    COMMAND = r"./pixel.sh -k {method} -t 0 -b 150 resources/pixel/{filename}.png " \
-              r"resources/pixel/{filename}_edited.png".format(filename=filename, method=method)
-
-    subprocess.run(f"{CMD} {COMMAND}", cwd=os.getcwd())
-    return Image(filename=f"{PATH}_edited.png")
-
-
 #
 
 
@@ -323,21 +259,7 @@ def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: m
     try:
         with Image(blob=image_bytes) as image, Color("transparent") as colour:
 
-            if edit_function in {cube, sphere, tshirt, pixel}:
-
-                if image.format != "GIF":
-                    image = edit_function(image, **kwargs)
-
-                else:
-                    image.coalesce()
-
-                    for index, x in enumerate(image.sequence):
-                        image.sequence[index] = edit_function(Image(x), **kwargs)
-                    image.format = "GIF"
-
-                    image.optimize_transparency()
-
-            elif image.format != "GIF":
+            if image.format != "GIF":
                 image.background_color = colour
                 edit_function(image, **kwargs)
 
