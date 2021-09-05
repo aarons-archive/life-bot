@@ -1,14 +1,11 @@
 [tool.pyright]
-
-include = ["Life"]
+include = ["bot"]
 exclude = []
 ignore = []
 strict = []
-
 venvPath = "venv"
 pythonVersion = "3.10"
 useLibraryCodeForTypes = true
-
 strictListInference = true
 strictDictionaryInference = true
 strictSetInference = true
@@ -65,7 +62,20 @@ reportIncompleteStub = "error"
 reportUnsupportedDunderAll = "error"
 reportUnusedCallResult = "none"
 reportUnusedCoroutine = "error"
-
 executionEnvironments = [
     { root = "code" },
 ]
+
+[tool.isort]
+line_length = 120
+multi_line_output = 3
+lines_after_imports = 2
+combine_star = true
+include_trailing_comma = true
+star_first = true
+known_local_folder=["core", "extensions", "utilities"]
+import_heading_future = "Future"
+import_heading_stdlib = "Standard Library"
+import_heading_thirdparty = "Packages"
+import_heading_firstparty="My stuff"
+import_heading_localfolder="My stuff"
