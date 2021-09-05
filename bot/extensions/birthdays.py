@@ -156,12 +156,12 @@ class Birthdays(commands.Cog):
 
     @commands.guild_only()
     @_birthday.command(name="list", aliases=["upcoming"])
-    async def _birthday_upcoming(self, ctx: context.Context) -> None:
+    async def _birthday_list(self, ctx: context.Context) -> None:
         """
         Displays a list of upcoming birthdays in the current server.
         """
 
-        if not (birthdays := self.bot.user_manager.birthdays(guild_id=ctx.guild.id)):
+        if not (birthdays := await self.bot.user_manager.birthdays(guild_id=ctx.guild.id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -170,12 +170,12 @@ class Birthdays(commands.Cog):
 
         await ctx.paginate_embed(
             entries=[
-                f"{ctx.guild.get_member(user_config.id).mention}:\n"
-                f"**Birthday:** {utils.format_date(user_config.birthday)}\n"
-                f"**Next birthday date:** {utils.format_date(user_config.next_birthday)}\n"
-                f"**Next birthday:** In {utils.format_difference(user_config.next_birthday)}\n"
-                f"**Age:** {user_config.age}"
-                for user_config in birthdays
+                f"{member.mention}:\n"
+                f"**Birthday:** {utils.format_date(birthday)}\n"
+                f"**Next birthday date:** {utils.format_date(next_birthday)}\n"
+                f"**Next birthday:** In {utils.format_difference(next_birthday)}\n"
+                f"**Age:** {age}"
+                for member, birthday, age, next_birthday in birthdays
             ],
             per_page=3,
             splitter="\n\n",
@@ -189,23 +189,22 @@ class Birthdays(commands.Cog):
         Displays the next person to have a birthday in the current server.
         """
 
-        if not (birthdays := self.bot.user_manager.birthdays(guild_id=ctx.guild.id)):
+        if not (birthdays := await self.bot.user_manager.birthdays(guild_id=ctx.guild.id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
                 description="No one has set their birthday, or everyone has set them to be private."
             )
 
-        user_config = birthdays[0]
-        member = ctx.guild.get_member(user_config.id)
+        member, birthday, age, next_birthday = birthdays[0]
 
         embed = discord.Embed(
             colour=colours.MAIN,
             title=f"Birthday information for {member}:",
-            description=f"**Birthday:** {utils.format_date(user_config.birthday)}\n"
-                        f"**Next birthday date:** {utils.format_date(user_config.next_birthday)}\n"
-                        f"**Next birthday:** In {utils.format_difference(user_config.next_birthday)}\n"
-                        f"**Age:** {user_config.age}\n"
+            description=f"**Birthday:** {utils.format_date(birthday)}\n"
+                        f"**Next birthday date:** {utils.format_date(next_birthday)}\n"
+                        f"**Next birthday:** In {utils.format_difference(next_birthday)}\n"
+                        f"**Age:** {age}\n"
         )
         await ctx.reply(embed=embed)
 
@@ -228,4 +227,4 @@ class Birthdays(commands.Cog):
         Displays a list of upcoming birthdays in the current server.
         """
 
-        await ctx.invoke(self._birthday_upcoming)
+        await ctx.invoke(self._birthday_upcoming)  # type: ignore

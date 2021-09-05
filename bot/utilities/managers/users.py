@@ -8,12 +8,14 @@ import math
 import os
 import pathlib
 import random
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 # Packages
 import asyncpg
 import discord
+import pendulum
 from colorthief import ColorThief
+from pendulum.tz.timezone import Timezone
 from PIL import Image, ImageDraw, ImageFont
 
 # My stuff
@@ -62,7 +64,11 @@ class UserManager:
 
         self.cache: dict[int, objects.UserConfig] = {}
 
-    async def fetch_config(self, user_id: int) -> objects.UserConfig:
+    async def fetch_config(
+        self,
+        user_id: int,
+        /
+    ) -> objects.UserConfig:
 
         data = await self.bot.db.fetchrow("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO UPDATE SET id = excluded.id RETURNING *", user_id)
         user_config = objects.UserConfig(bot=self.bot, data=data)
@@ -77,14 +83,22 @@ class UserManager:
         __log__.debug(f"[USERS] Cached config for '{user_id}'.")
         return user_config
 
-    async def get_config(self, user_id: int) -> objects.UserConfig:
+    async def get_config(
+        self,
+        user_id: int,
+        /
+    ) -> objects.UserConfig:
 
         if (user_config := self.cache.get(user_id)) is not None:
             return user_config
 
         return await self.fetch_config(user_id)
 
-    async def delete_config(self, user_id: int) -> None:
+    async def delete_config(
+        self,
+        user_id: int,
+        /
+    ) -> None:
 
         await self.bot.db.execute("DELETE FROM users WHERE id = $1", user_id)
         try:
@@ -94,37 +108,86 @@ class UserManager:
 
         __log__.info(f"[USERS] Deleted config for '{user_id}'.")
 
-    # Stats
+    #
 
-    def timezones(self, *, guild_id: int) -> list[objects.UserConfig]:
+    async def timezones(
+        self,
+        *,
+        guild_id: int
+    ) -> list[tuple[discord.Member, Timezone, pendulum.DateTime]]:
 
-        if not (guild := self.bot.get_guild(guild_id)):
-            raise ValueError(f"guild with id \"{guild_id}\" was not found.")
-
-        return sorted(
-            filter(
-                lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.timezone_private and config.timezone is not None,
-                self.configs.values()
-            ),
-            key=lambda config: config.time.offset_hours
+        records = await self.bot.db.fetch(
+            "SELECT id, timezone FROM users WHERE NOT timezone IS NULL and timezone_private IS FALSE"
         )
 
-    def birthdays(self, *, guild_id: int) -> list[objects.UserConfig]:
+        guild = self.bot.get_guild(guild_id)
+        data = []
 
-        if not (guild := self.bot.get_guild(guild_id)):
-            raise ValueError(f"guild with id \"{guild_id}\" was not found.")
+        for record in records:
 
-        return sorted(
-            filter(
-                lambda config: (guild.get_member(config.id) if guild else self.bot.get_user(config.id)) is not None and not config.birthday_private and config.birthday is not None,
-                self.configs.values()
-            ),
-            key=lambda config: config.next_birthday
+            if not (member := guild.get_member(record["id"])):
+                continue
+
+            timezone = pendulum.timezone(record["timezone"])
+
+            data.append(
+                (
+                    member,
+                    timezone,
+                    pendulum.now(tz=timezone)
+                )
+            )
+
+        return sorted(data, key=lambda item: item[2].offset_hours)
+
+    async def birthdays(
+        self,
+        *,
+        guild_id: int
+    ) -> list[tuple[discord.Member, pendulum.Date, int, pendulum.DateTime]]:
+
+        records = await self.bot.db.fetch(
+            "SELECT id, birthday FROM users WHERE NOT birthday IS NULL and birthday_private IS FALSE ORDER BY birthday DESC"
         )
 
-    # Leaderboards
+        guild = self.bot.get_guild(guild_id)
+        data = []
 
-    async def leaderboard(self, *, guild_id: int, page: int, limit: Optional[int] = 10) -> list[asyncpg.Record]:
+        for record in records:
+
+            if not (member := guild.get_member(record["id"])):
+                continue
+
+            birthday_date = record["birthday"]
+            birthday = pendulum.Date(birthday_date.year, birthday_date.month, birthday_date.day)
+
+            now_age = pendulum.now(tz="UTC")
+            age = (pendulum.date(year=now_age.year, month=now_age.month, day=now_age.day) - birthday).in_years()
+
+            next_birthday_now = pendulum.now(tz="UTC")
+            next_birthday_date = next_birthday_now.date()
+
+            next_birthday_year = next_birthday_date.year if next_birthday_date < birthday.add(years=age) else birthday.year + age + 1
+            next_birthday = next_birthday_now.set(year=next_birthday_year, month=birthday.month, day=birthday.day, hour=0, minute=0, second=0, microsecond=0)
+
+            data.append(
+                (
+                    member,
+                    birthday,
+                    age,
+                    next_birthday
+                )
+            )
+
+        return sorted(data, key=lambda item: item[3])
+
+    async def leaderboard(
+        self,
+        *,
+        guild_id: int,
+        page: int,
+        limit: int | None = 10
+    ) -> list[asyncpg.Record]:
 
         data = await self.bot.db.fetch(
             "SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
@@ -132,17 +195,29 @@ class UserManager:
         )
         return data
 
-    async def rank(self, *, guild_id: int, user_id: int) -> int:
+    async def rank(
+        self,
+        *,
+        user_id: int,
+        guild_id: int,
+    ) -> int:
 
         data = await self.bot.db.fetchrow(
-            "SELECT rank FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members WHERE guild_members.user_id = $2",
+            "SELECT rank "
+            "FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members "
+            "WHERE guild_members.user_id = $2",
             guild_id, user_id
         )
         return data["rank"]
 
-    # Images
+    #
 
-    async def create_leaderboard(self, *, guild_id: int, page: int) -> io.BytesIO:
+    async def create_leaderboard(
+        self,
+        *,
+        guild_id: int,
+        page: int
+    ) -> io.BytesIO:
 
         if not (records := await self.leaderboard(guild_id=guild_id, page=page)):
             raise exceptions.EmbedError(
@@ -171,7 +246,9 @@ class UserManager:
         return await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data)
 
     @staticmethod
-    def create_leaderboard_image(data: list[tuple[discord.Member | discord.User, int, int, io.BytesIO]]) -> io.BytesIO:
+    def create_leaderboard_image(
+        data: list[tuple[discord.Member | discord.User, int, int, io.BytesIO]]
+    ) -> io.BytesIO:
 
         with Image.open(fp=random.choice(IMAGES["SAI"]["leaderboard"])) as image:
 
@@ -263,7 +340,12 @@ class UserManager:
 
     #
 
-    async def create_level_card(self, *, guild_id: int, user_id: int) -> io.BytesIO:
+    async def create_level_card(
+        self,
+        *,
+        user_id: int,
+        guild_id: int
+    ) -> io.BytesIO:
 
         guild = self.bot.get_guild(guild_id)
         member = guild.get_member(user_id)
@@ -271,13 +353,19 @@ class UserManager:
         user_config = await self.get_config(user_id)
         member_config = await user_config.get_member_config(guild_id)
 
-        rank = await self.rank(guild_id=guild_id, user_id=user_id)
+        rank = await self.rank(user_id=user_id, guild_id=guild_id)
         avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
 
-        return await self.bot.loop.run_in_executor(None, self.create_level_card_image, (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes))
+        return await self.bot.loop.run_in_executor(
+            None,
+            self.create_level_card_image,
+            (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes)
+        )
 
     @staticmethod
-    def create_level_card_image(data: tuple[discord.Member, int, int, int, int, io.BytesIO]) -> io.BytesIO:
+    def create_level_card_image(
+        data: tuple[discord.Member, int, int, int, int, io.BytesIO]
+    ) -> io.BytesIO:
 
         member, xp, needed_xp, level, rank, avatar_bytes = data
 
@@ -346,9 +434,13 @@ class UserManager:
 
     #
 
-    async def create_timecard(self, *, guild_id: int) -> discord.File:
+    async def create_timecard(
+        self,
+        *,
+        guild_id: int
+    ) -> discord.File:
 
-        if not (timezones := self.timezones(guild_id=guild_id)):
+        if not (timezones := await self.timezones(guild_id=guild_id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -357,10 +449,10 @@ class UserManager:
 
         timezone_avatars = {}
 
-        for config in timezones:
+        for member, timezone, time in timezones:
 
-            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar.replace(format="png", size=256)).read())
-            timezone = config.time.format("HH:mm (ZZ)")
+            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+            timezone = time.format("HH:mm (ZZ)")
 
             if users := timezone_avatars.get(timezone, []):
                 if len(users) > 36:
@@ -378,9 +470,13 @@ class UserManager:
 
         return file
 
-    async def create_birthday_card(self, *, guild_id: int) -> discord.File:
+    async def create_birthday_card(
+        self,
+        *,
+        guild_id: int
+    ) -> discord.File:
 
-        if not (birthdays := self.birthdays(guild_id=guild_id)):
+        if not (birthdays := await self.birthdays(guild_id=guild_id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -389,10 +485,10 @@ class UserManager:
 
         birthday_avatars = {}
 
-        for config in birthdays:
+        for member, birthday, _, _ in birthdays:
 
-            avatar_bytes = io.BytesIO(await (self.bot.get_user(config.id).avatar.replace(format="png", size=256)).read())
-            birthday_month = config.birthday.format("MMMM")
+            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+            birthday_month = birthday.format("MMMM")
 
             if users := birthday_avatars.get(birthday_month, []):
                 if len(users) > 36:
@@ -411,7 +507,9 @@ class UserManager:
         return file
 
     @staticmethod
-    def create_grid_image(data: dict[str, io.BytesIO]) -> io.BytesIO:
+    def create_grid_image(
+        data: dict[str, io.BytesIO]
+    ) -> io.BytesIO:
 
         width_x, height_y = ((1600 * min(len(data), 5)) + 100), ((1800 * math.ceil(len(data) / 5)) + 100)
 

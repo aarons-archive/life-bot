@@ -35,7 +35,7 @@ class Time(commands.Cog):
         Displays a list of people and their timezones.
         """
 
-        if not (timezones := self.bot.user_manager.timezones(guild_id=ctx.guild.id)):
+        if not (timezones := await self.bot.user_manager.timezones(guild_id=ctx.guild.id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -44,8 +44,8 @@ class Time(commands.Cog):
 
         timezone_users = collections.defaultdict(list)
 
-        for user_config in timezones:
-            timezone_users[user_config.time.format("HH:mm (ZZ)")].append(f"{ctx.guild.get_member(user_config.id)} - {user_config.timezone.name}")
+        for member, timezone, time in timezones:
+            timezone_users[time.format("HH:mm (ZZ)")].append(f"{member} - {timezone.name}")
 
         await ctx.paginate_embed(
             entries=[f"`{timezone}:`\n{values.NL.join(members)}\n" for timezone, members in timezone_users.items()],
