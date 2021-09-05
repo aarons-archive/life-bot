@@ -1,3 +1,4 @@
+import re
 from typing import Any, Optional
 
 from discord.ext import commands
@@ -5,6 +6,7 @@ from discord.ext.ipc.server import route
 
 from core import values
 from core.bot import Life
+from utilities import utils
 
 
 def setup(bot: Life):
@@ -40,3 +42,21 @@ class IPC(commands.Cog):
             return None
 
         return [guild.id for guild in user.mutual_guilds]
+
+    @route()
+    async def additional_user_info(self, data) -> Optional[dict[str, Any]]:
+
+        if not (user := self.bot.get_user(data.user_id)):
+            return None
+
+        badges = utils.badge_emojis(user)
+        if badges != "N/A":
+            badges = [re.findall(r"\d+", emoji)[0] for emoji in utils.badge_emojis(user).split(" ")]
+        else:
+            badges = []
+
+        return {
+            "created_at": utils.format_datetime(user.created_at),
+            "created_ago": utils.format_difference(user.created_at),
+            "badges": badges,
+        }

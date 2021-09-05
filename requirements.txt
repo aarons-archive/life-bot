@@ -11,7 +11,7 @@ dateparser>=1.0.0
 https://github.com/Ext-Creators/discord-ext-alternatives/archive/discord.py@v2.zip
 https://github.com/Rapptz/discord.py/archive/master.zip
 humanize>=3.11.0
-jishaku>=2.2.0
+jishaku>=2.3.0
 ksoftapi>=0.4.1
 mystbin.py>=2.1.3
 pendulum>=2.1.2
