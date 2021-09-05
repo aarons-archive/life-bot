@@ -1,14 +1,18 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import asyncio
 from typing import Optional
 
+# Packages
 import async_timeout
 import discord
 import slate
 from slate import obsidian
 from slate.utils.queue import Item
 
+# My stuff
 from core import colours, config, emojis
 from core.bot import Life
 from utilities import context, enums, exceptions, utils

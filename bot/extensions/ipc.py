@@ -1,9 +1,15 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import re
 from typing import Any, Optional
 
+# Packages
 from discord.ext import commands
 from discord.ext.ipc.server import route
 
+# My stuff
 from core import values
 from core.bot import Life
 from utilities import utils

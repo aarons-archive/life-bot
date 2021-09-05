@@ -1,11 +1,15 @@
+# Future
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+# Standard Library
+from typing import TYPE_CHECKING, Any
 
+# My stuff
 from utilities import enums, objects, utils
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 

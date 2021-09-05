@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import multiprocessing
 import multiprocessing.connection
 import os
@@ -6,6 +10,7 @@ import subprocess
 import sys
 from typing import Any, Callable, Literal
 
+# Packages
 import aiohttp
 import bs4
 import humanize
@@ -13,6 +18,7 @@ import yarl
 from wand.color import Color
 from wand.image import Image
 
+# My stuff
 from core import colours, emojis
 from utilities import context, exceptions, utils
 

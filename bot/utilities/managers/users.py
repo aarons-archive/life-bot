@@ -1,23 +1,28 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import io
 import logging
 import math
 import os
 import pathlib
 import random
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+# Packages
 import asyncpg
 import discord
-from PIL import Image, ImageDraw, ImageFont
 from colorthief import ColorThief
+from PIL import Image, ImageDraw, ImageFont
 
+# My stuff
 from core import colours, emojis
 from utilities import exceptions, objects, utils
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 __log__: logging.Logger = logging.getLogger("utilities.managers.users")

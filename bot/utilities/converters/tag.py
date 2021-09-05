@@ -1,5 +1,10 @@
+# Future
+from __future__ import annotations
+
+# Packages
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis
 from utilities import context, exceptions
 

@@ -1,10 +1,14 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import abc
 from typing import Any, Optional
 
+# Packages
 import discord
 
+# My stuff
 from core import config, emojis, values
 from utilities import context
 

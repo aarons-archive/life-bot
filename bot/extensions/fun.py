@@ -1,11 +1,17 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import asyncio
 import collections
 import random
 from typing import Optional
 
+# Packages
 import discord
 from discord.ext import commands, tasks
 
+# My stuff
 from core import colours, emojis
 from core.bot import Life
 from utilities import context, exceptions, utils

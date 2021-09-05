@@ -1,6 +1,11 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import collections
 from typing import Optional
 
+# Packages
 import discord
 import pendulum
 import rapidfuzz
@@ -8,6 +13,7 @@ from discord.ext import commands
 from pendulum.tz.timezone import Timezone
 from pendulum.tz.zoneinfo.exceptions import InvalidTimezone
 
+# My stuff
 from core import colours, emojis, values
 from core.bot import Life
 from utilities import context, exceptions, utils

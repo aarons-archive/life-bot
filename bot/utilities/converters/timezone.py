@@ -1,8 +1,13 @@
+# Future
+from __future__ import annotations
+
+# Packages
 import pendulum
 import rapidfuzz
 from discord.ext import commands
 from pendulum.tz.timezone import Timezone
 
+# My stuff
 from core import colours
 from utilities import context, exceptions
 

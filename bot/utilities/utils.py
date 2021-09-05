@@ -1,5 +1,7 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import colorsys
 import datetime as dt
 import io
@@ -7,12 +9,14 @@ import math
 import random
 from typing import Any, Literal, Optional
 
+# Packages
 import aiohttp
 import discord
 import humanize
 import mystbin
 import pendulum
 
+# My stuff
 from core import colours, config, emojis, values
 from utilities import exceptions
 

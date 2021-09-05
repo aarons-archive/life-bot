@@ -1,13 +1,19 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import contextlib
 import logging
 import traceback
 from typing import Any, Optional
 
+# Packages
 import discord
 import pendulum
 import slate
 from discord.ext import commands
 
+# My stuff
 from core import colours, config, emojis, values
 from core.bot import Life
 from utilities import context, enums, exceptions, utils

@@ -1,16 +1,21 @@
+# Future
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+# Standard Library
+from typing import TYPE_CHECKING, Any, Optional
 
+# Packages
 import aioscheduler.task
 import discord
 import pendulum
 
+# My stuff
 from core import colours
 from utilities import enums, objects, utils
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 

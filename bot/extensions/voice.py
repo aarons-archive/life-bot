@@ -1,14 +1,18 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import math
 from typing import Literal, Optional
 
+# Packages
 import discord
 import ksoftapi
 import slate
 from discord.ext import commands
 from slate import obsidian
 
+# My stuff
 from core import colours, config, emojis, values
 from core.bot import Life
 from utilities import checks, context, converters, custom, enums, exceptions, utils

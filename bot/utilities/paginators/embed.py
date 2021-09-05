@@ -1,9 +1,13 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 from typing import Any, Optional
 
+# Packages
 import discord
 
+# My stuff
 from core import colours
 from utilities import context, paginators, utils
 

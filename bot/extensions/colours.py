@@ -1,11 +1,17 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import io
 import os
 from typing import Any, Literal, Optional
 
+# Packages
 import discord
-from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
+# My stuff
 from core import colours, emojis
 from core.bot import Life
 from utilities import context, decorators, exceptions, utils

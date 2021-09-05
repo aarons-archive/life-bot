@@ -1,19 +1,24 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import asyncio
 import functools
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
+# Packages
 import discord
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis
 from utilities import exceptions, paginators, utils
 
 
 if TYPE_CHECKING:
-    from extensions.voice.custom.player import Player
+    # My stuff
     from core.bot import Life
+    from extensions.voice.custom.player import Player
 
 
 class Context(commands.Context):

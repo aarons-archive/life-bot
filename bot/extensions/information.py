@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import collections
 import inspect
 import os
@@ -7,12 +11,14 @@ import subprocess
 import time
 from typing import Any, Optional
 
+# Packages
 import discord
 import humanize
 import pkg_resources
 import psutil
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis, values
 from core.bot import Life
 from utilities import context, converters, exceptions, utils

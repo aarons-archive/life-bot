@@ -1,15 +1,20 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import logging
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
+# Packages
 import pendulum
 from pendulum.tz.timezone import Timezone
 
+# My stuff
 from utilities import enums, objects
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")

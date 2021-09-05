@@ -1,8 +1,14 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import os
 import pathlib
 
+# Packages
 from discord.ext import commands, tasks
 
+# My stuff
 from core.bot import Life
 
 

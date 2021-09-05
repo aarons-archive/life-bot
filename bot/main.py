@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import asyncio
 import contextlib
 import logging
@@ -5,8 +9,10 @@ import logging.handlers
 import os
 import sys
 
+# Packages
 import setproctitle
 
+# My stuff
 from core import bot, config
 
 
@@ -68,6 +74,7 @@ if __name__ == "__main__":
     setproctitle.setproctitle("Life")
 
     try:
+        # Packages
         import uvloop
         if sys.platform != "win32":
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())

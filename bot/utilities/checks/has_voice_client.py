@@ -1,7 +1,13 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 from typing import Literal
 
+# Packages
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis
 from utilities import context, exceptions
 from utilities.checks.is_author_connected import is_author_connected

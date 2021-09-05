@@ -1,12 +1,16 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import logging
 from typing import TYPE_CHECKING
 
+# My stuff
 from utilities import objects
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 __log__: logging.Logger = logging.getLogger("utilities.managers.guilds")

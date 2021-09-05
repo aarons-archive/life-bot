@@ -1,13 +1,18 @@
+# Future
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+# Standard Library
+from typing import TYPE_CHECKING, Any, Optional
 
+# Packages
 import pendulum
 
+# My stuff
 from utilities import objects
 
 
 if TYPE_CHECKING:
+    # My stuff
     from core.bot import Life
 
 

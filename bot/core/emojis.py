@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+
 CHANNELS = {
     "TEXT":                "<:text:855190519717822515>",
     "TEXT_LOCKED":         "<:text_locked:855190519902765117>",

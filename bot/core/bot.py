@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import collections
 import copy
 import logging
@@ -6,6 +10,7 @@ import time
 import traceback
 from typing import Any, Callable, Optional, Type
 
+# Packages
 import aiohttp
 import aioredis
 import aioscheduler
@@ -21,6 +26,7 @@ from discord.ext import commands, ipc
 from discord.ext.alternatives import converter_dict
 from pendulum.tz.timezone import Timezone
 
+# My stuff
 from core import config
 from utilities import checks, context, converters, enums, help, managers, objects
 

@@ -1,9 +1,15 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 from inspect import Parameter
 from typing import Any, Literal, Optional
 
+# Packages
 import discord
 from discord.ext import commands
 
+# My stuff
 from core import colours, config, emojis
 from core.bot import Life
 from utilities import context, converters, exceptions, imaging, utils

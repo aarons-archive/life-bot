@@ -1,3 +1,7 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import asyncio
 from collections.abc import Callable, Coroutine
 from typing import Any, ParamSpec, TypeVar

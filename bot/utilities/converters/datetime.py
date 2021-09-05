@@ -1,9 +1,15 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 from typing import Any
 
+# Packages
 import dateparser.search
 import pendulum
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis
 from utilities import context, exceptions
 

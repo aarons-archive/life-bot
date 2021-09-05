@@ -1,9 +1,15 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import functools
 import random
 
+# Packages
 import discord
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis
 from core.bot import Life
 from utilities import context, converters, enums, exceptions, utils

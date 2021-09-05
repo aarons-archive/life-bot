@@ -1,6 +1,11 @@
+# Future
+from __future__ import annotations
+
+# Packages
 import discord
 from discord.ext import commands
 
+# My stuff
 from core import colours, emojis, values
 from core.bot import Life
 from utilities import context, converters, exceptions, utils
