@@ -156,22 +156,22 @@ class UserManager:
 
         for record in records:
 
-            if not (member := guild.get_member(record["user_id"])):
-                member = guild.get_member(self.bot.user.id)
+            if not (person := guild.get_member(record["user_id"])):
+                person = await self.bot.fetch_user(record["user_id"])
 
             data.append(
                 (
-                    member,
+                    person,
                     record["xp"],
                     record["rank"],
-                    io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+                    io.BytesIO(await (person.avatar.replace(format="png", size=256)).read())
                 )
             )
 
         return await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data)
 
     @staticmethod
-    def create_leaderboard_image(data: list[tuple[discord.Member, int, int, io.BytesIO]]) -> io.BytesIO:
+    def create_leaderboard_image(data: list[tuple[discord.Member | discord.User, int, int, io.BytesIO]]) -> io.BytesIO:
 
         with Image.open(fp=random.choice(IMAGES["SAI"]["leaderboard"])) as image:
 
@@ -198,7 +198,7 @@ class UserManager:
 
                 # Username
 
-                name_text = f"{member.nick or member.name}"
+                name_text = f"{getattr(member, 'nick', None) or member.name}"
                 name_fontsize = 45
                 name_font = ImageFont.truetype(font=KABEL_BLACK_FONT, size=name_fontsize)
 
@@ -266,10 +266,11 @@ class UserManager:
     async def create_level_card(self, *, guild_id: int, user_id: int) -> io.BytesIO:
 
         guild = self.bot.get_guild(guild_id)
-        user_config = await self.get_config(user_id)
-
         member = guild.get_member(user_id)
+
+        user_config = await self.get_config(user_id)
         member_config = await user_config.get_member_config(guild_id)
+
         rank = await self.rank(guild_id=guild_id, user_id=user_id)
         avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
 
