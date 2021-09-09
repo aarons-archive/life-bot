@@ -15,8 +15,9 @@ if TYPE_CHECKING:
 
 class MemberConfig:
 
-    def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
-        self._bot = bot
+    def __init__(self, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
+
+        self._bot = user_config.bot
         self._user_config = user_config
 
         self._id: int = data["id"]
@@ -27,7 +28,7 @@ class MemberConfig:
         self._coins: int = data["coins"]
 
     def __repr__(self) -> str:
-        return "<UserEconomy>"
+        return f"<MemberConfig id={self.id}, user_id={self.user_id}, guild_id={self.guild_id}, xp={self.xp}, coins={self.coins}>"
 
     # Properties
 

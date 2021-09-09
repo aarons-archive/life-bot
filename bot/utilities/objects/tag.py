@@ -33,7 +33,7 @@ class Tag:
         self._jump_url: str | None = data["jump_url"]
 
     def __repr__(self) -> str:
-        return f"<Tag id=\"{self.id}\" user_id=\"{self.user_id}\" guild_id=\"{self.guild_id}\" name=\"{self.name}\" alias=\"{self.alias}\">"
+        return f"<Tag id={self.id}, user_id={self.user_id}, guild_id={self.guild_id} name='{self.name}', alias='{self.alias}'>"
 
     # Properties
 

@@ -29,7 +29,7 @@ class Todo:
         self._jump_url: str | None = data["jump_url"]
 
     def __repr__(self) -> str:
-        return f"<Todo id=\"{self.id}\" user_id=\"{self.user_id}\">"
+        return f"<Todo id={self.id}, user_id={self.user_id}>"
 
     # Properties
 

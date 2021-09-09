@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     # My stuff
     from core.bot import Life
 
+
 __log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 
 
@@ -34,7 +35,7 @@ class GuildConfig:
         self._tags: dict[str, objects.Tag] = {}
 
     def __repr__(self) -> str:
-        return f"<GuildConfig id={self.id}>"
+        return f"<GuildConfig id={self.id}, prefixes={self.prefixes}, embed_size={self.embed_size}>"
 
     # Properties
 

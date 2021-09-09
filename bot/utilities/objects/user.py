@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     # My stuff
     from core.bot import Life
 
+
 __log__: logging.Logger = logging.getLogger("utilities.objects.user")
 
 
@@ -44,7 +45,7 @@ class UserConfig:
         self._member_configs: dict[int, objects.MemberConfig] = {}
 
     def __repr__(self) -> str:
-        return f"<UserConfig id={self.id}>"
+        return f"<UserConfig id={self.id}, blacklisted={self.blacklisted} timezone={self.timezone} birthday={self.birthday}>"
 
     # Properties
 
@@ -204,7 +205,7 @@ class UserConfig:
             return
 
         for member_config_data in member_configs:
-            member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=member_config_data)
+            member_config = objects.MemberConfig(user_config=self, data=member_config_data)
             self._member_configs[member_config.guild_id] = member_config
 
         __log__.debug(f"[USERS] Fetched and cached member configs ({len(member_configs)}) for '{self.id}'.")

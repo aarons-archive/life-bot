@@ -25,7 +25,7 @@ class Notifications:
         self._level_ups: bool = data["level_ups"]
 
     def __repr__(self) -> str:
-        return f"<Notifications id={self.id} user_id={self.user_id} level_ups={self.level_ups}>"
+        return f"<Notifications id={self.id}, user_id={self.user_id}, level_ups={self.level_ups}>"
 
     # Properties
 

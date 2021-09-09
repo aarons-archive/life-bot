@@ -58,7 +58,7 @@ class Reminder:
         self._task: aioscheduler.task.Task | None = None
 
     def __repr__(self) -> str:
-        return f"<Reminder id=\"{self.id}\" channel_id=\"{self.channel_id}\" user_id=\"{self.user_id}\" datetime={self.datetime} notified={self.notified} done={self.done}>"
+        return f"<Reminder id={self.id}, user_id={self.user_id}, channel_id={self.channel_id}, datetime={self.datetime}, notified={self.notified}, done={self.done}>"
 
     # Properties
 
