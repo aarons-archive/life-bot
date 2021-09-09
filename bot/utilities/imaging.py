@@ -192,7 +192,7 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
                 description="That image format is not allowed, valid formats are **GIF**, **HEIC**, **JPEG**, **PNG**, **WEBP**, **AVIF** and **SVG**."
             )
 
-        if int((request.headers.get("Content-Length") or "0")) > MAX_CONTENT_SIZE:
+        if int(request.headers.get("Content-Length") or "0") > MAX_CONTENT_SIZE:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,

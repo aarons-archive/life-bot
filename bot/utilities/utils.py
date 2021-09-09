@@ -224,15 +224,15 @@ def embed(
 
 
 def level(_xp: int) -> int:
-    return math.floor((((_xp / 100) ** (1.0 / 1.5)) / 3))
+    return math.floor(((_xp / 100) ** (1.0 / 1.5)) / 3)
 
 
 def needed_xp(_level: int, xp: int) -> int:
-    return round((((((_level + 1) * 3) ** 1.5) * 100) - xp))
+    return round(((((_level + 1) * 3) ** 1.5) * 100) - xp)
 
 
 def random_hex() -> str:
-    return "#%02X%02X%02X" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    return f"#{random.randint(0, 255):02X}{random.randint(0, 255):02X}{random.randint(0, 255):02X}"
 
 
 #

@@ -46,7 +46,7 @@ class Settings(commands.Cog):
             return
 
         try:
-            await checks.is_mod().predicate(ctx=ctx)
+            await checks.is_mod().predicate(ctx=ctx)  # type: ignore
         except commands.CheckAnyFailure:
             raise exceptions.EmbedError(
                 colour=colours.RED,
@@ -116,14 +116,14 @@ class Settings(commands.Cog):
         if not operation:
             prefixes = await self.bot.get_prefix(ctx.message)
             await ctx.paginate_embed(
-                entries=[f"`1.` {prefixes[0]}", *[f"`{index + 2}.` `{prefix}`" for index, prefix in enumerate(prefixes[2:])]],
+                entries=[f"`1.` {prefixes[0]}", *(f"`{index + 2}.` `{prefix}`" for index, prefix in enumerate(prefixes[2:]))],
                 per_page=10,
                 title="List of usable prefixes."
             )
             return
 
         try:
-            await checks.is_mod().predicate(ctx=ctx)
+            await checks.is_mod().predicate(ctx=ctx)  # type: ignore
         except commands.CheckAnyFailure:
             raise exceptions.EmbedError(
                 colour=colours.RED,

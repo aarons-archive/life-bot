@@ -34,7 +34,7 @@ class Todo(commands.Cog):
         """
 
         if content is not None:
-            await ctx.invoke(self.todo_add, content=content)
+            await ctx.invoke(self.todo_add, content=content)  # type: ignore
             return
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)

@@ -20,7 +20,7 @@ RESET = "\u001b[0m"
 BOLD = "\u001b[1m"
 UNDERLINE = "\u001b[4m"
 REVERSE = "\u001b[7m"
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = [f"\u001b[{30 + i}m" for i in range(8)]
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = (f"\u001b[{30 + i}m" for i in range(8))
 
 
 @contextlib.contextmanager
