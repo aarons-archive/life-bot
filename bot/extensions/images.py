@@ -19,6 +19,7 @@ _old_transform = commands.Command.transform
 
 
 def _new_transform(self, ctx: context.Context, param: Parameter) -> Any:
+
     if param.annotation is Optional[converters.ImageConverter]:
 
         message = ctx.message
@@ -64,7 +65,7 @@ class Images(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"**{name}** must be between **{minimum}** and **{maximum}**."
+                description=f"**{name}** must be between **{minimum}** and **{maximum}**.",
             )
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -175,7 +176,7 @@ class Images(commands.Cog):
         image: Optional[converters.ImageConverter],
         colour: commands.ColourConverter = utils.MISSING,
         width: int = 20,
-        height: int = 20
+        height: int = 20,
     ) -> None:
         """
         Creates a border around the given image.
@@ -203,7 +204,7 @@ class Images(commands.Cog):
             url=str(image),
             colour=str(colour) if colour else utils.random_hex(),
             width=width,
-            height=height
+            height=height,
         )
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -229,7 +230,7 @@ class Images(commands.Cog):
 
          **<number>** can be in the range of **0** to **255** or **0%** to **100%**
          **<hex>** can be **#FFF** or **#FFFFFF**.
-         """
+        """
 
         await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=str(colour) if colour else utils.random_hex())
 
@@ -338,7 +339,7 @@ class Images(commands.Cog):
         width: int = 20,
         height: int = 20,
         inner: int = 5,
-        outer: int = 10
+        outer: int = 10,
     ) -> None:
         """
         Creates a frame around the given image with a 3D effect.
@@ -370,7 +371,7 @@ class Images(commands.Cog):
             height=height,
             width=width,
             inner_bevel=inner,
-            outer_bevel=outer
+            outer_bevel=outer,
         )
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
@@ -381,7 +382,7 @@ class Images(commands.Cog):
         image: Optional[converters.ImageConverter],
         factor: float = 0.4,
         *,
-        method: imaging.PixelInterpolateMethods = "undefined"
+        method: imaging.PixelInterpolateMethods = "undefined",
     ) -> None:
         """
         Pulls or pushes pixels from the center the image.
@@ -441,7 +442,7 @@ class Images(commands.Cog):
         image: Optional[converters.ImageConverter],
         radius: float = 30,
         sigma: float = 20,
-        angle: int = 90
+        angle: int = 90,
     ) -> None:
         """
         Applies a blur along an angle.
@@ -476,7 +477,7 @@ class Images(commands.Cog):
         ctx: context.Context,
         image: Optional[converters.ImageConverter],
         attenuate: float = 0.5,
-        method: imaging.NoiseTypes = "impulse"
+        method: imaging.NoiseTypes = "impulse",
     ) -> None:
         """
         Adds random noise to an image.
@@ -611,7 +612,7 @@ class Images(commands.Cog):
         image: Optional[converters.ImageConverter],
         radius: float = 2.0,
         *,
-        method: imaging.PixelInterpolateMethods = "undefined"
+        method: imaging.PixelInterpolateMethods = "undefined",
     ) -> None:
         """
         Replaces each pixel with one from the surrounding area.
@@ -633,7 +634,7 @@ class Images(commands.Cog):
         image: Optional[converters.ImageConverter],
         degree: int = 45,
         *,
-        method: imaging.PixelInterpolateMethods = "undefined"
+        method: imaging.PixelInterpolateMethods = "undefined",
     ) -> None:
         """
         Swirls pixels around the center of the image.
@@ -674,7 +675,7 @@ class Images(commands.Cog):
         ctx: context.Context,
         image: Optional[converters.ImageConverter],
         *,
-        method: imaging.PixelInterpolateMethods = "undefined"
+        method: imaging.PixelInterpolateMethods = "undefined",
     ) -> None:
         """
         Creates a wave like effect on the image.

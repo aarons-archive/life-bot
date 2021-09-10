@@ -69,7 +69,12 @@ def format_seconds(seconds: float, *, friendly: bool = False) -> str:
     return f"{f'{days:02d}:' if not days == 0 else ''}{f'{hours:02d}:' if not hours == 0 or not days == 0 else ''}{minutes:02d}:{seconds:02d}"
 
 
-def channel_emoji(channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel, *, guild: discord.Guild, member: discord.Member) -> str:
+def channel_emoji(
+    channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel,
+    *,
+    guild: discord.Guild,
+    member: discord.Member,
+) -> str:
 
     overwrites = channel.permissions_for(member)
 
@@ -99,7 +104,11 @@ def badge_emojis(person: discord.User | discord.Member) -> str:
     if isinstance(person, discord.Member):
         if person.premium_since:
             badges.append(emojis.BOOSTER)
-        if ((activity := discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)) is not None) and activity.emoji and activity.emoji.is_custom_emoji():
+        if (
+            ((activity := discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)) is not None)
+            and activity.emoji
+            and activity.emoji.is_custom_emoji()
+        ):
             badges.append(emojis.NITRO)
 
     if person.avatar.is_animated() and emojis.NITRO not in badges:
@@ -120,7 +129,9 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
         if isinstance(activity, discord.Activity):
 
             if activity.type is discord.ActivityType.playing:
-                message.append(f"• Playing **{activity.name}** {f' | **{activity.details}**' if activity.details else ''}{f' | **{activity.state}**' if activity.state else ''}")
+                message.append(
+                    f"• Playing **{activity.name}** {f' | **{activity.details}**' if activity.details else ''}{f' | **{activity.state}**' if activity.state else ''}"
+                )
 
             elif activity.type is discord.ActivityType.watching:
                 message.append(f"• Watching **{activity.name}**")
@@ -131,7 +142,9 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
         elif isinstance(activity, discord.Spotify):
 
             album = f" from the album **{activity.album}**" if activity.album and activity.album != activity.title else ""
-            message.append(f"• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{', '.join(activity.artists)}** {album}")
+            message.append(
+                f"• Listening to **[{activity.title}](https://open.spotify.com/track/{activity.track_id})** by **{', '.join(activity.artists)}** {album}"
+            )
 
         elif isinstance(activity, discord.Game):
             message.append(f"• Playing **{activity.name}**")
@@ -145,7 +158,12 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
     return "\n".join(message)
 
 
-def avatar(person: discord.User | discord.Member, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
+def avatar(
+    person: discord.User | discord.Member,
+    *,
+    format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None,
+    size: int = 1024,
+) -> str | None:
     return str(person.avatar.replace(format=format or ("gif" if person.avatar.is_animated() else "png"), size=size)) if person.avatar else None
 
 
@@ -200,7 +218,7 @@ def embed(
     description: str | None = None,
     url: str | None = None,
     colour: discord.Colour = colours.MAIN,
-    emoji: str | None = None
+    emoji: str | None = None,
 ) -> discord.Embed:
 
     e = discord.Embed(colour=colour)

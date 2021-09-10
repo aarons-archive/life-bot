@@ -49,7 +49,7 @@ IMAGES = {
             pathlib.Path("./resources/SAI/leaderboard/4.png"),
             pathlib.Path("./resources/SAI/leaderboard/5.png"),
             pathlib.Path("./resources/SAI/leaderboard/6.png"),
-        ]
+        ],
     }
 }
 
@@ -116,9 +116,7 @@ class UserManager:
         guild_id: int
     ) -> list[tuple[discord.Member, Timezone, pendulum.DateTime]]:
 
-        records = await self.bot.db.fetch(
-            "SELECT id, timezone FROM users WHERE NOT timezone IS NULL and timezone_private IS FALSE"
-        )
+        records = await self.bot.db.fetch("SELECT id, timezone FROM users WHERE NOT timezone IS NULL and timezone_private IS FALSE")
 
         guild = self.bot.get_guild(guild_id)
         data = []
@@ -130,13 +128,7 @@ class UserManager:
 
             timezone = pendulum.timezone(record["timezone"])
 
-            data.append(
-                (
-                    member,
-                    timezone,
-                    pendulum.now(tz=timezone)
-                )
-            )
+            data.append((member, timezone, pendulum.now(tz=timezone)))
 
         return sorted(data, key=lambda item: item[2].offset_hours)
 
@@ -146,9 +138,7 @@ class UserManager:
         guild_id: int
     ) -> list[tuple[discord.Member, pendulum.Date, int, pendulum.DateTime]]:
 
-        records = await self.bot.db.fetch(
-            "SELECT id, birthday FROM users WHERE NOT birthday IS NULL and birthday_private IS FALSE ORDER BY birthday DESC"
-        )
+        records = await self.bot.db.fetch("SELECT id, birthday FROM users WHERE NOT birthday IS NULL and birthday_private IS FALSE ORDER BY birthday DESC")
 
         guild = self.bot.get_guild(guild_id)
         data = []
@@ -170,14 +160,7 @@ class UserManager:
             next_birthday_year = next_birthday_date.year if next_birthday_date < birthday.add(years=age) else birthday.year + age + 1
             next_birthday = next_birthday_now.set(year=next_birthday_year, month=birthday.month, day=birthday.day, hour=0, minute=0, second=0, microsecond=0)
 
-            data.append(
-                (
-                    member,
-                    birthday,
-                    age,
-                    next_birthday
-                )
-            )
+            data.append((member, birthday, age, next_birthday))
 
         return sorted(data, key=lambda item: item[3])
 
@@ -191,7 +174,9 @@ class UserManager:
 
         data = await self.bot.db.fetch(
             "SELECT user_id, xp, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
-            guild_id, limit, (page - 1) * (limit or 0)
+            guild_id,
+            limit,
+            (page - 1) * (limit or 0),
         )
         return data
 
@@ -206,7 +191,8 @@ class UserManager:
             "SELECT rank "
             "FROM (SELECT user_id, row_number() OVER (ORDER BY xp DESC) AS rank FROM members WHERE members.guild_id = $1) as guild_members "
             "WHERE guild_members.user_id = $2",
-            guild_id, user_id
+            guild_id,
+            user_id,
         )
         return data["rank"]
 
@@ -239,7 +225,7 @@ class UserManager:
                     person,
                     record["xp"],
                     record["rank"],
-                    io.BytesIO(await (person.avatar.replace(format="png", size=256)).read())
+                    io.BytesIO(await (person.avatar.replace(format="png", size=256)).read()),
                 )
             )
 
@@ -359,7 +345,7 @@ class UserManager:
         return await self.bot.loop.run_in_executor(
             None,
             self.create_level_card_image,
-            (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes)
+            (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes),
         )
 
     @staticmethod
@@ -444,7 +430,7 @@ class UserManager:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="No one has set their timezone, or everyone has set them to be private."
+                description="No one has set their timezone, or everyone has set them to be private.",
             )
 
         timezone_avatars = {}
@@ -480,7 +466,7 @@ class UserManager:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="No one has set their birthday, or everyone has set them to be private."
+                description="No one has set their birthday, or everyone has set them to be private.",
             )
 
         birthday_avatars = {}

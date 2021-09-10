@@ -21,7 +21,7 @@ class TextPaginator(paginators.BasePaginator):
         codeblock: bool = False,
         splitter: str = "\n",
         header: str | None = None,
-        footer: str | None = None
+        footer: str | None = None,
     ) -> None:
 
         super().__init__(
@@ -31,7 +31,7 @@ class TextPaginator(paginators.BasePaginator):
             timeout=timeout,
             delete_message=delete_message,
             codeblock=codeblock,
-            splitter=splitter
+            splitter=splitter,
         )
 
         self.header: str = header or ""

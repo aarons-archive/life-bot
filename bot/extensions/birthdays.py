@@ -42,7 +42,7 @@ class Birthdays(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"**{member.mention}** has their birthday set as private."
+                description=f"**{member.mention}** has their birthday set as private.",
             )
 
         embed = discord.Embed(
@@ -51,7 +51,7 @@ class Birthdays(commands.Cog):
             description=f"**Birthday:** {utils.format_date(user_config.birthday)}\n"
                         f"**Next birthday date:** {utils.format_date(user_config.next_birthday)}\n"
                         f"**Next birthday:** In {utils.format_difference(user_config.next_birthday)}\n"
-                        f"**Age:** {user_config.age}\n"
+                        f"**Age:** {user_config.age}\n",
         )
         await ctx.reply(embed=embed)
 
@@ -77,7 +77,7 @@ class Birthdays(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="Your birthday must allow you to be more than 13 years old."
+                description="Your birthday must allow you to be more than 13 years old.",
             )
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
@@ -86,7 +86,7 @@ class Birthdays(commands.Cog):
         embed = utils.embed(
             colour=colours.GREEN,
             emoji=emojis.TICK,
-            description=f"Birthday set to **{utils.format_date(user_config.birthday)}**"
+            description=f"Birthday set to **{utils.format_date(user_config.birthday)}**",
         )
         await ctx.reply(embed=embed)
 
@@ -99,12 +99,13 @@ class Birthdays(commands.Cog):
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         await user_config.set_birthday()
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Birthday reset."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description="Birthday reset."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @_birthday.command(name="private")
     async def _birthday_private(self, ctx: context.Context) -> None:
@@ -123,12 +124,13 @@ class Birthdays(commands.Cog):
 
         await user_config.set_birthday(user_config.birthday, private=True)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Your birthday is now **private**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description="Your birthday is now **private**."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @_birthday.command(name="public")
     async def _birthday_public(self, ctx: context.Context) -> None:
@@ -147,12 +149,13 @@ class Birthdays(commands.Cog):
 
         await user_config.set_birthday(user_config.birthday, private=False)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Your birthday is now **public**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description="Your birthday is now **public**."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @commands.guild_only()
     @_birthday.command(name="list", aliases=["upcoming"])
@@ -165,7 +168,7 @@ class Birthdays(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="No one has set their birthday, or everyone has set them to be private."
+                description="No one has set their birthday, or everyone has set them to be private.",
             )
 
         await ctx.paginate_embed(
@@ -179,7 +182,7 @@ class Birthdays(commands.Cog):
             ],
             per_page=3,
             splitter="\n\n",
-            title=f"Upcoming birthdays in **{ctx.guild}**:"
+            title=f"Upcoming birthdays in **{ctx.guild}**:",
         )
 
     @commands.guild_only()
@@ -193,20 +196,20 @@ class Birthdays(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="No one has set their birthday, or everyone has set them to be private."
+                description="No one has set their birthday, or everyone has set them to be private.",
             )
 
         member, birthday, age, next_birthday = birthdays[0]
 
-        embed = discord.Embed(
-            colour=colours.MAIN,
-            title=f"Birthday information for {member}:",
-            description=f"**Birthday:** {utils.format_date(birthday)}\n"
-                        f"**Next birthday date:** {utils.format_date(next_birthday)}\n"
-                        f"**Next birthday:** In {utils.format_difference(next_birthday)}\n"
-                        f"**Age:** {age}\n"
+        await ctx.reply(
+            embed=utils.embed(
+                title=f"Birthday information for {member}:",
+                description=f"**Birthday:** {utils.format_date(birthday)}\n"
+                            f"**Next birthday date:** {utils.format_date(next_birthday)}\n"
+                            f"**Next birthday:** In {utils.format_difference(next_birthday)}\n"
+                            f"**Age:** {age}\n",
+            )
         )
-        await ctx.reply(embed=embed)
 
     @commands.guild_only()
     @_birthday.command(name="card")

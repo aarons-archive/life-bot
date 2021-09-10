@@ -13,7 +13,7 @@ CHANNELS = {
     "ANNOUNCEMENT":        "<:announcement:855190517558411344>",
     "ANNOUNCEMENT_LOCKED": "<:announcement_locked:855190519134289940>",
     "RULES":               "<:rules:855190519159455754>",
-    "CATEGORY":            "<:category:855190517092057139>"
+    "CATEGORY":            "<:category:855190517092057139>",
 }
 BADGES = {
     "bug_hunter":                  "<:bug_hunter:855171597127516190>",
@@ -29,7 +29,7 @@ BADGES = {
     "team_user":                   "<:team_user:855171918603485214>",
     "system":                      "<:system_1:855171966360879115><:system_2:855171966804819978>",
     "verified_bot":                "<:verified_bot:855172014893301800>",
-    "discord_certified_moderator": "<:discord_certified_moderator:855172042151952395>"
+    "discord_certified_moderator": "<:discord_certified_moderator:855172042151952395>",
 }
 
 OWNER = "<:owner:855172083332022274>"

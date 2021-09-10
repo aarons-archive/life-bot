@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 class Notifications:
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
+
         self._bot = bot
         self._user_config = user_config
 

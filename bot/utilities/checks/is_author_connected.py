@@ -26,14 +26,14 @@ def is_author_connected(same_channel: bool) -> Callable[[T], T]:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"You must be connected to {voice_client_channel.mention} to use this command."
+                description=f"You must be connected to {voice_client_channel.mention} to use this command.",
             )
 
         if not author_channel:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="You must be connected to a voice channel to use this command."
+                description="You must be connected to a voice channel to use this command.",
             )
 
         return True

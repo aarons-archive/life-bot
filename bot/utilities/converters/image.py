@@ -18,9 +18,11 @@ class ImageConverter(commands.Converter):
         except commands.MemberNotFound:
             pass
         else:
-            await ctx.reply(f"Editing **{member}**'s avatar. If this is a mistake please specify the user/image you would like to edit before any extra arguments.")
+            await ctx.reply(
+                f"Editing **{member}**'s avatar. If this is a mistake please specify the user/image you would like to edit before any extra arguments."
+            )
             return utils.avatar(member)
-
+ 
         if (check := yarl.URL(argument)) and check.scheme and check.host:
             return argument
 

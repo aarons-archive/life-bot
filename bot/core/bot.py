@@ -36,11 +36,12 @@ __log__: logging.Logger = logging.getLogger("bot")
 CONVERTERS = {
     objects.Reminder:         converters.ReminderConverter,
     enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
-    Timezone:                 converters.TimezoneConverter
+    Timezone:                 converters.TimezoneConverter,
 }
 
 
 class Life(commands.AutoShardedBot):
+
     converters: dict[type, Callable[..., Any]]
 
     def __init__(self) -> None:
@@ -102,7 +103,17 @@ class Life(commands.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        if ctx.command and ctx.command.name in ["play", "yt-music", "soundcloud", "search", "play-now", "play-next", "rolecounts"]:
+        flag_commands = [
+            "play",
+            "yt-music",
+            "soundcloud",
+            "search",
+            "play-now",
+            "play-next",
+            "rolecounts",
+        ]
+
+        if ctx.command and ctx.command.name in flag_commands:
 
             content = message.content
             start = content.index(ctx.invoked_with) + len(ctx.invoked_with) + 1

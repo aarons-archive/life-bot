@@ -101,7 +101,7 @@ class Colours(commands.Cog):
                         f"**HSV:** {hsv}\n"
                         f"**XYZ:** {xyz.lower()}\n"
                         f"**CMYK:** {cmyk}\n",
-            colour=discord.Colour.from_rgb(r, g, b)
+            colour=discord.Colour.from_rgb(r, g, b),
         ).set_image(
             url=url
         )
@@ -117,7 +117,7 @@ class Colours(commands.Cog):
         ctx: context.Context,
         seed: Optional[discord.Color] = utils.MISSING,
         mode: Optional[Modes] = "monochrome",
-        count: int = utils.MISSING
+        count: int = utils.MISSING,
     ) -> None:
 
         count = count or 5
@@ -154,9 +154,7 @@ class Colours(commands.Cog):
                         f"**Mode:** {mode}\n"
                         f"**Count:** {count}\n"
                         f"**Link:** [click here]({url})",
-            colour=seed
-        ).set_image(
-            url=url
-        )
+            colour=seed,
+        ).set_image(url=url)
 
         await ctx.reply(embed=embed)

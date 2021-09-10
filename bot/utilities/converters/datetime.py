@@ -16,14 +16,11 @@ from utilities import context, exceptions
 
 SETTINGS = {
     "DATE_ORDER":               "DMY",
-
     "TIMEZONE":                 "UTC",
     "RETURN_AS_TIMEZONE_AWARE": False,
-
     "PREFER_DAY_OF_MONTH":      "current",
     "PREFER_DATES_FROM":        "future",
-
-    "PARSERS":                  ["relative-time", "absolute-time", "timestamp"]
+    "PARSERS":                  ["relative-time", "absolute-time", "timestamp"],
 }
 
 

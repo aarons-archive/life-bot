@@ -98,7 +98,7 @@ class BasePaginator(abc.ABC):
         timeout: int = 300,
         delete_message: bool = False,
         codeblock: bool = False,
-        splitter: str = "\n"
+        splitter: str = "\n",
     ) -> None:
 
         self.ctx: context.Context = ctx

@@ -51,7 +51,7 @@ class Context(commands.Context):
         codeblock: bool = False,
         splitter: str = "\n",
         header: str | None = None,
-        footer: str | None = None
+        footer: str | None = None,
     ) -> paginators.TextPaginator:
 
         paginator = paginators.TextPaginator(
@@ -63,7 +63,7 @@ class Context(commands.Context):
             codeblock=codeblock,
             splitter=splitter,
             header=header,
-            footer=footer
+            footer=footer,
         )
 
         await paginator.paginate()
@@ -175,7 +175,7 @@ class Context(commands.Context):
         author_icon_url: str | None = None,
         title: str | None = None,
         url: str | None = None,
-        colour: discord.Colour = colours.MAIN
+        colour: discord.Colour = colours.MAIN,
     ) -> int:
 
         if len(entries) == 1:
@@ -200,14 +200,18 @@ class Context(commands.Context):
             author_icon_url=author_icon_url,
             title=title,
             url=url,
-            colour=colour
+            colour=colour,
         )
         await paginator.paginate()
 
         for _ in range(5):
 
             try:
-                response = await self.bot.wait_for("message", check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id, timeout=30.0)
+                response = await self.bot.wait_for(
+                    "message",
+                    check=lambda msg: msg.author.id == self.author.id and msg.channel.id == self.channel.id,
+                    timeout=30.0,
+                )
             except asyncio.TimeoutError:
                 raise exceptions.EmbedError(
                     colour=colours.RED,
@@ -224,7 +228,7 @@ class Context(commands.Context):
                 embed = utils.embed(
                     colour=colours.RED,
                     emoji=emojis.CROSS,
-                    description="That was not a valid choice, try again or send `cancel` to exit."
+                    description="That was not a valid choice, try again or send `cancel` to exit.",
                 )
                 await self.reply(embed=embed)
                 continue

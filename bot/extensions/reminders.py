@@ -39,7 +39,7 @@ class Reminders(commands.Cog):
             per_page=5,
             splitter="\n\n",
             title="Multiple dates/times where detected in your reminder:",
-            header="Choose the option that best matches your intended reminder time.\n\n"
+            header="Choose the option that best matches your intended reminder time.\n\n",
         )
         _, datetime = entries[choice]
 
@@ -56,15 +56,16 @@ class Reminders(commands.Cog):
             channel_id=ctx.channel.id,
             datetime=datetime,
             content=await utils.safe_content(self.bot.mystbin, when[0], max_characters=1500),
-            jump_url=ctx.message.jump_url
+            jump_url=ctx.message.jump_url,
         )
 
-        embed = discord.Embed(
-            colour=colours.GREEN,
-            description=f"Reminder with id **{reminder.id}** created for **{utils.format_datetime(reminder.datetime)}**, "
-                        f"which is in **{utils.format_difference(reminder.datetime)}**."
+        await ctx.reply(
+            embed=discord.Embed(
+                colour=colours.GREEN,
+                description=f"Reminder with id **{reminder.id}** created for **{utils.format_datetime(reminder.datetime)}**, "
+                            f"which is in **{utils.format_difference(reminder.datetime)}**.",
+            )
         )
-        await ctx.reply(embed=embed)
 
     @commands.group(name="reminders", aliases=["reminder"], invoke_without_command=True)
     async def _reminders(self, ctx: context.Context) -> None:
@@ -119,7 +120,7 @@ class Reminders(commands.Cog):
             )
 
         entries = [
-            f"**{reminder.id}:** [__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}" \
+            f"**{reminder.id}:** [__**{'In ' if not reminder.done else ''}{utils.format_difference(reminder.datetime)}"
             f"{' ago' if reminder.done else ''}**__]({reminder.jump_url})\n"
             f"**When:** {utils.format_datetime(reminder.datetime, seconds=True)}\n"
             f"**Repeat:** {reminder.repeat_type.name.replace('_', ' ').lower().title()}\n"
@@ -145,12 +146,13 @@ class Reminders(commands.Cog):
         content = await utils.safe_content(self.bot.mystbin, content, max_characters=1500)
         await reminder.change_content(content, jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Edited content of reminder with id **{reminder.id}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Edited content of reminder with id **{reminder.id}**."
+            )
         )
-        await ctx.reply(embed=embed)
 
         #
 
@@ -177,7 +179,7 @@ class Reminders(commands.Cog):
         embed = utils.embed(
             colour=colours.GREEN,
             emoji=emojis.TICK,
-            description=f"Deleted **{len(reminders)}** reminder{s} with id{s} {', '.join(f'**{reminder.id}**' for reminder in reminders)}."
+            description=f"Deleted **{len(reminders)}** reminder{s} with id{s} {', '.join(f'**{reminder.id}**' for reminder in reminders)}.",
         )
         await ctx.reply(embed=embed)
 
@@ -199,12 +201,13 @@ class Reminders(commands.Cog):
 
         await reminder.change_repeat_type(repeat_type)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Edited repeat type of reminder with id **{reminder.id}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Edited repeat type of reminder with id **{reminder.id}**."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @_reminders.command(name="info")
     async def _reminders_info(self, ctx: context.Context, reminder: objects.Reminder) -> None:
@@ -222,6 +225,6 @@ class Reminders(commands.Cog):
                         f"**Repeat:** {reminder.repeat_type.name.replace('_', ' ').lower().title()}\n"
                         f"**Done:** {str(reminder.done).replace('False', 'No').replace('True', 'Yes')}\n"
                         f"**Content:**\n\n"
-                        f"{await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=1000)}"
+                        f"{await utils.safe_content(self.bot.mystbin, reminder.content, max_characters=1000)}",
         )
         await ctx.reply(embed=embed)

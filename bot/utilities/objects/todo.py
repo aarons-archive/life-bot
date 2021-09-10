@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 class Todo:
 
     def __init__(self, bot: Life, user_config: objects.UserConfig, data: dict[str, Any]) -> None:
+
         self._bot = bot
         self._user_config = user_config
 
@@ -70,6 +71,11 @@ class Todo:
     # Config
 
     async def change_content(self, content: str, *, jump_url: str | None = None) -> None:
-        data = await self.bot.db.fetchrow("UPDATE todos SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
+        data = await self.bot.db.fetchrow(
+            "UPDATE todos SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url",
+            content,
+            jump_url,
+            self.id,
+        )
         self._content = data["content"]
         self._jump_url = data["jump_url"] or self.jump_url

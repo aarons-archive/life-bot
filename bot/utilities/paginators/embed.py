@@ -45,7 +45,7 @@ class EmbedPaginator(paginators.BasePaginator):
             timeout=timeout,
             delete_message=delete_message,
             codeblock=codeblock,
-            splitter=splitter
+            splitter=splitter,
         )
 
         self.header: str = header or ""

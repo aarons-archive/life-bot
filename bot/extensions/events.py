@@ -39,8 +39,7 @@ BAD_ARGUMENT_ERRORS = {
     commands.BadFlagArgument:               "I couldn't convert a value for one of the flags you passed.",
     commands.MissingFlagArgument:           "You missed a value for the **{error.flag.name}** flag.",
     commands.TooManyFlags:                  "You passed too many values to the **{error.flag.name}** flag.",
-    commands.MissingRequiredFlag:           "You missed the **{error.flag.name}** flag."
-
+    commands.MissingRequiredFlag:           "You missed the **{error.flag.name}** flag.",
 }
 
 COOLDOWN_BUCKETS = {
@@ -50,7 +49,7 @@ COOLDOWN_BUCKETS = {
     commands.BucketType.role:     "for your role",
     commands.BucketType.guild:    "for this server",
     commands.BucketType.channel:  "for this channel",
-    commands.BucketType.category: "for this channel category"
+    commands.BucketType.category: "for this channel category",
 }
 
 CONCURRENCY_BUCKETS = {
@@ -65,11 +64,9 @@ CONCURRENCY_BUCKETS = {
 
 OTHER_ERRORS = {
     commands.TooManyArguments:              "You used too many arguments. Use **{prefix}help {command.qualified_name}** for help.",
-
     commands.UnexpectedQuoteError:          "There was an unexpected quote character in the arguments you passed.",
     commands.InvalidEndOfQuotedStringError: "There was an unexpected space after a quote character in the arguments you passed.",
     commands.ExpectedClosingQuoteError:     "There is a missing quote character in the arguments you passed.",
-
     commands.CheckFailure:                  "{error}",
     commands.CheckAnyFailure:               "PUT SOMETHING HERE",
     commands.PrivateMessageOnly:            "This command can only be used in private messages.",
@@ -78,12 +75,9 @@ OTHER_ERRORS = {
     commands.MissingRole:                   "You don't have the {error.missing_role.mention} role which is required to run this command.",
     commands.BotMissingRole:                "I don't have the {error.missing_role.mention} role which I require to run this command.",
     commands.NSFWChannelRequired:           "This command can only be run in NSFW channels.",
-
     commands.DisabledCommand:               "This command is currently disabled.",
-
     commands.MissingAnyRole:                "You are missing roles required to run this command.",
     commands.BotMissingAnyRole:             "I am missing roles required to run this command.",
-
 }
 
 
@@ -179,7 +173,7 @@ class Events(commands.Cog):
         embed = utils.embed(
             colour=colours.RED,
             emoji=emojis.CROSS,
-            description=f"Something went wrong! Join my [support server]({values.SUPPORT_LINK}) for help."
+            description=f"Something went wrong! Join my [support server]({values.SUPPORT_LINK}) for help.",
         )
         await ctx.reply(embed=embed)
 
@@ -188,13 +182,13 @@ class Events(commands.Cog):
 
         embed = discord.Embed(
             colour=colours.RED,
-            description=await utils.safe_content(self.bot.mystbin, ctx.message.content, syntax="python", max_characters=2000)
+            description=await utils.safe_content(self.bot.mystbin, ctx.message.content, syntax="python", max_characters=2000),
         ).add_field(
             name="Info:",
             value=f"{f'`Guild:` {ctx.guild} `{ctx.guild.id}`{values.NL}' if ctx.guild else ''}"
                   f"`Channel:` {ctx.channel} `{ctx.channel.id}`\n"
                   f"`Author:` {ctx.author} `{ctx.author.id}`\n"
-                  f"`Time:` {utils.format_datetime(pendulum.now(tz='UTC'))}"
+                  f"`Time:` {utils.format_datetime(pendulum.now(tz='UTC'))}",
         )
 
         message = await utils.safe_content(self.bot.mystbin, f"```py\n{message}```", syntax="python", max_characters=2000)
@@ -239,7 +233,7 @@ class Events(commands.Cog):
                         f"`Joined:` {utils.format_datetime(guild.me.joined_at)}\n"
                         f"`Members:` {total}\n"
                         f"`Bots:` {bots}\n"
-                        f"`Bot%:` {bots_percent}"
+                        f"`Bot%:` {bots_percent}",
         ).set_thumbnail(
             url=str(utils.icon(guild))
         )
@@ -267,7 +261,7 @@ class Events(commands.Cog):
                         f"`Joined:` {utils.format_datetime(guild.me.joined_at)}\n"
                         f"`Members:` {total}\n"
                         f"`Bots:` {bots}\n"
-                        f"`Bot%:` {bots_percent}"
+                        f"`Bot%:` {bots_percent}",
         ).set_thumbnail(
             url=str(utils.icon(guild))
         )
@@ -286,8 +280,10 @@ class Events(commands.Cog):
         with contextlib.suppress(discord.HTTPException, discord.NotFound, discord.Forbidden):
             for attachment in message.attachments:
                 await webhook.send(
-                    content=f"Attachment from message with id **{message.id}**:", file=await attachment.to_file(use_cached=True), username=f"{message.author}",
-                    avatar_url=utils.avatar(person=message.author)
+                    content=f"Attachment from message with id **{message.id}**:",
+                    file=await attachment.to_file(use_cached=True),
+                    username=f"{message.author}",
+                    avatar_url=utils.avatar(person=message.author),
                 )
 
     @staticmethod
@@ -295,8 +291,10 @@ class Events(commands.Cog):
 
         for embed in message.embeds:
             await webhook.send(
-                content=f"Embed from message with id **{message.id}**:", embed=embed, username=f"{message.author}",
-                avatar_url=utils.avatar(person=message.author)
+                content=f"Embed from message with id **{message.id}**:",
+                embed=embed,
+                username=f"{message.author}",
+                avatar_url=utils.avatar(person=message.author),
             )
 
     @commands.Cog.listener()
@@ -319,11 +317,11 @@ class Events(commands.Cog):
             value=f"`Channel:` {message.channel} `{message.channel.id}`\n"
                   f"`Author:` {message.author} `{message.author.id}`\n"
                   f"`Time:` {utils.format_datetime(datetime=pendulum.now(tz='UTC'))}\n"
-                  f"`Jump:` [Click here]({message.jump_url})"
+                  f"`Jump:` [Click here]({message.jump_url})",
         ).set_footer(
             text=f"ID: {message.id}"
         )
-
+        
         __log__.info(f"DM from {message.author} ({message.author.id}) | Content: {content}")
         await self.bot.DMS_LOG.send(embed=embed, username=f"{message.author}", avatar_url=utils.avatar(person=message.author))
 

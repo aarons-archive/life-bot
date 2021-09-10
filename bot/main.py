@@ -50,7 +50,7 @@ def logger():
 
         stream_formatter = logging.Formatter(
             fmt=f"{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s",
-            datefmt="%I:%M:%S %p %d/%m/%Y"
+            datefmt="%I:%M:%S %p %d/%m/%Y",
         )
         stream_handler.setFormatter(stream_formatter)
 

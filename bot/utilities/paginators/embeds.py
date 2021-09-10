@@ -22,13 +22,7 @@ class EmbedsPaginator(paginators.BasePaginator):
         delete_message: bool = False,
     ) -> None:
 
-        super().__init__(
-            ctx=ctx,
-            entries=entries,
-            per_page=1,
-            timeout=timeout,
-            delete_message=delete_message
-        )
+        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message=delete_message)
 
         self.current_page: discord.Embed | None = None
 

@@ -142,7 +142,9 @@ class UserConfig:
 
         data = await self.bot.db.fetchrow(
             "UPDATE users SET blacklisted = $1, blacklisted_reason = $2 WHERE id = $3 RETURNING blacklisted, blacklisted_reason",
-            blacklisted, reason, self.id
+            blacklisted,
+            reason,
+            self.id,
         )
 
         self._blacklisted = data["blacklisted"]
@@ -152,7 +154,12 @@ class UserConfig:
 
         private = self.timezone_private if private is None else private
 
-        data = await self.bot.db.fetchrow("UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private", timezone.name, private, self.id)
+        data = await self.bot.db.fetchrow(
+            "UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private",
+            timezone.name,
+            private,
+            self.id,
+        )
         self._timezone = pendulum.timezone(tz) if (tz := data.get("timezone")) else None
         self._timezone_private = private
 
@@ -160,7 +167,12 @@ class UserConfig:
 
         private = self.timezone_private if private is None else private
 
-        data = await self.bot.db.fetchrow("UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private", birthday, private, self.id)
+        data = await self.bot.db.fetchrow(
+            "UPDATE users SET birthday = $1, birthday_private = $2 WHERE id = $3 RETURNING birthday, birthday_private",
+            birthday,
+            private,
+            self.id,
+        )
         self._birthday = pendulum.Date(year=birthday.year, month=birthday.month, day=birthday.day) if (birthday := data.get("birthday")) else None
         self._birthday_private = private
 
@@ -168,7 +180,10 @@ class UserConfig:
 
     async def fetch_notifications(self) -> None:
 
-        notification = await self.bot.db.fetchrow("INSERT INTO notifications (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *", self.id)
+        notification = await self.bot.db.fetchrow(
+            "INSERT INTO notifications (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = excluded.user_id RETURNING *",
+            self.id,
+        )
         self._notifications = objects.Notifications(bot=self.bot, user_config=self, data=notification)
 
         __log__.debug(f"[USERS] Fetched and cached notification settings for '{self.id}'.")
@@ -240,12 +255,17 @@ class UserConfig:
         datetime: pendulum.DateTime,
         content: str,
         jump_url: str | None = None,
-        repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER
+        repeat_type: enums.ReminderRepeatType = enums.ReminderRepeatType.NEVER,
     ) -> objects.Reminder:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO reminders (user_id, channel_id, datetime, content, jump_url, repeat_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-            self.id, channel_id, datetime, content, jump_url, repeat_type.value
+            self.id,
+            channel_id,
+            datetime,
+            content,
+            jump_url,
+            repeat_type.value,
         )
 
         reminder = objects.Reminder(bot=self.bot, user_config=self, data=data)
@@ -272,7 +292,8 @@ class UserConfig:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO members (user_id, guild_id) VALUES ($1, $2) ON CONFLICT (user_id, guild_id) DO UPDATE SET user_id = excluded.user_id RETURNING *",
-            self.id, guild_id
+            self.id,
+            guild_id,
         )
         member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=data)
 

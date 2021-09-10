@@ -34,7 +34,7 @@ REPEAT_TYPES = {
     12: lambda dt: dt.add(months=6),
     13: lambda dt: dt.add(years=1),
     14: lambda dt: dt.add(years=2),
-    15: lambda dt: dt.add(seconds=30)
+    15: lambda dt: dt.add(seconds=30),
 }
 
 
@@ -141,7 +141,7 @@ class Reminder:
         embed = discord.Embed(
             colour=colours.MAIN,
             title="Reminder:",
-            description=f"[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}"
+            description=f"[`{utils.format_difference(self.created_at)} ago:`]({self.jump_url})\n\n{self.content}",
         )
 
         try:
@@ -179,7 +179,12 @@ class Reminder:
 
     async def change_content(self, content: str, *, jump_url: str | None = None) -> None:
 
-        data = await self.bot.db.fetchrow("UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url", content, jump_url, self.id)
+        data = await self.bot.db.fetchrow(
+            "UPDATE reminders SET content = $1, jump_url = $2 WHERE id = $3 RETURNING content, jump_url",
+            content,
+            jump_url,
+            self.id,
+        )
         self._content = data["content"]
         self._jump_url = data["jump_url"] or self.jump_url
 

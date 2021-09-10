@@ -59,7 +59,7 @@ class Dev(commands.Cog):
         embed = utils.embed(
             colour=colours.GREEN,
             emoji=emojis.TICK,
-            description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s1}."
+            description=f"Found and deleted **{len(messages)}** message{s} out of the last **{limit}** message{s1}.",
         )
         await ctx.reply(embed=embed, delete_after=10)
 
@@ -71,8 +71,13 @@ class Dev(commands.Cog):
         """
 
         entries = []
+        sorted_guilds = sorted(
+            self.bot.guilds,
+            reverse=True,
+            key=lambda _guild: sum(bool(member.bot) for member in _guild.members) / len(_guild.members) * 100,
+        )
 
-        for guild in sorted(self.bot.guilds, reverse=True, key=lambda _guild: sum(bool(member.bot) for member in _guild.members) / len(_guild.members) * 100):
+        for guild in sorted_guilds:
 
             total = len(guild.members)
             members = sum(not m.bot for m in guild.members)
@@ -189,9 +194,10 @@ class Dev(commands.Cog):
 
         await user_config.set_blacklisted(False)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Removed **{user}** from the blacklist."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Removed **{user}** from the blacklist."
+            )
         )
-        await ctx.reply(embed=embed)

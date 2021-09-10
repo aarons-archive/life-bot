@@ -22,7 +22,20 @@ from utilities import context, exceptions, utils
 
 CMD = "bash" if sys.platform == "win32" else "/bin/bash"
 
-PixelInterpolateMethods = Literal["undefined", "average", "average9", "average16", "background", "bilinear", "blend", "catrom", "integer", "mesh", "nearest", "spline"]
+PixelInterpolateMethods = Literal[
+    "undefined",
+    "average",
+    "average9",
+    "average16",
+    "background",
+    "bilinear",
+    "blend",
+    "catrom",
+    "integer",
+    "mesh",
+    "nearest",
+    "spline",
+]
 NoiseTypes = Literal["undefined", "uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"]
 
 
@@ -182,21 +195,21 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="I was unable to fetch that image. Check the URL or try again later."
+                description="I was unable to fetch that image. Check the URL or try again later.",
             )
 
         if request.headers.get("Content-Type") not in VALID_CONTENT_TYPES:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="That image format is not allowed, valid formats are **GIF**, **HEIC**, **JPEG**, **PNG**, **WEBP**, **AVIF** and **SVG**."
+                description="That image format is not allowed, valid formats are **GIF**, **HEIC**, **JPEG**, **PNG**, **WEBP**, **AVIF** and **SVG**.",
             )
 
         if int(request.headers.get("Content-Length") or "0") > MAX_CONTENT_SIZE:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"That image is too big to edit, maximum file size is **{humanize.naturalsize(MAX_CONTENT_SIZE)}**."
+                description=f"That image is too big to edit, maximum file size is **{humanize.naturalsize(MAX_CONTENT_SIZE)}**.",
             )
 
         return await request.read()
@@ -204,12 +217,11 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
 
 async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
 
-    embed = utils.embed(
-        colour=colours.GREEN,
-        emoji="<a:loading:872608197314220154>",
-        description="| Processing image"
+    message = await ctx.reply(
+        embed=utils.embed(
+            colour=colours.GREEN, emoji="<a:loading:872608197314220154>", description="| Processing image"
+        )
     )
-    message = await ctx.reply(embed=embed)
 
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
     image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
@@ -228,12 +240,11 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
 
     if data is ValueError or data is EOFError:
 
-        embed = utils.embed(
-            colour=colours.RED,
-            emoji=emojis.CROSS,
-            description="Image edit failed."
+        await message.edit(
+            embed=utils.embed(
+                colour=colours.RED, emoji=emojis.CROSS, description="Image edit failed."
+            )
         )
-        await message.edit(embed=embed)
 
         raise exceptions.EmbedError(
             colour=colours.RED,
@@ -244,12 +255,11 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
     url = await utils.upload_file(ctx.bot.session, file_bytes=data[0], file_format=data[1])
     await ctx.reply(url)
 
-    embed = utils.embed(
-        colour=colours.GREEN,
-        emoji=emojis.TICK,
-        description="Image edit success."
+    await message.edit(
+        embed=utils.embed(
+            colour=colours.GREEN, emoji=emojis.TICK, description="Image edit success."
+        )
     )
-    await message.edit(embed=embed)
 
     del data
 

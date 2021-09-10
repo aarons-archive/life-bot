@@ -48,7 +48,7 @@ class Todo(commands.Cog):
         await ctx.paginate_embed(
             entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in user_config.todos.values()],
             per_page=10,
-            title=f"Todo list for **{ctx.author}**:"
+            title=f"Todo list for **{ctx.author}**:",
         )
 
     @todo.command(name="list")
@@ -79,17 +79,16 @@ class Todo(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="You have 100 todos, try finishing some before adding any more."
+                description="You have 100 todos, try finishing some before adding any more.",
             )
 
         todo = await user_config.create_todo(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Todo **{todo.id}** created."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN, emoji=emojis.TICK, description=f"Todo **{todo.id}** created."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @todo.command(name="delete", aliases=["remove"])
     async def todo_delete(self, ctx: context.Context, todo_ids: commands.Greedy[int]) -> None:
@@ -131,7 +130,7 @@ class Todo(commands.Cog):
             entries=[f"[**`{todo.id}:`**]({todo.jump_url}) {todo.content}" for todo in todos],
             per_page=10,
             colour=colours.GREEN,
-            title=f"Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:"
+            title=f"Deleted **{len(todos)}** todo{'s' if len(todos) > 1 else ''}:",
         )
 
     @todo.command(name="clear")
@@ -154,12 +153,11 @@ class Todo(commands.Cog):
         for todo in user_config.todos.copy().values():
             await todo.delete()
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Cleared your todo list."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN, emoji=emojis.TICK, description="Cleared your todo list."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @todo.command(name="edit", aliases=["update"])
     async def todo_edit(self, ctx: context.Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:
@@ -190,9 +188,8 @@ class Todo(commands.Cog):
 
         await todo.change_content(content=str(content), jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Edited content of todo."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN, emoji=emojis.TICK, description="Edited content of todo."
+            )
         )
-        await ctx.reply(embed=embed)

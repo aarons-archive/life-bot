@@ -24,8 +24,13 @@ def is_mod() -> Callable[[T], T]:
                 commands.is_owner(),
                 checks.is_guild_owner(),
                 checks.has_any_permissions(
-                    manage_channels=True, manage_roles=True, manage_guild=True, kick_members=True, ban_members=True, administrator=True
-                )
+                    manage_channels=True,
+                    manage_roles=True,
+                    manage_guild=True,
+                    kick_members=True,
+                    ban_members=True,
+                    administrator=True,
+                ),
             ]
         ]
         errors = []

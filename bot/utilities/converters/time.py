@@ -13,7 +13,9 @@ from utilities import context, exceptions
 
 
 COLON_REGEX = re.compile(r"^(?:(?:(?P<hours>[01]?\d|2[0-3]):)?(?P<minutes>[0-5]?\d):)?(?P<seconds>[0-5]?\d)$")
-HUMAN_REGEX = re.compile(r"^(?:(?P<hours>[01]?\d|2[0-3])\s?(h|hour|hours)\s?)?(?:(?P<minutes>[0-5]?\d)\s?(m|min|mins|minutes)\s?)?(?:(?P<seconds>[0-5]?\d)\s?(s|sec|secs|seconds))?$")
+HUMAN_REGEX = re.compile(
+    r"^(?:(?P<hours>[01]?\d|2[0-3])\s?(h|hour|hours)\s?)?(?:(?P<minutes>[0-5]?\d)\s?(m|min|mins|minutes)\s?)?(?:(?P<seconds>[0-5]?\d)\s?(s|sec|secs|seconds))?$"
+)
 
 
 class TimeConverter(commands.Converter):

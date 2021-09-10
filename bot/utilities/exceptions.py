@@ -29,7 +29,7 @@ class EmbedError(LifeError):
         description: str | None = None,
         url: str | None = None,
         colour: discord.Colour = colours.MAIN,
-        emoji: str | None = None
+        emoji: str | None = None,
     ) -> None:
 
         self.embed = utils.embed(
@@ -44,5 +44,5 @@ class EmbedError(LifeError):
             description=description,
             url=url,
             colour=colour,
-            emoji=emoji
+            emoji=emoji,
         )

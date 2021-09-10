@@ -104,17 +104,18 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"There is already a tag with the name **{tag_check.name}**."
+                description=f"There is already a tag with the name **{tag_check.name}**.",
             )
 
         tag = await guild_config.create_tag(user_id=ctx.author.id, name=name, content=content, jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Created tag with name **{tag.name}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Created tag with name **{tag.name}**."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="alias")
     async def tag_alias(self, ctx: context.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
@@ -134,14 +135,14 @@ class Tags(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"There is already a tag with the name **{tag_check.name}**."
+                description=f"There is already a tag with the name **{tag_check.name}**.",
             )
 
         if not (original_tag := guild_config.get_tag(tag_name=original)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{original}** to alias too."
+                description=f"There are no tags with the name **{original}** to alias too.",
             )
 
         if original_tag.alias is not None:
@@ -149,12 +150,13 @@ class Tags(commands.Cog):
 
         tag = await guild_config.create_tag_alias(user_id=ctx.author.id, name=alias, original=original_tag.id, jump_url=ctx.message.jump_url)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Tag alias from **{tag.name}** to **{original}** was created."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Tag alias from **{tag.name}** to **{original}** was created.",
+            )
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="claim")
     async def tag_claim(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -183,12 +185,13 @@ class Tags(commands.Cog):
 
         await tag.change_owner(ctx.author.id)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description="Transferred tag to you."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description="Transferred tag to you."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="transfer")
     async def tag_transfer(self, ctx: context.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
@@ -230,12 +233,13 @@ class Tags(commands.Cog):
 
         await tag.change_owner(user_id=member.id)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Transferred tag from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Transferred tag from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**.",
+            )
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="edit")
     async def tag_edit(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
@@ -266,12 +270,13 @@ class Tags(commands.Cog):
 
         await tag.change_content(content)
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Edited content of tag with name **{name}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Edited content of tag with name **{name}**."
+            )
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="delete", aliases=["remove"])
     async def tag_delete(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -299,12 +304,12 @@ class Tags(commands.Cog):
 
         await tag.delete()
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=f"Deleted tag with name **{name}**."
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN,
+                emoji=emojis.TICK,
+                description=f"Deleted tag with name **{name}**.")
         )
-        await ctx.reply(embed=embed)
 
     @tag.command(name="search")
     async def tag_search(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
@@ -327,7 +332,7 @@ class Tags(commands.Cog):
         await ctx.paginate_embed(
             entries=[f"**{index + 1}.** {tag.name.replace(name, f'**{name}**')}" for index, tag in enumerate(tags)],
             per_page=25,
-            title=f"Tags matching: **{name}**"
+            title=f"Tags matching: **{name}**",
         )
 
     @tag.command(name="list")
@@ -352,7 +357,7 @@ class Tags(commands.Cog):
         await ctx.paginate_embed(
             entries=[f"**{index + 1}.** {tag.name}" for index, tag in enumerate(tags)],
             per_page=25,
-            title=f"Tags for **{member}:**"
+            title=f"Tags for **{member}:**",
         )
 
     @tag.command(name="all")
@@ -373,7 +378,7 @@ class Tags(commands.Cog):
         await ctx.paginate_embed(
             entries=[f"**{index + 1}.** {tag.name}" for index, tag in enumerate(tags)],
             per_page=25,
-            title=f"Tags for **{ctx.guild}:**"
+            title=f"Tags for **{ctx.guild}:**",
         )
 
     @tag.command(name="info")
@@ -396,13 +401,14 @@ class Tags(commands.Cog):
 
         owner = ctx.guild.get_member(tag.user_id)
 
-        embed = discord.Embed(
-            colour=colours.MAIN,
-            title=f"{tag.name}",
-            description=f"**Owner:** {owner.mention if owner else '*Not found*'} ({tag.user_id})\n"
-                        f"**Claimable:** {owner is None}\n"
-                        f"**Alias:** {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n"
-                        f"**Created on:** {utils.format_datetime(tag.created_at)}\n"
-                        f"**Created:** {utils.format_difference(tag.created_at)} ago\n"
+        await ctx.reply(
+            embed=discord.Embed(
+                colour=colours.MAIN,
+                title=f"{tag.name}",
+                description=f"**Owner:** {owner.mention if owner else '*Not found*'} ({tag.user_id})\n"
+                            f"**Claimable:** {owner is None}\n"
+                            f"**Alias:** {guild_config.get_tag(tag_id=tag.alias).name if tag.alias else None}\n"
+                            f"**Created on:** {utils.format_datetime(tag.created_at)}\n"
+                            f"**Created:** {utils.format_difference(tag.created_at)} ago\n",
+            )
         )
-        await ctx.reply(embed=embed)

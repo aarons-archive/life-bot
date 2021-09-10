@@ -17,16 +17,10 @@ class FilePaginator(paginators.BasePaginator):
         entries: list[functools.partial],
         timeout: int = 300,
         delete_message: bool = False,
-        header: str | None = None
+        header: str | None = None,
     ) -> None:
 
-        super().__init__(
-            ctx=ctx,
-            entries=entries,
-            per_page=1,
-            timeout=timeout,
-            delete_message=delete_message
-        )
+        super().__init__(ctx=ctx, entries=entries, per_page=1, timeout=timeout, delete_message=delete_message)
 
         self.header: str = header or ""
 

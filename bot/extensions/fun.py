@@ -32,7 +32,7 @@ MAGIC_8_BALL_RESPONSES = [
     "Definitely not",
     "WHAT, are you insane???",
     "Sorry I had you muted, can you ask me again?",
-    "I didn’t quite catch that, can you repeat?"
+    "I didn’t quite catch that, can you repeat?",
 ]
 
 RATES = [
@@ -50,7 +50,7 @@ RATES = [
     "9 :hot_face:",
     "10 :fire:",
     "100 :star_struck: :heart_eyes:",
-    "1000 :fire: :heart_eyes: :heart_on_fire: :heart_on_fire:"
+    "1000 :fire: :heart_eyes: :heart_on_fire: :heart_on_fire:",
 ]
 
 
@@ -114,7 +114,7 @@ class Fun(commands.Cog):
             reaction, _ = await self.bot.wait_for(
                 "reaction_add",
                 check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in CHOICES,
-                timeout=45.0
+                timeout=45.0,
             )
         except asyncio.TimeoutError:
             raise exceptions.EmbedError(
@@ -159,7 +159,7 @@ class Fun(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.UNKNOWN,
-                description="c'mon kid, you have to ask me something, how can I predict something from nothing?"
+                description="c'mon kid, you have to ask me something, how can I predict something from nothing?",
             )
 
         question = "".join(str(question).split("\n"))
@@ -195,7 +195,10 @@ class Fun(commands.Cog):
         if self.GAY_RATES.get(user.id) is None:
             self.GAY_RATES[user.id] = random.randint(1, 100)
 
-        await ctx.reply(f"{user.mention} is **{self.GAY_RATES[user.id]}%** gay :rainbow:", allowed_mentions=discord.AllowedMentions.none())
+        await ctx.reply(
+            f"{user.mention} is **{self.GAY_RATES[user.id]}%** gay :rainbow:",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @commands.command(name="iqrate", aliases=["iq-rate", "iq_rate"])
     async def iq_rate(self, ctx: context.Context, *, person: discord.User = utils.MISSING) -> None:

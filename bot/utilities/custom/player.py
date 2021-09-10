@@ -100,12 +100,13 @@ class Player(obsidian.ObsidianPlayer):
                     with async_timeout.timeout(timeout=120):
                         await self._queue_add_event.wait()
                 except asyncio.TimeoutError:
-                    embed = utils.embed(
-                        colour=colours.RED,
-                        emoji=emojis.CROSS,
-                        description="Nothing was added to the queue for two minutes, cya next time!"
+                    await self.send(
+                        embed=utils.embed(
+                            colour=colours.RED,
+                            emoji=emojis.CROSS,
+                            description="Nothing was added to the queue for two minutes, cya next time!",
+                        )
                     )
-                    await self.send(embed=embed)
                     await self.disconnect()
                     break
 
@@ -130,12 +131,13 @@ class Player(obsidian.ObsidianPlayer):
                 with async_timeout.timeout(timeout=5):
                     await self._track_start_event.wait()
             except asyncio.TimeoutError:
-                embed = utils.embed(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description=f"There was an error while playing the track [{self.current.title}]({self.current.uri})."
+                await self.send(
+                    embed=utils.embed(
+                        colour=colours.RED,
+                        emoji=emojis.CROSS,
+                        description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
+                    )
                 )
-                await self.send(embed=embed)
                 continue
 
             await self.invoke_controller()
@@ -169,14 +171,14 @@ class Player(obsidian.ObsidianPlayer):
                       f"`Loop mode:` {self.queue.loop_mode.name.title()}\n"
                       f"`Filter:` {getattr(self.filter, 'name', None)}\n"
                       f"`Queue entries:` {len(self.queue)}\n"
-                      f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n"
+                      f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n",
             ).add_field(
                 name="Track info:",
                 value=f"`Time:` {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
                       f"`Author:` {self.current.author}\n"
                       f"`Source:` {self.current.source.value.title()}\n"
                       f"`Requester:` {self.current.requester.mention}\n"
-                      f"`Seekable:` {self.current.is_seekable()}\n"
+                      f"`Seekable:` {self.current.is_seekable()}\n",
             )
 
             if not self.queue.is_empty():
@@ -193,12 +195,12 @@ class Player(obsidian.ObsidianPlayer):
                 name="Player info:",
                 value=f"`Paused:` {self.paused}\n"
                       f"`Loop mode:` {self.queue.loop_mode.name.title()}\n"
-                      f"`Filter:` {getattr(self.filter, 'name', None)}\n"
+                      f"`Filter:` {getattr(self.filter, 'name', None)}\n",
             ).add_field(
                 name="Track info:",
                 value=f"`Time:` {utils.format_seconds(seconds=self.position // 1000)} / {utils.format_seconds(seconds=self.current.length // 1000)}\n"
                       f"`Author:` {self.current.author}\n"
-                      f"`Source:` {self.current.source.value.title()}\n"
+                      f"`Source:` {self.current.source.value.title()}\n",
             )
 
         await self.send(embed=embed)
@@ -227,19 +229,27 @@ class Player(obsidian.ObsidianPlayer):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query."
+                description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query.",
             )
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources."
+                description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources.",
             )
 
         return search
 
-    async def queue_search(self, query: str, ctx: context.Context, source: slate.Source, now: bool = False, next: bool = False, choose: bool = False) -> None:
+    async def queue_search(
+        self,
+        query: str,
+        ctx: context.Context,
+        source: slate.Source,
+        now: bool = False,
+        next: bool = False,
+        choose: bool = False,
+    ) -> None:
 
         search = await self.search(query=query, ctx=ctx, source=source)
 
@@ -247,7 +257,7 @@ class Player(obsidian.ObsidianPlayer):
             choice = await ctx.choice(
                 entries=[f"`{index + 1:}:` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
                 per_page=10,
-                title="Select the number of the track you want to play:"
+                title="Select the number of the track you want to play:",
             )
             tracks = search.tracks[choice]
         else:
@@ -265,9 +275,8 @@ class Player(obsidian.ObsidianPlayer):
         else:
             description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
 
-        embed = utils.embed(
-            colour=colours.GREEN,
-            emoji=emojis.TICK,
-            description=description
+        await ctx.reply(
+            embed=utils.embed(
+                colour=colours.GREEN, emoji=emojis.TICK, description=description
+            )
         )
-        await ctx.reply(embed=embed)

@@ -45,5 +45,5 @@ class ReminderRepeatTypeConverter(commands.Converter):
         raise exceptions.EmbedError(
             colour=colours.RED,
             emoji=emojis.CROSS,
-            description=f"Repeat type must be one of:\n{f'{values.NL}'.join([f'- {v}' for v in valid])}"
+            description=f"Repeat type must be one of:\n{f'{values.NL}'.join([f'- {v}' for v in valid])}",
         )

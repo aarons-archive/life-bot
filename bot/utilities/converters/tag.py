@@ -12,6 +12,7 @@ from utilities import context, exceptions
 class TagNameConverter(commands.clean_content):
 
     async def convert(self, ctx: context.Context, argument: str) -> str:
+
         self.escape_markdown = True
 
         if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
@@ -21,7 +22,7 @@ class TagNameConverter(commands.clean_content):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"Tag names can not start with a tag subcommand name. ({', '.join(f'`{name}`' for name in names)})"
+                description=f"Tag names can not start with a tag subcommand name. ({', '.join(f'`{name}`' for name in names)})",
             )
         if len(argument) < 3 or len(argument) > 50:
             raise exceptions.EmbedError(

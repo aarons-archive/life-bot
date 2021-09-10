@@ -24,6 +24,7 @@ __log__: logging.Logger = logging.getLogger("utilities.objects.guild")
 class GuildConfig:
 
     def __init__(self, bot: Life, data: dict[str, Any]) -> None:
+
         self._bot = bot
 
         self._id: int = data["id"]
@@ -104,7 +105,11 @@ class GuildConfig:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO tags (user_id, guild_id, name, content, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-            user_id, self.id, name, content, jump_url
+            user_id,
+            self.id,
+            name,
+            content,
+            jump_url,
         )
 
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
@@ -116,7 +121,11 @@ class GuildConfig:
 
         data = await self.bot.db.fetchrow(
             "INSERT INTO tags (user_id, guild_id, name, alias, jump_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-            user_id, self.id, name, original, jump_url
+            user_id,
+            self.id,
+            name,
+            original,
+            jump_url,
         )
 
         tag = objects.Tag(bot=self.bot, guild_config=self, data=data)
@@ -146,7 +155,10 @@ class GuildConfig:
         return [tag for tag in self.tags.values() if tag.user_id == user_id]
 
     def get_tags_matching(self, name: str, *, limit: int = 5) -> list[objects.Tag] | None:
-        return [self.get_tag(tag_name=match) for match, _, _ in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)]
+        return [
+            self.get_tag(tag_name=match)
+            for match, _, _ in rapidfuzz.process.extract(query=name, choices=list(self.tags.keys()), processor=lambda t: t, limit=limit)
+        ]
 
     async def delete_tag(self, *, tag_name: str | None = None, tag_id: int | None = None) -> None:
 

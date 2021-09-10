@@ -40,7 +40,7 @@ VERIFICATION_LEVELS: dict[discord.VerificationLevel, str] = {
                                        "more than 10 minutes.",
     discord.VerificationLevel.highest: "Extreme - Must have a verified email, be registered on discord for more than 5 minutes, be a member of the server for "
                                        "more than 10 minutes, and have a "
-                                       "verified phone number."
+                                       "verified phone number.",
 }
 
 CONTENT_FILTER_LEVELS: dict[discord.ContentFilter, str] = {
@@ -58,7 +58,7 @@ NSFW_LEVELS: dict[discord.NSFWLevel, str] = {
     discord.NSFWLevel.default:        "Uncategorized",
     discord.NSFWLevel.explicit:       "Explicit - Contains NSFW content.",
     discord.NSFWLevel.safe:           "Safe - No NSFW content.",
-    discord.NSFWLevel.age_restricted: "Maybe - May contain NSFW content."
+    discord.NSFWLevel.age_restricted: "Maybe - May contain NSFW content.",
 }
 
 
@@ -111,7 +111,7 @@ class Information(commands.Cog):
                         f"**Rules channel:** {guild.rules_channel.mention if guild.rules_channel else 'Not set'}\n"
                         f"**Updates channel:** {guild.public_updates_channel.mention if guild.public_updates_channel else 'Not set'}\n"
                         f"**System channel:** {guild.system_channel.mention if guild.system_channel else 'Not set'}\n"
-                        f"**Preferred locale:** {guild.preferred_locale or 'Not set'}"
+                        f"**Preferred locale:** {guild.preferred_locale or 'Not set'}",
         ).set_footer(
             text=f"ID: {guild.id} | Owner ID: {guild.owner.id}"
         ).set_thumbnail(
@@ -141,7 +141,7 @@ class Information(commands.Cog):
                         f"**Mentionable:** {str(role.mentionable).replace('True', 'Yes').replace('False', 'No')}\n"
                         f"**Position (from bottom):** {role.position}\n"
                         f"**Colour:** {str(role.colour).upper()}\n"
-                        f"**Role members:** {len(role.members)}\n"
+                        f"**Role members:** {len(role.members)}\n",
         ).set_footer(
             text=f"ID: {role.id}"
         )
@@ -257,7 +257,7 @@ class Information(commands.Cog):
         await ctx.paginate(
             entries=[f"{role_name[:20] + (role_name[20:] and '..'):23} | {role_count}" for role_name, role_count in counts.items()],
             per_page=20,
-            codeblock=True
+            codeblock=True,
         )
 
     @commands.command(name="channels")
@@ -380,18 +380,25 @@ class Information(commands.Cog):
             colour=colours.MAIN,
             title="Ping:",
         ).add_field(
-            name="Websocket:", value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
+            name="Websocket:",
+            value=f"```py\n{self.bot.latency * 1000:.2f} ms\n```"
         ).add_field(
-            name="API:", value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
+            name="API:",
+            value=f"```py\n{(typing_end - typing_start) * 1000:.2f} ms\n```"
         ).add_field(
-            name="\u200B", value="\u200B"
+            name="\u200B",
+            value="\u200B"
         ).add_field(
-            name="PSQL:", value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
+            name="PSQL:",
+            value=f"```py\n{(db_end - db_start) * 1000:.2f} ms\n```"
         ).add_field(
-            name="Redis:", value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
+            name="Redis:",
+            value=f"```py\n{(redis_end - redis_start) * 1000:.2f} ms\n```"
         ).add_field(
-            name="\u200B", value="\u200B"
+            name="\u200B",
+            value="\u200B"
         )
+
         await ctx.reply(embed=embed)
 
     @commands.command(name="stats")
@@ -418,7 +425,7 @@ class Information(commands.Cog):
                         f"`aiohttp:` {pkg_resources.get_distribution('aiohttp').version}\n"
                         f"`slate:` {pkg_resources.get_distribution('slate').version}\n"
                         f"`pillow:` {pkg_resources.get_distribution('pillow').version}\n"
-                        f"`wand:` {pkg_resources.get_distribution('wand').version}\n"
+                        f"`wand:` {pkg_resources.get_distribution('wand').version}\n",
         )
         await ctx.reply(embed=embed)
 
@@ -440,43 +447,45 @@ class Information(commands.Cog):
             description=f"`OS:` {platform.platform()}\n"
                         f"`Python version:` {platform.python_version()} ({platform.python_implementation()})\n"
                         f"`Java version:` {java_version}\n"
-                        f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n"
+                        f"`Uptime:` {utils.format_seconds(time.time() - self.bot.start_time, friendly=True)}\n",
         ).add_field(
             name="System CPU:",
             value=f"`Frequency:` {round(cpu_freq.current, 2)} Mhz\n"
                   f"`Cores (logical):` {psutil.cpu_count()}\n"
-                  f"`Overall Usage:` {psutil.cpu_percent(interval=0.1)}%"
+                  f"`Overall Usage:` {psutil.cpu_percent(interval=0.1)}%",
         ).add_field(
             name="\u200B", value="\u200B"
         ).add_field(
             name="System Memory:",
             value=f"`Available:` {humanize.naturalsize(memory_info.available, binary=True)}\n"
                   f"`Total:` {humanize.naturalsize(memory_info.total, binary=True)}\n"
-                  f"`Used:` {humanize.naturalsize(memory_info.used, binary=True)}"
+                  f"`Used:` {humanize.naturalsize(memory_info.used, binary=True)}",
         ).add_field(
             name="System Disk:",
             value=f"`Total:` {humanize.naturalsize(disk_usage.total, binary=True)}\n"
                   f"`Used:` {humanize.naturalsize(disk_usage.used, binary=True)}\n"
-                  f"`Free:` {humanize.naturalsize(disk_usage.free, binary=True)}"
+                  f"`Free:` {humanize.naturalsize(disk_usage.free, binary=True)}",
         ).add_field(
             name="\u200B", value="\u200B"
         ).add_field(
             name="Process information:",
             value=f"`Memory usage:` {humanize.naturalsize(self.bot.process.memory_full_info().rss, binary=True)}\n"
                   f"`CPU usage:` {self.bot.process.cpu_percent()} %\n"
-                  f"`Threads:` {self.bot.process.num_threads()}"
+                  f"`Threads:` {self.bot.process.num_threads()}",
         )
+
         await ctx.reply(embed=embed)
 
     @commands.command(name="source", aliases=["src"])
     async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
 
         if not command:
-            embed = utils.embed(
-                emoji="\U0001f4da",
-                description=f"My source code can be viewed here: **{values.GITHUB_LINK}**"
+            await ctx.reply(
+                embed=utils.embed(
+                    emoji="\U0001f4da",
+                    description=f"My source code can be viewed here: **{values.GITHUB_LINK}**"
+                )
             )
-            await ctx.reply(embed=embed)
             return
 
         if command == "help":

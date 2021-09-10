@@ -31,9 +31,7 @@ class HelpCommand(commands.HelpCommand):
         return [
             command
             for command in cog.walk_commands()
-            if not command.hidden
-            and (not command.root_parent or not command.root_parent.hidden)
-            or self.context.author.id in config.OWNER_IDS
+            if not command.hidden and (not command.root_parent or not command.root_parent.hidden) or self.context.author.id in config.OWNER_IDS
         ]
 
     @staticmethod
@@ -77,7 +75,7 @@ class HelpCommand(commands.HelpCommand):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="This cog has no commands. (Or you are not allowed to see them)."
+                description="This cog has no commands. (Or you are not allowed to see them).",
             )
 
         entries = self.format_commands(unformatted_command=cog_commands)
@@ -99,7 +97,7 @@ class HelpCommand(commands.HelpCommand):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="That command has no subcommands that you are able to see."
+                description="That command has no subcommands that you are able to see.",
             )
 
         command_help = group.help if group.help else "No help provided for this command."
