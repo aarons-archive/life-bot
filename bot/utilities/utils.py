@@ -102,13 +102,12 @@ def badge_emojis(person: discord.User | discord.Member) -> str:
         badges.append(emojis.BOT)
 
     if isinstance(person, discord.Member):
+
         if person.premium_since:
             badges.append(emojis.BOOSTER)
-        if (
-            ((activity := discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)) is not None)
-            and activity.emoji
-            and activity.emoji.is_custom_emoji()
-        ):
+
+        activity: discord.CustomActivity | None = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities) # type: ignore
+        if activity is not None and activity.emoji and activity.emoji.is_custom_emoji():
             badges.append(emojis.NITRO)
 
     if person.avatar.is_animated() and emojis.NITRO not in badges:
@@ -281,7 +280,7 @@ async def safe_content(mystbin_client: mystbin.Client, content: str, *, syntax: 
         return content
 
     try:
-        paste = await mystbin_client.post(content, syntax=syntax)
+        paste = await mystbin_client.post(content, syntax=syntax)  # type: ignore
         return paste.url
     except mystbin.APIError:
         return content[:max_characters]
