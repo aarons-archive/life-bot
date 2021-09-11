@@ -35,7 +35,8 @@ __log__: logging.Logger = logging.getLogger("bot")
 
 CONVERTERS = {
     objects.Reminder:         converters.ReminderConverter,
-    enums.ReminderRepeatType: converters.ReminderRepeatTypeConverter,
+    enums.ReminderRepeatType: converters.EnumConverter(enums.ReminderRepeatType, "Repeat type"),
+    enums.NotificationType: converters.EnumConverter(enums.NotificationType, "Notification type"),
     Timezone:                 converters.TimezoneConverter,
 }
 
