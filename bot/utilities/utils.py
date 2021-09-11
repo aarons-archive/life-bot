@@ -252,6 +252,14 @@ def random_hex() -> str:
     return f"#{random.randint(0, 255):02X}{random.randint(0, 255):02X}{random.randint(0, 255):02X}"
 
 
+def readable_bool(value: bool) -> Literal["Yes", "No"]:
+
+    if value:
+        return "Yes"
+
+    return "No"
+
+
 #
 
 

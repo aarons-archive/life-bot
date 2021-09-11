@@ -60,6 +60,13 @@ class ReminderRepeatType(Enum):
     BI_YEARLY = EVERY_OTHER_YEAR
 
 
+class NotificationType(Enum):
+
+    LEVEL_UP = "level_ups"
+    LEVEL_UPS = LEVEL_UP
+    LEVELS = LEVEL_UP
+
+
 class Filters(Enum):
 
     ROTATION = 1

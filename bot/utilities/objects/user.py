@@ -295,7 +295,7 @@ class UserConfig:
             self.id,
             guild_id,
         )
-        member_config = objects.MemberConfig(bot=self.bot, user_config=self, data=data)
+        member_config = objects.MemberConfig(user_config=self, data=data)
 
         self._member_configs[member_config.guild_id] = member_config
 

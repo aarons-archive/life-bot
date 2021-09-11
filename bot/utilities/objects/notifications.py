@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 # My stuff
-from utilities import objects
+from utilities import enums, objects
 
 
 if TYPE_CHECKING:
@@ -51,3 +51,17 @@ class Notifications:
     @property
     def level_ups(self) -> bool:
         return self._level_ups
+
+    # Config
+
+    async def set_notification(self, _type: enums.NotificationType, status: bool) -> None:
+
+        _type_name = _type.value.lower()
+
+        data = await self.bot.db.fetchrow(
+            f"UPDATE notifications SET {_type_name} = $1 WHERE user_id = $2 RETURNING {_type_name}",
+            status,
+            self.user_id,
+        )
+
+        setattr(self, f"_{_type_name}", data[_type_name])
