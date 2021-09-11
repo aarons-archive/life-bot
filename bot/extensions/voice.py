@@ -694,7 +694,7 @@ class Voice(commands.Cog):
         except discord.Forbidden:
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I am unable to DM you.")
 
-    @commands.command(name="lyrics", aliases=["ly"])
+    @commands.command(name="lyrics", aliases=["ly"], enabled=False)
     async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
         """
         Displays lyrics for the given song.
