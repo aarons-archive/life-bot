@@ -39,11 +39,11 @@ class Economy(commands.Cog):
         member_config = await user_config.get_member_config(message.guild.id)
 
         xp = random.randint(10, 25)
+        await member_config.change_xp(xp, operation=enums.Operation.ADD)
 
         if xp >= member_config.needed_xp and user_config.notifications.level_ups:
             await message.reply(f"You are now level `{member_config.level}`!")
 
-        await member_config.change_xp(xp, operation=enums.Operation.ADD)
         await self.bot.redis.setex(name=f"{message.author.id}_{message.guild.id}_xp_gain", time=60, value="")
 
     #
