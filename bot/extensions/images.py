@@ -565,7 +565,7 @@ class Images(commands.Cog):
         await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree, reset_coords=True)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="sepia_tone", aliases=["st"])
+    @commands.command(name="sepia_tone", aliases=["sepia", "st"])
     async def sepia_tone(
         self,
         ctx: context.Context,
