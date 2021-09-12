@@ -10,7 +10,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import checks, context, enums, exceptions, utils
+from utilities import checks, context, converters, enums, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -194,10 +194,15 @@ class Settings(commands.Cog):
         )
 
     @notifications.command(name="enable", aliases=["e"])
-    async def notifications_enable(self, ctx: context.Context, *, notification_type: enums.NotificationType) -> None:
+    async def notifications_enable(self, ctx: context.Context, *, notification_type: enums.NotificationType = utils.MISSING) -> None:
         """
         Enables a notification type.
+
+        **notification_type**: The notification type to enable, if not passed, a list of a valid types will be displayed.
         """
+
+        if not notification_type:
+            await converters.EnumConverter(enums.NotificationType, "Notification type").convert(ctx, "a")  # this is a bad way to cause the error but whatever.
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         attr_name = notification_type.value.lower()
@@ -220,10 +225,15 @@ class Settings(commands.Cog):
         )
 
     @notifications.command(name="disable", aliases=["d"])
-    async def notifications_disable(self, ctx: context.Context, *, notification_type: enums.NotificationType) -> None:
+    async def notifications_disable(self, ctx: context.Context, *, notification_type: enums.NotificationType = utils.MISSING) -> None:
         """
         Disables a notification type.
+
+        **notification_type**: The notification type to disable, if not passed, a list of a valid types will be displayed.
         """
+
+        if not notification_type:
+            await converters.EnumConverter(enums.NotificationType, "Notification type").convert(ctx, "a")  # this is a bad way to cause the error but whatever.
 
         user_config = await self.bot.user_manager.get_config(ctx.author.id)
         attr_name = notification_type.value.lower()
