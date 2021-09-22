@@ -20,7 +20,6 @@ import ksoftapi
 import mystbin
 import psutil
 import slate
-import spotify
 from discord.ext import commands, ipc
 # noinspection PyUnresolvedReferences
 from discord.ext.alternatives import converter_dict
@@ -72,8 +71,6 @@ class Life(commands.AutoShardedBot):
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: ksoftapi.Client = ksoftapi.Client(api_key=config.KSOFT_TOKEN)
-        self.spotify: spotify.Client = spotify.Client(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
-        self.spotify_http: spotify.HTTPClient = spotify.HTTPClient(client_id=config.SPOTIFY_CLIENT_ID, client_secret=config.SPOTIFY_CLIENT_SECRET)
         self.slate: Type[slate.NodePool] = slate.NodePool
         self.ipc = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
 
@@ -180,8 +177,6 @@ class Life(commands.AutoShardedBot):
 
         await self.session.close()
         await self.ksoft.close()
-        await self.spotify.close()
-        await self.spotify_http.close()
 
         if self.db:
             await self.db.close()
@@ -201,5 +196,6 @@ class Life(commands.AutoShardedBot):
 
         await self.cogs["Voice"].load()  # type: ignore
 
-    async def on_ipc_error(self, endpoint: Any, error: Any) -> Any:
+    @staticmethod
+    async def on_ipc_error(endpoint: Any, error: Any) -> Any:
         print(endpoint, "raised", error)

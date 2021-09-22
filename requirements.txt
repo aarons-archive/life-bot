@@ -22,7 +22,6 @@ setproctitle>=1.2.2
 setuptools>=57.4.0
 https://github.com/Axelancerr/Slate/archive/main.zip
 soupsieve>=2.2.1
-https://github.com/Axelancerr/spotify.py/archive/master.zip
 wand>=0.6.7
 wheel>=0.37.0
 yarl>=1.6.3

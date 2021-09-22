@@ -106,7 +106,7 @@ def badge_emojis(person: discord.User | discord.Member) -> str:
         if person.premium_since:
             badges.append(emojis.BOOSTER)
 
-        activity: discord.CustomActivity | None = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities) # type: ignore
+        activity: discord.CustomActivity | None = discord.utils.find(lambda a: isinstance(a, discord.CustomActivity), person.activities)  # type: ignore
         if activity is not None and activity.emoji and activity.emoji.is_custom_emoji():
             badges.append(emojis.NITRO)
 
