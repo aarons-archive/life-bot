@@ -9,6 +9,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
+from core.bot import Life
 from utilities import context, exceptions
 
 
@@ -20,7 +21,7 @@ HUMAN_REGEX = re.compile(
 
 class TimeConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> int:
+    async def convert(self, ctx: context.Context[Life], argument: str) -> int:
 
         if (match := COLON_REGEX.match(argument)) or (match := HUMAN_REGEX.match(argument)):
 

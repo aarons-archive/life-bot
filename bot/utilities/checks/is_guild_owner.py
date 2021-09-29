@@ -8,6 +8,7 @@ from typing import Callable, TypeVar
 from discord.ext import commands
 
 # My stuff
+from core.bot import Life
 from utilities import context
 
 
@@ -16,7 +17,7 @@ T = TypeVar('T')
 
 def is_guild_owner() -> Callable[[T], T]:
 
-    def predicate(ctx: context.Context) -> bool:
+    def predicate(ctx: context.Context[Life]) -> bool:
         return ctx.guild is not None and ctx.guild.owner_id == ctx.author.id
 
     return commands.check(predicate)

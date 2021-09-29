@@ -16,18 +16,12 @@ from utilities import exceptions, paginators, utils
 
 
 if TYPE_CHECKING:
+
     # My stuff
-    from core.bot import Life
     from extensions.voice.custom.player import Player
 
 
 class Context(commands.Context):
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
-
-        self.message: discord.Message = kwargs["message"]
-        self.bot: Life = kwargs.get("bot")
 
     # Overwritten properties
 

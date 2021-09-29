@@ -8,6 +8,7 @@ from typing import Callable, TypeVar
 from discord.ext import commands
 
 # My stuff
+from core.bot import Life
 from utilities import context
 
 
@@ -16,7 +17,7 @@ T = TypeVar("T")
 
 def is_track_requester() -> Callable[[T], T]:
 
-    async def predicate(ctx: context.Context) -> bool:
+    async def predicate(ctx: context.Context[Life]) -> bool:
         return getattr(getattr(getattr(ctx.voice_client, "current", None), "requester", None), "id", None) == ctx.author.id
 
     return commands.check(predicate)

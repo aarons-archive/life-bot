@@ -9,6 +9,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
+from core.bot import Life
 from utilities import context, exceptions
 from utilities.checks.is_author_connected import is_author_connected
 
@@ -18,7 +19,7 @@ T = TypeVar("T")
 
 def has_voice_client(try_join: bool) -> Callable[[T], T]:
 
-    async def predicate(ctx: context.Context) -> Literal[True]:
+    async def predicate(ctx: context.Context[Life]) -> Literal[True]:
 
         if not ctx.voice_client or ctx.voice_client.is_connected() is False:
 

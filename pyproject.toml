@@ -61,6 +61,7 @@ reportInvalidStubStatement = "error"
 reportIncompleteStub = "error"
 reportUnsupportedDunderAll = "error"
 reportUnusedCallResult = "none"
+reportPrivateImportUsage = "none"
 reportUnusedCoroutine = "error"
 executionEnvironments = [
     { root = "code" },

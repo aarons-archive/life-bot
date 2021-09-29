@@ -9,6 +9,7 @@ import discord
 
 # My stuff
 from core import colours
+from core.bot import Life
 from utilities import context, paginators, utils
 
 
@@ -17,7 +18,7 @@ class EmbedPaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         entries: list[Any],
         per_page: int,
         timeout: int = 300,

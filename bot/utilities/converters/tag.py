@@ -6,12 +6,13 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
+from core.bot import Life
 from utilities import context, exceptions
 
 
 class TagNameConverter(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str) -> str:
+    async def convert(self, ctx: context.Context[Life], argument: str) -> str:
 
         self.escape_markdown = True
 
@@ -36,7 +37,7 @@ class TagNameConverter(commands.clean_content):
 
 class TagContentConverter(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str) -> str:
+    async def convert(self, ctx: context.Context[Life], argument: str) -> str:
 
         if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument

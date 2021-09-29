@@ -3,148 +3,80 @@ from __future__ import annotations
 
 # Standard Library
 import asyncio
+from typing import TYPE_CHECKING
 
 # Packages
 import async_timeout
 import discord
 import slate
-from slate import obsidian
-from slate.utils.queue import Item
+import slate.obsidian
 
 # My stuff
 from core import colours, config, emojis
-from core.bot import Life
 from utilities import context, enums, exceptions, utils
 
 
-class Queue(slate.Queue):
+if TYPE_CHECKING:
 
-    def __init__(self, player: Player) -> None:
+    # My stuff
+    from core.bot import Life
+
+
+class Queue(slate.Queue[slate.obsidian.Track]):
+
+    def __init__(self, player: Player, /) -> None:
+
         super().__init__()
-
-        self._player: Player = player
-
-    #
-
-    @property
-    def player(self) -> Player:
-        return self._player
+        self.player: Player = player
 
     #
 
-    def put(self, items: list[Item] | Item, *, position: int | None = None) -> None:
-        super().put(items=items, position=position)
+    def put(
+        self,
+        items: list[slate.obsidian.Track[context.Context[Life]]] | slate.obsidian.Track[context.Context[Life]],
+        /,
+        *,
+        position: int | None = None
+    ) -> None:
+
+        super().put(items, position=position)
 
         self.player._queue_add_event.set()
         self.player._queue_add_event.clear()
 
 
-class Player(obsidian.ObsidianPlayer):
+class Player(slate.obsidian.Player["Life", context.Context[Life], "Player"]):
 
-    def __init__(self, bot: Life, channel: discord.VoiceChannel) -> None:
-        super().__init__(bot, channel)
-
-        self._text_channel: discord.TextChannel | None = None
-
-        self._queue: Queue = Queue(player=self)
+    def __init__(
+        self,
+        client: Life,
+        channel: discord.VoiceChannel
+    ) -> None:
+        super().__init__(client, channel)
 
         self._queue_add_event: asyncio.Event = asyncio.Event()
         self._track_start_event: asyncio.Event = asyncio.Event()
         self._track_end_event: asyncio.Event = asyncio.Event()
 
+        self._queue: Queue = Queue(self)
+
+        self._text_channel: discord.TextChannel | None = None
         self._task: asyncio.Task | None = None
 
         self.skip_request_ids: set[int] = set()
-
         self.enabled_filters: set[enums.Filters] = set()
 
-    #
+    @property
+    def queue(self) -> Queue:
+        return self._queue
 
     @property
     def text_channel(self) -> discord.TextChannel | None:
         return self._text_channel
 
     @property
-    def voice_channel(self) -> discord.VoiceChannel | None:
+    def voice_channel(self) -> discord.VoiceChannel:
         return self.channel
-
-    @property
-    def queue(self) -> Queue:
-        return self._queue
-
-    #
-
-    async def connect(self, *, timeout: float | None = None, reconnect: bool | None = None, self_deaf: bool = True) -> None:
-
-        await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
-        self._task = asyncio.create_task(self.loop())
-
-    async def disconnect(self, *, force: bool = False) -> None:
-
-        await super().disconnect(force=force)
-        self._task.cancel()
-
-    #
-
-    async def loop(self) -> None:
-
-        while True:
-
-            self._queue_add_event.clear()
-            self._track_start_event.clear()
-            self._track_end_event.clear()
-
-            if self.queue.is_empty():
-
-                try:
-                    with async_timeout.timeout(timeout=120):
-                        await self._queue_add_event.wait()
-                except asyncio.TimeoutError:
-                    await self.send(
-                        embed=utils.embed(
-                            colour=colours.RED,
-                            emoji=emojis.CROSS,
-                            description="Nothing was added to the queue for two minutes, cya next time!",
-                        )
-                    )
-                    await self.disconnect()
-                    break
-
-            track = self.queue.get()
-
-            if track.source is slate.Source.SPOTIFY:
-
-                try:
-                    search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
-                except exceptions.EmbedError:
-                    try:
-                        search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE)
-                    except exceptions.EmbedError as error:
-                        await self.send(embed=error.embed)
-                        continue
-
-                track = search.tracks[0]
-
-            await self.play(track)
-
-            try:
-                with async_timeout.timeout(timeout=5):
-                    await self._track_start_event.wait()
-            except asyncio.TimeoutError:
-                await self.send(
-                    embed=utils.embed(
-                        colour=colours.RED,
-                        emoji=emojis.CROSS,
-                        description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
-                    )
-                )
-                continue
-
-            await self.invoke_controller()
-
-            await self._track_end_event.wait()
-
-            self._current = None
 
     #
 
@@ -161,7 +93,7 @@ class Player(obsidian.ObsidianPlayer):
             url=self.current.thumbnail
         )
 
-        guild_config = await self.bot.guild_manager.get_config(self.current.ctx.guild.id)
+        guild_config = await self.client.guild_manager.get_config(self.current.ctx.guild.id)
 
         if guild_config.embed_size is enums.EmbedSize.LARGE:
 
@@ -214,12 +146,17 @@ class Player(obsidian.ObsidianPlayer):
 
     #
 
-    async def search(self, query: str, ctx: context.Context, source: slate.Source) -> slate.SearchResult | None:
+    async def search(
+        self,
+        query: str,
+        ctx: context.Context[Life],
+        source: slate.Source
+    ) -> slate.obsidian.SearchResult[context.Context[Life]] | None:
 
         try:
-            search = await self.node.search(search=query, ctx=ctx, source=source)
+            search = await self._node.search(query, ctx=ctx, source=source)
 
-        except (slate.HTTPError, obsidian.ObsidianSearchError):
+        except (slate.HTTPError, slate.obsidian.SearchError):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -244,14 +181,14 @@ class Player(obsidian.ObsidianPlayer):
     async def queue_search(
         self,
         query: str,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         source: slate.Source,
         now: bool = False,
         next: bool = False,
         choose: bool = False,
     ) -> None:
 
-        search = await self.search(query=query, ctx=ctx, source=source)
+        search = await self.search(query, ctx=ctx, source=source)
 
         if choose:
             choice = await ctx.choice(
@@ -264,7 +201,7 @@ class Player(obsidian.ObsidianPlayer):
             tracks = search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks
 
         self.queue.put(
-            items=tracks,
+            tracks,
             position=0 if (now or next) else None
         )
         if now:
@@ -280,3 +217,88 @@ class Player(obsidian.ObsidianPlayer):
                 colour=colours.GREEN, emoji=emojis.TICK, description=description
             )
         )
+
+    #
+
+    async def connect(
+        self,
+        *,
+        timeout: float | None = None,
+        reconnect: bool | None = None,
+        self_deaf: bool = True
+    ) -> None:
+
+        await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
+        self._task = asyncio.create_task(self.loop())
+
+    async def disconnect(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
+
+        await super().disconnect(force=force)
+        self._task.cancel()
+
+    #
+
+    async def loop(self) -> None:
+
+        while True:
+
+            self._queue_add_event.clear()
+            self._track_start_event.clear()
+            self._track_end_event.clear()
+
+            if self.queue.is_empty():
+
+                try:
+                    with async_timeout.timeout(timeout=120):
+                        await self._queue_add_event.wait()
+
+                except asyncio.TimeoutError:
+                    await self.send(
+                        embed=utils.embed(
+                            colour=colours.RED,
+                            emoji=emojis.CROSS,
+                            description="Nothing was added to the queue for two minutes, cya next time!",
+                        )
+                    )
+                    await self.disconnect()
+                    break
+
+            track = self.queue.get()
+
+            if track.source is slate.Source.SPOTIFY:
+
+                try:
+                    search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE_MUSIC)
+                except exceptions.EmbedError:
+                    try:
+                        search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE)
+                    except exceptions.EmbedError as error:
+                        await self.send(embed=error.embed)
+                        continue
+
+                track = search.tracks[0]
+
+            await self.play(track)
+
+            try:
+                with async_timeout.timeout(timeout=5):
+                    await self._track_start_event.wait()
+            except asyncio.TimeoutError:
+                await self.send(
+                    embed=utils.embed(
+                        colour=colours.RED,
+                        emoji=emojis.CROSS,
+                        description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
+                    )
+                )
+                continue
+
+            await self.invoke_controller()
+
+            await self._track_end_event.wait()
+
+            self._current = None

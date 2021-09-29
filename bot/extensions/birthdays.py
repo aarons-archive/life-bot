@@ -22,9 +22,9 @@ class Birthdays(commands.Cog):
         self.bot = bot
 
     @commands.group(name="birthday", aliases=["bd"], invoke_without_command=True)
-    async def _birthday(self, ctx: context.Context, *, person: discord.Member = utils.MISSING) -> None:
+    async def _birthday(self, ctx: context.Context[Life], *, person: discord.Member = utils.MISSING) -> None:
         """
-        Display yours or another persons birthday.
+        Display yours or another person's birthday.
 
         **person**: The person to display the birthday of. Can be their ID, Username, Nickname or @Mention, If not provided than your birthday will be displayed.
         """
@@ -56,7 +56,7 @@ class Birthdays(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="set")
-    async def _birthday_set(self, ctx: context.Context, *, date: converters.DatetimeConverter) -> None:
+    async def _birthday_set(self, ctx: context.Context[Life], *, date: converters.DatetimeConverter) -> None:
         """
         Sets your birthday.
 
@@ -91,7 +91,7 @@ class Birthdays(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="reset")
-    async def _birthday_reset(self, ctx: context.Context) -> None:
+    async def _birthday_reset(self, ctx: context.Context[Life]) -> None:
         """
         Resets your birthday.
         """
@@ -108,7 +108,7 @@ class Birthdays(commands.Cog):
         )
 
     @_birthday.command(name="private")
-    async def _birthday_private(self, ctx: context.Context) -> None:
+    async def _birthday_private(self, ctx: context.Context[Life]) -> None:
         """
         Makes your birthday private.
         """
@@ -133,7 +133,7 @@ class Birthdays(commands.Cog):
         )
 
     @_birthday.command(name="public")
-    async def _birthday_public(self, ctx: context.Context) -> None:
+    async def _birthday_public(self, ctx: context.Context[Life]) -> None:
         """
         Makes your birthday public.
         """
@@ -159,7 +159,7 @@ class Birthdays(commands.Cog):
 
     @commands.guild_only()
     @_birthday.command(name="list", aliases=["upcoming"])
-    async def _birthday_list(self, ctx: context.Context) -> None:
+    async def _birthday_list(self, ctx: context.Context[Life]) -> None:
         """
         Displays a list of upcoming birthdays in the current server.
         """
@@ -187,7 +187,7 @@ class Birthdays(commands.Cog):
 
     @commands.guild_only()
     @_birthday.command(name="next")
-    async def _birthday_next(self, ctx: context.Context) -> None:
+    async def _birthday_next(self, ctx: context.Context[Life]) -> None:
         """
         Displays the next person to have a birthday in the current server.
         """
@@ -213,7 +213,7 @@ class Birthdays(commands.Cog):
 
     @commands.guild_only()
     @_birthday.command(name="card")
-    async def _birthday_card(self, ctx: context.Context) -> None:
+    async def _birthday_card(self, ctx: context.Context[Life]) -> None:
         """
         Creates an image with the birthday month of all servers members.
         """
@@ -225,7 +225,7 @@ class Birthdays(commands.Cog):
     # Aliases
 
     @commands.command(name="birthdays")
-    async def _birthdays(self, ctx: context.Context) -> None:
+    async def _birthdays(self, ctx: context.Context[Life]) -> None:
         """
         Displays a list of upcoming birthdays in the current server.
         """

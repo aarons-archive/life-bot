@@ -3,8 +3,8 @@ from __future__ import annotations
 
 # Standard Library
 import multiprocessing
-import multiprocessing.connection
 import sys
+from multiprocessing.connection import Connection
 from typing import Any, Callable, Literal
 
 # Packages
@@ -17,6 +17,7 @@ from wand.image import Image
 
 # My stuff
 from core import colours, emojis
+from core.bot import Life
 from utilities import context, exceptions, utils
 
 
@@ -215,7 +216,7 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
         return await request.read()
 
 
-async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
+async def edit_image(ctx: context.Context[Life], edit_function: Callable[..., Any], url: str, **kwargs) -> None:
 
     message = await ctx.reply(
         embed=utils.embed(
@@ -264,7 +265,7 @@ async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], ur
     del data
 
 
-def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: multiprocessing.connection.Connection, **kwargs) -> None:
+def do_edit_image(edit_function: Callable[..., Any], image_bytes: bytes, pipe: Connection, **kwargs) -> None:
 
     try:
         with Image(blob=image_bytes) as image, Color("transparent") as colour:

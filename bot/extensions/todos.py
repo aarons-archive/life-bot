@@ -23,7 +23,7 @@ class Todo(commands.Cog):
         self.bot = bot
 
     @commands.group(name="todo", aliases=["todos"], invoke_without_command=True)
-    async def todo(self, ctx: context.Context, *, content: Optional[str]) -> None:
+    async def todo(self, ctx: context.Context[Life], *, content: Optional[str]) -> None:
         """
         Creates a todo.
 
@@ -52,7 +52,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="list")
-    async def todo_list(self, ctx: context.Context) -> None:
+    async def todo_list(self, ctx: context.Context[Life]) -> None:
         """
         Shows your todos.
 
@@ -63,7 +63,7 @@ class Todo(commands.Cog):
         await ctx.invoke(self.todo, content=None)
 
     @todo.command(name="add", aliases=["make", "create"])
-    async def todo_add(self, ctx: context.Context, *, content: converters.TodoContentConverter) -> None:
+    async def todo_add(self, ctx: context.Context[Life], *, content: converters.TodoContentConverter) -> None:
         """
         Creates a todo.
 
@@ -91,7 +91,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="delete", aliases=["remove"])
-    async def todo_delete(self, ctx: context.Context, todo_ids: commands.Greedy[int]) -> None:
+    async def todo_delete(self, ctx: context.Context[Life], todo_ids: commands.Greedy[int]) -> None:
         """
         Deletes todos.
 
@@ -134,7 +134,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="clear")
-    async def todo_clear(self, ctx: context.Context) -> None:
+    async def todo_clear(self, ctx: context.Context[Life]) -> None:
         """
         Clears your todos.
 
@@ -160,7 +160,7 @@ class Todo(commands.Cog):
         )
 
     @todo.command(name="edit", aliases=["update"])
-    async def todo_edit(self, ctx: context.Context, todo_id: int, *, content: converters.TodoContentConverter) -> None:
+    async def todo_edit(self, ctx: context.Context[Life], todo_id: int, *, content: converters.TodoContentConverter) -> None:
         """
         Edits a todo.
 

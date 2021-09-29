@@ -22,7 +22,7 @@ class Reminders(commands.Cog):
         self.bot = bot
 
     @commands.command(name="remind", aliases=["remindme"])
-    async def remind(self, ctx: context.Context, *, when: converters.DatetimeConverter) -> None:
+    async def remind(self, ctx: context.Context[Life], *, when: converters.DatetimeConverter) -> None:
         """
         Creates a reminder.
 
@@ -68,7 +68,7 @@ class Reminders(commands.Cog):
         )
 
     @commands.group(name="reminders", aliases=["reminder"], invoke_without_command=True)
-    async def _reminders(self, ctx: context.Context) -> None:
+    async def _reminders(self, ctx: context.Context[Life]) -> None:
         """
         Base reminder command, displays a list of active reminders.
         """
@@ -97,7 +97,7 @@ class Reminders(commands.Cog):
         )
 
     @_reminders.command(name="list", aliases=["l"])
-    async def _reminders_list(self, ctx: context.Context) -> None:
+    async def _reminders_list(self, ctx: context.Context[Life]) -> None:
         """
         Alias of the base reminder command.
         """
@@ -105,7 +105,7 @@ class Reminders(commands.Cog):
         await ctx.invoke(self._reminders)
 
     @_reminders.command(name="all", aliases=["a"])
-    async def _reminders_all(self, ctx: context.Context) -> None:
+    async def _reminders_all(self, ctx: context.Context[Life]) -> None:
         """
         Displays a list of all your reminders.
         """
@@ -135,7 +135,7 @@ class Reminders(commands.Cog):
         )
 
     @_reminders.command(name="edit")
-    async def _reminders_edit(self, ctx: context.Context, reminder: objects.Reminder, *, content: str) -> None:
+    async def _reminders_edit(self, ctx: context.Context[Life], reminder: objects.Reminder, *, content: str) -> None:
         """
         Edits a reminders content.
 
@@ -157,7 +157,7 @@ class Reminders(commands.Cog):
         #
 
     @_reminders.command(name="delete")
-    async def _reminders_delete(self, ctx: context.Context, reminders: commands.Greedy[objects.Reminder]) -> None:
+    async def _reminders_delete(self, ctx: context.Context[Life], reminders: commands.Greedy[objects.Reminder]) -> None:
         """
         Deletes reminders with the given id's.
 
@@ -184,7 +184,7 @@ class Reminders(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_reminders.command(name="repeat")
-    async def _reminders_repeat(self, ctx: context.Context, reminder: objects.Reminder, *, repeat_type: enums.ReminderRepeatType) -> None:
+    async def _reminders_repeat(self, ctx: context.Context[Life], reminder: objects.Reminder, *, repeat_type: enums.ReminderRepeatType) -> None:
         """
         Edits a reminders repeat type.
 
@@ -210,7 +210,7 @@ class Reminders(commands.Cog):
         )
 
     @_reminders.command(name="info")
-    async def _reminders_info(self, ctx: context.Context, reminder: objects.Reminder) -> None:
+    async def _reminders_info(self, ctx: context.Context[Life], reminder: objects.Reminder) -> None:
         """
         Displays information about a reminder.
         """

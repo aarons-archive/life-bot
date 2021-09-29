@@ -6,12 +6,13 @@ import yarl
 from discord.ext import commands
 
 # My stuff
+from core.bot import Life
 from utilities import context, utils
 
 
 class ImageConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> str:
+    async def convert(self, ctx: context.Context[Life], argument: str) -> str:
 
         try:
             member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))
@@ -22,7 +23,7 @@ class ImageConverter(commands.Converter):
                 f"Editing **{member}**'s avatar. If this is a mistake please specify the user/image you would like to edit before any extra arguments."
             )
             return utils.avatar(member)
- 
+
         if (check := yarl.URL(argument)) and check.scheme and check.host:
             return argument
 

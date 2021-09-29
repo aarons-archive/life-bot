@@ -25,7 +25,7 @@ class Settings(commands.Cog):
     @commands.command(name="embedsize", aliases=["embed-size", "embed_size", "es"])
     async def embed_size(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         operation: Literal["set", "reset"] = utils.MISSING,
         size: Literal["large", "medium", "small"] = utils.MISSING,
     ) -> None:
@@ -87,7 +87,7 @@ class Settings(commands.Cog):
     @commands.command(name="prefixes", aliases=["prefix"])
     async def prefixes(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         operation: Literal["add", "remove", "reset", "clear"] = utils.MISSING,
         prefix: str = utils.MISSING,
     ) -> None:
@@ -179,7 +179,7 @@ class Settings(commands.Cog):
             )
 
     @commands.group(name="notifications", aliases=["notifs"], invoke_without_command=True)
-    async def notifications(self, ctx: context.Context) -> None:
+    async def notifications(self, ctx: context.Context[Life]) -> None:
         """
         Shows your current notification settings.
         """
@@ -194,7 +194,7 @@ class Settings(commands.Cog):
         )
 
     @notifications.command(name="enable", aliases=["e"])
-    async def notifications_enable(self, ctx: context.Context, *, notification_type: enums.NotificationType = utils.MISSING) -> None:
+    async def notifications_enable(self, ctx: context.Context[Life], *, notification_type: enums.NotificationType = utils.MISSING) -> None:
         """
         Enables a notification type.
 
@@ -225,7 +225,7 @@ class Settings(commands.Cog):
         )
 
     @notifications.command(name="disable", aliases=["d"])
-    async def notifications_disable(self, ctx: context.Context, *, notification_type: enums.NotificationType = utils.MISSING) -> None:
+    async def notifications_disable(self, ctx: context.Context[Life], *, notification_type: enums.NotificationType = utils.MISSING) -> None:
         """
         Disables a notification type.
 

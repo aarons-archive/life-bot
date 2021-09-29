@@ -18,7 +18,7 @@ from utilities import context, converters, exceptions, imaging, utils
 _old_transform = commands.Command.transform
 
 
-def _new_transform(self, ctx: context.Context, param: Parameter) -> Any:
+def _new_transform(self, ctx: context.Context[Life], param: Parameter) -> Any:
 
     if param.annotation is Optional[converters.ImageConverter]:
 
@@ -72,7 +72,7 @@ class Images(commands.Cog):
     @commands.command(name="blur")
     async def blur(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 10,
         sigma: float = 5
@@ -92,7 +92,7 @@ class Images(commands.Cog):
     @commands.command(name="adaptive_blur", aliases=["ab"])
     async def adaptive_blur(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 10,
         sigma: float = 5
@@ -112,7 +112,7 @@ class Images(commands.Cog):
     @commands.command(name="sharpen")
     async def sharpen(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 10,
         sigma: float = 5
@@ -132,7 +132,7 @@ class Images(commands.Cog):
     @commands.command(name="adaptive_sharpen", aliases=["as"])
     async def adaptive_sharpen(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 10,
         sigma: float = 5
@@ -152,12 +152,12 @@ class Images(commands.Cog):
     @commands.command(name="blueshift", aliases=["blue-shift", "blue_shift", "bs"])
     async def blueshift(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         factor: float = 1.25
     ) -> None:
         """
-        Creates a night time moonlight effect by shifting blue colour values.
+        Creates a nighttime moonlight effect by shifting blue colour values.
 
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
 
@@ -172,7 +172,7 @@ class Images(commands.Cog):
     @commands.command(name="border")
     async def border(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         colour: commands.ColourConverter = utils.MISSING,
         width: int = 20,
@@ -211,7 +211,7 @@ class Images(commands.Cog):
     @commands.command(name="colorize", aliases=["colourize", "colorise", "colourise"])
     async def colorize(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         colour: Optional[commands.ColourConverter]
     ) -> None:
@@ -238,7 +238,7 @@ class Images(commands.Cog):
     @commands.command(name="despeckle")
     async def despeckle(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -253,7 +253,7 @@ class Images(commands.Cog):
     @commands.command(name="floor")
     async def floor(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -268,7 +268,7 @@ class Images(commands.Cog):
     @commands.command(name="emboss")
     async def emboss(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 3,
         sigma: float = 1
@@ -288,7 +288,7 @@ class Images(commands.Cog):
     @commands.command(name="enhance")
     async def enhance(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -303,7 +303,7 @@ class Images(commands.Cog):
     @commands.command(name="flip")
     async def flip(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -318,7 +318,7 @@ class Images(commands.Cog):
     @commands.command(name="flop")
     async def flop(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -333,7 +333,7 @@ class Images(commands.Cog):
     @commands.command(name="frame")
     async def frame(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         colour: Optional[commands.ColourConverter],
         width: int = 20,
@@ -378,7 +378,7 @@ class Images(commands.Cog):
     @commands.command(name="implode", aliases=["explode"])
     async def implode(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         factor: float = 0.4,
         *,
@@ -399,7 +399,7 @@ class Images(commands.Cog):
     @commands.command(name="kmeans")
     async def kmeans(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         colors: int = 10
     ) -> None:
@@ -418,7 +418,7 @@ class Images(commands.Cog):
     @commands.command(name="kuwahara")
     async def kuwahara(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 5,
         sigma: float = 2.5
@@ -438,7 +438,7 @@ class Images(commands.Cog):
     @commands.command(name="motionblur", aliases=["motion-blur", "motion_blue", "mb"])
     async def motion_blur(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 30,
         sigma: float = 20,
@@ -459,7 +459,7 @@ class Images(commands.Cog):
     @commands.command(name="invert", aliases=["negate"])
     async def invert(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter]
     ) -> None:
         """
@@ -474,7 +474,7 @@ class Images(commands.Cog):
     @commands.command(name="noise")
     async def noise(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         attenuate: float = 0.5,
         method: imaging.NoiseTypes = "impulse",
@@ -498,7 +498,7 @@ class Images(commands.Cog):
     @commands.command(name="oil_paint", aliases=["op"])
     async def oil_paint(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 2,
         sigma: float = 1
@@ -518,7 +518,7 @@ class Images(commands.Cog):
     @commands.command(name="polaroid")
     async def polaroid(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         angle: float = 0,
         *,
@@ -548,7 +548,7 @@ class Images(commands.Cog):
     @commands.command(name="rotate")
     async def rotate(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         degree: int = 45
     ) -> None:
@@ -568,7 +568,7 @@ class Images(commands.Cog):
     @commands.command(name="sepia_tone", aliases=["sepia", "st"])
     async def sepia_tone(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         threshold: float = 0.8
     ) -> None:
@@ -588,7 +588,7 @@ class Images(commands.Cog):
     @commands.command(name="solarize")
     async def solarize(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         threshold: float = 0.5
     ) -> None:
@@ -608,7 +608,7 @@ class Images(commands.Cog):
     @commands.command(name="spread")
     async def spread(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         radius: float = 2.0,
         *,
@@ -630,7 +630,7 @@ class Images(commands.Cog):
     @commands.command(name="swirl")
     async def swirl(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         degree: int = 45,
         *,
@@ -652,7 +652,7 @@ class Images(commands.Cog):
     @commands.command(name="transparentize")
     async def transparentize(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         transparency: float = 0.5
     ) -> None:
@@ -672,7 +672,7 @@ class Images(commands.Cog):
     @commands.command(name="wave")
     async def wave(
         self,
-        ctx: context.Context,
+        ctx: context.Context[Life],
         image: Optional[converters.ImageConverter],
         *,
         method: imaging.PixelInterpolateMethods = "undefined",

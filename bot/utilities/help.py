@@ -7,6 +7,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, config, emojis, values
+from core.bot import Life
 from utilities import context, exceptions, utils
 
 
@@ -14,7 +15,7 @@ class HelpCommand(commands.HelpCommand):
 
     def __init__(self) -> None:
 
-        self.context: context.Context = utils.MISSING
+        self.context: context.Context[Life] = utils.MISSING
 
         super().__init__(
             command_attrs={

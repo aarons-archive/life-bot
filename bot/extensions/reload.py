@@ -32,7 +32,7 @@ class HotReload(commands.Cog):
 
         self.hot_reload_loop.start()
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         self.hot_reload_loop.stop()
 
     @tasks.loop(seconds=3)

@@ -6,12 +6,13 @@ import discord
 from discord.ext import commands
 
 # My stuff
+from core.bot import Life
 from utilities import context
 
 
 class PersonConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> discord.Member | discord.User:
+    async def convert(self, ctx: context.Context[Life], argument: str) -> discord.Member | discord.User:
 
         person = None
 

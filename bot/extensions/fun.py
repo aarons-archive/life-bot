@@ -32,7 +32,7 @@ MAGIC_8_BALL_RESPONSES = [
     "Definitely not",
     "WHAT, are you insane???",
     "Sorry I had you muted, can you ask me again?",
-    "I didn’t quite catch that, can you repeat?",
+    "I didn't quite catch that, can you repeat?",
 ]
 
 RATES = [
@@ -90,30 +90,30 @@ class Fun(commands.Cog):
     # Commands
 
     @commands.command(name="rps")
-    async def rps(self, ctx: context.Context) -> None:
+    async def rps(self, ctx: context.Context[Life]) -> None:
         """
         Play rock, paper, scissors with the bot.
         """
 
-        CHOICES = ["\U0001faa8", "\U0001f4f0", "\U00002702"]
-        MY_CHOICE = random.choice(CHOICES)
+        choices = ["\U0001faa8", "\U0001f4f0", "\U00002702"]
+        my_choice = random.choice(choices)
 
-        ROCK = "\U0001faa8"
-        PAPER = "\U0001f4f0"
-        SCISSORS = "\U00002702"
+        rock = "\U0001faa8"
+        paper = "\U0001f4f0"
+        scissors = "\U00002702"
 
-        LOSE = "You won! GG"
-        WIN = "I won! GG"
-        DRAW = "We both picked the same, It's a draw!"
+        lose = "You won! GG"
+        win = "I won! GG"
+        draw = "We both picked the same, It's a draw!"
 
         message = await ctx.reply("Let's see who wins!")
-        for choice in CHOICES:
+        for choice in choices:
             await message.add_reaction(choice)
 
         try:
             reaction, _ = await self.bot.wait_for(
                 "reaction_add",
-                check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in CHOICES,
+                check=lambda r, u: r.message.id == message.id and u.id == ctx.author.id and r.emoji in choices,
                 timeout=45.0,
             )
         except asyncio.TimeoutError:
@@ -123,36 +123,36 @@ class Fun(commands.Cog):
                 description="You took too long to respond!"
             )
 
-        if (player_choice := reaction.emoji) == ROCK:
-            if player_choice == MY_CHOICE:
-                await message.edit(content=DRAW)
-            elif MY_CHOICE == PAPER:
-                await message.edit(content=WIN)
-            elif MY_CHOICE == SCISSORS:
-                await message.edit(content=LOSE)
+        if (player_choice := reaction.emoji) == rock:
+            if player_choice == my_choice:
+                await message.edit(content=draw)
+            elif my_choice == paper:
+                await message.edit(content=win)
+            elif my_choice == scissors:
+                await message.edit(content=lose)
 
-        elif (player_choice := reaction.emoji) == PAPER:
-            if player_choice == MY_CHOICE:
-                await message.edit(content=DRAW)
-            elif MY_CHOICE == SCISSORS:
-                await message.edit(content=WIN)
-            elif MY_CHOICE == ROCK:
-                await message.edit(content=LOSE)
+        elif (player_choice := reaction.emoji) == paper:
+            if player_choice == my_choice:
+                await message.edit(content=draw)
+            elif my_choice == scissors:
+                await message.edit(content=win)
+            elif my_choice == rock:
+                await message.edit(content=lose)
 
-        elif (player_choice := reaction.emoji) == SCISSORS:
-            if player_choice == MY_CHOICE:
-                await message.edit(content=DRAW)
-            elif MY_CHOICE == ROCK:
-                await message.edit(content=WIN)
-            elif MY_CHOICE == PAPER:
-                await message.edit(content=LOSE)
+        elif (player_choice := reaction.emoji) == scissors:
+            if player_choice == my_choice:
+                await message.edit(content=draw)
+            elif my_choice == rock:
+                await message.edit(content=win)
+            elif my_choice == paper:
+                await message.edit(content=lose)
 
     @commands.command(name="8ball")
-    async def magic_8_ball(self, ctx: context.Context, *, question: str | None) -> None:
+    async def magic_8_ball(self, ctx: context.Context[Life], *, question: str | None) -> None:
         """
-        Ask the magic 8 ball a question.
+        Ask the magic 8-ball a question.
 
-        **question**: The question to ask the 8 ball.
+        **question**: The question to ask the 8-ball.
         """
 
         if not question:
@@ -170,7 +170,7 @@ class Fun(commands.Cog):
         await ctx.reply(self.MAGIC_8_BALL_PREDICTIONS[question])
 
     @commands.command(name="rate")
-    async def rate(self, ctx: context.Context, *, person: discord.User = utils.MISSING) -> None:
+    async def rate(self, ctx: context.Context[Life], *, person: discord.User = utils.MISSING) -> None:
         """
         Let the bot rate you, or someone else...
 
@@ -185,7 +185,7 @@ class Fun(commands.Cog):
         await ctx.reply(f"hmm...i rate {user.mention} a {self.RATES[user.id]}", allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(name="gayrate", aliases=["gay-rate", "gay_rate"])
-    async def gay_rate(self, ctx: context.Context, *, person: discord.User = utils.MISSING) -> None:
+    async def gay_rate(self, ctx: context.Context[Life], *, person: discord.User = utils.MISSING) -> None:
         """
         The bot will judge how gay you are...
         """
@@ -201,7 +201,7 @@ class Fun(commands.Cog):
         )
 
     @commands.command(name="iqrate", aliases=["iq-rate", "iq_rate"])
-    async def iq_rate(self, ctx: context.Context, *, person: discord.User = utils.MISSING) -> None:
+    async def iq_rate(self, ctx: context.Context[Life], *, person: discord.User = utils.MISSING) -> None:
         """
         Let the bot shame your IQ in front of everyone.
         """
@@ -214,7 +214,7 @@ class Fun(commands.Cog):
         await ctx.reply(f"{user.mention}'s IQ is **{self.IQ_RATES[user.id]}** :nerd:", allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(name="choose", aliases=["choice"])
-    async def choose(self, ctx: context.Context, *choices: commands.clean_content) -> None:
+    async def choose(self, ctx: context.Context[Life], *choices: commands.clean_content) -> None:
         """
         Chooses something from a list of choices.
 
@@ -231,7 +231,7 @@ class Fun(commands.Cog):
         await ctx.reply(random.choice(list(map(str, choices))))
 
     @commands.command(name="choosebestof", aliases=["cbo", "bestof"])
-    async def choosebestof(self, ctx: context.Context, times: Optional[int], *choices: commands.clean_content) -> None:
+    async def choosebestof(self, ctx: context.Context[Life], times: Optional[int], *choices: commands.clean_content) -> None:
         """
         Chooses the best option from a list of choices.
 

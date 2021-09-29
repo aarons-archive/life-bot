@@ -25,7 +25,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @commands.group(name="dev", hidden=True, invoke_without_command=True)
-    async def dev(self, ctx: context.Context) -> None:
+    async def dev(self, ctx: context.Context[Life]) -> None:
         """
         Base command for bot developer commands.
         """
@@ -34,7 +34,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @dev.command(name="cleanup", aliases=["clean"], hidden=True)
-    async def dev_cleanup(self, ctx: context.Context, limit: int = 100) -> None:
+    async def dev_cleanup(self, ctx: context.Context[Life], limit: int = 100) -> None:
         """
         Deletes the bots messages.
 
@@ -65,7 +65,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @dev.command(name="guilds", aliases=["g", "servers", "s"], hidden=True)
-    async def dev_guilds(self, ctx: context.Context) -> None:
+    async def dev_guilds(self, ctx: context.Context[Life]) -> None:
         """
         Displays a list of servers the bot is in.
         """
@@ -99,7 +99,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @dev.command(name="socketstats", aliases=["ss"], hidden=True)
-    async def dev_socket_stats(self, ctx: context.Context) -> None:
+    async def dev_socket_stats(self, ctx: context.Context[Life]) -> None:
         """
         Displays a list of socket event counts since bot startup.
         """
@@ -122,7 +122,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @commands.group(name="blacklist", aliases=["bl"], hidden=True, invoke_without_command=True)
-    async def blacklist(self, ctx: context.Context) -> None:
+    async def blacklist(self, ctx: context.Context[Life]) -> None:
         """
         Displays blacklisted users.
         """
@@ -148,7 +148,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist.command(name="add", hidden=True)
-    async def blacklist_add(self, ctx: context.Context, user: converters.PersonConverter, *, reason: str | None) -> None:
+    async def blacklist_add(self, ctx: context.Context[Life], user: converters.PersonConverter, *, reason: str | None) -> None:
         """
         Adds a user to the blacklist.
 
@@ -177,7 +177,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist.command(name="remove", hidden=True)
-    async def blacklist_remove(self, ctx: context.Context, user: converters.PersonConverter) -> None:
+    async def blacklist_remove(self, ctx: context.Context[Life], user: converters.PersonConverter) -> None:
         """
         Removes a user from the blacklist.
 

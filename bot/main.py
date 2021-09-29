@@ -8,6 +8,7 @@ import logging
 import logging.handlers
 import os
 import sys
+from collections.abc import Generator
 
 # Packages
 import setproctitle
@@ -24,13 +25,13 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = (f"\u001b[{30 + i}m" for
 
 
 @contextlib.contextmanager
-def logger():
+def logger() -> Generator[None, None, None]:
 
     loggers: dict[str, logging.Logger] = {
-        "discord":    logging.getLogger("discord"),
-        "bot":        logging.getLogger("bot"),
-        "extensions": logging.getLogger("extensions"),
-        "utilities":  logging.getLogger("utilities"),
+        # "discord":    logging.getLogger("discord"),
+        # "bot":        logging.getLogger("bot"),
+        # "extensions": logging.getLogger("extensions"),
+        # "utilities":  logging.getLogger("utilities"),
         "slate":      logging.getLogger("slate"),
     }
 
@@ -49,16 +50,16 @@ def logger():
         file_handler.setFormatter(file_formatter)
 
         stream_formatter = logging.Formatter(
-            fmt=f"{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s",
+            fmt=f"{CYAN}%(asctime)s{RESET} {YELLOW}[%(name) 30s]{RESET} {GREEN}[%(filename) 20s]{RESET} {BOLD}{REVERSE}{MAGENTA}[%(levelname) 7s]{RESET} %(message)s\n",
             datefmt="%I:%M:%S %p %d/%m/%Y",
         )
         stream_handler.setFormatter(stream_formatter)
 
-    loggers["discord"].setLevel(logging.INFO)
-    loggers["bot"].setLevel(logging.DEBUG)
-    loggers["extensions"].setLevel(logging.DEBUG)
-    loggers["utilities"].setLevel(logging.DEBUG)
-    loggers["slate"].setLevel(logging.INFO)
+    # loggers["discord"].setLevel(logging.INFO)
+    # loggers["bot"].setLevel(logging.DEBUG)
+    # loggers["extensions"].setLevel(logging.DEBUG)
+    # loggers["utilities"].setLevel(logging.DEBUG)
+    loggers["slate"].setLevel(logging.DEBUG)
 
     try:
         yield

@@ -77,7 +77,7 @@ class Information(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="serverinfo", aliases=["server-info", "server_info", "server", "guildinfo", "guild-info", "guild_info", "guild"])
-    async def server_info(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+    async def server_info(self, ctx: context.Context[Life], *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays information about the current server.
 
@@ -121,7 +121,7 @@ class Information(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="roleinfo", aliases=["role-info", "role_info", "role"])
-    async def role_info(self, ctx: context.Context, *, role: discord.Role = utils.MISSING) -> None:
+    async def role_info(self, ctx: context.Context[Life], *, role: discord.Role = utils.MISSING) -> None:
         """
         Displays information about the given role.
 
@@ -149,7 +149,7 @@ class Information(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="icon", aliases=["ico"])
-    async def icon(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+    async def icon(self, ctx: context.Context[Life], *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays the current servers icon.
 
@@ -180,7 +180,7 @@ class Information(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="banner")
-    async def banner(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+    async def banner(self, ctx: context.Context[Life], *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays the current servers banner.
 
@@ -211,7 +211,7 @@ class Information(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="splash")
-    async def splash(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+    async def splash(self, ctx: context.Context[Life], *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays the current servers invite splash screen.
 
@@ -241,7 +241,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="rolecounts", aliases=["role-counts", "role_counts", "roles", "rcs"])
-    async def role_counts(self, ctx: context.Context, server: discord.Guild = utils.MISSING, *, options: RoleCountOptions) -> None:
+    async def role_counts(self, ctx: context.Context[Life], server: discord.Guild = utils.MISSING, *, options: RoleCountOptions) -> None:
         """
         Displays roles and how many people have them within a server.
 
@@ -261,7 +261,7 @@ class Information(commands.Cog):
         )
 
     @commands.command(name="channels")
-    async def channels(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
+    async def channels(self, ctx: context.Context[Life], *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays a list of channels in a server.
 
@@ -290,7 +290,7 @@ class Information(commands.Cog):
     #
 
     @commands.command(name="userinfo", aliases=["user-info", "user_info", "user", "memberinfo", "member-info", "member_info", "member"])
-    async def user_info(self, ctx: context.Context, *, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def user_info(self, ctx: context.Context[Life], *, person: converters.PersonConverter = utils.MISSING) -> None:
         """
         Displays information about the given person.
 
@@ -334,9 +334,9 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="avatar", aliases=["avy"])
-    async def avatar(self, ctx: context.Context, *, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def avatar(self, ctx: context.Context[Life], *, person: converters.PersonConverter = utils.MISSING) -> None:
         """
-        Display a persons avatar.
+        Display a person's avatar.
 
         **person**: The person to get the avatar of. Can be their ID, Username, Nickname or @Mention. Defaults to you.
         """
@@ -359,7 +359,7 @@ class Information(commands.Cog):
     #
 
     @commands.command(name="ping")
-    async def ping(self, ctx: context.Context) -> None:
+    async def ping(self, ctx: context.Context[Life]) -> None:
         """
         Displays the bots various pings.
         """
@@ -402,7 +402,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="stats")
-    async def stats(self, ctx: context.Context) -> None:
+    async def stats(self, ctx: context.Context[Life]) -> None:
         """
         Display the bots stats.
         """
@@ -430,9 +430,9 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="system", aliases=["sys"])
-    async def system(self, ctx: context.Context) -> None:
+    async def system(self, ctx: context.Context[Life]) -> None:
         """
-        Display the bot"s system stats.
+        Display the bots' system stats.
         """
 
         cpu_freq: Any = psutil.cpu_freq()
@@ -477,7 +477,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="source", aliases=["src"])
-    async def source(self, ctx: context.Context, *, command: Optional[str]) -> None:
+    async def source(self, ctx: context.Context[Life], *, command: Optional[str]) -> None:
 
         if not command:
             await ctx.reply(
