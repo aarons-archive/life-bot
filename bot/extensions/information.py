@@ -113,7 +113,7 @@ class Information(commands.Cog):
                         f"**System channel:** {guild.system_channel.mention if guild.system_channel else 'Not set'}\n"
                         f"**Preferred locale:** {guild.preferred_locale or 'Not set'}",
         ).set_footer(
-            text=f"ID: {guild.id} | Owner ID: {guild.owner.id}"
+            text=f"ID: {guild.id} | Owner ID: {guild.owner.id if guild.owner else 'Unknown'}"
         ).set_thumbnail(
             url=utils.icon(guild)
         )
@@ -439,7 +439,8 @@ class Information(commands.Cog):
         memory_info = psutil.virtual_memory()
         disk_usage = psutil.disk_usage("/")
 
-        java_version = re.search(r'\"(\d+\.\d+).*\"', subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT).decode()).groups()[0]
+        java_search = re.search(r'\"(\d+\.\d+).*\"', subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT).decode())
+        java_version = java_search.groups()[0] if java_search else "Unknown"
 
         embed = discord.Embed(
             colour=colours.MAIN,

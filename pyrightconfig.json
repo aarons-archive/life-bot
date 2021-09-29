@@ -1,0 +1,54 @@
+{
+  "include": [
+    "bot"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "ignore": [],
+  "strict": [],
+
+  "venvPath": "venv",
+  "verboseOutput": false,
+  "extraPaths": [],
+  "pythonVersion": "3.10",
+  "pythonPlatform": "Windows",
+
+  "executionEnvironments": [
+    {
+      "root": "slate"
+    }
+  ],
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+
+  "strictListInference": true,
+  "strictDictionaryInference": true,
+  "strictSetInference": true,
+  "strictParameterNoneValue": true,
+  "reportMissingImports": false,
+  "reportMissingModuleSource": "error",
+  "reportUnusedImport": "none",
+  "reportUnusedClass": "error",
+  "reportUnusedFunction": "error",
+  "reportUnusedVariable": "error",
+  "reportDuplicateImport": "error",
+  "reportUntypedFunctionDecorator": "none",
+  "reportUntypedClassDecorator": "error",
+  "reportUntypedNamedTuple": "error",
+  "reportConstantRedefinition": "error",
+  "reportIncompatibleMethodOverride": "error",
+  "reportIncompatibleVariableOverride": "error",
+  "reportOverlappingOverload": "error",
+  "reportUninitializedInstanceVariable": "error",
+  "reportMissingTypeArgument": "error",
+  "reportInvalidTypeVarUse": "error",
+  "reportCallInDefaultInitializer": "error",
+  "reportUnnecessaryIsInstance": "error",
+  "reportUnnecessaryCast": "error",
+  "reportUnnecessaryComparison": "error",
+  "reportInvalidStubStatement": "error",
+  "reportIncompleteStub": "error",
+  "reportPrivateImportUsage": "none",
+}

@@ -110,7 +110,7 @@ def badge_emojis(person: discord.User | discord.Member) -> str:
         if activity is not None and activity.emoji and activity.emoji.is_custom_emoji():
             badges.append(emojis.NITRO)
 
-    if person.avatar.is_animated() and emojis.NITRO not in badges:
+    if person.avatar and person.avatar.is_animated() and emojis.NITRO not in badges:
         badges.append(emojis.NITRO)
 
     return " ".join(badges) if badges else "N/A"

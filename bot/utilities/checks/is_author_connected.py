@@ -9,6 +9,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
+from core.bot import Life
 from utilities import context, exceptions
 
 

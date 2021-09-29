@@ -54,7 +54,7 @@ class Settings(commands.Cog):
             if not size:
                 raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description=f"You didn't provide an embed size.")
 
-            embed_size = getattr(enums.EmbedSize, size.upper(), None)
+            embed_size = getattr(enums.EmbedSize, size.upper())
 
             if guild_config.embed_size is embed_size:
                 raise exceptions.EmbedError(
