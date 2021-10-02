@@ -3,11 +3,10 @@ from __future__ import annotations
 
 # Standard Library
 import math
-from typing import Literal, Optional
+from typing import Literal
 
 # Packages
 import discord
-import ksoftapi
 import slate
 from discord.ext import commands
 from slate import obsidian
@@ -98,33 +97,6 @@ class Voice(commands.Cog):
     async def on_obsidian_track_stuck(self, player: custom.Player, _: obsidian.TrackStuck) -> None:
         await player.handle_track_error()
 
-    # @commands.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, _: discord.VoiceState) -> None:
-
-        if not (guild := self.bot.get_guild(member.guild.id)):
-            return
-
-        # noinspection PyTypeChecker
-        voice_client: custom.Player = guild.voice_client
-        if not voice_client:
-            return
-
-        if not before.channel:
-            return
-
-        if before.channel.id != voice_client.voice_channel.id:
-            return
-
-        members = [m for m in voice_client.voice_channel.members if m.bot is False]
-        all_deafened = all(m.voice.self_deaf or m.voice.deaf for m in members)
-
-        if (not members or all_deafened) and voice_client.is_paused() is False:
-            await voice_client.set_pause(True)
-            return
-
-        if voice_client.is_paused() is True:
-            await voice_client.set_pause(False)
-
     # Join/Leave commands
 
     @commands.command(name="join", aliases=["summon", "connect"])
@@ -145,11 +117,7 @@ class Voice(commands.Cog):
         await ctx.author.voice.channel.connect(cls=custom.Player)
         ctx.voice_client._text_channel = ctx.channel
 
-        await ctx.send(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description=f"Joined {ctx.voice_client.voice_channel.mention}."
-            )
-        )
+        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Joined {ctx.voice_client.voice_channel.mention}."))
 
     @commands.command(name="disconnect", aliases=["dc", "leave", "destroy"])
     @checks.is_author_connected(same_channel=True)
@@ -159,12 +127,7 @@ class Voice(commands.Cog):
         Disconnects the bot its voice channel.
         """
 
-        await ctx.send(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description=f"Left {ctx.voice_client.voice_channel.mention}."
-            )
-        )
-
+        await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Left {ctx.voice_client.voice_channel.mention}."))
         await ctx.voice_client.disconnect()
 
     # Play commands
@@ -315,7 +278,7 @@ class Voice(commands.Cog):
         Pauses the current track.
         """
 
-        if ctx.voice_client.paused:
+        if ctx.voice_client.paused is True:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -323,12 +286,7 @@ class Voice(commands.Cog):
             )
 
         await ctx.voice_client.set_pause(True)
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.PAUSED, description="The player is now **paused**."
-            )
-        )
+        await ctx.reply(embed=utils.embed(emoji=emojis.PAUSED, description="The player is now **paused**."))
 
     @commands.command(name="resume", aliases=["continue", "unpause"])
     @checks.is_author_connected(same_channel=True)
@@ -346,12 +304,7 @@ class Voice(commands.Cog):
             )
 
         await ctx.voice_client.set_pause(False)
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.PLAYING, description="The player is now **resumed**."
-            )
-        )
+        await ctx.reply(embed=utils.embed(emoji=emojis.PLAYING, description="The player is now **resumed**."))
 
     # Seek commands
 
@@ -382,7 +335,6 @@ class Voice(commands.Cog):
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.SEEK_FORWARD,
                 description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
             )
@@ -410,14 +362,14 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"That is not a valid amount of time. Please choose an amount lower than **{utils.format_seconds(remaining // 1000, friendly=True)}**.",
+                description=f"That is not a valid amount of time. "
+                            f"Please choose an amount lower than **{utils.format_seconds(remaining // 1000, friendly=True)}**.",
             )
 
         await ctx.voice_client.set_position(position + milliseconds)
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.SEEK_FORWARD,
                 description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
             )
@@ -444,14 +396,14 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"That is not a valid amount of time. Please choose an amount lower than **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
+                description=f"That is not a valid amount of time. "
+                            f"Please choose an amount lower than **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
             )
 
         await ctx.voice_client.set_position(position - milliseconds)
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.SEEK_BACK,
                 description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
             )
@@ -471,7 +423,6 @@ class Voice(commands.Cog):
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.REPEAT,
                 description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
             )
@@ -495,7 +446,6 @@ class Voice(commands.Cog):
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.LOOP_CURRENT,
                 description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
             )
@@ -517,7 +467,6 @@ class Voice(commands.Cog):
 
         await ctx.reply(
             embed=utils.embed(
-                colour=colours.GREEN,
                 emoji=emojis.LOOP,
                 description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
             )
@@ -584,11 +533,7 @@ class Voice(commands.Cog):
 
             await ctx.voice_client.stop()
 
-            await ctx.reply(
-                embed=utils.embed(
-                    colour=colours.GREEN, emoji=emojis.NEXT, description="Skipped the current track."
-                )
-            )
+            await ctx.reply(embed=utils.embed(emoji=emojis.NEXT, description="Skipped the current track."))
             return
 
         if 0 <= amount > len(ctx.voice_client.queue) + 1:
@@ -618,12 +563,7 @@ class Voice(commands.Cog):
             ctx.voice_client.queue.get()
 
         await ctx.voice_client.stop()
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.NEXT, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."
-            )
-        )
+        await ctx.reply(embed=utils.embed(emoji=emojis.NEXT, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."))
 
     # Misc
 
@@ -655,106 +595,19 @@ class Voice(commands.Cog):
                 f"**Length:** {utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}\n"
                 f"**Live:** {ctx.voice_client.current.is_stream()}\n"
                 f"**Seekable:** {ctx.voice_client.current.is_seekable()}",
-            ).set_image(url=ctx.voice_client.current.thumbnail)
-            await ctx.author.send(embed=embed)
-
-            await ctx.reply(
-                embed=utils.embed(
-                    colour=colours.GREEN, emoji=emojis.TICK, description="Saved the current track to our DM's."
-                )
             )
+            embed.set_image(
+                url=ctx.voice_client.current.thumbnail
+            )
+            await ctx.author.send(embed=embed)
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Saved the current track to our DM's."))
 
         except discord.Forbidden:
-            raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I am unable to DM you.")
-
-    @commands.command(name="lyrics", aliases=["ly"], enabled=False)
-    async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
-        """
-        Displays lyrics for the given song.
-
-        **query**: The query to search for lyrics with, If not provided the bot will try to display lyrics for the song you are listening to on spotify, or the track playing in a voice chat the bot is in.
-
-        You can also force it to display lyrics from either of these by specifying the **query** argument as **spotify** or **player**.
-        """
-
-        def get_spotify_query() -> str | None:
-
-            if not (activity := discord.utils.find(lambda a: isinstance(a, discord.Spotify), ctx.author.activities)):
-                return None
-
-            featuring = f" feat.{' & '.join(activity.artists[1:])}" if len(activity.artists) > 1 else ""
-            return f"{activity.artist[:activity.artist.index(';')] if len(activity.artists) > 1 else activity.artist}{featuring} - {activity.title}"
-
-        def get_player_query() -> str | None:
-
-            if not ctx.voice_client or ctx.voice_client.is_playing() is False:
-                return None
-
-            return f"{ctx.voice_client.current.author} - {ctx.voice_client.current.title}"
-
-        if query == "spotify":
-            if not (query := get_spotify_query()):
-                raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description="You don't have an active spotify status to fetch lyrics from.",
-                )
-
-        elif query == "player":
-            if not (query := get_player_query()):
-                raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description="I am not playing a track in voice chat to fetch lyrics from.",
-                )
-
-        else:
-            if query is None and not (query := get_spotify_query()) and not (query := get_player_query()):
-                raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="You must provide a search term to find lyrics for.")
-
-        try:
-            results = await self.bot.ksoft.music.lyrics(query, limit=50)
-        except ksoftapi.NoResults:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"No results were found for the search **{query}**."
+                description="I am unable to DM you."
             )
-        except ksoftapi.APIError:
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description="The API used to fetch lyrics is currently unavailable."
-            )
-
-        choice = await ctx.choice(
-            entries=[f"`{index + 1}:` {result.artist} - {result.name}" for index, result in enumerate(results)],
-            per_page=10,
-            title="Type the number of the song that you want lyrics for:",
-            header=f"**Query:** {query}\n\n",
-        )
-        result = results[choice]
-
-        entries = []
-        for line in result.lyrics.split("\n"):
-
-            if not entries:
-                entries.append(line)
-                continue
-
-            last_entry = entries[-1]
-            if len(last_entry) >= 1000 or len(last_entry) + len(line) >= 1000:
-                entries.append(line)
-                continue
-
-            entries[-1] += f"\n{line}"
-
-        await ctx.paginate_embed(
-            entries=entries,
-            per_page=1,
-            title=f"Lyrics for **{result.name}** by **{result.artist}**:",
-            embed_footer="Lyrics provided by KSoft.Si API",
-        )
 
     # Queue commands
 
@@ -882,12 +735,7 @@ class Voice(commands.Cog):
         """
 
         ctx.voice_client.queue.clear()
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description="The queue has been cleared."
-            )
-        )
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="The queue has been cleared."))
 
     @commands.command(name="shuffle")
     @checks.queue_not_empty()
@@ -899,12 +747,7 @@ class Voice(commands.Cog):
         """
 
         ctx.voice_client.queue.shuffle()
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.SHUFFLE, description="The queue has been shuffled."
-            )
-        )
+        await ctx.reply(embed=utils.embed(emoji=emojis.SHUFFLE, description="The queue has been shuffled."))
 
     @commands.command(name="reverse")
     @checks.queue_not_empty()
@@ -916,12 +759,7 @@ class Voice(commands.Cog):
         """
 
         ctx.voice_client.queue.reverse()
-
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.DOUBLE_LEFT, description="The queue has been reversed."
-            )
-        )
+        await ctx.reply(embed=utils.embed(emoji=emojis.DOUBLE_LEFT, description="The queue has been reversed."))
 
     @commands.command(name="sort")
     @checks.queue_not_empty()
@@ -947,11 +785,7 @@ class Voice(commands.Cog):
         elif method == "length":
             ctx.voice_client.queue._queue.sort(key=lambda track: track.length, reverse=reverse)
 
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description=f"The queue has been sorted with method **{method}**."
-            )
-        )
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"The queue has been sorted with method **{method}**."))
 
     @commands.command(name="remove")
     @checks.queue_not_empty()
@@ -973,11 +807,7 @@ class Voice(commands.Cog):
 
         item = ctx.voice_client.queue.get(entry - 1, put_history=False)
 
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **[{item.title}]({item.uri})** from the queue."
-            )
-        )
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Removed **[{item.title}]({item.uri})** from the queue."))
 
     @commands.command(name="move")
     @checks.queue_not_empty()
