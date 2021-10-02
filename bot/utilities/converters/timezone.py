@@ -9,13 +9,12 @@ from pendulum.tz.timezone import Timezone
 
 # My stuff
 from core import colours
-from core.bot import Life
 from utilities import context, exceptions
 
 
 class TimezoneConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context[Life], argument: str) -> Timezone:
+    async def convert(self, ctx: context.Context, argument: str) -> Timezone:
 
         if argument not in pendulum.timezones:
             msg = "\n".join(f"- {match}" for match, _, _ in rapidfuzz.process.extract(query=argument, choices=pendulum.timezones))

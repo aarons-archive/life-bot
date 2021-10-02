@@ -10,7 +10,6 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, values
-from core.bot import Life
 from utilities import context, exceptions
 
 
@@ -23,7 +22,7 @@ class EnumConverter(commands.Converter, Generic[EnumType]):
         self.enum = enum
         self.name = name
 
-    async def convert(self, ctx: context.Context[Life], argument: str) -> EnumType:
+    async def convert(self, ctx: context.Context, argument: str) -> EnumType:
 
         if enum := getattr(self.enum, argument.replace(" ", "_").upper(), None):
             return enum

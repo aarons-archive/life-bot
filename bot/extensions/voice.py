@@ -88,45 +88,21 @@ class Voice(commands.Cog):
         player._track_start_event.set()
         player._track_start_event.clear()
 
+        await player.controller.send_new()
+
     @commands.Cog.listener()
     async def on_obsidian_track_end(self, player: custom.Player, _: obsidian.TrackEnd) -> None:
-
-        player._track_end_event.set()
-        player._track_end_event.clear()
-
-        player.skip_request_ids = set()
+        await player._handle_track_over()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_exception(self, player: custom.Player, event: obsidian.TrackException) -> None:
-
-        embed = utils.embed(
-            colour=colours.RED,
-            description=f"There was a **{event.severity}** error while playing the current track. "
-                        f"Join my [support server]({values.SUPPORT_LINK}) for more help.",
-        )
-        await player.send(embed=embed)
-
-        player._track_end_event.set()
-        player._track_end_event.clear()
-
-        player.skip_request_ids = set()
+    async def on_obsidian_track_exception(self, player: custom.Player, _: obsidian.TrackException) -> None:
+        await player._handle_track_error()
 
     @commands.Cog.listener()
     async def on_obsidian_track_stuck(self, player: custom.Player, _: obsidian.TrackStuck) -> None:
+        await player._handle_track_error()
 
-        embed = utils.embed(
-            colour=colours.RED,
-            description=f"Something went wrong while playing the current track. "
-                        f"Join my [support server]({values.SUPPORT_LINK}) for more help.",
-        )
-        await player.send(embed=embed)
-
-        player._track_end_event.set()
-        player._track_end_event.clear()
-
-        player.skip_request_ids = set()
-
-    @commands.Cog.listener()
+    # @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, _: discord.VoiceState) -> None:
 
         if not (guild := self.bot.get_guild(member.guild.id)):
@@ -157,7 +133,7 @@ class Voice(commands.Cog):
 
     @commands.command(name="join", aliases=["summon", "connect"])
     @checks.is_author_connected(same_channel=False)
-    async def join(self, ctx: context.Context[Life]) -> None:
+    async def join(self, ctx: context.Context) -> None:
         """
         Joins the bot to your voice channel.
         """
@@ -182,7 +158,7 @@ class Voice(commands.Cog):
     @commands.command(name="disconnect", aliases=["dc", "leave", "destroy"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def disconnect(self, ctx: context.Context[Life]) -> None:
+    async def disconnect(self, ctx: context.Context) -> None:
         """
         Disconnects the bot its voice channel.
         """
@@ -200,7 +176,7 @@ class Voice(commands.Cog):
     @commands.command(name="play", aliases=["p"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def play(self, ctx: context.Context[Life], query: str, *, options: Options) -> None:
+    async def play(self, ctx: context.Context, query: str, *, options: Options) -> None:
         """
         Queues tracks with the given name or url.
 
@@ -224,7 +200,7 @@ class Voice(commands.Cog):
     @commands.command(name="search")
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def search(self, ctx: context.Context[Life], query: str, *, options: Options) -> None:
+    async def search(self, ctx: context.Context, query: str, *, options: Options) -> None:
         """
         Choose which track to play based on a search.
 
@@ -250,7 +226,7 @@ class Voice(commands.Cog):
     @commands.command(name="youtubemusic", aliases=["youtube-music", "youtube_music", "ytmusic", "yt-music", "yt_music", "ytm"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def youtube_music(self, ctx: context.Context[Life], query: str, *, options: QueueOptions) -> None:
+    async def youtube_music(self, ctx: context.Context, query: str, *, options: QueueOptions) -> None:
         """
         Queues tracks from YouTube music with the given name or url.
 
@@ -271,7 +247,7 @@ class Voice(commands.Cog):
     @commands.command(name="soundcloud", aliases=["sc"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def soundcloud(self, ctx: context.Context[Life], query: str, *, options: QueueOptions) -> None:
+    async def soundcloud(self, ctx: context.Context, query: str, *, options: QueueOptions) -> None:
         """
         Queues tracks from soundcloud with the given name or url.
 
@@ -294,7 +270,7 @@ class Voice(commands.Cog):
     @commands.command(name="playnext", aliases=["play-next", "play_next", "pnext"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def play_next(self, ctx: context.Context[Life], query: str, *, options: SearchOptions) -> None:
+    async def play_next(self, ctx: context.Context, query: str, *, options: SearchOptions) -> None:
         """
         Queues tracks at the start of the queue.
 
@@ -315,7 +291,7 @@ class Voice(commands.Cog):
     @commands.command(name="playnow", aliases=["play-now", "play_now", "pnow"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
-    async def play_now(self, ctx: context.Context[Life], query: str, *, options: SearchOptions) -> None:
+    async def play_now(self, ctx: context.Context, query: str, *, options: SearchOptions) -> None:
         """
         Queues tracks and skips the current track.
 
@@ -338,7 +314,7 @@ class Voice(commands.Cog):
     @commands.command(name="pause", aliases=["stop"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def pause(self, ctx: context.Context[Life]) -> None:
+    async def pause(self, ctx: context.Context) -> None:
         """
         Pauses the current track.
         """
@@ -361,7 +337,7 @@ class Voice(commands.Cog):
     @commands.command(name="resume", aliases=["continue", "unpause"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def resume(self, ctx: context.Context[Life]) -> None:
+    async def resume(self, ctx: context.Context) -> None:
         """
         Resumes the current track.
         """
@@ -388,7 +364,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def seek(self, ctx: context.Context[Life], *, time: converters.TimeConverter) -> None:
+    async def seek(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
         """
         Seeks to a position in the current track.
 
@@ -421,7 +397,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def forward(self, ctx: context.Context[Life], *, time: converters.TimeConverter) -> None:
+    async def forward(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
         """
         Seeks forward on the current track.
 
@@ -456,7 +432,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def rewind(self, ctx: context.Context[Life], *, time: converters.TimeConverter) -> None:
+    async def rewind(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
         """
         Seeks backward on the current track.
 
@@ -490,7 +466,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def replay(self, ctx: context.Context[Life]) -> None:
+    async def replay(self, ctx: context.Context) -> None:
         """
         Seeks to the start of the current track.
         """
@@ -511,7 +487,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def loop(self, ctx: context.Context[Life]) -> None:
+    async def loop(self, ctx: context.Context) -> None:
         """
         Loops the current track.
         """
@@ -533,7 +509,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def queueloop(self, ctx: context.Context[Life]) -> None:
+    async def queueloop(self, ctx: context.Context) -> None:
         """
         Loops the queue.
         """
@@ -572,7 +548,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def skip(self, ctx: context.Context[Life], amount: int = 1) -> None:
+    async def skip(self, ctx: context.Context, amount: int = 1) -> None:
         """
         Votes to skip the current track.
         """
@@ -658,7 +634,7 @@ class Voice(commands.Cog):
     @commands.command(name="nowplaying", aliases=["np"])
     @checks.is_voice_client_playing()
     @checks.has_voice_client(try_join=False)
-    async def nowplaying(self, ctx: context.Context[Life]) -> None:
+    async def nowplaying(self, ctx: context.Context) -> None:
         """
         Shows the player controller.
         """
@@ -668,7 +644,7 @@ class Voice(commands.Cog):
     @commands.command(name="save", aliases=["grab", "yoink"])
     @checks.is_voice_client_playing()
     @checks.has_voice_client(try_join=False)
-    async def save(self, ctx: context.Context[Life]) -> None:
+    async def save(self, ctx: context.Context) -> None:
         """
         Saves the current track to your DM's.
         """
@@ -696,7 +672,7 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(colour=colours.RED, emoji=emojis.CROSS, description="I am unable to DM you.")
 
     @commands.command(name="lyrics", aliases=["ly"], enabled=False)
-    async def lyrics(self, ctx: context.Context[Life], *, query: Optional[str]) -> None:
+    async def lyrics(self, ctx: context.Context, *, query: Optional[str]) -> None:
         """
         Displays lyrics for the given song.
 
@@ -789,7 +765,7 @@ class Voice(commands.Cog):
     @commands.group(name="queue", aliases=["q"], invoke_without_command=True)
     @checks.queue_not_empty()
     @checks.has_voice_client(try_join=False)
-    async def queue(self, ctx: context.Context[Life]) -> None:
+    async def queue(self, ctx: context.Context) -> None:
         """
         Displays the queue.
         """
@@ -810,7 +786,7 @@ class Voice(commands.Cog):
     @queue.command(name="detailed", aliases=["d"])
     @checks.queue_not_empty()
     @checks.has_voice_client(try_join=False)
-    async def queue_detailed(self, ctx: context.Context[Life]) -> None:
+    async def queue_detailed(self, ctx: context.Context) -> None:
         """
         Displays detailed information about the queue.
         """
@@ -838,7 +814,7 @@ class Voice(commands.Cog):
 
     @queue.group(name="history", invoke_without_command=True)
     @checks.has_voice_client(try_join=False)
-    async def queue_history(self, ctx: context.Context[Life]) -> None:
+    async def queue_history(self, ctx: context.Context) -> None:
         """
         Displays the queue history.
         """
@@ -865,7 +841,7 @@ class Voice(commands.Cog):
 
     @queue_history.command(name="detailed", aliases=["d"])
     @checks.has_voice_client(try_join=False)
-    async def queue_history_detailed(self, ctx: context.Context[Life]) -> None:
+    async def queue_history_detailed(self, ctx: context.Context) -> None:
         """
         Displays detailed information about the queue history.
         """
@@ -904,7 +880,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def clear(self, ctx: context.Context[Life]) -> None:
+    async def clear(self, ctx: context.Context) -> None:
         """
         Clears the queue.
         """
@@ -921,7 +897,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def shuffle(self, ctx: context.Context[Life]) -> None:
+    async def shuffle(self, ctx: context.Context) -> None:
         """
         Shuffles the queue.
         """
@@ -938,7 +914,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def reverse(self, ctx: context.Context[Life]) -> None:
+    async def reverse(self, ctx: context.Context) -> None:
         """
         Reverses the queue.
         """
@@ -955,7 +931,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def sort(self, ctx: context.Context[Life], method: Literal["title", "length", "author"], reverse: bool = False) -> None:
+    async def sort(self, ctx: context.Context, method: Literal["title", "length", "author"], reverse: bool = False) -> None:
         """
         Sorts the queue.
 
@@ -985,7 +961,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def remove(self, ctx: context.Context[Life], entry: int = 0) -> None:
+    async def remove(self, ctx: context.Context, entry: int = 0) -> None:
         """
         Removes a track from the queue.
 
@@ -1011,7 +987,7 @@ class Voice(commands.Cog):
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def move(self, ctx: context.Context[Life], entry_1: int = 0, entry_2: int = 0) -> None:
+    async def move(self, ctx: context.Context, entry_1: int = 0, entry_2: int = 0) -> None:
         """
         Move a track in the queue to a different position.
 
@@ -1049,7 +1025,7 @@ class Voice(commands.Cog):
     @commands.command(name="8d")
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def _8d(self, ctx: context.Context[Life]) -> None:
+    async def _8d(self, ctx: context.Context) -> None:
         """
         Sets an 8D audio filter on the player.
         """
@@ -1081,7 +1057,7 @@ class Voice(commands.Cog):
     @commands.command(name="nightcore")
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def nightcore(self, ctx: context.Context[Life]) -> None:
+    async def nightcore(self, ctx: context.Context) -> None:
         """
         Sets a nightcore audio filter on the player.
         """

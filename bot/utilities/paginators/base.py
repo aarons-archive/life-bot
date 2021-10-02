@@ -10,7 +10,6 @@ import discord
 
 # My stuff
 from core import config, emojis, values
-from core.bot import Life
 from utilities import context
 
 
@@ -93,7 +92,7 @@ class BasePaginator(abc.ABC):
     def __init__(
         self,
         *,
-        ctx: context.Context[Life],
+        ctx: context.Context,
         entries: list[Any],
         per_page: int,
         timeout: int = 300,
@@ -102,7 +101,7 @@ class BasePaginator(abc.ABC):
         splitter: str = "\n",
     ) -> None:
 
-        self.ctx: context.Context[Life] = ctx
+        self.ctx: context.Context = ctx
         self.entries: list[Any] = entries
         self.per_page: int = per_page
 

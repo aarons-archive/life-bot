@@ -9,7 +9,6 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
-from core.bot import Life
 from utilities import context, exceptions
 
 
@@ -18,7 +17,7 @@ T = TypeVar("T")
 
 def is_author_connected(same_channel: bool) -> Callable[[T], T]:
 
-    async def predicate(ctx: context.Context[Life]) -> Literal[True]:
+    async def predicate(ctx: context.Context) -> Literal[True]:
 
         author_channel = ctx.author.voice and ctx.author.voice.channel
         voice_client_channel = ctx.voice_client and ctx.voice_client.voice_channel

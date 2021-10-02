@@ -30,7 +30,7 @@ class Time(commands.Cog):
 
     @commands.guild_only()
     @commands.command(name="times")
-    async def times(self, ctx: context.Context[Life]) -> None:
+    async def times(self, ctx: context.Context) -> None:
         """
         Displays a list of people and their timezones.
         """
@@ -54,7 +54,7 @@ class Time(commands.Cog):
         )
 
     @commands.command(name="timezones", aliases=["tzs"])
-    async def timezones(self, ctx: context.Context[Life]) -> None:
+    async def timezones(self, ctx: context.Context) -> None:
         """
         Displays a list of timezones that can be used with the bot.
         """
@@ -69,7 +69,7 @@ class Time(commands.Cog):
     #
 
     @commands.group(name="timezone", aliases=["time"], invoke_without_command=True)
-    async def _timezone(self, ctx: context.Context[Life], *, timezone: Optional[str]) -> None:
+    async def _timezone(self, ctx: context.Context, *, timezone: Optional[str]) -> None:
         """
         Displays the time of the user or timezone provided.
 
@@ -119,7 +119,7 @@ class Time(commands.Cog):
 
     @commands.guild_only()
     @_timezone.command(name="card")
-    async def _timezone_card(self, ctx: context.Context[Life]) -> None:
+    async def _timezone_card(self, ctx: context.Context) -> None:
         """
         Creates an image with the timezones of all servers members.
         """
@@ -129,7 +129,7 @@ class Time(commands.Cog):
             await ctx.reply(file=file)
 
     @_timezone.command(name="set")
-    async def _timezone_set(self, ctx: context.Context[Life], *, timezone: Timezone) -> None:
+    async def _timezone_set(self, ctx: context.Context, *, timezone: Timezone) -> None:
         """
         Sets your timezone.
 
@@ -147,7 +147,7 @@ class Time(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="reset")
-    async def _timezone_reset(self, ctx: context.Context[Life]) -> None:
+    async def _timezone_reset(self, ctx: context.Context) -> None:
         """
         Resets your timezone.
         """
@@ -163,7 +163,7 @@ class Time(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_timezone.command(name="private")
-    async def _timezone_private(self, ctx: context.Context[Life]) -> None:
+    async def _timezone_private(self, ctx: context.Context) -> None:
         """
         Make your timezone private.
         """
@@ -186,7 +186,7 @@ class Time(commands.Cog):
         )
 
     @_timezone.command(name="public")
-    async def _timezone_public(self, ctx: context.Context[Life]) -> None:
+    async def _timezone_public(self, ctx: context.Context) -> None:
         """
         Make your timezone public.
         """

@@ -71,8 +71,7 @@ class Life(commands.AutoShardedBot):
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: ksoftapi.Client = ksoftapi.Client(api_key=config.KSOFT_TOKEN)
-        self.slate: Type[obsidian.NodePool[Life, context.Context[Life], custom.Player]] = obsidian.NodePool
-
+        self.slate: Type[obsidian.NodePool[Life, context.Context, custom.Player]] = obsidian.NodePool
         self.ipc = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
 
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
@@ -130,7 +129,7 @@ class Life(commands.AutoShardedBot):
 
         await self.invoke(ctx)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[context.Context[Life]] = context.Context) -> context.Context[Life]:
+    async def get_context(self, message: discord.Message, *, cls: Type[context.Context] = context.Context) -> context.Context:
         return await super().get_context(message=message, cls=cls)
 
     async def is_owner(self, user: discord.User | discord.Member) -> bool:

@@ -6,13 +6,12 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
-from core.bot import Life
 from utilities import context, exceptions, objects
 
 
 class ReminderConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context[Life], argument: str) -> objects.Reminder:
+    async def convert(self, ctx: context.Context, argument: str) -> objects.Reminder:
 
         try:
             reminder_id = int(argument)

@@ -6,13 +6,12 @@ import yarl
 from discord.ext import commands
 
 # My stuff
-from core.bot import Life
 from utilities import context, utils
 
 
 class ImageConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context[Life], argument: str) -> str:
+    async def convert(self, ctx: context.Context, argument: str) -> str:
 
         try:
             member = await commands.MemberConverter().convert(ctx=ctx, argument=str(argument))

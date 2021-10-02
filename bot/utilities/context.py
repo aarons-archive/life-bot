@@ -18,10 +18,11 @@ from utilities import exceptions, paginators, utils
 if TYPE_CHECKING:
 
     # My stuff
+    from core.bot import Life
     from extensions.voice.custom.player import Player
 
 
-class Context(commands.Context):
+class Context(commands.Context["Life"]):
 
     # Overwritten properties
 

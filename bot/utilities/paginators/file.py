@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 
 # My stuff
-from core.bot import Life
 from utilities import context, paginators, utils
 
 
@@ -14,7 +13,7 @@ class FilePaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context[Life],
+        ctx: context.Context,
         entries: list[functools.partial],
         timeout: int = 300,
         delete_message: bool = False,

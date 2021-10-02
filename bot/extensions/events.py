@@ -91,7 +91,7 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: context.Context[Life], error: Any) -> discord.Message | None:
+    async def on_command_error(self, ctx: context.Context, error: Any) -> discord.Message | None:
 
         error = getattr(error, "original", error)
 
@@ -168,7 +168,7 @@ class Events(commands.Cog):
         else:
             await self.handle_traceback(ctx, error)
 
-    async def handle_traceback(self, ctx: context.Context[Life], exception: Exception) -> None:
+    async def handle_traceback(self, ctx: context.Context, exception: Exception) -> None:
 
         embed = utils.embed(
             colour=colours.RED,

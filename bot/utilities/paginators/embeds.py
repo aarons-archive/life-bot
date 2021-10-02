@@ -8,7 +8,6 @@ from typing import Any
 import discord
 
 # My stuff
-from core.bot import Life
 from utilities import context, paginators
 
 
@@ -17,7 +16,7 @@ class EmbedsPaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context[Life],
+        ctx: context.Context,
         entries: list[Any],
         timeout: int = 300,
         delete_message: bool = False,
