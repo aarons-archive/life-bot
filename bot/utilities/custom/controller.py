@@ -35,8 +35,8 @@ class Controller:
         if (channel is None and self.player.text_channel is None) or self.player.current is None:
             return
 
-        channel = channel or self.player.text_channel
-        guild_config = await self.player.client.guild_manager.get_config(channel.guild.id)
+        text_channel = channel or self.player.text_channel
+        guild_config = await self.player.client.guild_manager.get_config(text_channel.guild.id)
 
         embed = utils.embed(
             title="Now playing:",
@@ -67,7 +67,7 @@ class Controller:
 
             embed.add_field(name="Up next:", value="\n".join(entries), inline=False)
 
-        return await channel.send(embed=embed)
+        return await text_channel.send(embed=embed)
 
     #
 

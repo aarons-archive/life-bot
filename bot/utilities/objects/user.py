@@ -156,7 +156,7 @@ class UserConfig:
 
         data = await self.bot.db.fetchrow(
             "UPDATE users SET timezone = $1, timezone_private = $2 WHERE id = $3 RETURNING timezone, timezone_private",
-            timezone.name,
+            timezone.name if timezone else None,
             private,
             self.id,
         )

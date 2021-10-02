@@ -23,7 +23,7 @@ class PaginatorButtons(discord.ui.View):
     # Overridden
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
+        return interaction.user is not None and interaction.user.id in {*config.OWNER_IDS, self.paginator.ctx.author.id}
 
     async def on_timeout(self) -> None:
         self.stop()

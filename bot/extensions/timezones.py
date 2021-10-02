@@ -158,7 +158,7 @@ class Time(commands.Cog):
         embed = utils.embed(
             colour=colours.GREEN,
             emoji=emojis.TICK,
-            description=f"Your timezone has been reset back to **{user_config.timezone.name}**.",
+            description=f"Your timezone has been reset back to **{None}**.",
         )
         await ctx.reply(embed=embed)
 

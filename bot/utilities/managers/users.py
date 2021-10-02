@@ -437,7 +437,7 @@ class UserManager:
 
         for member, timezone, time in timezones:
 
-            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+            avatar_bytes = io.BytesIO(await (member.display_avatar.replace(format="png", size=256)).read())
             timezone = time.format("HH:mm (ZZ)")
 
             if users := timezone_avatars.get(timezone, []):
@@ -473,7 +473,7 @@ class UserManager:
 
         for member, birthday, _, _ in birthdays:
 
-            avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+            avatar_bytes = io.BytesIO(await (member.display_avatar.replace(format="png", size=256)).read())
             birthday_month = birthday.format("MMMM")
 
             if users := birthday_avatars.get(birthday_month, []):

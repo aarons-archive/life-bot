@@ -147,7 +147,9 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
     ) -> None:
 
         await super().disconnect(force=force)
-        self._task.cancel()
+
+        if self._task is not None and self._task.done() is False:
+            self._task.cancel()
 
     #
 
