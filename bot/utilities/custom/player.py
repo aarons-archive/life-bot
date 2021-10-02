@@ -227,7 +227,7 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 colour=colours.RED,
                 description=f"Something went wrong while playing a track. ",
             ),
-            view=views.SupportButton
+            view=views.SupportButton()
         )
 
         await self.handle_track_over()
