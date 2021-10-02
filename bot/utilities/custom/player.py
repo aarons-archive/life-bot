@@ -10,6 +10,7 @@ import async_timeout
 import discord
 import slate
 import slate.obsidian
+import yarl
 
 # My stuff
 from core import colours, config, emojis
@@ -59,8 +60,11 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         self,
         query: str,
         ctx: context.Context,
-        source: slate.Source
-    ) -> slate.obsidian.SearchResult[context.Context] | None:
+        source: slate.Source | None
+    ) -> slate.obsidian.SearchResult[context.Context]:
+
+        if (url := yarl.URL(query)) is not None and url.host and url.scheme:
+            source = None
 
         try:
             search = await self._node.search(query, ctx=ctx, source=source)
@@ -71,11 +75,18 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 emoji=emojis.CROSS,
                 description="There was an error while searching for results."
             )
+
         except slate.NoMatchesFound as error:
+
+            if error.source:
+                message = f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query."
+            else:
+                message = f"No results were found for your query.",
+
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query.",
+                description=message,
             )
 
         if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
@@ -109,23 +120,16 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         else:
             tracks = search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks
 
-        self.queue.put(
-            tracks,
-            position=0 if (now or next) else None
-        )
+        self.queue.put(tracks, position=0 if (now or next) else None)
         if now:
             await self.stop()
 
         if search.type is slate.SearchType.TRACK or isinstance(search.result, list):
             description = f"Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue."
         else:
-            description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.url}) to the queue."
+            description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.uri}) to the queue."
 
-        await ctx.reply(
-            embed=utils.embed(
-                colour=colours.GREEN, emoji=emojis.TICK, description=description
-            )
-        )
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description))
 
     #
 
@@ -182,6 +186,7 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                     )
                     await self.send(embed=embed)
                     await self.disconnect()
+
                     break
 
             track = self.queue.get()
@@ -203,12 +208,15 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                     await self._track_start_event.wait()
 
             except asyncio.TimeoutError:
-                embed = utils.embed(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
-                )
-                await self.send(embed=embed)
+
+                if self.current:
+                    embed = utils.embed(
+                        colour=colours.RED,
+                        emoji=emojis.CROSS,
+                        description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
+                    )
+                    await self.send(embed=embed)
+
                 continue
 
             await self._track_end_event.wait()
