@@ -12,8 +12,8 @@ import slate
 import slate.obsidian
 
 # My stuff
-from core import colours, config, emojis, values
-from utilities import context, custom, enums, exceptions, utils
+from core import colours, config, emojis
+from utilities import context, custom, enums, exceptions, utils, views
 
 
 if TYPE_CHECKING:
@@ -215,12 +215,13 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
 
     async def _handle_track_error(self) -> None:
 
-        embed = utils.embed(
-            colour=colours.RED,
-            description=f"Something went wrong while playing a track. "
-                        f"Join my [support server]({values.SUPPORT_LINK}) for more help.",
+        await self.send(
+            embed=utils.embed(
+                colour=colours.RED,
+                description=f"Something went wrong while playing a track. ",
+            ),
+            view=views.SupportButton
         )
-        await self.send(embed=embed)
 
         await self._handle_track_over()
 

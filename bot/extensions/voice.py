@@ -13,7 +13,7 @@ from discord.ext import commands
 from slate import obsidian
 
 # My stuff
-from core import colours, config, emojis, values
+from core import colours, config, emojis
 from core.bot import Life
 from utilities import checks, context, converters, custom, enums, exceptions, utils
 
@@ -639,7 +639,7 @@ class Voice(commands.Cog):
         Shows the player controller.
         """
 
-        await ctx.voice_client.invoke_controller()
+        await ctx.voice_client.controller.send_new()
 
     @commands.command(name="save", aliases=["grab", "yoink"])
     @checks.is_voice_client_playing()

@@ -27,7 +27,6 @@ class Controller:
     ) -> None:
 
         self.player: custom.Player = player
-
         self.message: discord.Message | None = None
 
     async def send_new(self) -> None:
