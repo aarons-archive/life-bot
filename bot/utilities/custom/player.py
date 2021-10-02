@@ -213,7 +213,14 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
 
     #
 
-    async def _handle_track_error(self) -> None:
+    async def handle_track_start(self) -> None:
+
+        self._track_start_event.set()
+        self._track_start_event.clear()
+
+        await self.controller.handle_track_start()
+
+    async def handle_track_error(self) -> None:
 
         await self.send(
             embed=utils.embed(
@@ -223,13 +230,13 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
             view=views.SupportButton
         )
 
-        await self._handle_track_over()
+        await self.handle_track_over()
 
-    async def _handle_track_over(self) -> None:
+    async def handle_track_over(self) -> None:
 
         self._track_end_event.set()
         self._track_end_event.clear()
 
-        self._skip_request_ids = set()
+        self.skip_request_ids = set()
 
-        await self.controller.edit_old()
+        await self.controller.handle_track_over()

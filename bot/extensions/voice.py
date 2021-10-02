@@ -84,23 +84,19 @@ class Voice(commands.Cog):
 
     @commands.Cog.listener()
     async def on_obsidian_track_start(self, player: custom.Player, _: obsidian.TrackStart) -> None:
-
-        player._track_start_event.set()
-        player._track_start_event.clear()
-
-        await player.controller.send_new()
+        await player.handle_track_start()
 
     @commands.Cog.listener()
     async def on_obsidian_track_end(self, player: custom.Player, _: obsidian.TrackEnd) -> None:
-        await player._handle_track_over()
+        await player.handle_track_over()
 
     @commands.Cog.listener()
     async def on_obsidian_track_exception(self, player: custom.Player, _: obsidian.TrackException) -> None:
-        await player._handle_track_error()
+        await player.handle_track_error()
 
     @commands.Cog.listener()
     async def on_obsidian_track_stuck(self, player: custom.Player, _: obsidian.TrackStuck) -> None:
-        await player._handle_track_error()
+        await player.handle_track_error()
 
     # @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, _: discord.VoiceState) -> None:
@@ -639,7 +635,7 @@ class Voice(commands.Cog):
         Shows the player controller.
         """
 
-        await ctx.voice_client.controller.send_new()
+        await ctx.voice_client.controller.invoke(ctx.channel)
 
     @commands.command(name="save", aliases=["grab", "yoink"])
     @checks.is_voice_client_playing()
