@@ -54,7 +54,7 @@ class Controller:
         embed.add_field(
             name="Track info:",
             value=f"`Time:` {utils.format_seconds(self.player.position // 1000)} / {utils.format_seconds(self.player.current.length // 1000)}\n"
-                  f"`Author:` {self.player.current.author}\n"
+                  f"`Is Stream:` {self.player.current.is_stream()}\n"
                   f"`Source:` {self.player.current.source.value.title()}\n"
                   f"`Requester:` {self.player.current.requester.mention}\n"
         )
