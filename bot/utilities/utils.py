@@ -18,10 +18,14 @@ import pendulum
 
 # My stuff
 from core import colours, config, emojis, values
+from typings import common
 from utilities import exceptions
 
 
-def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.DateTime:
+def convert_datetime(
+    datetime: dt.datetime | pendulum.DateTime,
+    /
+) -> pendulum.DateTime:
 
     datetime.replace(microsecond=0)
 
@@ -31,19 +35,38 @@ def convert_datetime(datetime: dt.datetime | pendulum.DateTime) -> pendulum.Date
     return pendulum.instance(datetime, tz="UTC")
 
 
-def format_datetime(datetime: dt.datetime | pendulum.DateTime, *, seconds: bool = False) -> str:
+def format_datetime(
+    datetime: dt.datetime | pendulum.DateTime,
+    /,
+    *,
+    seconds: bool = False
+) -> str:
+
     return convert_datetime(datetime).format(f"dddd MMMM Do YYYY [at] hh:mm{':ss' if seconds else ''} A")
 
 
-def format_date(date: pendulum.Date) -> str:
+def format_date(
+    date: pendulum.Date,
+    /
+) -> str:
+
     return date.format("dddd MMMM Do YYYY")
 
 
-def format_time(time: pendulum.Time) -> str:
+def format_time(
+    time: pendulum.Time,
+    /
+) -> str:
+
     return time.format("hh:mm:ss")
 
 
-def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tuple[str] = ('seconds',)) -> str:
+def format_difference(
+    datetime: dt.datetime | pendulum.DateTime,
+    /,
+    *,
+    suppress: tuple[str] = ('seconds',)
+) -> str:
 
     datetime = convert_datetime(datetime)
 
@@ -53,7 +76,12 @@ def format_difference(datetime: dt.datetime | pendulum.DateTime, *, suppress: tu
     return humanize.precisedelta(now.diff(datetime), format="%0.0f", suppress=suppress)
 
 
-def format_seconds(seconds: float, *, friendly: bool = False) -> str:
+def format_seconds(
+    seconds: float,
+    /,
+    *,
+    friendly: bool = False
+) -> str:
 
     seconds = round(seconds)
 
@@ -67,6 +95,53 @@ def format_seconds(seconds: float, *, friendly: bool = False) -> str:
         return f"{f'{days}d ' if not days == 0 else ''}{f'{hours}h ' if not hours == 0 or not days == 0 else ''}{minutes}m {seconds}s"
 
     return f"{f'{days:02d}:' if not days == 0 else ''}{f'{hours:02d}:' if not hours == 0 or not days == 0 else ''}{minutes:02d}:{seconds:02d}"
+
+
+def avatar(
+    person: discord.User | discord.Member,
+    /,
+    *,
+    format: common.ImageFormat | None = None,
+    size: int = 1024,
+) -> str:
+
+    return str(person.display_avatar.replace(format=format or ("gif" if person.display_avatar.is_animated() else "png"), size=size))
+
+
+def icon(
+    guild: discord.Guild,
+    /,
+    *,
+    format: common.ImageFormat | None = None,
+    size: int = 1024
+) -> str | None:
+
+    return str(guild.icon.replace(format=format or ("gif" if guild.icon.is_animated() else "png"), size=size)) if guild.icon else None
+
+
+def banner(
+    guild: discord.Guild,
+    /,
+    *,
+    format: common.ImageFormat | None = None,
+    size: int = 1024
+) -> str | None:
+
+    return str(guild.banner.replace(format=format or ("gif" if guild.banner.is_animated() else "png"), size=size)) if guild.banner else None
+
+
+def splash(
+    guild: discord.Guild,
+    /,
+    *,
+    format: common.ImageFormat | None = None,
+    size: int = 1024
+) -> str | None:
+
+    return str(guild.splash.replace(format=format or ("gif" if guild.splash.is_animated() else "png"), size=size)) if guild.splash else None
+
+
+#
 
 
 def channel_emoji(
@@ -155,27 +230,6 @@ def activities(member: discord.Member) -> str:  # sourcery no-metrics
             message.append(f"• {f'{activity.emoji} ' if activity.emoji else ''}{f'{activity.name}' if activity.name else ''}")
 
     return "\n".join(message)
-
-
-def avatar(
-    person: discord.User | discord.Member,
-    *,
-    format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None,
-    size: int = 1024,
-) -> str | None:
-    return str(person.avatar.replace(format=format or ("gif" if person.avatar.is_animated() else "png"), size=size)) if person.avatar else None
-
-
-def icon(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
-    return str(guild.icon.replace(format=format or ("gif" if guild.icon.is_animated() else "png"), size=size)) if guild.icon else None
-
-
-def banner(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
-    return str(guild.banner.replace(format=format or ("gif" if guild.banner.is_animated() else "png"), size=size)) if guild.banner else None
-
-
-def splash(guild: discord.Guild, *, format: Literal["webp", "jpeg", "jpg", "png", "gif"] | None = None, size: int = 1024) -> str | None:
-    return str(guild.splash.replace(format=format or ("gif" if guild.splash.is_animated() else "png"), size=size)) if guild.splash else None
 
 
 def voice_region(obj: discord.VoiceChannel | discord.StageChannel | discord.Guild) -> str:
