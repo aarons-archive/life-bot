@@ -19,6 +19,7 @@ import discord
 import ksoftapi
 import mystbin
 import psutil
+import topgg
 from discord.ext import commands, ipc
 # noinspection PyUnresolvedReferences
 from discord.ext.alternatives import converter_dict
@@ -72,7 +73,13 @@ class Life(commands.AutoShardedBot):
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: ksoftapi.Client = ksoftapi.Client(api_key=config.KSOFT_TOKEN)
         self.slate: Type[obsidian.NodePool[Life, context.Context, custom.Player]] = obsidian.NodePool
-        self.ipc = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
+        self.ipc: ipc.Server = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
+
+        self.topgg: topgg.DBLClient | None = topgg.DBLClient(
+            bot=self,
+            token=config.TOPGG,
+            autopost=True
+        ) if config.ENV is enums.Environment.PRODUCTION else None
 
         self.user_manager: managers.UserManager = managers.UserManager(bot=self)
         self.guild_manager: managers.GuildManager = managers.GuildManager(bot=self)
