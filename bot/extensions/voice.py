@@ -7,6 +7,7 @@ from typing import Literal
 
 # Packages
 import discord
+import humanize
 import slate
 from discord.ext import commands
 from slate import obsidian
@@ -477,7 +478,6 @@ class Voice(commands.Cog):
     @commands.command(
         name="skip",
         aliases=[
-            "next",
             "s",
             "voteskip",
             "vote-skip",
@@ -487,7 +487,7 @@ class Voice(commands.Cog):
             "force-skip",
             "force_skip",
             "fs",
-            "skipto",
+            "next",
         ],
     )
     @checks.is_voice_client_playing()
@@ -911,3 +911,121 @@ class Voice(commands.Cog):
             )
 
         await ctx.reply(embed=embed)
+
+    #
+
+    @commands.command(name="nodestats", aliases=["node-stats", "node_stats"])
+    async def nodestats(self, ctx: context.Context) -> None:
+
+        embeds = []
+
+        for node in self.bot.slate.nodes.values():
+
+            embed = discord.Embed(
+                colour=colours.MAIN,
+                title=f"Stats: {node._identifier}",
+                description=f"**Players:** {len(node.players.values())}\n" \
+                            f"**Active players:** {len([player for player in node.players.values() if player.is_playing()])}\n\n"
+            )
+
+            if node._stats:
+                embed.description += f"**Threads (running):** {node._stats.threads_running}\n" \
+                                     f"**Threads (daemon):** {node._stats.threads_daemon}\n" \
+                                     f"**Threads (peak):** {node._stats.threads_peak}\n\n" \
+                                     f"**Memory (init):** {humanize.naturalsize(node._stats.heap_used_init + node._stats.non_heap_used_init)}\n" \
+                                     f"**Memory (max):** {humanize.naturalsize(node._stats.heap_used_max + node._stats.non_heap_used_max)}\n" \
+                                     f"**Memory (committed):** " \
+                                     f"{humanize.naturalsize(node._stats.heap_used_committed + node._stats.non_heap_used_committed)}\n" \
+                                     f"**Memory (used):** {humanize.naturalsize(node._stats.heap_used_used + node._stats.non_heap_used_used)}\n\n" \
+                                     f"**CPU (cores):** {node._stats.cpu_cores}\n"
+
+            embeds.append(embed)
+
+        await ctx.paginate_embeds(entries=embeds)
+
+    # Debug commands
+
+    @commands.is_owner()
+    @commands.command(name="voiceclients", aliases=["voice-clients", "voice_clients", "vcs"])
+    async def voiceclients(self, ctx: context.Context) -> None:
+
+        entries = []
+
+        for node in self.bot.slate.nodes.values():
+            for player in node.players.values():
+
+                current = f"[{player.current.title}]({player.current.uri})" if player.current else "None"
+                position = \
+                    f"{utils.format_seconds(player.position // 1000)} / {utils.format_seconds(player.current.length // 1000)}" \
+                    if player.current \
+                    else "N/A"
+
+                entry = f"**• {player.channel.guild.id}**\n" \
+                        f"**Guild:** {player.channel.guild}\n" \
+                        f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', None)}`\n" \
+                        f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', None)}`\n" \
+                        f"**Current track:** {current}\n" \
+                        f"**Position:** {position}\n" \
+                        f"**Paused:** {player.paused}\n" \
+                        f"**Listeners:** {len(player.listeners)}\n" \
+
+                entries.append(entry)
+
+        await ctx.paginate_embed(entries=entries, per_page=3)
+
+    @commands.is_owner()
+    @commands.command(name="voiceclient", aliases=["voice-client", "voice_client", "vc"])
+    async def voiceclient(self, ctx: context.Context, server: discord.Guild = utils.MISSING) -> None:
+
+        guild = server or ctx.guild
+
+        if not (player := self.bot.slate.players.get(guild.id)):
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="That guild does not have a voice client."
+            )
+
+        current = f"[{player.current.title}]({player.current.uri})" if player.current else "n/a"
+        requester = f"{player.current.requester} `{player.current.requester.id}`" if player.current else 'n/a'
+        position = f"{utils.format_seconds(player.position // 1000)} / {utils.format_seconds(player.current.length // 1000)}" if player.current else "n/a"
+
+        embed = discord.Embed(
+            colour=colours.MAIN,
+            title=f"{guild.name}",
+        )
+        embed.add_field(
+            name="__Player info:__",
+            value=f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', 'n/a')}`\n"
+                  f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', 'n/a')}`\n"
+                  f"**Is playing:** {player.is_playing()}\n"
+                  f"**Is paused:** {player.is_paused()}\n"
+                  f"**Filter:** {player.filter}",
+            inline=False
+        )
+        embed.add_field(
+            name=f"__Queue info:__",
+            value=f"**Loop mode:** {player.queue.loop_mode.name.title()}\n"
+                  f"**Length:** {len(player.queue)}\n"
+                  f"**Total time:** {utils.format_seconds(sum(track.length for track in player.queue) // 1000, friendly=True)}\n",
+            inline=False
+        )
+        embed.add_field(
+            name="__Track info:__",
+            value=f"**Current track:** {current}\n"
+                  f"**Author:** {getattr(player.current, 'author', 'n/a')}\n"
+                  f"**Position:** {position}\n"
+                  f"**Is Stream:** {player.current.is_stream() if player.current else 'n/a'}\n"
+                  f"**Is Seekable:** {player.current.is_seekable() if player.current else 'n/a'}\n"
+                  f"**Source:** {player.current.source.value.title() if player.current else 'n/a'}\n"
+                  f"**Requester:** {requester}\n",
+            inline=False
+        )
+        embed.set_footer(
+            text=f"ID: {guild.id}"
+        )
+        embed.set_thumbnail(
+            url=utils.icon(guild)
+        )
+
+        await ctx.send(embed=embed)

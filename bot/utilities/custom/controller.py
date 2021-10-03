@@ -44,28 +44,34 @@ class Controller:
             thumbnail=self.player.current.thumbnail
         )
 
-        embed.add_field(
-            name="Player info:",
-            value=f"`Paused:` {self.player.paused}\n"
-                  f"`Loop mode:` {self.player.queue.loop_mode.name.title()}\n"
-                  f"`Queue length:` {len(self.player.queue)}\n"
-                  f"`Queue time:` {utils.format_seconds(sum(track.length for track in self.player.queue) // 1000, friendly=True)}\n",
-        )
-        embed.add_field(
-            name="Track info:",
-            value=f"`Time:` {utils.format_seconds(self.player.position // 1000)} / {utils.format_seconds(self.player.current.length // 1000)}\n"
-                  f"`Is Stream:` {self.player.current.is_stream()}\n"
-                  f"`Source:` {self.player.current.source.value.title()}\n"
-                  f"`Requester:` {self.player.current.requester.mention}\n"
-        )
+        if guild_config.embed_size.value >= enums.EmbedSize.MEDIUM.value:
+
+            embed.add_field(
+                name="__Player info:__",
+                value=f"**Paused:** {self.player.paused}\n"
+                      f"**Loop mode:** {self.player.queue.loop_mode.name.title()}\n"
+                      f"**Queue length:** {len(self.player.queue)}\n"
+                      f"**Queue time:** {utils.format_seconds(sum(track.length for track in self.player.queue) // 1000, friendly=True)}\n",
+            )
+            embed.add_field(
+                name="__Track info:__",
+                value=f"**Time:** {utils.format_seconds(self.player.position // 1000)} / {utils.format_seconds(self.player.current.length // 1000)}\n"
+                      f"**Is Stream:** {self.player.current.is_stream()}\n"
+                      f"**Source:** {self.player.current.source.value.title()}\n"
+                      f"**Requester:** {self.player.current.requester.mention}\n"
+            )
 
         if guild_config.embed_size is enums.EmbedSize.LARGE and not self.player.queue.is_empty():
 
-            entries = [f"`{index + 1}.` [{entry.title}]({entry.uri})" for index, entry in enumerate(list(self.player.queue)[:3])]
+            entries = [f"**{index + 1}.** [{entry.title}]({entry.uri})" for index, entry in enumerate(list(self.player.queue)[:3])]
             if len(self.player.queue) > 3:
-                entries.append(f"...\n`{len(self.player.queue)}.` [{self.player.queue[-1].title}]({self.player.queue[-1].uri})")
+                entries.append(f"**...**\n**{len(self.player.queue)}.** [{self.player.queue[-1].title}]({self.player.queue[-1].uri})")
 
-            embed.add_field(name="Up next:", value="\n".join(entries), inline=False)
+            embed.add_field(
+                name="__Up next:__",
+                value="\n".join(entries),
+                inline=False
+            )
 
         return await text_channel.send(embed=embed)
 
