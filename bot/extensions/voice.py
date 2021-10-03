@@ -154,7 +154,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, now=options.now, next=options.next, source=get_source(options))
+            await ctx.voice_client.queue_search(query, ctx=ctx, now=options.now, next=options.next, source=get_source(options))
 
     @commands.command(name="search")
     @checks.is_author_connected(same_channel=True)
@@ -178,7 +178,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, now=options.now, next=options.next, source=get_source(options), choose=True)
+            await ctx.voice_client.queue_search(query, ctx=ctx, now=options.now, next=options.next, source=get_source(options), choose=True)
 
     # Platform specific play commands
 
@@ -201,7 +201,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, now=options.now, next=options.next, source=slate.Source.YOUTUBE_MUSIC)
+            await ctx.voice_client.queue_search(query, ctx=ctx, now=options.now, next=options.next, source=slate.Source.YOUTUBE_MUSIC)
 
     @commands.command(name="soundcloud", aliases=["sc"])
     @checks.is_author_connected(same_channel=True)
@@ -222,7 +222,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, now=options.now, next=options.next, source=slate.Source.SOUNDCLOUD)
+            await ctx.voice_client.queue_search(query, ctx=ctx, now=options.now, next=options.next, source=slate.Source.SOUNDCLOUD)
 
     # Queue specific play commands
 
@@ -245,7 +245,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, next=True, source=get_source(options))
+            await ctx.voice_client.queue_search(query, ctx=ctx, next=True, source=get_source(options))
 
     @commands.command(name="playnow", aliases=["play-now", "play_now", "pnow"])
     @checks.is_author_connected(same_channel=True)
@@ -266,7 +266,7 @@ class Voice(commands.Cog):
         """
 
         async with ctx.channel.typing():
-            await ctx.voice_client.queue_search(query=query, ctx=ctx, now=True, source=get_source(options))
+            await ctx.voice_client.queue_search(query, ctx=ctx, now=True, source=get_source(options))
 
     # Pause/Resume commands
 

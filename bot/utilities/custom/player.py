@@ -13,7 +13,7 @@ import slate.obsidian
 import yarl
 
 # My stuff
-from core import colours, config, emojis
+from core import colours, emojis
 from utilities import context, custom, enums, exceptions, utils, views
 
 
@@ -59,29 +59,24 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
     async def search(
         self,
         query: str,
+        /,
+        *,
+        source: slate.Source,
         ctx: context.Context,
-        source: slate.Source | None
     ) -> slate.obsidian.SearchResult[context.Context]:
 
-        if (url := yarl.URL(query)) is not None and url.host and url.scheme:
-            source = None
+        if (url := yarl.URL(query)) and url.host and url.scheme:
+            source = slate.Source.NONE
 
         try:
             search = await self._node.search(query, ctx=ctx, source=source)
 
-        except (slate.HTTPError, slate.obsidian.SearchError):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description="There was an error while searching for results."
-            )
-
         except slate.NoMatchesFound as error:
 
             if error.source:
-                message = f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your query."
+                message = f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your search."
             else:
-                message = f"No results were found for your query.",
+                message = f"No results were found for your search.",
 
             raise exceptions.EmbedError(
                 colour=colours.RED,
@@ -89,11 +84,12 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 description=message,
             )
 
-        if search.source in [slate.Source.HTTP, slate.Source.LOCAL] and ctx.author.id not in config.OWNER_IDS:
+        except (slate.SearchError, slate.HTTPError):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="You do not have permission to play tracks from `HTTP` or `LOCAL` sources.",
+                description="There was an error while searching for results.",
+                view=views.SupportButton()
             )
 
         return search
@@ -101,18 +97,20 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
     async def queue_search(
         self,
         query: str,
-        ctx: context.Context,
+        /,
+        *,
         source: slate.Source,
+        ctx: context.Context,
         now: bool = False,
         next: bool = False,
         choose: bool = False,
     ) -> None:
 
-        search = await self.search(query, ctx=ctx, source=source)
+        search = await self.search(query, source=source, ctx=ctx)
 
         if choose:
             choice = await ctx.choice(
-                entries=[f"`{index + 1:}:` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
+                entries=[f"`{index + 1:}.` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
                 per_page=10,
                 title="Select the number of the track you want to play:",
             )
@@ -194,7 +192,7 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
             if track.source is slate.Source.SPOTIFY:
 
                 try:
-                    search = await self.search(query=f"{track.author} - {track.title}", ctx=track.ctx, source=slate.Source.YOUTUBE)
+                    search = await self.search(f"{track.author} - {track.title}", source=slate.Source.YOUTUBE, ctx=track.ctx)
                 except exceptions.EmbedError as error:
                     await self.send(embed=error.embed)
                     continue

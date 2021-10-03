@@ -63,7 +63,7 @@ class Controller:
 
             entries = [f"`{index + 1}.` [{entry.title}]({entry.uri})" for index, entry in enumerate(list(self.player.queue)[:3])]
             if len(self.player.queue) > 3:
-                entries.append(f"`...`\n`{len(self.player.queue)}.` [{self.player.queue[-1].title}]({self.player.queue[-1].uri})")
+                entries.append(f"...\n`{len(self.player.queue)}.` [{self.player.queue[-1].title}]({self.player.queue[-1].uri})")
 
             embed.add_field(name="Up next:", value="\n".join(entries), inline=False)
 
