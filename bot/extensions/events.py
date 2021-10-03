@@ -193,8 +193,8 @@ class Events(commands.Cog):
 
         message = await utils.safe_content(self.bot.mystbin, f"```py\n{message}```", syntax="python", max_characters=2000)
 
-        await self.bot.ERROR_LOG.send(embed=embed, username=f"{ctx.author}", avatar_url=utils.avatar(person=ctx.author))
-        await self.bot.ERROR_LOG.send(content=message, username=f"{ctx.author}", avatar_url=utils.avatar(person=ctx.author))
+        await self.bot.ERROR_LOG.send(embed=embed, username=f"{ctx.author}", avatar_url=utils.avatar(ctx.author))
+        await self.bot.ERROR_LOG.send(content=message, username=f"{ctx.author}", avatar_url=utils.avatar(ctx.author))
 
     # Bot events
 
@@ -283,7 +283,7 @@ class Events(commands.Cog):
                     content=f"Attachment from message with id **{message.id}**:",
                     file=await attachment.to_file(use_cached=True),
                     username=f"{message.author}",
-                    avatar_url=utils.avatar(person=message.author),
+                    avatar_url=utils.avatar(message.author),
                 )
 
     @staticmethod
@@ -294,7 +294,7 @@ class Events(commands.Cog):
                 content=f"Embed from message with id **{message.id}**:",
                 embed=embed,
                 username=f"{message.author}",
-                avatar_url=utils.avatar(person=message.author),
+                avatar_url=utils.avatar(message.author),
             )
 
     @commands.Cog.listener()
@@ -316,14 +316,14 @@ class Events(commands.Cog):
             name="Info:",
             value=f"`Channel:` {message.channel} `{message.channel.id}`\n"
                   f"`Author:` {message.author} `{message.author.id}`\n"
-                  f"`Time:` {utils.format_datetime(datetime=pendulum.now(tz='UTC'))}\n"
+                  f"`Time:` {utils.format_datetime(pendulum.now(tz='UTC'))}\n"
                   f"`Jump:` [Click here]({message.jump_url})",
         ).set_footer(
             text=f"ID: {message.id}"
         )
 
         __log__.info(f"DM from {message.author} ({message.author.id}) | Content: {content}")
-        await self.bot.DMS_LOG.send(embed=embed, username=f"{message.author}", avatar_url=utils.avatar(person=message.author))
+        await self.bot.DMS_LOG.send(embed=embed, username=f"{message.author}", avatar_url=utils.avatar(message.author))
 
         await self._log_attachments(webhook=self.bot.DMS_LOG, message=message)
         await self._log_embeds(webhook=self.bot.DMS_LOG, message=message)

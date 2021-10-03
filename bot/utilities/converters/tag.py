@@ -1,6 +1,9 @@
 # Future
 from __future__ import annotations
 
+# Standard Library
+from typing import Any
+
 # Packages
 from discord.ext import commands
 
@@ -18,7 +21,9 @@ class TagNameConverter(commands.clean_content):
         if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument
 
-        if argument.split(" ")[0] in (names := ctx.bot.get_command("tag").all_commands.keys()):
+        command: Any = ctx.bot.get_command("tag")
+
+        if argument.split(" ")[0] in (names := command.all_commands.keys()):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,

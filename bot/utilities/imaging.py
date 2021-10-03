@@ -17,7 +17,6 @@ from wand.image import Image
 
 # My stuff
 from core import colours, emojis
-from core.bot import Life
 from utilities import context, exceptions, utils
 
 

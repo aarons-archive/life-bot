@@ -650,7 +650,7 @@ class Voice(commands.Cog):
                             f"[{track.title}]({track.uri})\n\n"
                             f"**Author:** {track.author}\n"
                             f"**Source:** {track.source.name.title()}\n"
-                            f"**Length:** {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n"
+                            f"**Length:** {utils.format_seconds(round(track.length) // 1000, friendly=True)}\n"
                             f"**Live:** {track.is_stream()}\n"
                             f"**Seekable:** {track.is_seekable()}\n"
                             f"**Requester:** {track.requester.mention}",
@@ -712,7 +712,7 @@ class Voice(commands.Cog):
                             f"[{track.title}]({track.uri})\n\n"
                             f"**Author:** {track.author}\n"
                             f"**Source:** {track.source.name.title()}\n"
-                            f"**Length:** {utils.format_seconds(seconds=round(track.length) // 1000, friendly=True)}\n"
+                            f"**Length:** {utils.format_seconds(round(track.length) // 1000, friendly=True)}\n"
                             f"**Live:** {track.is_stream()}\n"
                             f"**Seekable:** {track.is_seekable()}\n"
                             f"**Requester:** {track.requester.mention}",
