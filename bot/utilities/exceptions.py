@@ -30,9 +30,10 @@ class EmbedError(LifeError):
         url: str | None = None,
         colour: discord.Colour = colours.MAIN,
         emoji: str | None = None,
+        view: discord.ui.View | None = None,
     ) -> None:
 
-        self.embed = utils.embed(
+        self.embed: discord.Embed = utils.embed(
             footer_url=footer_url,
             footer=footer,
             image=image,
@@ -46,3 +47,4 @@ class EmbedError(LifeError):
             colour=colour,
             emoji=emoji,
         )
+        self.view: discord.ui.View | None = view
