@@ -971,6 +971,13 @@ class Voice(commands.Cog):
 
                 entries.append(entry)
 
+        if not entries:
+            raise exceptions.EmbedError(
+                colour=colours.RED,
+                emoji=emojis.CROSS,
+                description="There are no active voice clients."
+            )
+
         await ctx.paginate_embed(entries=entries, per_page=3)
 
     @commands.is_owner()
@@ -983,7 +990,7 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="That guild does not have a voice client."
+                description="That server does not have a voice client."
             )
 
         current = f"[{player.current.title}]({player.current.uri})" if player.current else "n/a"
