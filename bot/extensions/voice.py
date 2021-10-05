@@ -1046,7 +1046,7 @@ class Voice(commands.Cog):
                 name="__Up next:__",
                 value="\n".join(
                     [f"**{index + 1}.** [{entry.title}]({entry.uri}) by **{entry.author}**" for index, entry in enumerate(list(player.queue)[:3])]
-                ),
+                ) + (f"\n ... 3 of {len(player.queue)} total" if len(player.queue) > 3 else ""),
                 inline=False
             )
 
