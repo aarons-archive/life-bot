@@ -924,7 +924,7 @@ class Voice(commands.Cog):
             embed = discord.Embed(
                 colour=colours.MAIN,
                 title=f"Stats: {node._identifier}",
-                description=f"**Players:** {len(node.players.values())}\n" \
+                description=f"**Players:** {len(node.players.values())}\n"
                             f"**Active players:** {len([player for player in node.players.values() if player.is_playing()])}\n\n"
             )
 
