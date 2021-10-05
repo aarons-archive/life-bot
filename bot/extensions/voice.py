@@ -990,7 +990,7 @@ class Voice(commands.Cog):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description="That server does not have a voice client."
+                description=f"**{guild}** does not have a voice client."
             )
 
         current = f"[{player.current.title}]({player.current.uri})" if player.current else "n/a"
@@ -1027,6 +1027,10 @@ class Voice(commands.Cog):
                   f"**Source:** {player.current.source.value.title() if player.current else 'n/a'}\n"
                   f"**Requester:** {requester}\n",
             inline=False
+        )
+        embed.add_field(
+            name="__Listeners:__",
+            value="\n".join(f"- {member} `{member.id}`" for member in player.listeners)
         )
         embed.set_footer(
             text=f"ID: {guild.id}"
