@@ -961,7 +961,7 @@ class Voice(commands.Cog):
                     else "N/A"
 
                 entries.append(
-                    f"**__{player.channel.guild}:__**\n"
+                    f"**{player.channel.guild}:** `{player.channel.guild.id}`\n"
                     f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', None)}`\n"
                     f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', None)}`\n"
                     f"**Track:** {current}\n"
@@ -1044,13 +1044,17 @@ class Voice(commands.Cog):
 
             embed.add_field(
                 name="__Up next:__",
-                value="\n".join([f"**{index + 1}.** [{entry.title}]({entry.uri}) by **{entry.author}**" for index, entry in enumerate(list(player.queue)[:3])]),
+                value="\n".join(
+                    [f"**{index + 1}.** [{entry.title}]({entry.uri}) by **{entry.author}**" for index, entry in enumerate(list(player.queue)[:3])]
+                ),
                 inline=False
             )
 
         embed.add_field(
             name="__Listeners:__",
-            value="\n".join(f"- {member} `{member.id}`" for member in player.listeners),
+            value="\n".join(
+                f"- {member} `{member.id}`" for member in player.listeners[:5]
+            ) + (f"\n ... 5 of {len(player.listeners)} total" if len(player.listeners) > 5 else ""),
             inline=False
         )
 
