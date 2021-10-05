@@ -1046,7 +1046,7 @@ class Voice(commands.Cog):
                 name="__Up next:__",
                 value="\n".join(
                     [f"**{index + 1}.** [{entry.title}]({entry.uri}) by **{entry.author}**" for index, entry in enumerate(list(player.queue)[:3])]
-                ) + (f"\n ... 3 of {len(player.queue)} total" if len(player.queue) > 3 else ""),
+                ) + (f"\n ... **3** of **{len(player.queue)}** total." if len(player.queue) > 3 else ""),
                 inline=False
             )
 
@@ -1054,7 +1054,7 @@ class Voice(commands.Cog):
             name="__Listeners:__",
             value="\n".join(
                 f"- {member} `{member.id}`" for member in player.listeners[:5]
-            ) + (f"\n ... 5 of {len(player.listeners)} total" if len(player.listeners) > 5 else ""),
+            ) + (f"\n ... **3** of **{len(player.listeners)}** total." if len(player.listeners) > 5 else ""),
             inline=False
         )
 
