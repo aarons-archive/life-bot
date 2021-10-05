@@ -954,22 +954,22 @@ class Voice(commands.Cog):
         for node in self.bot.slate.nodes.values():
             for player in node.players.values():
 
-                current = f"[{player.current.title}]({player.current.uri})" if player.current else "None"
+                current = f"[{player.current.title}]({player.current.uri}) by **{player.current.author}**" if player.current else "None"
                 position = \
                     f"{utils.format_seconds(player.position // 1000)} / {utils.format_seconds(player.current.length // 1000)}" \
                     if player.current \
                     else "N/A"
 
-                entry = f"**• {player.channel.guild.id}**\n" \
-                        f"**Guild:** {player.channel.guild}\n" \
-                        f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', None)}`\n" \
-                        f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', None)}`\n" \
-                        f"**Current track:** {current}\n" \
-                        f"**Position:** {position}\n" \
-                        f"**Paused:** {player.paused}\n" \
-                        f"**Listeners:** {len(player.listeners)}\n" \
-
-                entries.append(entry)
+                entries.append(
+                    f"**__{player.channel.guild}:__**\n"
+                    f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', None)}`\n"
+                    f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', None)}`\n"
+                    f"**Track:** {current}\n"
+                    f"**Position:** {position}\n"
+                    f"**Queue length:** {len(player.queue)}\n"
+                    f"**Is playing:** {player.is_playing()}\n"
+                    f"**Is paused:** {player.is_paused()}\n"
+                )
 
         if not entries:
             raise exceptions.EmbedError(
@@ -993,50 +993,65 @@ class Voice(commands.Cog):
                 description=f"**{guild}** does not have a voice client."
             )
 
-        current = f"[{player.current.title}]({player.current.uri})" if player.current else "n/a"
-        requester = f"{player.current.requester} `{player.current.requester.id}`" if player.current else 'n/a'
-        position = f"{utils.format_seconds(player.position // 1000)} / {utils.format_seconds(player.current.length // 1000)}" if player.current else "n/a"
-
         embed = discord.Embed(
             colour=colours.MAIN,
-            title=f"{guild.name}",
-        )
-        embed.add_field(
-            name="__Player info:__",
-            value=f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', 'n/a')}`\n"
-                  f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', 'n/a')}`\n"
-                  f"**Is playing:** {player.is_playing()}\n"
-                  f"**Is paused:** {player.is_paused()}\n"
-                  f"**Filter:** {player.filter}",
-            inline=False
-        )
-        embed.add_field(
-            name=f"__Queue info:__",
-            value=f"**Loop mode:** {player.queue.loop_mode.name.title()}\n"
-                  f"**Length:** {len(player.queue)}\n"
-                  f"**Total time:** {utils.format_seconds(sum(track.length for track in player.queue) // 1000, friendly=True)}\n",
-            inline=False
-        )
-        embed.add_field(
-            name="__Track info:__",
-            value=f"**Current track:** {current}\n"
-                  f"**Author:** {getattr(player.current, 'author', 'n/a')}\n"
-                  f"**Position:** {position}\n"
-                  f"**Is Stream:** {player.current.is_stream() if player.current else 'n/a'}\n"
-                  f"**Is Seekable:** {player.current.is_seekable() if player.current else 'n/a'}\n"
-                  f"**Source:** {player.current.source.value.title() if player.current else 'n/a'}\n"
-                  f"**Requester:** {requester}\n",
-            inline=False
-        )
-        embed.add_field(
-            name="__Listeners:__",
-            value="\n".join(f"- {member} `{member.id}`" for member in player.listeners)
-        )
-        embed.set_footer(
-            text=f"ID: {guild.id}"
+            title=f"{guild.name} `{guild.id}`",
         )
         embed.set_thumbnail(
             url=utils.icon(guild)
+        )
+
+        embed.add_field(
+            name="__Player info:__",
+            value=f"**Voice channel:** {player.voice_channel} `{getattr(player.voice_channel, 'id', None)}`\n"
+                  f"**Text channel:** {player.text_channel} `{getattr(player.text_channel, 'id', None)}`\n"
+                  f"**Is playing:** {player.is_playing()}\n"
+                  f"**Is paused:** {player.is_paused()}\n",
+            inline=False
+        )
+
+        if player.current:
+            embed.add_field(
+                name="__Track info:__",
+                value=f"**Track:** [{player.current.title}]({player.current.uri})\n"
+                      f"**Author:** {player.current.author}\n"
+                      f"**Position:** {utils.format_seconds(player.position // 1000)} / {utils.format_seconds(player.current.length // 1000)}\n"
+                      f"**Source:** {player.current.source.value.title()}\n"
+                      f"**Requester:** {player.current.requester} `{player.current.requester.id}`\n"
+                      f"**Is stream:** {player.current.is_stream()}\n"
+                      f"**Is seekable:** {player.current.is_seekable()}\n",
+                inline=False
+            )
+            embed.set_image(
+                url=player.current.thumbnail
+            )
+        else:
+            embed.add_field(
+                name="__Track info:__",
+                value=f"**Track:** None\n",
+                inline=False
+            )
+
+        embed.add_field(
+            name=f"__Queue info:__",
+            value=f"**Length:** {len(player.queue)}\n"
+                  f"**Total time:** {utils.format_seconds(sum(track.length for track in player.queue) // 1000, friendly=True)}\n"
+                  f"**Loop mode:** {player.queue.loop_mode.name.title()}\n",
+            inline=False
+        )
+
+        if not player.queue.is_empty():
+
+            embed.add_field(
+                name="__Up next:__",
+                value="\n".join([f"**{index + 1}.** [{entry.title}]({entry.uri}) by **{entry.author}**" for index, entry in enumerate(list(player.queue)[:3])]),
+                inline=False
+            )
+
+        embed.add_field(
+            name="__Listeners:__",
+            value="\n".join(f"- {member} `{member.id}`" for member in player.listeners),
+            inline=False
         )
 
         await ctx.send(embed=embed)
