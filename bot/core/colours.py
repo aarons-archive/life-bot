@@ -5,8 +5,6 @@ from __future__ import annotations
 import discord
 
 
-MAIN = discord.Colour(0xF20034)
-RED = discord.Colour(0xF21847)
-YELLOW = discord.Colour(0xF2BA18)
-GREEN = discord.Colour(0x18F23B)
-BLUE = discord.Colour(0x0C3BF2)
+MAIN = discord.Colour(0xF1C30F)
+RED = discord.Colour(0xF20035)
+GREEN = discord.Colour(0x16E037)

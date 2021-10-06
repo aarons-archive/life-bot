@@ -60,9 +60,7 @@ def setup(bot: Life) -> None:
 class Voice(commands.Cog):
 
     def __init__(self, bot: Life) -> None:
-        self.bot = bot
-
-    #
+        self.bot: Life = bot
 
     async def load(self) -> None:
 
@@ -98,7 +96,7 @@ class Voice(commands.Cog):
     async def on_obsidian_track_stuck(self, player: custom.Player, _: obsidian.TrackStuck) -> None:
         await player.handle_track_error()
 
-    # Join/Leave commands
+    # Join/leave commands
 
     @commands.command(name="join", aliases=["summon", "connect"])
     @checks.is_author_connected(same_channel=False)
@@ -269,7 +267,7 @@ class Voice(commands.Cog):
         async with ctx.channel.typing():
             await ctx.voice_client.queue_search(query, ctx=ctx, now=True, source=get_source(options))
 
-    # Pause/Resume commands
+    # Pause/resume commands
 
     @commands.command(name="pause", aliases=["stop"])
     @checks.is_author_connected(same_channel=True)
@@ -282,12 +280,11 @@ class Voice(commands.Cog):
         if ctx.voice_client.paused is True:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
-                description="The player is already paused."
+                description="The played is already paused."
             )
 
         await ctx.voice_client.set_pause(True)
-        await ctx.reply(embed=utils.embed(emoji=emojis.PAUSED, description="The player is now **paused**."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="The player is now **paused**."))
 
     @commands.command(name="resume", aliases=["continue", "unpause"])
     @checks.is_author_connected(same_channel=True)
@@ -300,12 +297,11 @@ class Voice(commands.Cog):
         if ctx.voice_client.paused is False:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="The player is not paused."
             )
 
         await ctx.voice_client.set_pause(False)
-        await ctx.reply(embed=utils.embed(emoji=emojis.PLAYING, description="The player is now **resumed**."))
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="The player is now **resumed**."))
 
     # Seek commands
 
@@ -319,6 +315,28 @@ class Voice(commands.Cog):
         Seeks to a position in the current track.
 
         **time**: The position to seek too.
+
+        Valid time formats include:
+
+        - 01:10:20 (hh:mm:ss)
+        - 01:20 (mm:ss)
+        - 20 (ss)
+        - (h:m:s)
+        - (hh:m:s)
+        - (h:mm:s)
+        - etc
+
+        - 1 hour 20 minutes 30 seconds
+        - 1 hour 20 minutes
+        - 1 hour 30 seconds
+        - 20 minutes 30 seconds
+        - 20 minutes
+        - 30 seconds
+        - 1 hour 20 minutes and 30 seconds
+        - 1h20m30s
+        - 20m and 30s
+        - 20s
+        - etc
         """
 
         # noinspection PyTypeChecker
@@ -327,107 +345,146 @@ class Voice(commands.Cog):
         if 0 < milliseconds > ctx.voice_client.current.length:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"That is not a valid amount of time, please choose a time between **0s** and "
-                            f"**{utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}**.",
+                description=f"That is not a valid amount of time, please choose a time between "
+                            f"**0s** and **{utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}**.",
             )
 
         await ctx.voice_client.set_position(milliseconds)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.SEEK_FORWARD,
-                description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
-            )
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**."
         )
+        await ctx.reply(embed=embed)
 
-    @commands.command(name="forward", aliases=["fwd"])
+    @commands.command(name="fastforward", aliases=["fast-forward", "fast_forward", "ff", "forward", "fwd"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def forward(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
+    async def fast_forward(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
         """
-        Seeks forward on the current track.
+        Seeks the player forward.
 
         **time**: The amount of time to seek forward.
+
+        Valid time formats include:
+
+        - 01:10:20 (hh:mm:ss)
+        - 01:20 (mm:ss)
+        - 20 (ss)
+        - (h:m:s)
+        - (hh:m:s)
+        - (h:mm:s)
+        - etc
+
+        - 1 hour 20 minutes 30 seconds
+        - 1 hour 20 minutes
+        - 1 hour 30 seconds
+        - 20 minutes 30 seconds
+        - 20 minutes
+        - 30 seconds
+        - 1 hour 20 minutes and 30 seconds
+        - 1h20m30s
+        - 20m and 30s
+        - 20s
+        - etc
         """
 
         # noinspection PyTypeChecker
         milliseconds = time * 1000
-
         position = ctx.voice_client.position
         remaining = ctx.voice_client.current.length - position
 
         if milliseconds >= remaining:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"That is not a valid amount of time. "
-                            f"Please choose an amount lower than **{utils.format_seconds(remaining // 1000, friendly=True)}**.",
+                description=f"That was too much time to seek forward, try seeking forward an amount less than "
+                            f"**{utils.format_seconds(remaining // 1000, friendly=True)}**.",
             )
 
         await ctx.voice_client.set_position(position + milliseconds)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.SEEK_FORWARD,
-                description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
-            )
+        # noinspection PyTypeChecker
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"Seeking forward **{utils.format_seconds(time, friendly=True)}**, the players position is now "
+                        f"**{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**."
         )
+        await ctx.reply(embed=embed)
 
-    @commands.command(name="rewind", aliases=["rwd", "backward", "bckwd"])
+    @commands.command(name="rewind", aliases=["rwd"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def rewind(self, ctx: context.Context, *, time: converters.TimeConverter) -> None:
         """
-        Seeks backward on the current track.
+        Seeks the player backward.
 
         **time**: The amount of time to seek backward.
+
+        Valid time formats include:
+
+        - 01:10:20 (hh:mm:ss)
+        - 01:20 (mm:ss)
+        - 20 (ss)
+        - (h:m:s)
+        - (hh:m:s)
+        - (h:mm:s)
+        - etc
+
+        - 1 hour 20 minutes 30 seconds
+        - 1 hour 20 minutes
+        - 1 hour 30 seconds
+        - 20 minutes 30 seconds
+        - 20 minutes
+        - 30 seconds
+        - 1 hour 20 minutes and 30 seconds
+        - 1h20m30s
+        - 20m and 30s
+        - 20s
+        - etc
         """
 
         # noinspection PyTypeChecker
         milliseconds = time * 1000
-
         position = ctx.voice_client.position
 
-        if milliseconds >= ctx.voice_client.position:
+        if milliseconds >= position:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"That is not a valid amount of time. "
-                            f"Please choose an amount lower than **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
+                description=f"That was too much time to seek backward, try seeking backward an amount less than "
+                            f"**{utils.format_seconds(position // 1000, friendly=True)}**.",
             )
 
         await ctx.voice_client.set_position(position - milliseconds)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.SEEK_BACK,
-                description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
-            )
+        # noinspection PyTypeChecker
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"Seeking backward **{utils.format_seconds(time, friendly=True)}**, the players position is now "
+                        f"**{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**."
         )
+        await ctx.reply(embed=embed)
 
-    @commands.command(name="replay")
+    @commands.command(name="replay", aliases=["restart"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def replay(self, ctx: context.Context) -> None:
         """
-        Seeks to the start of the current track.
+        Replays the current track.
         """
 
         await ctx.voice_client.set_position(0)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.REPEAT,
-                description=f"The players position is now **{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**.",
-            )
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"Replaying [{ctx.voice_client.current.title}]({ctx.voice_client.current.uri}) by **{ctx.voice_client.current.author}**."
         )
+        await ctx.reply(embed=embed)
 
     # Loop commands
 
@@ -912,7 +969,7 @@ class Voice(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    #
+    # Debug commands
 
     @commands.command(name="nodestats", aliases=["node-stats", "node_stats"])
     async def nodestats(self, ctx: context.Context) -> None:
@@ -942,8 +999,6 @@ class Voice(commands.Cog):
             embeds.append(embed)
 
         await ctx.paginate_embeds(entries=embeds)
-
-    # Debug commands
 
     @commands.is_owner()
     @commands.command(name="voiceclients", aliases=["voice-clients", "voice_clients", "vcs"])

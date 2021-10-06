@@ -8,21 +8,42 @@ import re
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import context, exceptions
 
 
-COLON_REGEX = re.compile(r"^(?:(?:(?P<hours>[01]?\d|2[0-3]):)?(?P<minutes>[0-5]?\d):)?(?P<seconds>[0-5]?\d)$")
-HUMAN_REGEX = re.compile(
-    r"^(?:(?P<hours>[01]?\d|2[0-3])\s?(h|hour|hours)\s?)?(?:(?P<minutes>[0-5]?\d)\s?(m|min|mins|minutes)\s?)?(?:(?P<seconds>[0-5]?\d)\s?(s|sec|secs|seconds))?$"
-)
+COLON_FORMAT_REGEX = re.compile(r"""
+^
+    (?:
+        (?:
+            (?P<hours>[0-1]?[0-9]|2[0-3]):
+        )?
+        (?P<minutes>[0-5]?[0-9]):
+    )?
+    (?P<seconds>[0-5]?[0-9])
+$
+""", flags=re.VERBOSE)
+
+HUMAN_FORMAT_REGEX = re.compile(r"""
+^
+    (?: 
+        (?P<hours>[0-1]?[0-9]|2[0-3]) \s? (?:h|hour|hours) (?:\s?|\s?and\s?) 
+    )?
+    (?: 
+        (?P<minutes>[0-5]?[0-9]) \s? (?:m|min|mins|minute|minutes) (?:\s?|\s?and\s?) 
+    )?
+    (?: 
+        (?P<seconds>[0-5]?[0-9]) \s? (?:s|sec|secs|second|seconds)                   
+    )?
+$
+""", flags=re.VERBOSE)
 
 
 class TimeConverter(commands.Converter):
 
     async def convert(self, ctx: context.Context, argument: str) -> int:
 
-        if (match := COLON_REGEX.match(argument)) or (match := HUMAN_REGEX.match(argument)):
+        if (match := COLON_FORMAT_REGEX.match(argument)) or (match := HUMAN_FORMAT_REGEX.match(argument)):
 
             total = 0
 
@@ -40,7 +61,6 @@ class TimeConverter(commands.Converter):
             except ValueError:
                 raise exceptions.EmbedError(
                     colour=colours.RED,
-                    emoji=emojis.CROSS,
                     description="That time format was not recognized."
                 )
 
