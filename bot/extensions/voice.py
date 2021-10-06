@@ -982,7 +982,7 @@ class Voice(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="voiceclient", aliases=["voice-client", "voice_client", "vc"])
-    async def voiceclient(self, ctx: context.Context, server: discord.Guild = utils.MISSING) -> None:
+    async def voiceclient(self, ctx: context.Context, *, server: discord.Guild = utils.MISSING) -> None:
 
         guild = server or ctx.guild
 
