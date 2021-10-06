@@ -286,7 +286,7 @@ class Voice(commands.Cog):
         await ctx.voice_client.set_pause(True)
         await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="The player is now **paused**."))
 
-    @commands.command(name="resume", aliases=["continue", "unpause"])
+    @commands.command(name="resume", aliases=["unpause", "continue"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def resume(self, ctx: context.Context) -> None:
@@ -305,7 +305,7 @@ class Voice(commands.Cog):
 
     # Seek commands
 
-    @commands.command(name="seek")
+    @commands.command(name="seek", aliases=["scrub"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
@@ -413,7 +413,7 @@ class Voice(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @commands.command(name="rewind", aliases=["rwd"])
+    @commands.command(name="rewind", aliases=["rwd", "backward", "bwd"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
@@ -488,47 +488,45 @@ class Voice(commands.Cog):
 
     # Loop commands
 
-    @commands.command(name="loop", aliases=["loop-current", "loop_current", "repeat"])
+    @commands.command(name="loopcurrent", aliases=["loop-current", "loop_current", "loop"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def loop(self, ctx: context.Context) -> None:
+    async def loop_current(self, ctx: context.Context) -> None:
         """
         Loops the current track.
         """
 
-        if ctx.voice_client.queue.loop_mode is not slate.QueueLoopMode.CURRENT:
+        if ctx.voice_client.queue.loop_mode != slate.QueueLoopMode.CURRENT:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.CURRENT)
         else:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.OFF)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.LOOP_CURRENT,
-                description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
-            )
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
         )
+        await ctx.reply(embed=embed)
 
-    @commands.command(name="queueloop", aliases=["loopqueue", "loop-queue", "loop_queue", "qloop"])
+    @commands.command(name="loopqueue", aliases=["loop-queue", "loop_queue", "loopq", "qloop"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def queueloop(self, ctx: context.Context) -> None:
+    async def loop_queue(self, ctx: context.Context) -> None:
         """
         Loops the queue.
         """
 
-        if ctx.voice_client.queue.loop_mode is not slate.QueueLoopMode.QUEUE:
+        if ctx.voice_client.queue.loop_mode != slate.QueueLoopMode.QUEUE:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.QUEUE)
         else:
             ctx.voice_client.queue.set_loop_mode(slate.QueueLoopMode.OFF)
 
-        await ctx.reply(
-            embed=utils.embed(
-                emoji=emojis.LOOP,
-                description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
-            )
+        embed = utils.embed(
+            colour=colours.GREEN,
+            description=f"The queue looping mode is now **{ctx.voice_client.queue.loop_mode.name.title()}**.",
         )
+        await ctx.reply(embed=embed)
 
     # Skip commands
 
