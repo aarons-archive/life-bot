@@ -25,11 +25,7 @@ if TYPE_CHECKING:
 
 class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
 
-    def __init__(
-        self,
-        client: Life,
-        channel: discord.VoiceChannel
-    ) -> None:
+    def __init__(self, client: Life, channel: discord.VoiceChannel) -> None:
         super().__init__(client, channel)
 
         self._queue_add_event: asyncio.Event = asyncio.Event()
@@ -54,6 +50,13 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         return self.channel
 
     #
+
+    async def send(self, *args, **kwargs) -> None:
+
+        if not self.text_channel:
+            return
+
+        await self.text_channel.send(*args, **kwargs)
 
     async def search(
         self,
@@ -130,37 +133,6 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
 
     #
 
-    async def connect(
-        self,
-        *,
-        timeout: float | None = None,
-        reconnect: bool | None = None,
-        self_deaf: bool = True
-    ) -> None:
-
-        await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
-        self._task = asyncio.create_task(self.loop())
-
-    async def disconnect(
-        self,
-        *,
-        force: bool = False
-    ) -> None:
-
-        await super().disconnect(force=force)
-
-        if self._task is not None and self._task.done() is False:
-            self._task.cancel()
-
-    #
-
-    async def send(self, *args, **kwargs) -> None:
-
-        if not self.text_channel:
-            return
-
-        await self.text_channel.send(*args, **kwargs)
-
     async def loop(self) -> None:
 
         while True:
@@ -173,7 +145,6 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 try:
                     with async_timeout.timeout(timeout=3600):
                         await self._queue_add_event.wait()
-
                 except asyncio.TimeoutError:
                     await self.disconnect()
                     break
@@ -191,7 +162,22 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 track = search.tracks[0]
 
             await self.play(track)
+
             await self._track_end_event.wait()
+
+    #
+
+    async def connect(self, *, timeout: float | None = None, reconnect: bool | None = None, self_deaf: bool = True) -> None:
+
+        await super().connect(timeout=timeout, reconnect=reconnect, self_deaf=self_deaf)
+        self._task = asyncio.create_task(self.loop())
+
+    async def disconnect(self, *, force: bool = False) -> None:
+
+        await super().disconnect(force=force)
+
+        if self._task is not None and self._task.done() is False:
+            self._task.cancel()
 
     #
 
