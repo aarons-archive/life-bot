@@ -530,95 +530,73 @@ class Voice(commands.Cog):
 
     # Skip commands
 
-    @commands.command(
-        name="skip",
-        aliases=[
-            "s",
-            "voteskip",
-            "vote-skip",
-            "vote_skip",
-            "vs",
-            "forceskip",
-            "force-skip",
-            "force_skip",
-            "fs",
-            "next",
-        ],
-    )
+    @commands.command(name="skip", aliases=["s", "voteskip", "vote-skip", "vote_skip", "vs", "forceskip", "force-skip", "force_skip", "fs", "next"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def skip(self, ctx: context.Context, amount: int = 1) -> None:
         """
-        Votes to skip the current track.
+        Skips the current track.
+
+        **amount**: The amount of tracks to skip, only works if you are the bot owner, guild owner, or have the manage guild, manage message, manage channels, kick members, or ban members permissions.
         """
 
         try:
+
             await commands.check_any(  # type: ignore
                 checks.is_owner(),
                 checks.is_guild_owner(),
-                checks.is_track_requester(),
-                checks.has_any_permissions(manage_guild=True, kick_members=True, ban_members=True, manage_messages=True, manage_channels=True),
+                checks.has_any_permissions(manage_guild=True, manage_messages=True, manage_channels=True, kick_members=True, ban_members=True),
             ).predicate(ctx=ctx)
 
+            if 0 <= amount > len(ctx.voice_client.queue) + 1:
+                raise exceptions.EmbedError(
+                    colour=colours.RED,
+                    description=f"There are not enough tracks in the queue to skip that many, try again with an amount between "
+                                f"**1** and **{len(ctx.voice_client.queue) + 1}**.",
+                )
+
+            for _ in enumerate(ctx.voice_client.queue[:amount - 1]):
+                ctx.voice_client.queue.get(put_history=False)
+
+            await ctx.voice_client.stop()
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."))
+            return
+
         except commands.CheckAnyFailure:
+
+            if ctx.author.id == ctx.voice_client.current.requester.id:
+                await ctx.voice_client.stop()
+                await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="Skipped the current track."))
+                return
 
             if ctx.author not in ctx.voice_client.listeners:
                 raise exceptions.EmbedError(
                     colour=colours.RED,
-                    emoji=emojis.CROSS,
                     description="You can not vote to skip as you are currently deafened.",
                 )
 
-            if ctx.author.id in ctx.voice_client.skip_request_ids:
-                ctx.voice_client.skip_request_ids.remove(ctx.author.id)
-                message = "Removed your vote to skip, "
-            else:
-                ctx.voice_client.skip_request_ids.add(ctx.author.id)
-                message = "Added your vote to skip, "
-
             skips_needed = math.floor(75 * len(ctx.voice_client.listeners) / 100)
 
-            if len(ctx.voice_client.skip_request_ids) < skips_needed:
-                raise exceptions.EmbedError(
-                    colour=colours.GREEN,
-                    emoji=emojis.TICK,
-                    description=f"{message} currently on **{len(ctx.voice_client.skip_request_ids)}** out of **{skips_needed}** votes needed to skip.",
-                )
+            if ctx.author.id not in ctx.voice_client.skip_request_ids:
 
-            await ctx.voice_client.stop()
+                ctx.voice_client.skip_request_ids.add(ctx.author.id)
 
-            await ctx.reply(embed=utils.embed(emoji=emojis.NEXT, description="Skipped the current track."))
-            return
+                if len(ctx.voice_client.skip_request_ids) < skips_needed:
+                    embed = utils.embed(
+                        colour=colours.GREEN,
+                        description=f"Added your vote to skip, currently on **{len(ctx.voice_client.skip_request_ids)}** out of **{skips_needed}** votes "
+                                    f"needed to skip."
+                    )
+                    await ctx.reply(embed=embed)
+                    return
 
-        if 0 <= amount > len(ctx.voice_client.queue) + 1:
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are not enough tracks in the queue to skip that many. Choose a number between **1** and **{len(ctx.voice_client.queue) + 1}**.",
-            )
+                await ctx.voice_client.stop()
+                await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="Skipped the current track."))
+                return
 
-        for track in ctx.voice_client.queue[: amount - 1]:
-            try:
-                if track.requester.id != ctx.author.id:
-                    raise commands.CheckAnyFailure(checks=[], errors=[])
-                await commands.check_any(  # type: ignore
-                    checks.is_owner(),
-                    checks.is_guild_owner(),
-                    checks.has_any_permissions(manage_guild=True, kick_members=True, ban_members=True, manage_messages=True, manage_channels=True),
-                ).predicate(ctx=ctx)
-            except commands.CheckAnyFailure:
-                raise exceptions.EmbedError(
-                    colour=colours.RED,
-                    emoji=emojis.CROSS,
-                    description=f"You do not have permission to skip the next **{amount}** tracks in the queue.",
-                )
-
-        for _ in enumerate(ctx.voice_client.queue[: amount - 1]):
-            ctx.voice_client.queue.get()
-
-        await ctx.voice_client.stop()
-        await ctx.reply(embed=utils.embed(emoji=emojis.NEXT, description=f"Skipped **{amount}** track{'s' if amount != 1 else ''}."))
+            ctx.voice_client.skip_request_ids.remove(ctx.author.id)
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="Removed your vote to skip."))
 
     # Misc
 
