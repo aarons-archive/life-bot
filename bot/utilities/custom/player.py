@@ -60,6 +60,9 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
             return
 
         text_channel = channel or self.text_channel
+        if text_channel is None:
+            return
+
         guild_config = await self.client.guild_manager.get_config(text_channel.guild.id)
 
         embed = utils.embed(
@@ -82,7 +85,7 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
                 value=f"**Time:** {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(self.current.length // 1000)}\n"
                       f"**Is Stream:** {self.current.is_stream()}\n"
                       f"**Source:** {self.current.source.value.title()}\n"
-                      f"**Requester:** {self.current.requester.mention}\n"
+                      f"**Requester:** {self.current.requester.mention if self.current.requester else 'N/A'}\n"
             )
 
         if guild_config.embed_size is enums.EmbedSize.LARGE and not self.queue.is_empty():
