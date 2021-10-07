@@ -33,7 +33,6 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         super().__init__(client, channel)
 
         self._queue_add_event: asyncio.Event = asyncio.Event()
-        self._track_start_event: asyncio.Event = asyncio.Event()
         self._track_end_event: asyncio.Event = asyncio.Event()
 
         self._task: asyncio.Task | None = None
@@ -167,24 +166,16 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         while True:
 
             self._queue_add_event.clear()
-            self._track_start_event.clear()
             self._track_end_event.clear()
 
             if self.queue.is_empty():
 
                 try:
-                    with async_timeout.timeout(timeout=120):
+                    with async_timeout.timeout(timeout=3600):
                         await self._queue_add_event.wait()
 
                 except asyncio.TimeoutError:
-
-                    embed = utils.embed(
-                        colour=colours.RED,
-                        description="Nothing was added to the queue for two minutes, cya next time!",
-                    )
-                    await self.send(embed=embed)
                     await self.disconnect()
-
                     break
 
             track = self.queue.get()
@@ -200,51 +191,31 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
                 track = search.tracks[0]
 
             await self.play(track)
-
-            try:
-                with async_timeout.timeout(timeout=5):
-                    await self._track_start_event.wait()
-
-            except asyncio.TimeoutError:
-
-                if self.current:
-                    embed = utils.embed(
-                        colour=colours.RED,
-                        emoji=emojis.CROSS,
-                        description=f"There was an error while playing the track [{self.current.title}]({self.current.uri}).",
-                    )
-                    await self.send(embed=embed)
-
-                continue
-
             await self._track_end_event.wait()
 
     #
 
     async def handle_track_start(self) -> None:
-
-        self._track_start_event.set()
-        self._track_start_event.clear()
-
         await self.controller.handle_track_start()
+
+    async def handle_track_over(self) -> None:
+
+        self.skip_request_ids = set()
+        self._current = None
+
+        self._track_end_event.set()
+        self._track_end_event.clear()
+
+        await self.controller.handle_track_over()
 
     async def handle_track_error(self) -> None:
 
         await self.send(
             embed=utils.embed(
                 colour=colours.RED,
-                description=f"Something went wrong while playing a track. ",
+                description=f"Something went wrong while playing a track.",
             ),
             view=views.SupportButton()
         )
 
         await self.handle_track_over()
-
-    async def handle_track_over(self) -> None:
-
-        self._track_end_event.set()
-        self._track_end_event.clear()
-
-        self.skip_request_ids = set()
-
-        await self.controller.handle_track_over()
