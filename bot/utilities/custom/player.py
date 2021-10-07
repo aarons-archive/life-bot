@@ -34,12 +34,12 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         self._task: asyncio.Task | None = None
 
         self._text_channel: discord.TextChannel | None = None
+        self.message: discord.Message | None = None
 
         self.skip_request_ids: set[int] = set()
         self.enabled_filters: set[enums.Filters] = set()
 
         self.queue: custom.Queue = custom.Queue(self)
-        self.controller: custom.Controller = custom.Controller(self)
 
     @property
     def text_channel(self) -> discord.TextChannel | None:
@@ -51,7 +51,58 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
 
     #
 
-    async def send(self, *args, **kwargs) -> None:
+    async def invoke_controller(
+        self,
+        channel: discord.TextChannel | None = None
+    ) -> discord.Message | None:
+
+        if (channel is None and self.text_channel is None) or self.current is None:
+            return
+
+        text_channel = channel or self.text_channel
+        guild_config = await self.client.guild_manager.get_config(text_channel.guild.id)
+
+        embed = utils.embed(
+            title="Now playing:",
+            description=f"**[{self.current.title}]({self.current.uri})**\nBy **{self.current.author}**",
+            thumbnail=self.current.thumbnail
+        )
+
+        if guild_config.embed_size.value >= enums.EmbedSize.MEDIUM.value:
+
+            embed.add_field(
+                name="__Player info:__",
+                value=f"**Paused:** {self.paused}\n"
+                      f"**Loop mode:** {self.queue.loop_mode.name.title()}\n"
+                      f"**Queue length:** {len(self.queue)}\n"
+                      f"**Queue time:** {utils.format_seconds(sum(track.length for track in self.queue) // 1000, friendly=True)}\n",
+            )
+            embed.add_field(
+                name="__Track info:__",
+                value=f"**Time:** {utils.format_seconds(self.position // 1000)} / {utils.format_seconds(self.current.length // 1000)}\n"
+                      f"**Is Stream:** {self.current.is_stream()}\n"
+                      f"**Source:** {self.current.source.value.title()}\n"
+                      f"**Requester:** {self.current.requester.mention}\n"
+            )
+
+        if guild_config.embed_size is enums.EmbedSize.LARGE and not self.queue.is_empty():
+
+            entries = [f"**{index + 1}.** [{entry.title}]({entry.uri})" for index, entry in enumerate(list(self.queue)[:3])]
+            if len(self.queue) > 3:
+                entries.append(f"**...**\n**{len(self.queue)}.** [{self.queue[-1].title}]({self.queue[-1].uri})")
+
+            embed.add_field(
+                name="__Up next:__",
+                value="\n".join(entries),
+                inline=False
+            )
+
+        return await text_channel.send(embed=embed)
+
+    async def send(
+        self,
+        *args, **kwargs
+    ) -> None:
 
         if not self.text_channel:
             return
@@ -182,7 +233,7 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
     #
 
     async def handle_track_start(self) -> None:
-        await self.controller.handle_track_start()
+        self.message = await self.invoke_controller()
 
     async def handle_track_over(self) -> None:
 
@@ -192,7 +243,15 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         self._track_end_event.set()
         self._track_end_event.clear()
 
-        await self.controller.handle_track_over()
+        if not self.message:
+            return
+
+        try:
+            old = self.queue._queue_history[0]
+        except IndexError:
+            return
+
+        await self.message.edit(embed=utils.embed(description=f"Finished playing **[{old.title}]({old.uri})** by **{old.author}**."))
 
     async def handle_track_error(self) -> None:
 

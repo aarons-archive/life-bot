@@ -608,7 +608,7 @@ class Voice(commands.Cog):
         Shows the current track.
         """
 
-        await ctx.voice_client.controller.invoke(ctx.channel)
+        await ctx.voice_client.invoke_controller(ctx.channel)
 
     @commands.command(name="save", aliases=["grab", "yoink"])
     @checks.is_voice_client_playing()
