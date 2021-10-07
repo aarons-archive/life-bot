@@ -749,7 +749,7 @@ class Voice(commands.Cog):
 
     # Queue control commands
 
-    @commands.command(name="clear")
+    @commands.command(name="clear", aliases=["clr"])
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -761,7 +761,7 @@ class Voice(commands.Cog):
         ctx.voice_client.queue.clear()
         await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="The queue has been cleared."))
 
-    @commands.command(name="shuffle")
+    @commands.command(name="shuffle", aliases=["shfl"])
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -811,7 +811,7 @@ class Voice(commands.Cog):
 
         await ctx.reply(embed=utils.embed(colour=colours.GREEN, description=f"The queue has been sorted by**{method}**."))
 
-    @commands.command(name="remove")
+    @commands.command(name="remove", aliases=["rm"])
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -831,7 +831,7 @@ class Voice(commands.Cog):
         item = ctx.voice_client.queue.get(entry - 1, put_history=False)
         await ctx.reply(embed=utils.embed(colour=colours.GREEN, description=f"Removed **[{item.title}]({item.uri})** by **{item.author}** from the queue."))
 
-    @commands.command(name="move")
+    @commands.command(name="move", aliases=["mv"])
     @checks.queue_not_empty()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -866,7 +866,7 @@ class Voice(commands.Cog):
 
     # Effect commands
 
-    @commands.command(name="8d")
+    @commands.command(name="8d", aliases=["8dimensional"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def _8d(self, ctx: context.Context) -> None:
@@ -896,10 +896,10 @@ class Voice(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.command(name="nightcore")
+    @commands.command(name="nightcore", aliases=["night-core", "night_core", "nc"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
-    async def nightcore(self, ctx: context.Context) -> None:
+    async def night_core(self, ctx: context.Context) -> None:
         """
         Sets a nightcore audio filter on the player.
         """
@@ -924,7 +924,7 @@ class Voice(commands.Cog):
 
     # Debug commands
 
-    @commands.command(name="nodestats", aliases=["node-stats", "node_stats"])
+    @commands.command(name="nodestats", aliases=["node-stats", "node_stats", "ns"])
     async def nodestats(self, ctx: context.Context) -> None:
         """
         Displays information about the bots connected nodes.
