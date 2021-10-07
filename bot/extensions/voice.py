@@ -528,7 +528,7 @@ class Voice(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    # Skip commands
+    # Skip command
 
     @commands.command(name="skip", aliases=["s", "voteskip", "vote-skip", "vote_skip", "vs", "forceskip", "force-skip", "force_skip", "fs", "next"])
     @checks.is_voice_client_playing()
@@ -605,7 +605,7 @@ class Voice(commands.Cog):
     @checks.has_voice_client(try_join=False)
     async def nowplaying(self, ctx: context.Context) -> None:
         """
-        Shows the player controller.
+        Shows the current track.
         """
 
         await ctx.voice_client.controller.invoke(ctx.channel)
@@ -615,30 +615,28 @@ class Voice(commands.Cog):
     @checks.has_voice_client(try_join=False)
     async def save(self, ctx: context.Context) -> None:
         """
-        Saves the current track to your DM's.
+        Saves the current track to our DM's.
         """
 
         try:
-            embed = discord.Embed(
-                colour=colours.MAIN,
-                title=ctx.voice_client.current.title,
-                url=ctx.voice_client.current.uri,
+
+            embed = utils.embed(
+                title=f"{ctx.voice_client.current.title}",
+                url=f"{ctx.voice_client.current.uri}",
+                image=ctx.voice_client.current.thumbnail,
                 description=f"**Author:** {ctx.voice_client.current.author}\n"
-                f"**Source:** {ctx.voice_client.current.source.value.title()}\n"
-                f"**Length:** {utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}\n"
-                f"**Live:** {ctx.voice_client.current.is_stream()}\n"
-                f"**Seekable:** {ctx.voice_client.current.is_seekable()}",
-            )
-            embed.set_image(
-                url=ctx.voice_client.current.thumbnail
+                            f"**Source:** {ctx.voice_client.current.source.name.title()}\n"
+                            f"**Length:** {utils.format_seconds(ctx.voice_client.current.length // 1000, friendly=True)}\n"
+                            f"**Is stream:** {ctx.voice_client.current.is_stream()}\n"
+                            f"**Is seekable:** {ctx.voice_client.current.is_seekable()}\n"
+                            f"**Requester:** {ctx.voice_client.current.requester} `{ctx.voice_client.current.requester.id}`"
             )
             await ctx.author.send(embed=embed)
-            await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description="Saved the current track to our DM's."))
+            await ctx.reply(embed=utils.embed(colour=colours.GREEN, description="Saved the current track to our DM's."))
 
         except discord.Forbidden:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="I am unable to DM you."
             )
 
