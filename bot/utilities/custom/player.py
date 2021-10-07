@@ -14,7 +14,7 @@ import yarl
 
 # My stuff
 from core import colours, emojis
-from utilities import context, custom, enums, exceptions, utils, views
+from utilities import custom, enums, exceptions, utils, views
 
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from core.bot import Life
 
 
-class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
+class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
 
     def __init__(self, client: Life, channel: discord.VoiceChannel) -> None:
         super().__init__(client, channel)
@@ -115,8 +115,8 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         /,
         *,
         source: slate.Source,
-        ctx: context.Context,
-    ) -> slate.obsidian.SearchResult[context.Context]:
+        ctx: custom.Context,
+    ) -> slate.obsidian.SearchResult[custom.Context]:
 
         if (url := yarl.URL(query)) and url.host and url.scheme:
             source = slate.Source.NONE
@@ -153,7 +153,7 @@ class Player(slate.obsidian.Player["Life", context.Context, "Player"]):
         /,
         *,
         source: slate.Source,
-        ctx: context.Context,
+        ctx: custom.Context,
         now: bool = False,
         next: bool = False,
         choose: bool = False,

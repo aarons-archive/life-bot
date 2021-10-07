@@ -17,7 +17,7 @@ from wand.image import Image
 
 # My stuff
 from core import colours, emojis
-from utilities import context, exceptions, utils
+from utilities import custom, exceptions, utils
 
 
 CMD = "bash" if sys.platform == "win32" else "/bin/bash"
@@ -215,7 +215,7 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
         return await request.read()
 
 
-async def edit_image(ctx: context.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
+async def edit_image(ctx: custom.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
 
     message = await ctx.reply(
         embed=utils.embed(

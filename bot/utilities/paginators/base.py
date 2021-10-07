@@ -10,7 +10,7 @@ import discord
 
 # My stuff
 from core import config, emojis, values
-from utilities import context
+from utilities import custom
 
 
 class PaginatorButtons(discord.ui.View):
@@ -92,7 +92,7 @@ class BasePaginator(abc.ABC):
     def __init__(
         self,
         *,
-        ctx: context.Context,
+        ctx: custom.Context,
         entries: list[Any],
         per_page: int,
         timeout: int = 300,
@@ -101,7 +101,7 @@ class BasePaginator(abc.ABC):
         splitter: str = "\n",
     ) -> None:
 
-        self.ctx: context.Context = ctx
+        self.ctx: custom.Context = ctx
         self.entries: list[Any] = entries
         self.per_page: int = per_page
 

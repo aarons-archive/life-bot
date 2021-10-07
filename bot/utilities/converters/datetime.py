@@ -11,7 +11,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
-from utilities import context, exceptions
+from utilities import custom, exceptions
 
 
 SETTINGS = {
@@ -26,7 +26,7 @@ SETTINGS = {
 
 class DatetimeConverter(commands.Converter):
 
-    async def convert(self, ctx: context.Context, argument: str) -> tuple[str, dict[str, pendulum.DateTime]]:
+    async def convert(self, ctx: custom.Context, argument: str) -> tuple[str, dict[str, pendulum.DateTime]]:
 
         searches: Any = dateparser.search.search_dates(argument, languages=["en"], settings=SETTINGS)
         if not searches:

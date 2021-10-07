@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from utilities import checks, context
+from utilities import checks, custom
 
 
 T = TypeVar("T")
@@ -16,7 +16,7 @@ T = TypeVar("T")
 
 def is_mod() -> Callable[[T], T]:
 
-    async def predicate(ctx: context.Context) -> Literal[True]:
+    async def predicate(ctx: custom.Context) -> Literal[True]:
 
         unwrapped = [
             wrapped.predicate for wrapped in  # type: ignore

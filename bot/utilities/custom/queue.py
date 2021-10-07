@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING
 import slate
 import slate.obsidian
 
-# My stuff
-from utilities import context
-
 
 if TYPE_CHECKING:
 
@@ -31,7 +28,7 @@ class Queue(slate.Queue[slate.obsidian.Track]):
 
     def put(
         self,
-        items: list[slate.obsidian.Track[context.Context]] | slate.obsidian.Track[context.Context],
+        items: list[slate.obsidian.Track[custom.Context]] | slate.obsidian.Track[custom.Context],
         /,
         *,
         position: int | None = None

@@ -28,7 +28,7 @@ from slate import obsidian
 
 # My stuff
 from core import config
-from utilities import checks, context, converters, custom, enums, help, managers, objects
+from utilities import checks, converters, custom, enums, managers, objects
 
 
 __log__: logging.Logger = logging.getLogger("bot")
@@ -50,7 +50,7 @@ class Life(commands.AutoShardedBot):
             status=discord.Status.dnd,
             activity=discord.Activity(type=discord.ActivityType.playing, name="aaaaa!"),
             allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=False),
-            help_command=help.HelpCommand(),
+            help_command=custom.HelpCommand(),
             intents=discord.Intents.all(),
             command_prefix=self.get_prefix,
             case_insensitive=True,
@@ -72,7 +72,7 @@ class Life(commands.AutoShardedBot):
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
         self.ksoft: ksoftapi.Client = ksoftapi.Client(api_key=config.KSOFT_TOKEN)
-        self.slate: obsidian.NodePool[Life, context.Context, custom.Player] = obsidian.NodePool()
+        self.slate: obsidian.NodePool[Life, custom.Context, custom.Player] = obsidian.NodePool()
         self.ipc: ipc.Server = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
 
         self.topgg: topgg.DBLClient | None = topgg.DBLClient(
@@ -136,7 +136,7 @@ class Life(commands.AutoShardedBot):
 
         await self.invoke(ctx)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[context.Context] = context.Context) -> context.Context:
+    async def get_context(self, message: discord.Message, *, cls: Type[custom.Context] = custom.Context) -> custom.Context:
         return await super().get_context(message=message, cls=cls)
 
     async def is_owner(self, user: discord.User | discord.Member) -> bool:

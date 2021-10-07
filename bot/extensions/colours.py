@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import context, decorators, exceptions, utils
+from utilities import custom, decorators, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -64,7 +64,7 @@ class Colours(commands.Cog):
         return buffer
 
     @commands.command(name="randomcolour", aliases=["random-colour", "random_colour", "randomcolor", "random-color", "random_color", "rc"])
-    async def randomcolour(self, ctx: context.Context) -> None:
+    async def randomcolour(self, ctx: custom.Context) -> None:
 
         async with self.bot.session.get(url=f"https://www.thecolorapi.com/id", params={"hex": utils.random_hex().strip("#")}) as request:
 
@@ -114,7 +114,7 @@ class Colours(commands.Cog):
     @commands.command(name="colourscheme", aliases=["colour-scheme", "colour_scheme", "colorscheme", "color-scheme", "color_scheme", "cs"])
     async def colourscheme(
         self,
-        ctx: context.Context,
+        ctx: custom.Context,
         seed: Optional[discord.Color] = utils.MISSING,
         mode: Optional[Modes] = "monochrome",
         count: int = utils.MISSING,

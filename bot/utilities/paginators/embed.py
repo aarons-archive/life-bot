@@ -9,7 +9,7 @@ import discord
 
 # My stuff
 from core import colours
-from utilities import context, paginators, utils
+from utilities import custom, paginators, utils
 
 
 class EmbedPaginator(paginators.BasePaginator):
@@ -17,7 +17,7 @@ class EmbedPaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context,
+        ctx: custom.Context,
         entries: list[Any],
         per_page: int,
         timeout: int = 300,

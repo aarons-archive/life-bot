@@ -8,7 +8,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis, values
 from core.bot import Life
-from utilities import context, converters, exceptions, utils
+from utilities import converters, custom, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -21,7 +21,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @commands.group(name="tag", aliases=["tags"], invoke_without_command=True)
-    async def tag(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Gets a tag.
 
@@ -54,7 +54,7 @@ class Tags(commands.Cog):
         await ctx.reply(tag.content)
 
     @tag.command(name="raw")
-    async def tag_raw(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag_raw(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Gets a tags raw content.
 
@@ -87,7 +87,7 @@ class Tags(commands.Cog):
         await ctx.reply(discord.utils.escape_markdown(tag.content))
 
     @tag.command(name="create", aliases=["make"])
-    async def tag_create(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
+    async def tag_create(self, ctx: custom.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
         """
         Creates a tag.
 
@@ -118,7 +118,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="alias")
-    async def tag_alias(self, ctx: context.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
+    async def tag_alias(self, ctx: custom.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
         """
         Alias a new tag to a pre-existing tag.
 
@@ -159,7 +159,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="claim")
-    async def tag_claim(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag_claim(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Claims a tag if its owner has left the server.
 
@@ -194,7 +194,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="transfer")
-    async def tag_transfer(self, ctx: context.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
+    async def tag_transfer(self, ctx: custom.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
         """
         Transfers a tag to another member.
 
@@ -242,7 +242,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="edit")
-    async def tag_edit(self, ctx: context.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
+    async def tag_edit(self, ctx: custom.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
         """
         Edits a tags content.
 
@@ -279,7 +279,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="delete", aliases=["remove"])
-    async def tag_delete(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag_delete(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Deletes a tag.
 
@@ -312,7 +312,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="search")
-    async def tag_search(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag_search(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Displays a list of tags that are similar to the search.
 
@@ -336,7 +336,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="list")
-    async def tag_list(self, ctx: context.Context, *, person: discord.Member = utils.MISSING) -> None:
+    async def tag_list(self, ctx: custom.Context, *, person: discord.Member = utils.MISSING) -> None:
         """
         Gets a list of yours or someone else's tags.
 
@@ -361,7 +361,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="all")
-    async def tag_all(self, ctx: context.Context) -> None:
+    async def tag_all(self, ctx: custom.Context) -> None:
         """
         Gets a list of all tags in this server.
         """
@@ -382,7 +382,7 @@ class Tags(commands.Cog):
         )
 
     @tag.command(name="info")
-    async def tag_info(self, ctx: context.Context, *, name: converters.TagNameConverter) -> None:
+    async def tag_info(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Displays information about a tag.
 

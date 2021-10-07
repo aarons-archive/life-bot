@@ -8,7 +8,7 @@ from typing import Any
 import discord
 
 # My stuff
-from utilities import context, paginators
+from utilities import custom, paginators
 
 
 class EmbedsPaginator(paginators.BasePaginator):
@@ -16,7 +16,7 @@ class EmbedsPaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context,
+        ctx: custom.Context,
         entries: list[Any],
         timeout: int = 300,
         delete_message: bool = False,

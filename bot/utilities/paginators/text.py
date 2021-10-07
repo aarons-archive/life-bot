@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 # My stuff
-from utilities import context, paginators
+from utilities import custom, paginators
 
 
 class TextPaginator(paginators.BasePaginator):
@@ -13,7 +13,7 @@ class TextPaginator(paginators.BasePaginator):
     def __init__(
         self,
         *,
-        ctx: context.Context,
+        ctx: custom.Context,
         entries: list[Any],
         per_page: int,
         timeout: int = 300,

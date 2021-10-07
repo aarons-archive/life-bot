@@ -12,7 +12,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import context, converters, enums, exceptions, utils
+from utilities import converters, custom, enums, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -49,7 +49,7 @@ class Economy(commands.Cog):
     #
 
     @commands.command(name="level", aliases=["xp", "score", "rank"], ignore_extra=False)
-    async def level(self, ctx: context.Context, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def level(self, ctx: custom.Context, person: converters.PersonConverter = utils.MISSING) -> None:
         """
         Displays yours, or another persons xp, rank, and level information.
 
@@ -66,7 +66,7 @@ class Economy(commands.Cog):
             await ctx.reply(url)
 
     @commands.group(name="leaderboard", aliases=["lb"], invoke_without_command=True)
-    async def leaderboard(self, ctx: context.Context) -> None:
+    async def leaderboard(self, ctx: custom.Context) -> None:
         """
         Displays the leaderboard for ranks, xp and levels.
         """
@@ -77,7 +77,7 @@ class Economy(commands.Cog):
         )
 
     @leaderboard.command(name="text")
-    async def leaderboard_text(self, ctx: context.Context) -> None:
+    async def leaderboard_text(self, ctx: custom.Context) -> None:
         """
         Displays the leaderboard in a text table.
         """

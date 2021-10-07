@@ -6,12 +6,12 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis
-from utilities import context, exceptions
+from utilities import custom, exceptions
 
 
 class TodoContentConverter(commands.clean_content):
 
-    async def convert(self, ctx: context.Context, argument: str) -> str:
+    async def convert(self, ctx: custom.Context, argument: str) -> str:
 
         if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument

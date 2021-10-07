@@ -9,10 +9,10 @@ from discord.ext import commands
 
 # My stuff
 from core import colours, emojis, values
-from utilities import context, exceptions
+from utilities import custom, exceptions
 
 
-async def global_check(ctx: context.Context) -> Literal[True]:
+async def global_check(ctx: custom.Context) -> Literal[True]:
 
     user_config = await ctx.bot.user_manager.get_config(ctx.author.id)
 
