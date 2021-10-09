@@ -28,7 +28,7 @@ PAST_SETTINGS = {
     "TIMEZONE":                 "UTC",
     "RETURN_AS_TIMEZONE_AWARE": False,
     "PREFER_DAY_OF_MONTH":      "current",
-    "PREFER_DATES_FROM":        "future",
+    "PREFER_DATES_FROM":        "past",
     "PARSERS":                  ["relative-time", "absolute-time", "timestamp"],
 }
 
