@@ -112,6 +112,54 @@ class Context(commands.Context["Life"]):
         await paginator.paginate()
         return paginator
 
+    async def paginate_fields(
+        self,
+        *,
+        entries: list[tuple[Any, Any]],
+        per_page: int,
+        timeout: int = 300,
+        delete_message: bool = False,
+        codeblock: bool = False,
+        splitter: str = "\n",
+        header: str | None = None,
+        footer: str | None = None,
+        embed_footer: str | None = None,
+        embed_footer_url: str | None = None,
+        image: str | None = None,
+        thumbnail: str | None = None,
+        author: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
+        colour: discord.Colour = colours.MAIN,
+    ) -> paginators.FieldsPaginator:
+
+        paginator = paginators.FieldsPaginator(
+            ctx=self,
+            entries=entries,
+            per_page=per_page,
+            timeout=timeout,
+            delete_message=delete_message,
+            codeblock=codeblock,
+            splitter=splitter,
+            header=header,
+            footer=footer,
+            embed_footer=embed_footer,
+            embed_footer_url=embed_footer_url,
+            image=image,
+            thumbnail=thumbnail,
+            author=author,
+            author_url=author_url,
+            author_icon_url=author_icon_url,
+            title=title,
+            url=url,
+            colour=colour,
+        )
+
+        await paginator.paginate()
+        return paginator
+
     async def paginate_file(
         self,
         *,
