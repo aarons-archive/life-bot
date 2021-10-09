@@ -123,7 +123,7 @@ class Voice(commands.Cog):
     @checks.has_voice_client(try_join=False)
     async def disconnect(self, ctx: custom.Context) -> None:
         """
-        Disconnects the bot its voice channel.
+        Disconnects the bot from its voice channel.
         """
 
         await ctx.send(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=f"Left {ctx.voice_client.voice_channel.mention}."))
