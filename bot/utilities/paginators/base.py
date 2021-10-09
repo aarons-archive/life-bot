@@ -19,6 +19,7 @@ class PaginatorButtons(discord.ui.View):
         super().__init__(timeout=paginator.timeout)
 
         self.paginator: BasePaginator = paginator
+        self.page_label.label = f"{self.paginator.page + 1}/{len(self.paginator.pages)}"
 
     # Overridden
 
@@ -49,12 +50,12 @@ class PaginatorButtons(discord.ui.View):
 
         await interaction.response.defer()
 
-        if not self.paginator.message or self.paginator.page <= 0:
+        if not self.paginator.message or self.paginator.page == 0:
             return
 
         await self.paginator.change_page(page=self.paginator.page - 1)
 
-    @discord.ui.button(label="1/?")
+    @discord.ui.button()
     async def page_label(self, _: discord.ui.Button, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
 
@@ -63,7 +64,7 @@ class PaginatorButtons(discord.ui.View):
 
         await interaction.response.defer()
 
-        if not self.paginator.message or self.paginator.page >= len(self.paginator.pages) - 1:
+        if not self.paginator.message or self.paginator.page == len(self.paginator.pages) - 1:
             return
 
         await self.paginator.change_page(page=self.paginator.page + 1)
@@ -99,6 +100,7 @@ class BasePaginator(abc.ABC):
         delete_message: bool = False,
         codeblock: bool = False,
         splitter: str = "\n",
+        join_pages: bool = True,
     ) -> None:
 
         self.ctx: custom.Context = ctx
@@ -109,19 +111,24 @@ class BasePaginator(abc.ABC):
         self.delete_message: bool = delete_message
         self.codeblock: bool = codeblock
         self.splitter: str = splitter
+        self.join_pages: bool = join_pages
 
         self.message: discord.Message | None = None
-        self.view: PaginatorButtons = PaginatorButtons(paginator=self)
 
         self.page: int = 0
 
         if self.per_page > 1:
-            self.pages: list[Any] = [self.splitter.join(self.entries[page:page + self.per_page]) for page in range(0, len(self.entries), self.per_page)]
+            self.pages: list[Any] = [
+                self.splitter.join(self.entries[page:page + self.per_page]) if self.join_pages else self.entries[page:page + self.per_page]
+                for page in range(0, len(self.entries), self.per_page)
+            ]
         else:
             self.pages: list[Any] = self.entries
 
-        self.CODEBLOCK_START = f"```{values.NL}" if self.codeblock else ""
-        self.CODEBLOCK_END = f"{values.NL}```" if self.codeblock else ""
+        self.CODEBLOCK_START: str = f"```{values.NL}" if self.codeblock else ""
+        self.CODEBLOCK_END: str = f"{values.NL}```" if self.codeblock else ""
+
+        self.view: PaginatorButtons = PaginatorButtons(paginator=self)
 
     #
 

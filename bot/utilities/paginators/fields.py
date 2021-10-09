@@ -41,11 +41,12 @@ class FieldsPaginator(paginators.BasePaginator):
         super().__init__(
             ctx=ctx,
             entries=entries,
-            per_page=1,
+            per_page=per_page,
             timeout=timeout,
             delete_message=delete_message,
             codeblock=codeblock,
             splitter=splitter,
+            join_pages=False
         )
 
         self.header: str = header or ""
@@ -78,9 +79,6 @@ class FieldsPaginator(paginators.BasePaginator):
             url=url,
             colour=colour,
         )
-
-        self.per_page = per_page
-        self.pages: list[list[Any]] = [self.entries[page:page + self.per_page] for page in range(0, len(self.entries), self.per_page)]
 
     # Abstract methods
 
