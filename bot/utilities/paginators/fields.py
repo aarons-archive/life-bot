@@ -86,6 +86,8 @@ class FieldsPaginator(paginators.BasePaginator):
 
     async def set_page(self, *, page: int) -> None:
 
+        self.embed.description = f"{self.CODEBLOCK_START}{self.header}{self.footer}{self.CODEBLOCK_END}"
+
         self.embed.clear_fields()
 
         for name, value in self.pages[page]:
