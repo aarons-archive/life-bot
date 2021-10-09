@@ -98,7 +98,7 @@ def format_seconds(
 
 
 def avatar(
-    person: discord.User | discord.Member,
+    person: discord.User | discord.Member | discord.ClientUser,
     /,
     *,
     format: common.ImageFormat | None = None,
