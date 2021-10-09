@@ -25,7 +25,7 @@ class HelpCommand(commands.HelpCommand):
 
     def filter_command_list(
         self,
-        command_list: list[commands.Command, commands.Group],
+        command_list: list[commands.Command | commands.Group],
         /,
     ) -> list[commands.Command | commands.Group]:
 
