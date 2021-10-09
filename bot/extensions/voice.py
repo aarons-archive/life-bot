@@ -181,7 +181,7 @@ class Voice(commands.Cog):
 
     # Platform specific play commands
 
-    @commands.command(name="youtubemusic", aliases=["youtube-music", "youtube_music", "ytmusic", "yt-music", "yt_music", "ytm"])
+    @commands.command(name="youtube-music", aliases=["youtube_music", "youtubemusic", "yt-music", "yt_music", "ytmusic", "ytm"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def youtube_music(self, ctx: custom.Context, query: str, *, options: QueueOptions) -> None:
@@ -225,7 +225,7 @@ class Voice(commands.Cog):
 
     # Queue specific play commands
 
-    @commands.command(name="playnext", aliases=["play-next", "play_next", "pnext"])
+    @commands.command(name="play-next", aliases=["play_next", "playnext", "pnext"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def play_next(self, ctx: custom.Context, query: str, *, options: SearchOptions) -> None:
@@ -246,7 +246,7 @@ class Voice(commands.Cog):
         async with ctx.channel.typing():
             await ctx.voice_client.queue_search(query, ctx=ctx, next=True, source=get_source(options))
 
-    @commands.command(name="playnow", aliases=["play-now", "play_now", "pnow"])
+    @commands.command(name="play-now", aliases=["play_now", "playnow", "pnow"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=True)
     async def play_now(self, ctx: custom.Context, query: str, *, options: SearchOptions) -> None:
@@ -357,7 +357,7 @@ class Voice(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @commands.command(name="fastforward", aliases=["fast-forward", "fast_forward", "ff", "forward", "fwd"])
+    @commands.command(name="fast-forward", aliases=["fast_forward", "fastforward", "ff", "forward", "fwd"])
     @checks.is_track_seekable()
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
@@ -488,7 +488,7 @@ class Voice(commands.Cog):
 
     # Loop commands
 
-    @commands.command(name="loopcurrent", aliases=["loop-current", "loop_current", "loop"])
+    @commands.command(name="loop-current", aliases=["loop_current", "loopcurrent", "loopc", "cloop"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -508,7 +508,7 @@ class Voice(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
-    @commands.command(name="loopqueue", aliases=["loop-queue", "loop_queue", "loopq", "qloop"])
+    @commands.command(name="loop-queue", aliases=["loop_queue", "loopqueue", "loopq", "qloop", "loop"])
     @checks.is_voice_client_playing()
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
@@ -896,7 +896,7 @@ class Voice(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.command(name="nightcore", aliases=["night-core", "night_core", "nc"])
+    @commands.command(name="night-core", aliases=["night_core", "nightcore", "nc"])
     @checks.is_author_connected(same_channel=True)
     @checks.has_voice_client(try_join=False)
     async def night_core(self, ctx: custom.Context) -> None:
@@ -924,7 +924,7 @@ class Voice(commands.Cog):
 
     # Debug commands
 
-    @commands.command(name="nodestats", aliases=["node-stats", "node_stats", "ns"])
+    @commands.command(name="nodestats", aliases=["node-stats", "node_stats", "ns"], hidden=True)
     async def nodestats(self, ctx: custom.Context) -> None:
         """
         Displays information about the bots connected nodes.
@@ -957,7 +957,7 @@ class Voice(commands.Cog):
         await ctx.paginate_embeds(entries=embeds)
 
     @commands.is_owner()
-    @commands.command(name="voiceclients", aliases=["voice-clients", "voice_clients", "vcs"])
+    @commands.command(name="voiceclients", aliases=["voice-clients", "voice_clients", "vcs"], hidden=True)
     async def voiceclients(self, ctx: custom.Context) -> None:
         """
         Displays information about voice clients that the bot has.
@@ -995,7 +995,7 @@ class Voice(commands.Cog):
         await ctx.paginate_embed(entries=entries, per_page=3)
 
     @commands.is_owner()
-    @commands.command(name="voiceclient", aliases=["voice-client", "voice_client", "vc"])
+    @commands.command(name="voiceclient", aliases=["voice-client", "voice_client", "vc"], hidden=True)
     async def voiceclient(self, ctx: custom.Context, *, server: discord.Guild = utils.MISSING) -> None:
         """
         Displays information about a specific voice client.
