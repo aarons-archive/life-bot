@@ -22,7 +22,7 @@ class Reminders(commands.Cog):
         self.bot = bot
 
     @commands.command(name="remind", aliases=["remindme"])
-    async def remind(self, ctx: custom.Context, *, when: converters.DatetimeConverter) -> None:
+    async def remind(self, ctx: custom.Context, *, when: converters.FutureDatetimeConverter) -> None:
         """
         Creates a reminder.
 

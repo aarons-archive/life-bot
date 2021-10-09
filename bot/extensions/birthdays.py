@@ -56,7 +56,7 @@ class Birthdays(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="set")
-    async def _birthday_set(self, ctx: custom.Context, *, date: converters.DatetimeConverter) -> None:
+    async def _birthday_set(self, ctx: custom.Context, *, date: converters.PastDatetimeConverter) -> None:
         """
         Sets your birthday.
 
