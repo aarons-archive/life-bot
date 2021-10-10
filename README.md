@@ -66,11 +66,11 @@ pip install -r requirements.txt
 
 ```bash
 cd Life/
-mv config_example.py Life/config.py
-nano config.py
+mv config_example.py bot/core/config.py
+nano bot/core/config.py
 ```
 
-5. Run the [`main.py`](Life/main.py) file.
+5. Run the [`main.py`](bot/main.py) file.
 
 ```bash
 python main.py
