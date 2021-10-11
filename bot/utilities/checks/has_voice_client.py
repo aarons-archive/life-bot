@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions
 from utilities.checks.is_author_connected import is_author_connected
 
@@ -28,7 +28,6 @@ def has_voice_client(try_join: bool) -> Callable[[T], T]:
             else:
                 raise exceptions.EmbedError(
                     colour=colours.RED,
-                    emoji=emojis.CROSS,
                     description="I am not connected to any voice channels."
                 )
 

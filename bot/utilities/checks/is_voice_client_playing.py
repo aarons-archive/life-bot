@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions
 
 
@@ -22,7 +22,6 @@ def is_voice_client_playing() -> Callable[[T], T]:
         if not ctx.voice_client or not ctx.voice_client.is_playing():
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="No tracks are currently playing."
             )
 

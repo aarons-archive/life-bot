@@ -19,7 +19,6 @@ async def global_check(ctx: custom.Context) -> Literal[True]:
     if user_config.blacklisted is True:
         raise exceptions.EmbedError(
             colour=colours.RED,
-            emoji=emojis.CROSS,
             description=f"You are blacklisted from using this bot.\n\n"
                         f"*If you would like to appeal this please join my [support server]({values.SUPPORT_LINK}).*",
         )

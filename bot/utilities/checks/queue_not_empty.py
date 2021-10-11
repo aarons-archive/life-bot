@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions
 
 
@@ -22,7 +22,6 @@ def queue_not_empty() -> Callable[[T], T]:
         if not ctx.voice_client or ctx.voice_client.queue.is_empty():
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="The queue is empty."
             )
 

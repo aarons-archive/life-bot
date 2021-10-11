@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions
 
 
@@ -22,7 +22,6 @@ def is_track_seekable() -> Callable[[T], T]:
         if not ctx.voice_client or not ctx.voice_client.current or not ctx.voice_client.current.is_seekable():
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="The current track is not seekable."
             )
 

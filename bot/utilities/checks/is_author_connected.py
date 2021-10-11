@@ -8,7 +8,7 @@ from typing import Callable, Literal, TypeVar
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions
 
 
@@ -25,14 +25,12 @@ def is_author_connected(same_channel: bool) -> Callable[[T], T]:
         if same_channel is True and voice_client_channel is not None and author_channel != voice_client_channel:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description=f"You must be connected to {voice_client_channel.mention} to use this command.",
             )
 
         if not author_channel:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You must be connected to a voice channel to use this command.",
             )
 

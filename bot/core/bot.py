@@ -71,7 +71,6 @@ class Life(commands.AutoShardedBot):
 
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
         self.mystbin: mystbin.Client = mystbin.Client(session=self.session)
-        self.ksoft: ksoftapi.Client = ksoftapi.Client(api_key=config.KSOFT_TOKEN)
         self.slate: obsidian.NodePool[Life, custom.Context, custom.Player] = obsidian.NodePool()
         self.ipc: ipc.Server = ipc.Server(bot=self, secret_key=config.SECRET_KEY, multicast_port=config.MULTICAST_PORT)
 
