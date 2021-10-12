@@ -1,12 +1,11 @@
 *.pyc
 *.log*
-*.ttf
-*.otf
-*.png
-*.sh
 
-.idea/
+node_modules/
+resources/
+static/
 venv/
-.git/
+build/
+.idea/
 
 config.py
