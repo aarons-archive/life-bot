@@ -22,23 +22,14 @@ import topgg
 from discord.ext import commands, ipc
 # noinspection PyUnresolvedReferences
 from discord.ext.alternatives import converter_dict
-from pendulum.tz.timezone import Timezone
 from slate import obsidian
 
 # My stuff
-import utilities.utils
 from core import config, values
-from utilities import checks, converters, custom, enums, managers, objects, utils
+from utilities import checks, custom, enums, managers, utils
 
 
 __log__: logging.Logger = logging.getLogger("bot")
-
-CONVERTERS = {
-    objects.Reminder:         converters.ReminderConverter,
-    enums.ReminderRepeatType: converters.EnumConverter(enums.ReminderRepeatType, "Repeat type"),
-    enums.NotificationType:   converters.EnumConverter(enums.NotificationType, "Notification type"),
-    Timezone:                 converters.TimezoneConverter,
-}
 
 
 class Life(commands.AutoShardedBot):
@@ -88,7 +79,7 @@ class Life(commands.AutoShardedBot):
 
         self.add_check(checks.global_check, call_once=True)  # type: ignore
 
-        self.converters |= CONVERTERS
+        self.converters |= values.CONVERTERS
 
     #
 

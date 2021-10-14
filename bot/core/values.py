@@ -3,9 +3,11 @@ from __future__ import annotations
 
 # Packages
 import discord
+from pendulum.tz.timezone import Timezone
 
 # My stuff
 from core import config
+from utilities import converters, enums, objects
 
 
 # Common values
@@ -39,7 +41,7 @@ BETA_INVITE_LINK = discord.utils.oauth_url(
     scopes=["bot", "applications.commands"]
 )
 BETA_INVITE_LINK_NO_PERMISSIONS = discord.utils.oauth_url(
-    client_id=config.BOT_ID,
+    client_id=config.BETA_BOT_ID,
     scopes=["bot"]
 )
 
@@ -57,3 +59,22 @@ FLAG_COMMANDS = [
     "play-now",
     "rolecounts",
 ]
+
+CONVERTERS = {
+    objects.PastPhrasedDatetimeSearch:   converters.PastPhrasedDatetimeConverter,
+    objects.FuturePhrasedDatetimeSearch: converters.FuturePhrasedDatetimeConverter,
+    enums.ReminderRepeatType:            converters.EnumConverter(enums.ReminderRepeatType, "Repeat type"),
+    enums.NotificationType:              converters.EnumConverter(enums.NotificationType, "Notification type"),
+
+    objects.Reminder:                    converters.ReminderConverter,
+    Timezone:                            converters.TimezoneConverter,
+}
+
+DATE_PARSER_SETTINGS = {
+    "DATE_ORDER":               "DMY",
+    "TIMEZONE":                 "UTC",
+    "RETURN_AS_TIMEZONE_AWARE": False,
+    "PREFER_DAY_OF_MONTH":      "current",
+    "PREFER_DATES_FROM":        "past",
+    "PARSERS":                  ["relative-time", "absolute-time", "timestamp"],
+}

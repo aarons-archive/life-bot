@@ -9,7 +9,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import converters, custom, exceptions, utils
+from utilities import custom, exceptions, objects, utils
 
 
 def setup(bot: Life) -> None:
@@ -56,14 +56,14 @@ class Birthdays(commands.Cog):
         await ctx.reply(embed=embed)
 
     @_birthday.command(name="set")
-    async def _birthday_set(self, ctx: custom.Context, *, date: converters.PastDatetimeConverter) -> None:
+    async def _birthday_set(self, ctx: custom.Context, *, date: objects.PastPhrasedDatetimeSearch) -> None:
         """
         Sets your birthday.
 
         **date**: Your birthday. This should include some form of date such as **tomorrow**, **in 3 weeks** or **1st january 2020**.
         """
 
-        entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(date[1].items())}
+        entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(date.datetimes.items())}
 
         choice = await ctx.choice(
             entries=[f"`{index + 1}:` {phrase}\n{utils.format_date(datetime)}" for index, (phrase, datetime) in entries.items()],

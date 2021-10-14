@@ -16,11 +16,12 @@ from utilities import custom, exceptions
 EnumType = TypeVar("EnumType", bound=discord.Enum)
 
 
-class EnumConverter(commands.Converter, Generic[EnumType]):
+class EnumConverter(Generic[EnumType], commands.Converter[EnumType]):
 
     def __init__(self, enum: Type[EnumType], name: str) -> None:
-        self.enum = enum
-        self.name = name
+
+        self.enum: EnumType = enum
+        self.name: str = name
 
     async def convert(self, ctx: custom.Context, argument: str) -> EnumType:
 

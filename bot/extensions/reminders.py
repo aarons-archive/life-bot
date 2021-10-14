@@ -9,7 +9,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import converters, custom, enums, exceptions, objects, utils
+from utilities import custom, enums, exceptions, objects, utils
 
 
 def setup(bot: Life) -> None:
@@ -22,7 +22,7 @@ class Reminders(commands.Cog):
         self.bot = bot
 
     @commands.command(name="remind", aliases=["remindme"])
-    async def remind(self, ctx: custom.Context, *, when: converters.FutureDatetimeConverter) -> None:
+    async def remind(self, ctx: custom.Context, *, when: objects.FuturePhrasedDatetimeSearch) -> None:
         """
         Creates a reminder.
 
@@ -32,7 +32,7 @@ class Reminders(commands.Cog):
         `l-remind in 3 hours do that thing you talked about doing.`
         """
 
-        entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(when[1].items())}
+        entries = {index: (phrase, datetime) for index, (phrase, datetime) in enumerate(when.datetimes.items())}
 
         choice = await ctx.choice(
             entries=[f"**{index + 1}:** **{phrase}**\n`{utils.format_datetime(datetime)}`" for index, (phrase, datetime) in entries.items()],
@@ -55,7 +55,7 @@ class Reminders(commands.Cog):
         reminder = await user_config.create_reminder(
             channel_id=ctx.channel.id,
             datetime=datetime,
-            content=await utils.safe_content(self.bot.mystbin, when[0], max_characters=1500),
+            content=await utils.safe_content(self.bot.mystbin, when.phrase, max_characters=1500),
             jump_url=ctx.message.jump_url,
         )
 

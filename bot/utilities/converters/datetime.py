@@ -1,63 +1,43 @@
 # Future
 from __future__ import annotations
 
-# Standard Library
-from typing import Any
-
 # Packages
 import dateparser.search
-import pendulum
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
-from utilities import custom, exceptions
+from core import colours, values
+from utilities import custom, exceptions, objects
 
 
-FUTURE_SETTINGS = {
-    "DATE_ORDER":               "DMY",
-    "TIMEZONE":                 "UTC",
-    "RETURN_AS_TIMEZONE_AWARE": False,
-    "PREFER_DAY_OF_MONTH":      "current",
-    "PREFER_DATES_FROM":        "future",
-    "PARSERS":                  ["relative-time", "absolute-time", "timestamp"],
-}
+class PastPhrasedDatetimeConverter(commands.Converter[objects.PastPhrasedDatetimeSearch]):
 
-PAST_SETTINGS = {
-    "DATE_ORDER":               "DMY",
-    "TIMEZONE":                 "UTC",
-    "RETURN_AS_TIMEZONE_AWARE": False,
-    "PREFER_DAY_OF_MONTH":      "current",
-    "PREFER_DATES_FROM":        "past",
-    "PARSERS":                  ["relative-time", "absolute-time", "timestamp"],
-}
+    async def convert(self, ctx: custom.Context, argument: str) -> objects.PastPhrasedDatetimeSearch:
 
+        datetimes = dateparser.search.search_dates(argument, languages=["en"], settings=values.DATE_PARSER_SETTINGS)
 
-class FutureDatetimeConverter(commands.Converter):
-
-    async def convert(self, ctx: custom.Context, argument: str) -> tuple[str, dict[str, pendulum.DateTime]]:
-
-        searches: Any = dateparser.search.search_dates(argument, languages=["en"], settings=FUTURE_SETTINGS)
-        if not searches:
+        if not datetimes:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="I couldn't find a time or date in that input."
             )
 
-        return argument, {phrase: pendulum.instance(datetime, tz="UTC") for phrase, datetime in searches}
+        return objects.PastPhrasedDatetimeSearch(argument, datetimes=datetimes)
 
 
-class PastDatetimeConverter(commands.Converter):
+class FuturePhrasedDatetimeConverter(commands.Converter[objects.FuturePhrasedDatetimeSearch]):
 
-    async def convert(self, ctx: custom.Context, argument: str) -> tuple[str, dict[str, pendulum.DateTime]]:
+    async def convert(self, ctx: custom.Context, argument: str) -> objects.FuturePhrasedDatetimeSearch:
 
-        searches: Any = dateparser.search.search_dates(argument, languages=["en"], settings=PAST_SETTINGS)
-        if not searches:
+        settings = values.DATE_PARSER_SETTINGS.copy()
+        settings["PREFER_DATES_FROM"] = "future"
+
+        datetimes = dateparser.search.search_dates(argument, languages=["en"], settings=settings)
+
+        if not datetimes:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="I couldn't find a time or date in that input."
             )
 
-        return argument, {phrase: pendulum.instance(datetime, tz="UTC") for phrase, datetime in searches}
+        return objects.FuturePhrasedDatetimeSearch(argument, datetimes=datetimes)
