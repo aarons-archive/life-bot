@@ -41,6 +41,7 @@ class Colours(commands.Cog):
         buffer.seek(0)
         return buffer
 
+    # noinspection PyTypeChecker
     @decorators.async_executor
     def generate_colour_scheme(self, hex_codes: list[str], names: list[str]) -> Any:
 

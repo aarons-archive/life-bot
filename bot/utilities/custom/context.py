@@ -17,6 +17,7 @@ from utilities import exceptions, paginators, utils
 
 if TYPE_CHECKING:
 
+    # noinspection PyUnresolvedReferences
     # My stuff
     from core.bot import Life
     from extensions.voice.custom.player import Player

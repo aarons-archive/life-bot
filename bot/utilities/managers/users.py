@@ -231,6 +231,7 @@ class UserManager:
 
         return await self.bot.loop.run_in_executor(None, self.create_leaderboard_image, data)
 
+    # noinspection PyTypeChecker
     @staticmethod
     def create_leaderboard_image(
         data: list[tuple[discord.Member | discord.User, int, int, io.BytesIO]]
@@ -348,6 +349,7 @@ class UserManager:
             (member, member_config.xp, member_config.needed_xp, member_config.level, rank, avatar_bytes),
         )
 
+    # noinspection PyTypeChecker
     @staticmethod
     def create_level_card_image(
         data: tuple[discord.Member, int, int, int, int, io.BytesIO]
@@ -492,6 +494,7 @@ class UserManager:
 
         return file
 
+    # noinspection PyTypeChecker
     @staticmethod
     def create_grid_image(
         data: dict[str, io.BytesIO]

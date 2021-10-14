@@ -8,7 +8,7 @@ from typing import Literal
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis, values
+from core import colours, values
 from utilities import custom, exceptions
 
 
