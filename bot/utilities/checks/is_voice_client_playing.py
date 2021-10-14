@@ -22,7 +22,7 @@ def is_voice_client_playing() -> Callable[[T], T]:
         if not ctx.voice_client or not ctx.voice_client.is_playing():
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                description="No tracks are currently playing."
+                description="There are no tracks playing."
             )
 
         return True

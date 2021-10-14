@@ -15,23 +15,17 @@ from utilities import custom, exceptions
 T = TypeVar("T")
 
 
-def is_author_connected(same_channel: bool) -> Callable[[T], T]:
+def is_author_connected() -> Callable[[T], T]:
 
     async def predicate(ctx: custom.Context) -> Literal[True]:
 
         author_channel = ctx.author.voice and ctx.author.voice.channel
         voice_client_channel = ctx.voice_client and ctx.voice_client.voice_channel
 
-        if same_channel is True and voice_client_channel is not None and author_channel != voice_client_channel:
+        if voice_client_channel != author_channel:
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 description=f"You must be connected to {voice_client_channel.mention} to use this command.",
-            )
-
-        if not author_channel:
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                description="You must be connected to a voice channel to use this command.",
             )
 
         return True

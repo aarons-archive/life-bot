@@ -15,14 +15,14 @@ from utilities import custom, exceptions
 T = TypeVar("T")
 
 
-def queue_not_empty() -> Callable[[T], T]:
+def is_voice_client_connected() -> Callable[[T], T]:
 
     async def predicate(ctx: custom.Context) -> Literal[True]:
 
-        if not ctx.voice_client or ctx.voice_client.queue.is_empty():
+        if not ctx.voice_client or not ctx.voice_client.is_connected():
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                description="The queue is empty."
+                description="I am not connected to any voice channels."
             )
 
         return True
