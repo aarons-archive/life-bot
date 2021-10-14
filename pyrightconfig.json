@@ -50,5 +50,5 @@
   "reportUnnecessaryComparison": "error",
   "reportInvalidStubStatement": "error",
   "reportIncompleteStub": "error",
-  "reportPrivateImportUsage": "none",
+  "reportPrivateImportUsage": "none"
 }
