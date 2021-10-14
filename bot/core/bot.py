@@ -16,7 +16,6 @@ import aioredis
 import aioscheduler
 import asyncpg
 import discord
-import ksoftapi
 import mystbin
 import psutil
 import topgg
@@ -182,7 +181,6 @@ class Life(commands.AutoShardedBot):
     async def close(self) -> None:
 
         await self.session.close()
-        await self.ksoft.close()
 
         if self.db:
             await self.db.close()

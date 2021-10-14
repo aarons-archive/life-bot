@@ -33,7 +33,6 @@ I'd request that you don't run your own instance of this bot, but im not exactly
 * [Obsidian](https://github.com/mixtape-bot/obsidian) (requires [JDK-16](https://openjdk.java.net/projects/jdk/16/))
 * [Discord API Application](https://discord.com/developers/applications)
 * [Spotify API Application](https://developer.spotify.com/dashboard/applications)
-* [Ksoft.si API Application](https://api.ksoft.si/dashboard/)
 * [AxelWeb](https://cdn.axelancerr.xyz/home) token (Reach out to me on discord if you desperately need this.)
 * Good python knowledge, chances are that I'll help you understand whatever is going on here - as long as you know
   [the basics](https://media.mrrandom.xyz/TofuYoyoCynicChorusGyro.png) of a discord bot made in python.
