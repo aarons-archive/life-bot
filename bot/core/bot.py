@@ -8,7 +8,7 @@ import logging
 import re
 import time
 import traceback
-from typing import Any, Callable, Type
+from typing import Any, Type
 
 # Packages
 import aiohttp
@@ -26,8 +26,9 @@ from pendulum.tz.timezone import Timezone
 from slate import obsidian
 
 # My stuff
-from core import config
-from utilities import checks, converters, custom, enums, managers, objects
+import utilities.utils
+from core import config, values
+from utilities import checks, converters, custom, enums, managers, objects, utils
 
 
 __log__: logging.Logger = logging.getLogger("bot")
@@ -42,7 +43,7 @@ CONVERTERS = {
 
 class Life(commands.AutoShardedBot):
 
-    converters: dict[type, Callable[..., Any]]
+    converters: dict[Type[Any], Type[Any]]
 
     def __init__(self) -> None:
         super().__init__(
@@ -65,7 +66,7 @@ class Life(commands.AutoShardedBot):
         self.GUILD_LOG: discord.Webhook = discord.Webhook.from_url(session=self.session, url=config.GUILD_WEBHOOK_URL)
         self.DMS_LOG: discord.Webhook = discord.Webhook.from_url(session=self.session, url=config.DM_WEBHOOK_URL)
 
-        self.db: asyncpg.Pool | None = None
+        self.db: asyncpg.Pool = utils.MISSING
         self.redis: aioredis.Redis | None = None
 
         self.scheduler: aioscheduler.Manager = aioscheduler.Manager()
@@ -85,7 +86,7 @@ class Life(commands.AutoShardedBot):
         self.first_ready: bool = True
         self.start_time: float = time.time()
 
-        self.add_check(checks.global_check, call_once=True)
+        self.add_check(checks.global_check, call_once=True)  # type: ignore
 
         self.converters |= CONVERTERS
 
@@ -106,17 +107,7 @@ class Life(commands.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        flag_commands = [
-            "play",
-            "yt-music",
-            "soundcloud",
-            "search",
-            "play-now",
-            "play-next",
-            "rolecounts",
-        ]
-
-        if ctx.command and ctx.command.name in flag_commands:
+        if ctx.command and ctx.command.name in values.FLAG_COMMANDS and ctx.invoked_with:
 
             content = message.content
             start = content.index(ctx.invoked_with) + len(ctx.invoked_with) + 1
@@ -125,16 +116,15 @@ class Life(commands.AutoShardedBot):
             except ValueError:
                 end = len(content)
 
-            content = (content[:start] + ('"' + content[start:end] + '"') + content[end:]).replace('""', "")
+            new_message = copy.copy(message)
+            new_content = (content[:start] + ('"' + content[start:end] + '"') + content[end:]).replace('""', "")
+            new_message.content = re.sub(r"--([^\s]+)\s*", r"--\1 true ", new_content)
 
-            message = copy.copy(message)
-            message.content = re.sub(r"--([^\s]+)\s*", r"--\1 true ", content)
-
-            ctx = await self.get_context(message)
+            ctx = await self.get_context(new_message)
 
         await self.invoke(ctx)
 
-    async def get_context(self, message: discord.Message, *, cls: Type[custom.Context] = custom.Context) -> custom.Context:
+    async def get_context(self, message: discord.Message, *, cls: Type[commands.Context] = custom.Context) -> commands.Context:
         return await super().get_context(message=message, cls=cls)
 
     async def is_owner(self, user: discord.User | discord.Member) -> bool:

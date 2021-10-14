@@ -47,3 +47,13 @@ BETA_INVITE_LINK_NO_PERMISSIONS = discord.utils.oauth_url(
 # External links
 SUPPORT_LINK = "https://discord.gg/w9f6NkQbde"
 GITHUB_LINK = "https://github.com/Axelancerr/Life-bot"
+
+FLAG_COMMANDS = [
+    "play",
+    "search",
+    "youtube-music",
+    "soundcloud",
+    "play-next",
+    "play-now",
+    "rolecounts",
+]
