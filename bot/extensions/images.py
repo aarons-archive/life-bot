@@ -12,7 +12,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, config, emojis
 from core.bot import Life
-from utilities import converters, custom, exceptions, imaging, utils
+from utilities import custom, exceptions, imaging, objects, utils
 
 
 _old_transform = commands.Command.transform
@@ -20,28 +20,22 @@ _old_transform = commands.Command.transform
 
 def _new_transform(self, ctx: custom.Context, param: Parameter) -> Any:
 
-    if param.annotation is Optional[converters.ImageConverter]:
+    if param.annotation is Optional[objects.Image]:
 
         message = ctx.message
         if reference := ctx.message.reference:
             message = reference.cached_message or (reference.resolved if isinstance(reference.resolved, discord.Message) else ctx.message)
 
-        default = None
-
         if attachments := message.attachments:
-            default = attachments[0].url
+            default = objects.Image(attachments[0].url)
 
-        for embed in message.embeds:
-            if (image := embed.image) or (image := embed.thumbnail):
-                default = image.url
-                break
+        elif (embeds := message.embeds) is not [] and (image := embeds[0].image) or (image := embeds[0].thumbnail):
+            default = objects.Image(image.url)
 
-        param = Parameter(
-            name=param.name,
-            kind=param.kind,
-            default=default or utils.avatar(ctx.author),
-            annotation=param.annotation
-        )
+        else:
+            default = objects.Image(utils.avatar(ctx.author))
+
+        param = Parameter(name=param.name, kind=param.kind, default=default, annotation=param.annotation)
 
     return _old_transform(self=self, ctx=ctx, param=param)
 
@@ -50,13 +44,13 @@ commands.Command.transform = _new_transform
 
 
 def setup(bot: Life) -> None:
-    bot.add_cog(Images(bot=bot))
+    bot.add_cog(Images(bot))
 
 
 class Images(commands.Cog):
 
-    def __init__(self, bot: Life) -> None:
-        self.bot = bot
+    def __init__(self, bot: Life, /) -> None:
+        self.bot: Life = bot
 
     @staticmethod
     def limit(person: discord.User | discord.Member, name: str, value: float, minimum: float, maximum: float) -> None:
@@ -73,7 +67,7 @@ class Images(commands.Cog):
     async def blur(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 10,
         sigma: float = 5
     ) -> None:
@@ -86,14 +80,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.blur, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.blur, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="adaptive_blur", aliases=["ab"])
+    @commands.command(name="adaptive-blur", aliases=["adaptive_blur", "adaptiveblur", "ab"])
     async def adaptive_blur(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 10,
         sigma: float = 5
     ) -> None:
@@ -106,14 +100,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_blur, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_blur, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="sharpen")
     async def sharpen(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 10,
         sigma: float = 5
     ) -> None:
@@ -126,14 +120,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sharpen, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="adaptive_sharpen", aliases=["as"])
+    @commands.command(name="adaptive-sharpen", aliases=["adaptive_sharpen", "adaptivesharpen", "as"])
     async def adaptive_sharpen(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 10,
         sigma: float = 5
     ) -> None:
@@ -146,14 +140,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_sharpen, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.adaptive_sharpen, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="blueshift", aliases=["blue-shift", "blue_shift", "bs"])
+    @commands.command(name="blue-shift", aliases=["blue_shift", "blueshift", "bs"])
     async def blueshift(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         factor: float = 1.25
     ) -> None:
         """
@@ -166,14 +160,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="factor", value=factor, minimum=0, maximum=20)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.blueshift, url=str(image), factor=factor)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.blueshift, image=image, factor=factor)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="border")
     async def border(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         colour: commands.ColourConverter = utils.MISSING,
         width: int = 20,
         height: int = 20,
@@ -201,7 +195,7 @@ class Images(commands.Cog):
         await imaging.edit_image(
             ctx=ctx,
             edit_function=imaging.border,
-            url=str(image),
+            image=image,
             colour=str(colour) if colour else utils.random_hex(),
             width=width,
             height=height,
@@ -212,7 +206,7 @@ class Images(commands.Cog):
     async def colorize(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         colour: Optional[commands.ColourConverter]
     ) -> None:
         """
@@ -232,14 +226,14 @@ class Images(commands.Cog):
          **<hex>** can be **#FFF** or **#FFFFFF**.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, url=str(image), colour=str(colour) if colour else utils.random_hex())
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.colorize, image=image, colour=str(colour) if colour else utils.random_hex())
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="despeckle")
     async def despeckle(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Removes noise from an image.
@@ -247,14 +241,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.despeckle, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.despeckle, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="floor")
     async def floor(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Warps and tiles the image which makes it like a floor.
@@ -262,14 +256,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.floor, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.floor, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="emboss")
     async def emboss(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 3,
         sigma: float = 1
     ) -> None:
@@ -282,14 +276,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.emboss, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.emboss, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="enhance")
     async def enhance(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Removes noise from an image.
@@ -297,14 +291,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.enhance, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.enhance, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="flip")
     async def flip(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Flips the image along the x-axis.
@@ -312,14 +306,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.flip, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.flip, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="flop")
     async def flop(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Flips the image along the y-axis.
@@ -327,14 +321,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.flop, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.flop, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="frame")
     async def frame(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         colour: Optional[commands.ColourConverter],
         width: int = 20,
         height: int = 20,
@@ -366,7 +360,7 @@ class Images(commands.Cog):
         await imaging.edit_image(
             ctx=ctx,
             edit_function=imaging.frame,
-            url=str(image),
+            image=image,
             matte=str(colour) if colour else utils.random_hex(),
             height=height,
             width=width,
@@ -379,7 +373,7 @@ class Images(commands.Cog):
     async def implode(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         factor: float = 0.4,
         *,
         method: imaging.PixelInterpolateMethods = "undefined",
@@ -393,14 +387,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="factor", value=factor, minimum=-20, maximum=20)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, url=str(image), amount=factor, method=method)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.implode, image=image, amount=factor, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kmeans")
     async def kmeans(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         colors: int = 10
     ) -> None:
         """
@@ -412,14 +406,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="colours", value=colors, minimum=0, maximum=1024)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, url=str(image), number_colours=colors)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.kmeans, image=image, number_colours=colors)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="kuwahara")
     async def kuwahara(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 5,
         sigma: float = 2.5
     ) -> None:
@@ -432,14 +426,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=20)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=20)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.kuwahara, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.kuwahara, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="motionblur", aliases=["motion-blur", "motion_blue", "mb"])
+    @commands.command(name="motion-blur", aliases=["motion_blur", "motionblur", "mb"])
     async def motion_blur(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 30,
         sigma: float = 20,
         angle: int = 90,
@@ -453,14 +447,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=50)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=50)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.motion_blur, url=str(image), radius=radius, sigma=sigma, angle=angle)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.motion_blur, image=image, radius=radius, sigma=sigma, angle=angle)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="invert", aliases=["negate"])
     async def invert(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter]
+        image: Optional[objects.Image]
     ) -> None:
         """
         Inverts the colours in an image.
@@ -468,14 +462,14 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.negate, url=str(image))
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.negate, image=image)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="noise")
     async def noise(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         attenuate: float = 0.5,
         method: imaging.NoiseTypes = "impulse",
     ) -> None:
@@ -492,14 +486,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="attenuate", value=attenuate, minimum=0.0, maximum=1.0)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.noise, url=str(image), method=method, attenuate=attenuate)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.noise, image=image, method=method, attenuate=attenuate)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="oil_paint", aliases=["op"])
+    @commands.command(name="oil-paint", aliases=["oil_paint", "oilpaint", "op"])
     async def oil_paint(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 2,
         sigma: float = 1
     ) -> None:
@@ -512,14 +506,14 @@ class Images(commands.Cog):
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
         self.limit(person=ctx.author, name="sigma", value=sigma, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.oil_paint, url=str(image), radius=radius, sigma=sigma)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.oil_paint, image=image, radius=radius, sigma=sigma)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="polaroid")
     async def polaroid(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         angle: float = 0,
         *,
         caption: Optional[str]
@@ -542,14 +536,14 @@ class Images(commands.Cog):
                 description="**caption** must be **100** characters or less."
             )
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, url=str(image), angle=angle, caption=caption, method="undefined")
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.polaroid, image=image, angle=angle, caption=caption, method="undefined")
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="rotate")
     async def rotate(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         degree: int = 45
     ) -> None:
         """
@@ -562,14 +556,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="degree", value=degree, minimum=-360, maximum=360)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, url=str(image), degree=degree, reset_coords=True)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.rotate, image=image, degree=degree, reset_coords=True)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
-    @commands.command(name="sepia_tone", aliases=["sepia", "st"])
+    @commands.command(name="sepia-tone", aliases=["sepia_tone", "sepiatone", "st"])
     async def sepia_tone(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         threshold: float = 0.8
     ) -> None:
         """
@@ -582,14 +576,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="threshold", value=threshold, minimum=0.0, maximum=1.0)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.sepia_tone, url=str(image), threshold=threshold)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.sepia_tone, image=image, threshold=threshold)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="solarize")
     async def solarize(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         threshold: float = 0.5
     ) -> None:
         """
@@ -602,14 +596,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="threshold", value=threshold, minimum=0.0, maximum=1.0)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.solarize, url=str(image), threshold=threshold)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.solarize, image=image, threshold=threshold)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="spread")
     async def spread(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         radius: float = 2.0,
         *,
         method: imaging.PixelInterpolateMethods = "undefined",
@@ -624,14 +618,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="radius", value=radius, minimum=0, maximum=30)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, url=str(image), radius=radius, method=method)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.spread, image=image, radius=radius, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="swirl")
     async def swirl(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         degree: int = 45,
         *,
         method: imaging.PixelInterpolateMethods = "undefined",
@@ -646,14 +640,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="degree", value=degree, minimum=-360, maximum=360)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, url=str(image), degree=degree, method=method)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.swirl, image=image, degree=degree, method=method)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="transparentize")
     async def transparentize(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         transparency: float = 0.5
     ) -> None:
         """
@@ -666,14 +660,14 @@ class Images(commands.Cog):
 
         self.limit(person=ctx.author, name="transparency", value=transparency, minimum=0.0, maximum=1.0)
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.transparentize, url=str(image), transparency=transparency)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.transparentize, image=image, transparency=transparency)
 
     @commands.max_concurrency(1, per=commands.cooldowns.BucketType.member)
     @commands.command(name="wave")
     async def wave(
         self,
         ctx: custom.Context,
-        image: Optional[converters.ImageConverter],
+        image: Optional[objects.Image],
         *,
         method: imaging.PixelInterpolateMethods = "undefined",
     ) -> None:
@@ -683,4 +677,4 @@ class Images(commands.Cog):
         **image**: Can be a members ID, Username, Nickname or @Mention, attachment, emoji or image url.
         """
 
-        await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, url=str(image), method=method)
+        await imaging.edit_image(ctx=ctx, edit_function=imaging.wave, image=image, method=method)

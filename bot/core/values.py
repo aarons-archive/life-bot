@@ -65,6 +65,7 @@ CONVERTERS = {
     objects.FuturePhrasedDatetimeSearch: converters.FuturePhrasedDatetimeConverter,
     enums.ReminderRepeatType:            converters.EnumConverter(enums.ReminderRepeatType, "Repeat type"),
     enums.NotificationType:              converters.EnumConverter(enums.NotificationType, "Notification type"),
+    objects.Image:                       converters.ImageConverter,
 
     objects.Reminder:                    converters.ReminderConverter,
     Timezone:                            converters.TimezoneConverter,

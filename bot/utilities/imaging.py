@@ -17,10 +17,8 @@ from wand.image import Image
 
 # My stuff
 from core import colours, emojis
-from utilities import custom, exceptions, utils
+from utilities import custom, exceptions, objects, utils
 
-
-CMD = "bash" if sys.platform == "win32" else "/bin/bash"
 
 PixelInterpolateMethods = Literal[
     "undefined",
@@ -36,7 +34,16 @@ PixelInterpolateMethods = Literal[
     "nearest",
     "spline",
 ]
-NoiseTypes = Literal["undefined", "uniform", "gaussian", "multiplicative_gaussian", "impulse", "laplacian", "poisson", "random"]
+NoiseTypes = Literal[
+    "undefined",
+    "uniform",
+    "gaussian",
+    "multiplicative_gaussian",
+    "impulse",
+    "laplacian",
+    "poisson",
+    "random"
+]
 
 
 def blur(image: Image, radius: float, sigma: float) -> None:
@@ -215,16 +222,17 @@ async def request_image_bytes(*, session: aiohttp.ClientSession, url: str) -> by
         return await request.read()
 
 
-async def edit_image(ctx: custom.Context, edit_function: Callable[..., Any], url: str, **kwargs) -> None:
+async def edit_image(ctx: custom.Context, edit_function: Callable[..., Any], image: objects.Image, **kwargs) -> None:
 
-    message = await ctx.reply(
-        embed=utils.embed(
-            colour=colours.GREEN, emoji="<a:loading:872608197314220154>", description="| Processing image"
-        )
+    embed = utils.embed(
+        colour=colours.GREEN,
+        emoji=emojis.LOADING,
+        description="Processing image"
     )
+    message = await ctx.reply(embed=embed)
 
+    image_bytes = await request_image_bytes(session=ctx.bot.session, url=image.url)
     receiving_pipe, sending_pipe = multiprocessing.Pipe(duplex=False)
-    image_bytes = await request_image_bytes(session=ctx.bot.session, url=url)
 
     process = multiprocessing.Process(target=do_edit_image, daemon=True, args=(edit_function, image_bytes, sending_pipe), kwargs=kwargs)
     process.start()
@@ -240,26 +248,24 @@ async def edit_image(ctx: custom.Context, edit_function: Callable[..., Any], url
 
     if data is ValueError or data is EOFError:
 
-        await message.edit(
-            embed=utils.embed(
-                colour=colours.RED, emoji=emojis.CROSS, description="Image edit failed."
-            )
-        )
+        try:
+            await message.delete()
+        except Exception:
+            pass
 
         raise exceptions.EmbedError(
             colour=colours.RED,
-            emoji=emojis.CROSS,
-            description="Something went wrong while editing that image, try again."
+            description="Something went wrong while editing that image."
         )
 
     url = await utils.upload_file(ctx.bot.session, file_bytes=data[0], file_format=data[1])
-    await ctx.reply(url)
 
-    await message.edit(
-        embed=utils.embed(
-            colour=colours.GREEN, emoji=emojis.TICK, description="Image edit success."
-        )
-    )
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+    await ctx.reply(url)
 
     del data
 
