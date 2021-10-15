@@ -12,7 +12,7 @@ from core import colours
 from utilities import custom, exceptions
 
 
-class TimezoneConverter(commands.Converter):
+class TimezoneConverter(commands.Converter[Timezone]):
 
     async def convert(self, ctx: custom.Context, argument: str) -> Timezone:
 
