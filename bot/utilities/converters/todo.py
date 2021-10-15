@@ -5,7 +5,7 @@ from __future__ import annotations
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions, objects
 
 
@@ -32,17 +32,16 @@ class TodoConverter(commands.Converter[objects.Todo]):
         return todo
 
 
-class TodoContentConverter(commands.clean_content):
+class TodoContentConverter(commands.Converter[str]):
 
     async def convert(self, ctx: custom.Context, argument: str) -> str:
 
-        if not (argument := (await super().convert(ctx=ctx, argument=argument)).strip()):
+        if not (argument := (await commands.clean_content().convert(ctx=ctx, argument=argument)).strip()):
             raise commands.BadArgument
 
         if len(argument) > 150:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="Your todo content must be under 150 characters."
             )
 

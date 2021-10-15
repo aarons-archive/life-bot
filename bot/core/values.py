@@ -70,7 +70,7 @@ CONVERTERS = {
     objects.Tag:                         converters.TagConverter,
     objects.Time:                        converters.TimeConverter,
     Timezone:                            converters.TimezoneConverter,
-    objects.Todo:                        converters.TodoConverter
+    objects.Todo:                        converters.TodoConverter,
 }
 
 DATE_PARSER_SETTINGS = {
