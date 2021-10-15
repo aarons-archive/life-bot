@@ -26,16 +26,16 @@ def _new_transform(self, ctx: custom.Context, param: Parameter) -> Any:
         if reference := ctx.message.reference:
             message = reference.cached_message or (reference.resolved if isinstance(reference.resolved, discord.Message) else ctx.message)
 
+        default = None
+
         if attachments := message.attachments:
             default = objects.Image(attachments[0].url)
 
-        elif (embeds := message.embeds) is not [] and (image := embeds[0].image) or (image := embeds[0].thumbnail):
-            default = objects.Image(image.url)
+        elif embeds := message.embeds:
+            if (image := embeds[0].image) or (image := embeds[0].thumbnail):
+                default = objects.Image(image.url)
 
-        else:
-            default = objects.Image(utils.avatar(ctx.author))
-
-        param = Parameter(name=param.name, kind=param.kind, default=default, annotation=param.annotation)
+        param = Parameter(name=param.name, kind=param.kind, default=default or objects.Image(utils.avatar(ctx.author)), annotation=param.annotation)
 
     return _old_transform(self=self, ctx=ctx, param=param)
 
