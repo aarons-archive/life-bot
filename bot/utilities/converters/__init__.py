@@ -9,4 +9,4 @@ from utilities.converters.reminder import ReminderConverter
 from utilities.converters.tag import TagContentConverter, TagConverter, TagNameConverter
 from utilities.converters.time import TimeConverter
 from utilities.converters.timezone import TimezoneConverter
-from utilities.converters.todo import TodoContentConverter
+from utilities.converters.todo import TodoContentConverter, TodoConverter
