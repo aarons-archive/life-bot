@@ -12,7 +12,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis
 from core.bot import Life
-from utilities import converters, custom, enums, exceptions, utils
+from utilities import custom, enums, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -49,7 +49,7 @@ class Economy(commands.Cog):
     #
 
     @commands.command(name="level", aliases=["xp", "score", "rank"], ignore_extra=False)
-    async def level(self, ctx: custom.Context, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def level(self, ctx: custom.Context, person: discord.Member = utils.MISSING) -> None:
         """
         Displays yours, or another persons xp, rank, and level information.
 

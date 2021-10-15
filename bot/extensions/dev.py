@@ -6,12 +6,13 @@ import collections
 import time
 
 # Packages
+import discord
 from discord.ext import commands
 
 # My stuff
 from core import colours, config, emojis
 from core.bot import Life
-from utilities import converters, custom, exceptions, utils
+from utilities import custom, exceptions, utils
 
 
 def setup(bot: Life) -> None:
@@ -148,7 +149,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist.command(name="add", hidden=True)
-    async def blacklist_add(self, ctx: custom.Context, user: converters.PersonConverter, *, reason: str | None) -> None:
+    async def blacklist_add(self, ctx: custom.Context, user: discord.User, *, reason: str | None) -> None:
         """
         Adds a user to the blacklist.
 
@@ -177,7 +178,7 @@ class Dev(commands.Cog):
 
     @commands.is_owner()
     @blacklist.command(name="remove", hidden=True)
-    async def blacklist_remove(self, ctx: custom.Context, user: converters.PersonConverter) -> None:
+    async def blacklist_remove(self, ctx: custom.Context, user: discord.User) -> None:
         """
         Removes a user from the blacklist.
 

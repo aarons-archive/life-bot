@@ -21,7 +21,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis, values
 from core.bot import Life
-from utilities import converters, custom, exceptions, utils
+from utilities import custom, exceptions, utils
 
 
 COLOURS: dict[discord.Status, int] = {
@@ -290,7 +290,7 @@ class Information(commands.Cog):
     #
 
     @commands.command(name="userinfo", aliases=["user-info", "user_info", "user", "memberinfo", "member-info", "member_info", "member"])
-    async def user_info(self, ctx: custom.Context, *, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def user_info(self, ctx: custom.Context, *, person: discord.Member | discord.User = utils.MISSING) -> None:
         """
         Displays information about the given person.
 
@@ -334,7 +334,7 @@ class Information(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(name="avatar", aliases=["avy"])
-    async def avatar(self, ctx: custom.Context, *, person: converters.PersonConverter = utils.MISSING) -> None:
+    async def avatar(self, ctx: custom.Context, *, person: discord.Member | discord.User = utils.MISSING) -> None:
         """
         Display a person's avatar.
 
