@@ -9,7 +9,7 @@ from discord.ext import commands
 
 # My stuff
 from core import colours
-from utilities import custom, exceptions
+from utilities import custom, exceptions, objects
 
 
 COLON_FORMAT_REGEX = re.compile(r"""
@@ -33,9 +33,9 @@ $
 """, flags=re.VERBOSE)
 
 
-class TimeConverter(commands.Converter):
+class TimeConverter(commands.Converter[objects.Time]):
 
-    async def convert(self, ctx: custom.Context, argument: str) -> int:
+    async def convert(self, ctx: custom.Context, argument: str) -> objects.Time:
 
         if (match := COLON_FORMAT_REGEX.match(argument)) or (match := HUMAN_FORMAT_REGEX.match(argument)):
 
@@ -58,4 +58,4 @@ class TimeConverter(commands.Converter):
                     description="That time format was not recognized."
                 )
 
-        return total
+        return objects.Time(seconds=total)

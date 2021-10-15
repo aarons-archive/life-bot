@@ -15,7 +15,7 @@ from slate import obsidian
 # My stuff
 from core import colours, config, emojis
 from core.bot import Life
-from utilities import checks, converters, custom, enums, exceptions, utils
+from utilities import checks, custom, enums, exceptions, objects, utils
 
 
 class Options(commands.FlagConverter, delimiter=" ", prefix="--", case_insensitive=True):
@@ -341,7 +341,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected()
     @checks.is_voice_client_connected()
-    async def seek(self, ctx: custom.Context, *, time: converters.TimeConverter) -> None:
+    async def seek(self, ctx: custom.Context, *, time: objects.Time) -> None:
         """
         Seeks to a position in the current track.
 
@@ -370,8 +370,7 @@ class Voice(commands.Cog):
         - etc
         """
 
-        # noinspection PyTypeChecker
-        milliseconds = time * 1000
+        milliseconds = time.seconds * 1000
 
         if 0 < milliseconds > ctx.voice_client.current.length:
             raise exceptions.EmbedError(
@@ -393,7 +392,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected()
     @checks.is_voice_client_connected()
-    async def fast_forward(self, ctx: custom.Context, *, time: converters.TimeConverter) -> None:
+    async def fast_forward(self, ctx: custom.Context, *, time: objects.Time) -> None:
         """
         Seeks the player forward.
 
@@ -422,8 +421,7 @@ class Voice(commands.Cog):
         - etc
         """
 
-        # noinspection PyTypeChecker
-        milliseconds = time * 1000
+        milliseconds = time.seconds * 1000
         position = ctx.voice_client.position
         remaining = ctx.voice_client.current.length - position
 
@@ -436,10 +434,9 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(position + milliseconds)
 
-        # noinspection PyTypeChecker
         embed = utils.embed(
             colour=colours.GREEN,
-            description=f"Seeking forward **{utils.format_seconds(time, friendly=True)}**, the players position is now "
+            description=f"Seeking forward **{utils.format_seconds(time.seconds, friendly=True)}**, the players position is now "
                         f"**{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**."
         )
         await ctx.reply(embed=embed)
@@ -449,7 +446,7 @@ class Voice(commands.Cog):
     @checks.is_voice_client_playing()
     @checks.is_author_connected()
     @checks.is_voice_client_connected()
-    async def rewind(self, ctx: custom.Context, *, time: converters.TimeConverter) -> None:
+    async def rewind(self, ctx: custom.Context, *, time: objects.Time) -> None:
         """
         Seeks the player backward.
 
@@ -478,8 +475,7 @@ class Voice(commands.Cog):
         - etc
         """
 
-        # noinspection PyTypeChecker
-        milliseconds = time * 1000
+        milliseconds = time.seconds * 1000
         position = ctx.voice_client.position
 
         if milliseconds >= position:
@@ -491,10 +487,9 @@ class Voice(commands.Cog):
 
         await ctx.voice_client.set_position(position - milliseconds)
 
-        # noinspection PyTypeChecker
         embed = utils.embed(
             colour=colours.GREEN,
-            description=f"Seeking backward **{utils.format_seconds(time, friendly=True)}**, the players position is now "
+            description=f"Seeking backward **{utils.format_seconds(time.seconds, friendly=True)}**, the players position is now "
                         f"**{utils.format_seconds(ctx.voice_client.position // 1000, friendly=True)}**."
         )
         await ctx.reply(embed=embed)

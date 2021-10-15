@@ -68,6 +68,7 @@ CONVERTERS = {
     objects.Image:                       converters.ImageConverter,
     objects.Reminder:                    converters.ReminderConverter,
     objects.Tag:                         converters.TagConverter,
+    objects.Time:                        converters.TimeConverter,
 
     Timezone:                            converters.TimezoneConverter,
 }
