@@ -8,7 +8,7 @@ from discord.ext import commands
 # My stuff
 from core import colours, emojis, values
 from core.bot import Life
-from utilities import converters, custom, exceptions, utils
+from utilities import converters, custom, exceptions, objects, utils
 
 
 def setup(bot: Life) -> None:
@@ -21,7 +21,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @commands.group(name="tag", aliases=["tags"], invoke_without_command=True)
-    async def tag(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
+    async def _tag(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Gets a tag.
 
@@ -53,7 +53,7 @@ class Tags(commands.Cog):
 
         await ctx.reply(tag.content)
 
-    @tag.command(name="raw")
+    @_tag.command(name="raw")
     async def tag_raw(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Gets a tags raw content.
@@ -86,7 +86,7 @@ class Tags(commands.Cog):
 
         await ctx.reply(discord.utils.escape_markdown(tag.content))
 
-    @tag.command(name="create", aliases=["make"])
+    @_tag.command(name="create", aliases=["make"])
     async def tag_create(self, ctx: custom.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
         """
         Creates a tag.
@@ -117,7 +117,7 @@ class Tags(commands.Cog):
             )
         )
 
-    @tag.command(name="alias")
+    @_tag.command(name="alias")
     async def tag_alias(self, ctx: custom.Context, alias: converters.TagNameConverter, original: converters.TagNameConverter) -> None:
         """
         Alias a new tag to a pre-existing tag.
@@ -158,23 +158,13 @@ class Tags(commands.Cog):
             )
         )
 
-    @tag.command(name="claim")
-    async def tag_claim(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
+    @_tag.command(name="claim")
+    async def tag_claim(self, ctx: custom.Context, *, tag: objects.Tag) -> None:
         """
         Claims a tag if its owner has left the server.
 
         **name**: The name of the tag to claim.
         """
-
-        name = str(name)
-        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
-
-        if not (tag := guild_config.get_tag(tag_name=name)):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{name}**."
-            )
 
         if ctx.guild.get_member(tag.user_id):
             raise exceptions.EmbedError(
@@ -189,12 +179,12 @@ class Tags(commands.Cog):
             embed=utils.embed(
                 colour=colours.GREEN,
                 emoji=emojis.TICK,
-                description="Transferred tag to you."
+                description=f"Transferred tag **{tag.name}** to you."
             )
         )
 
-    @tag.command(name="transfer")
-    async def tag_transfer(self, ctx: custom.Context, name: converters.TagNameConverter, *, member: discord.Member) -> None:
+    @_tag.command(name="transfer")
+    async def tag_transfer(self, ctx: custom.Context, tag: objects.Tag, *, member: discord.Member) -> None:
         """
         Transfers a tag to another member.
 
@@ -202,32 +192,19 @@ class Tags(commands.Cog):
         **member**: The member to transfer the tag too. Can be their ID, Username, Nickname or @Mention.
         """
 
-        name = str(name)
-        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
-
         if member.bot:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You can not transfer tags to bots."
-            )
-
-        if not (tag := guild_config.get_tag(tag_name=name)):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{name}**."
             )
         if tag.user_id != ctx.author.id:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You do not own that tag."
             )
         if tag.user_id == member.id:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You can not transfer tags to yourself."
             )
 
@@ -237,12 +214,12 @@ class Tags(commands.Cog):
             embed=utils.embed(
                 colour=colours.GREEN,
                 emoji=emojis.TICK,
-                description=f"Transferred tag from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**.",
+                description=f"Transferred tag **{tag.name}** from **{ctx.author}** to **{ctx.guild.get_member(tag.user_id)}**.",
             )
         )
 
-    @tag.command(name="edit")
-    async def tag_edit(self, ctx: custom.Context, name: converters.TagNameConverter, *, content: converters.TagContentConverter) -> None:
+    @_tag.command(name="edit")
+    async def tag_edit(self, ctx: custom.Context, tag: objects.Tag, *, content: converters.TagContentConverter) -> None:
         """
         Edits a tags content.
 
@@ -250,55 +227,32 @@ class Tags(commands.Cog):
         **content:** The content to edit the tag with.
         """
 
-        name = str(name)
-        content = str(content)
-
-        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
-
-        if not (tag := guild_config.get_tag(tag_name=name)):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{name}**."
-            )
         if tag.user_id != ctx.author.id:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You do not own that tag."
             )
 
-        await tag.change_content(content)
+        await tag.change_content(str(content))
 
         await ctx.reply(
             embed=utils.embed(
                 colour=colours.GREEN,
-                emoji=emojis.TICK,
-                description=f"Edited content of tag with name **{name}**."
+                description=f"Edited content of tag with name **{tag.name}**."
             )
         )
 
-    @tag.command(name="delete", aliases=["remove"])
-    async def tag_delete(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
+    @_tag.command(name="delete", aliases=["remove"])
+    async def tag_delete(self, ctx: custom.Context, *, tag: objects.Tag) -> None:
         """
         Deletes a tag.
 
         **name**: The name of the tag to delete.
         """
 
-        name = str(name)
-        guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
-
-        if not (tag := guild_config.get_tag(tag_name=name)):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{name}**."
-            )
         if tag.user_id != ctx.author.id:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You do not own that tag."
             )
 
@@ -307,11 +261,10 @@ class Tags(commands.Cog):
         await ctx.reply(
             embed=utils.embed(
                 colour=colours.GREEN,
-                emoji=emojis.TICK,
-                description=f"Deleted tag with name **{name}**.")
+                description=f"Deleted tag with name **{tag.name}**.")
         )
 
-    @tag.command(name="search")
+    @_tag.command(name="search")
     async def tag_search(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
         """
         Displays a list of tags that are similar to the search.
@@ -325,7 +278,6 @@ class Tags(commands.Cog):
         if not (tags := guild_config.get_tags_matching(name=name, limit=100)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description=f"There are no tags similar to the search **{name}**."
             )
 
@@ -335,7 +287,7 @@ class Tags(commands.Cog):
             title=f"Tags matching: **{name}**",
         )
 
-    @tag.command(name="list")
+    @_tag.command(name="list")
     async def tag_list(self, ctx: custom.Context, *, person: discord.Member = utils.MISSING) -> None:
         """
         Gets a list of yours or someone else's tags.
@@ -344,13 +296,11 @@ class Tags(commands.Cog):
         """
 
         member = person or ctx.author
-
         guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
 
         if not (tags := guild_config.get_user_tags(member.id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description=f"**{member}** does not have any tags."
             )
 
@@ -360,7 +310,7 @@ class Tags(commands.Cog):
             title=f"Tags for **{member}:**",
         )
 
-    @tag.command(name="all")
+    @_tag.command(name="all")
     async def tag_all(self, ctx: custom.Context) -> None:
         """
         Gets a list of all tags in this server.
@@ -371,8 +321,7 @@ class Tags(commands.Cog):
         if not (tags := guild_config.get_all_tags()):
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
-                description="There are no tags."
+                description="There are no available tags."
             )
 
         await ctx.paginate_embed(
@@ -381,24 +330,15 @@ class Tags(commands.Cog):
             title=f"Tags for **{ctx.guild}:**",
         )
 
-    @tag.command(name="info")
-    async def tag_info(self, ctx: custom.Context, *, name: converters.TagNameConverter) -> None:
+    @_tag.command(name="info")
+    async def tag_info(self, ctx: custom.Context, *, tag: objects.Tag) -> None:
         """
         Displays information about a tag.
 
         **name**: The name of the tag to get the information for.
         """
 
-        name = str(name)
         guild_config = await self.bot.guild_manager.get_config(ctx.guild.id)
-
-        if not (tag := guild_config.get_tag(tag_name=name)):
-            raise exceptions.EmbedError(
-                colour=colours.RED,
-                emoji=emojis.CROSS,
-                description=f"There are no tags with the name **{name}**."
-            )
-
         owner = ctx.guild.get_member(tag.user_id)
 
         await ctx.reply(

@@ -67,6 +67,7 @@ CONVERTERS = {
     enums.NotificationType:              converters.EnumConverter(enums.NotificationType, "Notification type"),
     objects.Image:                       converters.ImageConverter,
     objects.Reminder:                    converters.ReminderConverter,
+    objects.Tag:                         converters.TagConverter,
 
     Timezone:                            converters.TimezoneConverter,
 }

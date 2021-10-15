@@ -6,7 +6,7 @@ from utilities.converters.datetime import FuturePhrasedDatetimeConverter, PastPh
 from utilities.converters.enum import EnumConverter
 from utilities.converters.image import ImageConverter
 from utilities.converters.reminder import ReminderConverter
-from utilities.converters.tag import TagContentConverter, TagNameConverter
+from utilities.converters.tag import TagContentConverter, TagConverter, TagNameConverter
 from utilities.converters.time import TimeConverter
 from utilities.converters.timezone import TimezoneConverter
 from utilities.converters.todo import TodoContentConverter
