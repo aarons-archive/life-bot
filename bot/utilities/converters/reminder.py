@@ -5,11 +5,11 @@ from __future__ import annotations
 from discord.ext import commands
 
 # My stuff
-from core import colours, emojis
+from core import colours
 from utilities import custom, exceptions, objects
 
 
-class ReminderConverter(commands.Converter):
+class ReminderConverter(commands.Converter[objects.Reminder]):
 
     async def convert(self, ctx: custom.Context, argument: str) -> objects.Reminder:
 
@@ -18,7 +18,6 @@ class ReminderConverter(commands.Converter):
         except ValueError:
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="That was not a valid reminder id."
             )
 
@@ -27,7 +26,6 @@ class ReminderConverter(commands.Converter):
         if not (reminder := user_config.get_reminder(reminder_id)):
             raise exceptions.EmbedError(
                 colour=colours.RED,
-                emoji=emojis.CROSS,
                 description="You do not have a reminder with that id."
             )
 
