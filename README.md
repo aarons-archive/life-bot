@@ -4,6 +4,10 @@
 
 Life is a multipurpose discord bot made by Axel#3456. You can click [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot&permissions=4399156288) to invite it with basic permissions, or [here](https://discord.com/oauth2/authorize?client_id=628284183579721747&scope=bot) to invite with no permissions. Feel free to join my [support server](https://discord.gg/w9f6NkQbde) in case you find any bugs or have features to suggest.
 
+## Usage:
+
+To use the bot, invite it and then type `l-help` for a list of commands.
+
 ## Features:
 
 * **Music** - lyrics, queue management, volume control, and filters
