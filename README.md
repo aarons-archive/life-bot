@@ -6,7 +6,7 @@ Life is a multipurpose discord bot made by Axel#3456. You can click [here](https
 
 ## Usage:
 
-To use the bot, invite it and then type `l-help` for a list of commands.
+To use the bot, invite it and then type `l-help` for a list of commands. You can use `l-prefix add "YOUR PREFIX HERE"` to add a new prefix.
 
 ## Features:
 
