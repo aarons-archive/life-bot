@@ -322,7 +322,7 @@ async def upload_file(session: aiohttp.ClientSession, *, file_bytes: bytes | io.
     data = aiohttp.FormData()
     data.add_field("file", value=file_bytes, filename=f"file.{file_format.lower()}")
 
-    async with session.post("https://cdn.axelancerr.xyz/api/media", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
+    async with session.post("https://cdn.axelancerr.xyz/api/v1/files", headers={"Authorization": config.AXEL_WEB_TOKEN}, data=data) as response:
 
         if response.status == 413:
             raise exceptions.EmbedError(
