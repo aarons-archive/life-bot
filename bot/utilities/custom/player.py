@@ -112,35 +112,32 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
 
         await self.text_channel.send(*args, **kwargs)
 
+    #
+
     async def search(
         self,
         query: str,
         /,
         *,
         source: slate.Source,
-        ctx: custom.Context,
-    ) -> slate.obsidian.SearchResult[custom.Context]:
+        ctx: custom.Context | None,
+    ) -> slate.obsidian.Result[custom.Context]:
 
         if (url := yarl.URL(query)) and url.host and url.scheme:
             source = slate.Source.NONE
 
         try:
-            search = await self._node.search(query, ctx=ctx, source=source)
+            search = await self._node.search(query, source=source, ctx=ctx)
 
-        except slate.NoMatchesFound as error:
-
-            if error.source:
-                message = f"No {error.source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your search."
-            else:
-                message = f"No results were found for your search.",
+        except slate.NoResultsFound as error:
 
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
-                description=message,
+                description=f"No {error.search_source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your search.",
             )
 
-        except (slate.SearchError, slate.HTTPError):
+        except (slate.SearchFailed, slate.HTTPError):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -162,28 +159,34 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
         choose: bool = False,
     ) -> None:
 
-        search = await self.search(query, source=source, ctx=ctx)
+        result = await self.search(query, source=source, ctx=ctx)
 
-        if choose:
-            choice = await ctx.choice(
-                entries=[f"`{index + 1:}.` [{track.title}]({track.uri})" for index, track in enumerate(search.tracks)],
-                per_page=10,
-                title="Select the number of the track you want to play:",
-            )
-            tracks = search.tracks[choice]
+        if result.search_type in {slate.SearchType.TRACK, slate.SearchType.SEARCH_RESULT} or isinstance(result.result, list):
+
+            if choose:
+                choice = await ctx.choice(
+                    entries=[f"**{index + 1:}.** [{track.title}]({track.uri})" for index, track in enumerate(result.tracks)],
+                    per_page=10,
+                    title="Select the number of the track you want to play:",
+                )
+                tracks = result.tracks[choice]
+            else:
+                tracks = result.tracks[0]
+
+            description = f"Added the {result.search_source.value.lower()} track " \
+                          f"[{result.tracks[0].title}]({result.tracks[0].uri}) to the queue."
+
         else:
-            tracks = search.tracks[0] if search.type is slate.SearchType.TRACK else search.tracks
+            tracks = result.tracks
+
+            description = f"Added the {result.search_source.value.lower()} {result.search_type.name.lower()} " \
+                          f"[{result.result.name}]({result.result.url}) to the queue."
+
+        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description))
 
         self.queue.put(tracks, position=0 if (now or next) else None)
         if now:
             await self.stop()
-
-        if search.type is slate.SearchType.TRACK or isinstance(search.result, list):
-            description = f"Added the {search.source.value.lower()} track [{search.tracks[0].title}]({search.tracks[0].uri}) to the queue."
-        else:
-            description = f"Added the {search.source.value.lower()} {search.type.name.lower()} [{search.result.name}]({search.result.uri}) to the queue."
-
-        await ctx.reply(embed=utils.embed(colour=colours.GREEN, emoji=emojis.TICK, description=description))
 
     #
 
@@ -261,7 +264,7 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
         await self.send(
             embed=utils.embed(
                 colour=colours.RED,
-                description=f"Something went wrong while playing a track.",
+                description="Something went wrong while playing a track.",
             ),
             view=views.SupportButton()
         )
