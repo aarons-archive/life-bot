@@ -9,8 +9,8 @@ from typing import Literal
 import discord
 import humanize
 import slate
+import slate.obsidian
 from discord.ext import commands
-from slate import obsidian
 
 # My stuff
 from core import colours, config, emojis
@@ -42,15 +42,15 @@ class SearchOptions(commands.FlagConverter, delimiter=" ", prefix="--", case_ins
 def get_source(flags: Options | SearchOptions) -> slate.Source:
 
     if flags.music:
-        return slate.Source.YOUTUBE_MUSIC
+        return slate.obsidian.Source.YOUTUBE_MUSIC
     elif flags.soundcloud:
-        return slate.Source.SOUNDCLOUD
+        return slate.obsidian.Source.SOUNDCLOUD
     elif flags.local:
-        return slate.Source.LOCAL
+        return slate.obsidian.Source.LOCAL
     elif flags.http:
-        return slate.Source.HTTP
+        return slate.obsidian.Source.HTTP
 
-    return slate.Source.YOUTUBE
+    return slate.obsidian.Source.YOUTUBE
 
 
 def setup(bot: Life) -> None:
@@ -75,25 +75,25 @@ class Voice(commands.Cog):
                     spotify_client_id=config.SPOTIFY_CLIENT_ID,
                     spotify_client_secret=config.SPOTIFY_CLIENT_SECRET,
                 )
-            except slate.NodeConnectionError:
+            except slate.obsidian.NodeConnectionError:
                 continue
 
     # Events
 
     @commands.Cog.listener()
-    async def on_obsidian_track_start(self, player: custom.Player, _: obsidian.TrackStart) -> None:
+    async def on_obsidian_track_start(self, player: custom.Player, _: slate.obsidian.TrackStart) -> None:
         await player.handle_track_start()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_end(self, player: custom.Player, _: obsidian.TrackEnd) -> None:
+    async def on_obsidian_track_end(self, player: custom.Player, _: slate.obsidian.TrackEnd) -> None:
         await player.handle_track_over()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_exception(self, player: custom.Player, _: obsidian.TrackException) -> None:
+    async def on_obsidian_track_exception(self, player: custom.Player, _: slate.obsidian.TrackException) -> None:
         await player.handle_track_error()
 
     @commands.Cog.listener()
-    async def on_obsidian_track_stuck(self, player: custom.Player, _: obsidian.TrackStuck) -> None:
+    async def on_obsidian_track_stuck(self, player: custom.Player, _: slate.obsidian.TrackStuck) -> None:
         await player.handle_track_error()
 
     # Join/leave commands
@@ -897,7 +897,7 @@ class Voice(commands.Cog):
 
         if enums.Filters.ROTATION in ctx.voice_client.enabled_filters:
             await ctx.voice_client.set_filter(
-                obsidian.Filter(ctx.voice_client.filter, rotation=obsidian.Rotation())
+                slate.obsidian.Filter(ctx.voice_client.filter, rotation=slate.obsidian.Rotation())
             )
             ctx.voice_client.enabled_filters.remove(enums.Filters.ROTATION)
             embed = utils.embed(
@@ -907,7 +907,7 @@ class Voice(commands.Cog):
 
         else:
             await ctx.voice_client.set_filter(
-                obsidian.Filter(ctx.voice_client.filter, rotation=obsidian.Rotation(rotation_hertz=0.5))
+                slate.obsidian.Filter(ctx.voice_client.filter, rotation=slate.obsidian.Rotation(rotation_hertz=0.5))
             )
             ctx.voice_client.enabled_filters.add(enums.Filters.ROTATION)
             embed = utils.embed(
@@ -926,7 +926,7 @@ class Voice(commands.Cog):
         """
 
         if enums.Filters.NIGHTCORE in ctx.voice_client.enabled_filters:
-            await ctx.voice_client.set_filter(obsidian.Filter(ctx.voice_client.filter, timescale=obsidian.Timescale()))
+            await ctx.voice_client.set_filter(slate.obsidian.Filter(ctx.voice_client.filter, timescale=slate.obsidian.Timescale()))
             ctx.voice_client.enabled_filters.remove(enums.Filters.NIGHTCORE)
             embed = utils.embed(
                 colour=colours.GREEN,
@@ -934,7 +934,7 @@ class Voice(commands.Cog):
             )
 
         else:
-            await ctx.voice_client.set_filter(obsidian.Filter(ctx.voice_client.filter, timescale=obsidian.Timescale(speed=1.12, pitch=1.12)))
+            await ctx.voice_client.set_filter(slate.obsidian.Filter(ctx.voice_client.filter, timescale=slate.obsidian.Timescale(speed=1.12, pitch=1.12)))
             ctx.voice_client.enabled_filters.add(enums.Filters.NIGHTCORE)
             embed = utils.embed(
                 colour=colours.GREEN,

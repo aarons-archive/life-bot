@@ -10,7 +10,7 @@ from typing import Any
 # Packages
 import discord
 import pendulum
-import slate
+import slate.obsidian
 from discord.ext import commands
 
 # My stuff
@@ -127,7 +127,7 @@ class Events(commands.Cog):
 
         message = None
 
-        if isinstance(error, slate.NodesNotFound):
+        if isinstance(error, slate.obsidian.NoNodesFound):
             message = "There are no players available right now."
 
         elif isinstance(error, commands.MissingRequiredArgument):

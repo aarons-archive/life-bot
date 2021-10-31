@@ -119,17 +119,17 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
         query: str,
         /,
         *,
-        source: slate.Source,
+        source: slate.obsidian.Source,
         ctx: custom.Context | None,
     ) -> slate.obsidian.Result[custom.Context]:
 
         if (url := yarl.URL(query)) and url.host and url.scheme:
-            source = slate.Source.NONE
+            source = slate.obsidian.Source.NONE
 
         try:
             search = await self._node.search(query, source=source, ctx=ctx)
 
-        except slate.NoResultsFound as error:
+        except slate.obsidian.NoResultsFound as error:
 
             raise exceptions.EmbedError(
                 colour=colours.RED,
@@ -137,7 +137,7 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
                 description=f"No {error.search_source.value.lower().replace('_', ' ')} {error.search_type.value}s were found for your search.",
             )
 
-        except (slate.SearchFailed, slate.HTTPError):
+        except (slate.obsidian.SearchFailed, slate.HTTPError):
             raise exceptions.EmbedError(
                 colour=colours.RED,
                 emoji=emojis.CROSS,
@@ -152,7 +152,7 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
         query: str,
         /,
         *,
-        source: slate.Source,
+        source: slate.obsidian.Source,
         ctx: custom.Context,
         now: bool = False,
         next: bool = False,
@@ -161,7 +161,7 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
 
         result = await self.search(query, source=source, ctx=ctx)
 
-        if result.search_type in {slate.SearchType.TRACK, slate.SearchType.SEARCH_RESULT} or isinstance(result.result, list):
+        if result.search_type in {slate.obsidian.SearchType.TRACK, slate.obsidian.SearchType.SEARCH_RESULT} or isinstance(result.result, list):
 
             if choose:
                 choice = await ctx.choice(
@@ -208,10 +208,10 @@ class Player(slate.obsidian.Player["Life", custom.Context, "Player"]):
 
             track = self.queue.get()
 
-            if track.source is slate.Source.SPOTIFY:
+            if track.source is slate.obsidian.Source.SPOTIFY:
 
                 try:
-                    search = await self.search(f"{track.author} - {track.title}", source=slate.Source.YOUTUBE, ctx=track.ctx)
+                    search = await self.search(f"{track.author} - {track.title}", source=slate.obsidian.Source.YOUTUBE, ctx=track.ctx)
                 except exceptions.EmbedError as error:
                     await self.send(embed=error.embed)
                     continue
