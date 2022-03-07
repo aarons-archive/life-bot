@@ -225,7 +225,7 @@ class UserManager:
                     person,
                     record["xp"],
                     record["rank"],
-                    io.BytesIO(await (person.avatar.replace(format="png", size=256)).read()),
+                    io.BytesIO(await (person.display_avatar.replace(format="png", size=256)).read()),
                 )
             )
 
@@ -341,7 +341,7 @@ class UserManager:
         member_config = await user_config.get_member_config(guild_id)
 
         rank = await self.rank(user_id=user_id, guild_id=guild_id)
-        avatar_bytes = io.BytesIO(await (member.avatar.replace(format="png", size=256)).read())
+        avatar_bytes = io.BytesIO(await (member.display_avatar.replace(format="png", size=256)).read())
 
         return await self.bot.loop.run_in_executor(
             None,
