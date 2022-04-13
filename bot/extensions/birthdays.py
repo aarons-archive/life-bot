@@ -230,4 +230,4 @@ class Birthdays(commands.Cog):
         Displays a list of upcoming birthdays in the current server.
         """
 
-        await ctx.invoke(self._birthday_upcoming)  # type: ignore
+        await ctx.invoke(self._birthday_list)  # type: ignore
