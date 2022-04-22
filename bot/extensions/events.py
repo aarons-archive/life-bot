@@ -127,10 +127,7 @@ class Events(commands.Cog):
 
         message = None
 
-        if isinstance(error, slate.obsidian.NoNodesFound):
-            message = "There are no players available right now."
-
-        elif isinstance(error, commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             message = f"You missed the **{error.param.name}** argument. Use **{config.PREFIX}help {ctx.command.qualified_name}** for help."
 
         elif isinstance(error, commands.BadArgument):
